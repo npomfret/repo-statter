@@ -10,5 +10,8 @@ export const VERSION = '1.0.0' as const
 
 if (process.argv[1]?.endsWith('index.ts')) {
   const args = process.argv.slice(2)
-  await handleCLI(args)
+  handleCLI(args).catch(error => {
+    console.error('Error:', error.message)
+    process.exit(1)
+  })
 }
