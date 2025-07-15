@@ -3,17 +3,10 @@
   "version": "1.0.0",
   "description": "",
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    }
-  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
+    "dev": "ts-node --esm src/index.ts",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
@@ -21,12 +14,12 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "simple-git": "^3.28.0"
+    "simple-git": "^3.28.0",
+    "ts-node": "^10.9.2"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",
     "@vitest/coverage-v8": "^2.1.8",
-    "tsup": "^8.3.5",
     "typescript": "^5.7.3",
     "vitest": "^2.1.8"
   },
