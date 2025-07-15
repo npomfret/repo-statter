@@ -184,7 +184,7 @@ export async function generateReport(repoPath: string, outputMode: 'dist' | 'ana
   }
   
   const template = await readFile('src/report/template.html', 'utf-8')
-  const chartData = transformCommitData(commits, repoName)
+  const chartData = await transformCommitData(commits, repoName, repoPath)
   
   const html = injectDataIntoTemplate(template, chartData, commits)
   await writeFile(reportPath, html)
@@ -212,19 +212,42 @@ export async function generateReport(repoPath: string, outputMode: 'dist' | 'ana
   console.log(`Total lines added: ${commits.reduce((sum, c) => sum + c.linesAdded, 0)}`)
 }
 
-function transformCommitData(commits: CommitData[], repoName: string) {
+async function getGitHubUrl(repoPath: string): Promise<string | null> {
+  const git = simpleGit(repoPath)
+  try {
+    const remotes = await git.getRemotes(true)
+    const origin = remotes.find(r => r.name === 'origin')
+    if (origin && origin.refs.fetch) {
+      const match = origin.refs.fetch.match(/github\.com[:/](.+?)(?:\.git)?$/)
+      if (match) {
+        return `https://github.com/${match[1]}`
+      }
+    }
+  } catch (error) {
+    // Silent fail - not all repos have GitHub remotes
+  }
+  return null
+}
+
+async function transformCommitData(commits: CommitData[], repoName: string, repoPath: string) {
   const totalCommits = commits.length
   const totalLinesOfCode = commits.reduce((sum, commit) => sum + commit.linesAdded, 0)
+  const totalCodeChurn = commits.reduce((sum, commit) => sum + commit.linesAdded + commit.linesDeleted, 0)
   
   const contributors = getContributorStats(commits)
   const topContributor = contributors[0]?.name || 'Unknown'
+  
+  const githubUrl = await getGitHubUrl(repoPath)
+  const githubLink = githubUrl ? ` • <a href="${githubUrl}" target="_blank" class="text-decoration-none">View on GitHub</a>` : ''
   
   return {
     repositoryName: repoName,
     totalCommits,
     totalLinesOfCode,
+    totalCodeChurn,
     topContributor,
-    generationDate: new Date().toLocaleDateString()
+    generationDate: new Date().toLocaleDateString(),
+    githubLink
   }
 }
 
@@ -358,11 +381,28 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
         new ApexCharts(document.querySelector('#fileTypesChart'), options).render();
       }
       
+      function renderCodeChurnChart() {
+        const options = {
+          chart: { type: 'area', height: 350, toolbar: { show: false }, stacked: true },
+          series: [
+            { name: 'Lines Added', data: timeSeries.map(point => ({ x: point.date, y: point.linesAdded })) },
+            { name: 'Lines Deleted', data: timeSeries.map(point => ({ x: point.date, y: point.linesDeleted })) }
+          ],
+          xaxis: { type: 'datetime', title: { text: 'Date' } },
+          yaxis: { title: { text: 'Lines Changed' } },
+          fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.9 } },
+          colors: ['#28a745', '#dc3545'],
+          tooltip: { shared: true }
+        };
+        new ApexCharts(document.querySelector('#codeChurnChart'), options).render();
+      }
+      
       document.addEventListener('DOMContentLoaded', function() {
         renderCommitActivityChart();
         renderContributorsChart();
         renderLinesOfCodeChart();
         renderFileTypesChart();
+        renderCodeChurnChart();
       });
     </script>
   `;
@@ -372,6 +412,8 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
     .replace(/{{generationDate}}/g, chartData.generationDate)
     .replace(/{{totalCommits}}/g, chartData.totalCommits.toString())
     .replace(/{{totalLinesOfCode}}/g, chartData.totalLinesOfCode.toString())
+    .replace(/{{totalCodeChurn}}/g, chartData.totalCodeChurn.toString())
     .replace(/{{topContributor}}/g, chartData.topContributor)
+    .replace(/{{githubLink}}/g, chartData.githubLink)
     .replace('</body>', chartScript + '\n</body>')
 }

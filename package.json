@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "tsx src/index.ts",
     "build": "tsx src/index.ts",
+    "build:self": "tsx src/index.ts .",
     "analyse": "tsx src/index.ts",
     "test": "vitest",
     "test:run": "vitest run",
