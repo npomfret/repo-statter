@@ -7,5 +7,6 @@
 - brutally critique them, but don't be pedantic
 - if the quality not ok, explain why, be clear and helpful
 - if it's largely ok, write a nice and detailed commit message and commit
-    - if you are unsure, ask the user 
+    - if you are unsure, ask the user
+    - if it would benefit from being multiple commits, then so be it
 
