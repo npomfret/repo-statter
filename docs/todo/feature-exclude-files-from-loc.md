@@ -28,7 +28,69 @@ The exclusion list will be made configurable to allow users to tailor it to thei
 - A configuration file (e.g., `.repostatterrc.json`) will be introduced to allow users to define their own exclusion patterns.
 - CLI arguments could provide a way to specify a custom configuration file path or override patterns for a single run.
 
+## Implementation Plan
+
+### Status: READY FOR IMPLEMENTATION
+
+Based on codebase analysis, the LOC calculation happens in the git parser when processing commit diffs. The implementation will add file exclusion logic to filter out non-code files from the statistics.
+
+### Phase 1: Hardcoded Default Exclusions
+
+**Step 1: Add exclusion patterns**
+- Create exclusion utility in `src/utils/exclusions.ts`
+- Define default glob patterns for common non-code files
+- Add `minimatch` dependency for pattern matching
+
+**Step 2: Modify git parser**
+- Update `parseCommitDiff()` in `src/git/parser.ts` to filter excluded files
+- Apply exclusions to `FileChange` objects before they're added to commit data
+- Ensure excluded files don't contribute to `linesAdded`/`linesDeleted` totals
+
+**Step 3: Update file type classification**
+- Modify `getFileType()` to handle excluded files appropriately
+- Consider whether to show excluded files in UI or hide them completely
+
+### Technical Implementation Details
+
+**Files to modify:**
+1. `src/utils/exclusions.ts` (new file)
+2. `src/git/parser.ts` (lines 139-170 in `parseCommitDiff()`)
+3. `package.json` (add minimatch dependency)
+
+**Key considerations:**
+- Exclusions apply at commit-diff level, not file-level
+- Maintain existing file type classification for non-excluded files
+- Ensure excluded files don't appear in any statistics or visualizations
+- Use glob patterns for flexibility (e.g., `node_modules/**/*`)
+
+### Testing Strategy
+
+**Validation approach:**
+- Test with repository containing typical excluded files (node_modules, dist, etc.)
+- Verify LOC counts before/after exclusion implementation
+- Check that excluded files don't appear in file heat maps or type statistics
+- Ensure interactive filtering still works correctly
+
+**Simple test case:**
+1. Create test repo with source files + node_modules
+2. Run analysis before exclusion changes
+3. Run analysis after exclusion changes
+4. Verify node_modules files are excluded from all statistics
+
+### Breaking Into Steps
+
+This can be implemented in a single focused commit:
+- **"feat: Exclude common non-code files from LOC statistics"**
+
+**Implementation order:**
+1. Add exclusion patterns utility
+2. Modify git parser to filter excluded files
+3. Test with current repository
+4. Verify all statistics exclude filtered files
+
 ## Acceptance Criteria
 
 - The LOC statistics no longer count lines from files matching the default exclusion patterns.
 - The overall accuracy and relevance of the repository statistics are improved.
+- Excluded files do not appear in any charts or visualizations.
+- Interactive filtering continues to work correctly with the exclusion system.
