@@ -4,6 +4,7 @@ export { parseCommitHistory, type CommitData, type FileChange } from './git/pars
 export { generateReport } from './report/generator.js'
 export { getContributorStats, getFileTypeStats } from './stats/calculator.js'
 export { getTimeSeriesData, getLinearSeriesData } from './chart/data-transformer.js'
+export { processCommitMessages, type WordFrequency } from './text/processor.js'
 
 export const VERSION = '1.0.0' as const
 

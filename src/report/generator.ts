@@ -4,6 +4,7 @@ import { existsSync } from 'fs'
 import { parseCommitHistory, getGitHubUrl } from '../git/parser.js'
 import { getContributorStats, getFileTypeStats } from '../stats/calculator.js'
 import { getTimeSeriesData, getLinearSeriesData } from '../chart/data-transformer.js'
+import { processCommitMessages } from '../text/processor.js'
 import type { CommitData } from '../git/parser.js'
 
 export async function generateReport(repoPath: string, outputMode: 'dist' | 'analysis' = 'dist'): Promise<void> {
@@ -83,6 +84,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
   const fileTypes = getFileTypeStats(commits)
   const timeSeries = getTimeSeriesData(commits)
   const linearSeries = getLinearSeriesData(commits)
+  const wordCloudData = processCommitMessages(commits.map(c => c.message))
   
   const chartScript = `
     <script>
@@ -91,6 +93,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
       const fileTypes = ${JSON.stringify(fileTypes)};
       const timeSeries = ${JSON.stringify(timeSeries)};
       const linearSeries = ${JSON.stringify(linearSeries)};
+      const wordCloudData = ${JSON.stringify(wordCloudData)};
       
       
       let linesOfCodeChart = null;
@@ -297,12 +300,65 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
         new ApexCharts(document.querySelector('#codeChurnChart'), options).render();
       }
       
+      function renderWordCloud() {
+        if (wordCloudData.length === 0) {
+          document.querySelector('#wordCloudChart').innerHTML = '<p class="text-muted text-center">No commit messages to analyze</p>';
+          return;
+        }
+        
+        const container = document.querySelector('#wordCloudChart');
+        const width = container.offsetWidth;
+        const height = 400;
+        
+        // ApexCharts-inspired colors
+        const colors = ['#0d6efd', '#198754', '#dc3545', '#ffc107', '#6f42c1', '#20c997', '#fd7e14', '#6c757d'];
+        const color = d3.scale.ordinal().range(colors);
+        
+        const draw = function(words) {
+          d3.select('#wordCloudChart')
+            .append('svg')
+            .attr('width', width)
+            .attr('height', height)
+            .append('g')
+            .attr('transform', 'translate(' + width/2 + ',' + height/2 + ')')
+            .selectAll('text')
+            .data(words)
+            .enter().append('text')
+            .style('font-size', function(d) { return d.size + 'px'; })
+            .style('font-family', '\'Inter\', -apple-system, sans-serif')
+            .style('font-weight', function(d) { return d.size > 40 ? '600' : '400'; })
+            .style('fill', function(d, i) { return color(i); })
+            .attr('text-anchor', 'middle')
+            .attr('transform', function(d) {
+              return 'translate(' + [d.x, d.y] + ')rotate(' + d.rotate + ')';
+            })
+            .text(function(d) { return d.text; })
+            .style('cursor', 'default')
+            .append('title')
+            .text(function(d) { return d.text + ': ' + Math.round(d.size); });
+        };
+        
+        const layout = d3.layout.cloud()
+          .size([width, height])
+          .words(wordCloudData.map(function(d) {
+            return {text: d.text, size: d.size};
+          }))
+          .padding(5)
+          .rotate(function() { return ~~(Math.random() * 2) * 90; })
+          .font('\'Inter\', -apple-system, sans-serif')
+          .fontSize(function(d) { return d.size; })
+          .on('end', draw);
+        
+        layout.start();
+      }
+      
       document.addEventListener('DOMContentLoaded', function() {
         renderCommitActivityChart();
         renderContributorsChart();
         renderLinesOfCodeChart();
         renderFileTypesChart();
         renderCodeChurnChart();
+        renderWordCloud();
         
         // Add event listeners for axis toggles
         document.querySelectorAll('input[name="xAxis"]').forEach(input => {
