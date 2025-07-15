@@ -59,8 +59,10 @@
         </div>
 
         <div class="row">
-            <div class="col-lg-6 mb-4">
-                <div class="card">
+            <!-- Time Series Charts Column -->
+            <div class="col-lg-8">
+                <!-- Commit Activity Chart -->
+                <div class="card mb-4">
                     <div class="card-header">
                         <h5 class="card-title mb-0">Commit Activity Over Time</h5>
                     </div>
@@ -68,22 +70,9 @@
                         <div id="commitActivityChart"></div>
                     </div>
                 </div>
-            </div>
-            <div class="col-lg-6 mb-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">Contributors</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="contributorsChart"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <div class="row">
-            <div class="col-lg-8 mb-4">
-                <div class="card">
+                <!-- Lines of Code Growth Chart -->
+                <div class="card mb-4">
                     <div class="card-header">
                         <h5 class="card-title mb-0">Lines of Code Growth</h5>
                     </div>
@@ -97,22 +86,9 @@
                         <div id="linesOfCodeChart"></div>
                     </div>
                 </div>
-            </div>
-            <div class="col-lg-4 mb-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">File Types</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="fileTypesChart"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <div class="row">
-            <div class="col-lg-12 mb-4">
-                <div class="card">
+                <!-- Code Churn Chart -->
+                <div class="card mb-4">
                     <div class="card-header">
                         <h5 class="card-title mb-0">Code Churn Over Time</h5>
                     </div>
@@ -121,11 +97,31 @@
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="row">
-            <div class="col-lg-12 mb-4">
-                <div class="card">
+            <!-- Non-Time Series Charts Column -->
+            <div class="col-lg-4">
+                <!-- Contributors Chart -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Contributors</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="contributorsChart"></div>
+                    </div>
+                </div>
+
+                <!-- File Types Chart -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">File Types</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="fileTypesChart"></div>
+                    </div>
+                </div>
+
+                <!-- Word Cloud -->
+                <div class="card mb-4">
                     <div class="card-header">
                         <h5 class="card-title mb-0">Commit Message Word Cloud</h5>
                     </div>
