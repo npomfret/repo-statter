@@ -20,7 +20,9 @@
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit"
   },
-  "dependencies": {},
+  "dependencies": {
+    "simple-git": "^3.28.0"
+  },
   "devDependencies": {
     "@types/node": "^22.10.5",
     "@vitest/coverage-v8": "^2.1.8",
