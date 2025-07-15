@@ -325,7 +325,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             .data(words)
             .enter().append('text')
             .style('font-size', function(d) { return d.size + 'px'; })
-            .style('font-family', '\'Inter\', -apple-system, sans-serif')
+            .style('font-family', "'Inter', -apple-system, sans-serif")
             .style('font-weight', function(d) { return d.size > 40 ? '600' : '400'; })
             .style('fill', function(d, i) { return color(i); })
             .attr('text-anchor', 'middle')
@@ -345,7 +345,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
           }))
           .padding(5)
           .rotate(function() { return ~~(Math.random() * 2) * 90; })
-          .font('\'Inter\', -apple-system, sans-serif')
+          .font("'Inter', -apple-system, sans-serif")
           .fontSize(function(d) { return d.size; })
           .on('end', draw);
         
