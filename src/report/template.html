@@ -192,6 +192,37 @@
         .text-danger {
             color: var(--accent-danger) !important;
         }
+
+        /* Custom tooltip styles */
+        .custom-tooltip {
+            background: var(--bs-card-bg);
+            color: var(--bs-body-color);
+            border: 1px solid var(--bs-border-color);
+            border-radius: 4px;
+            padding: 12px;
+            font-size: 12px;
+            line-height: 1.4;
+            min-width: 250px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .custom-tooltip .tooltip-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--bs-border-color);
+            color: var(--accent-primary);
+        }
+
+        .custom-tooltip .tooltip-content > div {
+            margin: 4px 0;
+        }
+
+        .custom-tooltip strong {
+            color: var(--text-secondary);
+            margin-right: 4px;
+        }
     </style>
 </head>
 <body>

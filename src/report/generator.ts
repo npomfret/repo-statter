@@ -353,6 +353,46 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
         document.getElementById('dateToFilter').value = maxDate.toISOString().split('T')[0];
       }
       
+      function formatBytes(bytes) {
+        if (bytes >= 1000000000) {
+          return (bytes / 1000000000).toFixed(2) + ' GB';
+        } else if (bytes >= 1000000) {
+          return (bytes / 1000000).toFixed(2) + ' MB';
+        } else if (bytes >= 1000) {
+          return (bytes / 1000).toFixed(2) + ' KB';
+        } else {
+          return bytes.toFixed(0) + ' bytes';
+        }
+      }
+      
+      function createCommitTooltip(xAxis, filteredLinearSeries, commits, customContent) {
+        return function({ seriesIndex, dataPointIndex, w }) {
+          if (xAxis === 'commit') {
+            const point = filteredLinearSeries[dataPointIndex];
+            if (point && point.sha !== 'start') {
+              const commit = commits.find(c => c.sha === point.sha);
+              if (commit) {
+                let content = '<div class="custom-tooltip">' +
+                  '<div class="tooltip-title">Commit #' + point.commitIndex + '</div>' +
+                  '<div class="tooltip-content">' +
+                  '<div><strong>SHA:</strong> ' + commit.sha.substring(0, 7) + '</div>' +
+                  '<div><strong>Author:</strong> ' + commit.author + '</div>' +
+                  '<div><strong>Date:</strong> ' + new Date(commit.date).toLocaleString() + '</div>' +
+                  '<div><strong>Message:</strong> ' + commit.message + '</div>';
+                
+                if (customContent) {
+                  content += customContent(commit, point);
+                }
+                
+                content += '</div></div>';
+                return content;
+              }
+            }
+          }
+          return null;
+        };
+      }
+      
       function renderCommitActivityChart() {
         const xAxis = document.querySelector('input[name="commitActivityXAxis"]:checked').value;
         const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
@@ -502,7 +542,11 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             theme: isDark ? 'dark' : 'light',
             x: {
               format: xAxis === 'date' ? 'dd MMM yyyy' : undefined
-            }
+            },
+            custom: createCommitTooltip(xAxis, filteredLinearSeries, commits, function(commit, point) {
+              return '<div><strong>Lines:</strong> +' + commit.linesAdded + ' / -' + commit.linesDeleted + '</div>' +
+                     '<div><strong>Total Lines:</strong> ' + point.cumulativeLines.toLocaleString() + '</div>';
+            })
           }
         };
         linesOfCodeChart = new ApexCharts(document.querySelector('#linesOfCodeChart'), options);
@@ -592,7 +636,11 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             theme: isDark ? 'dark' : 'light',
             x: {
               format: xAxis === 'date' ? 'dd MMM yyyy' : undefined
-            }
+            },
+            custom: createCommitTooltip(xAxis, filteredLinearSeries, commits, function(commit, point) {
+              return '<div><strong>Lines Added:</strong> ' + commit.linesAdded.toLocaleString() + '</div>' +
+                     '<div><strong>Lines Deleted:</strong> ' + commit.linesDeleted.toLocaleString() + '</div>';
+            })
           }
         };
         codeChurnChart = new ApexCharts(document.querySelector('#codeChurnChart'), options);
@@ -647,17 +695,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             },
             min: 0,
             labels: {
-              formatter: function (val) {
-                if (val >= 1000000000) {
-                  return (val / 1000000000).toFixed(1) + 'GB';
-                } else if (val >= 1000000) {
-                  return (val / 1000000).toFixed(1) + 'MB';
-                } else if (val >= 1000) {
-                  return (val / 1000).toFixed(1) + 'KB';
-                } else {
-                  return val.toFixed(0) + 'B';
-                }
-              },
+              formatter: formatBytes,
               style: { colors: isDark ? '#f0f6fc' : '#24292f' }
             }
           },
@@ -670,18 +708,13 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
               format: xAxis === 'date' ? 'dd MMM yyyy' : undefined
             },
             y: {
-              formatter: function (val) {
-                if (val >= 1000000000) {
-                  return (val / 1000000000).toFixed(2) + ' GB';
-                } else if (val >= 1000000) {
-                  return (val / 1000000).toFixed(2) + ' MB';
-                } else if (val >= 1000) {
-                  return (val / 1000).toFixed(2) + ' KB';
-                } else {
-                  return val.toFixed(0) + ' bytes';
-                }
-              }
-            }
+              formatter: formatBytes
+            },
+            custom: createCommitTooltip(xAxis, filteredLinearSeries, commits, function(commit, point) {
+              return '<div><strong>Bytes Added:</strong> ' + formatBytes(commit.bytesAdded || 0) + '</div>' +
+                     '<div><strong>Bytes Deleted:</strong> ' + formatBytes(commit.bytesDeleted || 0) + '</div>' +
+                     '<div><strong>Total Size:</strong> ' + formatBytes(point.cumulativeBytes) + '</div>';
+            })
           }
         };
         repositorySizeChart = new ApexCharts(document.querySelector('#repositorySizeChart'), options);
