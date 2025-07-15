@@ -85,7 +85,7 @@ npm run build /path/to/repo  # Generate report for specific repository
 
 ## Step 11: CLI Integration
 
-### Status: Ready for Implementation
+### Status: ✅ COMPLETE
 
 ### Analysis
 There's a discrepancy between the CLI Interface specification and the current implementation:
@@ -150,6 +150,38 @@ Given the CLAUDE.md guidance to "be minimal and elegant" and "do not add any sup
 2. Modify existing generateReport function to accept output directory option
 3. Add simple CLI handling to src/index.ts
 4. Single commit for the complete feature
+
+### Implementation Results
+
+✅ **Completed Implementation:**
+1. Added CLI argument parsing for `--repo` flag using native process.argv
+2. Updated `generateReport()` to support two output modes:
+   - `dist` mode: Outputs to `dist/report.html` (for build command)
+   - `analysis` mode: Outputs to `analysis/<repo-name>/report.html` and `analysis/<repo-name>/repo-stats.json`
+3. Added input validation for repository path
+4. Maintained backward compatibility with existing `build` command
+5. Switched from ts-node to tsx for better ESM support and performance
+
+**Key Changes:**
+- Modified `src/index.ts` to handle both CLI modes
+- Updated all npm scripts to use tsx instead of ts-node
+- Created comprehensive README.md documentation
+- No additional dependencies needed (except tsx for better TypeScript execution)
+
+**Usage:**
+```bash
+# Quick build mode
+npm run build .
+
+# Full analysis mode
+npm run analyse -- --repo /path/to/repository
+```
+
+**Output Structure:**
+- Build mode: `dist/report.html`
+- Analysis mode: 
+  - `analysis/<repo-name>/report.html`
+  - `analysis/<repo-name>/repo-stats.json`
 
 ---
 

@@ -127,26 +127,86 @@ async function parseCommitDiff(repoPath: string, commitHash: string): Promise<{ 
 
 export const VERSION = '1.0.0' as const
 
-if (process.argv[1]?.endsWith('index.ts') && process.argv.length > 2) {
-  const repoPath = process.argv[2] || '.'
-  generateReport(repoPath)
+if (process.argv[1]?.endsWith('index.ts')) {
+  const args = process.argv.slice(2)
+  
+  if (args.includes('--repo')) {
+    const repoIndex = args.indexOf('--repo')
+    const repoPath = args[repoIndex + 1]
+    
+    if (!repoPath) {
+      console.error('Error: --repo requires a path argument')
+      console.error('Usage: npm run analyse -- --repo /path/to/repository')
+      process.exit(1)
+    }
+    
+    if (!existsSync(repoPath)) {
+      console.error(`Error: Repository path does not exist: ${repoPath}`)
+      process.exit(1)
+    }
+    
+    generateReport(repoPath, 'analysis').catch(error => {
+      console.error('Error generating report:', error)
+      process.exit(1)
+    })
+  } else if (args.length > 0 && args[0]) {
+    generateReport(args[0], 'dist').catch(error => {
+      console.error('Error generating report:', error)
+      process.exit(1)
+    })
+  } else {
+    console.error('Usage:')
+    console.error('  npm run build <repo-path>')
+    console.error('  npm run analyse -- --repo <repo-path>')
+    process.exit(1)
+  }
 }
 
-export async function generateReport(repoPath: string): Promise<void> {
+export async function generateReport(repoPath: string, outputMode: 'dist' | 'analysis' = 'dist'): Promise<void> {
   const commits = await parseCommitHistory(repoPath)
-  const repoName = basename(repoPath)
+  const repoName = basename(repoPath) || 'repo'
   
-  if (!existsSync('dist')) {
-    await mkdir('dist', { recursive: true })
+  let outputDir: string
+  let reportPath: string
+  let statsPath: string | null = null
+  
+  if (outputMode === 'analysis') {
+    outputDir = `analysis/${repoName}`
+    reportPath = `${outputDir}/report.html`
+    statsPath = `${outputDir}/repo-stats.json`
+  } else {
+    outputDir = 'dist'
+    reportPath = `${outputDir}/report.html`
+  }
+  
+  if (!existsSync(outputDir)) {
+    await mkdir(outputDir, { recursive: true })
   }
   
   const template = await readFile('src/report/template.html', 'utf-8')
   const chartData = transformCommitData(commits, repoName)
   
   const html = injectDataIntoTemplate(template, chartData, commits)
-  await writeFile('dist/report.html', html)
+  await writeFile(reportPath, html)
   
-  console.log(`Report generated: dist/report.html`)
+  if (statsPath) {
+    const stats = {
+      repository: repoName,
+      generatedAt: new Date().toISOString(),
+      totalCommits: commits.length,
+      totalLinesAdded: commits.reduce((sum, c) => sum + c.linesAdded, 0),
+      totalLinesDeleted: commits.reduce((sum, c) => sum + c.linesDeleted, 0),
+      contributors: getContributorStats(commits),
+      fileTypes: getFileTypeStats(commits),
+      commits: commits
+    }
+    await writeFile(statsPath, JSON.stringify(stats, null, 2))
+  }
+  
+  console.log(`Report generated: ${reportPath}`)
+  if (statsPath) {
+    console.log(`Stats saved: ${statsPath}`)
+  }
   console.log(`Repository: ${repoName}`)
   console.log(`Total commits: ${commits.length}`)
   console.log(`Total lines added: ${commits.reduce((sum, c) => sum + c.linesAdded, 0)}`)
