@@ -103,6 +103,7 @@ function getFileType(fileName: string): string {
   }
 }
 
+
 async function parseCommitDiff(repoPath: string, commitHash: string): Promise<{ linesAdded: number; linesDeleted: number; filesChanged: FileChange[] }> {
   const git = simpleGit(repoPath)
   
@@ -296,15 +297,49 @@ function getFileTypeStats(commits: CommitData[]) {
 }
 
 function getTimeSeriesData(commits: CommitData[]) {
+  if (commits.length === 0) return []
+  
+  // First, determine if we need hourly granularity
+  const repoAgeHours = getRepoAgeInHours(commits)
+  const useHourlyData = repoAgeHours < 48 // Use hourly data for repos less than 2 days old
+  
+  // Add a starting point just before the first commit
+  const firstCommit = commits[0]
+  if (!firstCommit) return []
+  const firstCommitDate = new Date(firstCommit.date)
+  const startDate = new Date(firstCommitDate)
+  if (useHourlyData) {
+    startDate.setHours(startDate.getHours() - 1) // One hour before
+  } else {
+    startDate.setDate(startDate.getDate() - 1) // One day before
+  }
+  
   const timeSeriesMap = new Map<string, { date: string; commits: number; linesAdded: number; linesDeleted: number; cumulativeLines: number }>()
+  
+  // Add the zero starting point
+  const startDateKey = useHourlyData 
+    ? startDate.toISOString().slice(0, 13) + ':00:00'
+    : startDate.toISOString().split('T')[0]!
+  
+  timeSeriesMap.set(startDateKey, {
+    date: startDateKey,
+    commits: 0,
+    linesAdded: 0,
+    linesDeleted: 0,
+    cumulativeLines: 0
+  })
+  
   let cumulativeLines = 0
   
   for (const commit of commits) {
-    const date = new Date(commit.date).toISOString().split('T')[0]!
+    // For short time frames, include hours in the grouping
+    const dateKey = useHourlyData 
+      ? new Date(commit.date).toISOString().slice(0, 13) + ':00:00' // Group by hour
+      : new Date(commit.date).toISOString().split('T')[0]! // Group by day
     
-    if (!timeSeriesMap.has(date)) {
-      timeSeriesMap.set(date, {
-        date,
+    if (!timeSeriesMap.has(dateKey)) {
+      timeSeriesMap.set(dateKey, {
+        date: dateKey,
         commits: 0,
         linesAdded: 0,
         linesDeleted: 0,
@@ -312,7 +347,7 @@ function getTimeSeriesData(commits: CommitData[]) {
       })
     }
     
-    const existing = timeSeriesMap.get(date)!
+    const existing = timeSeriesMap.get(dateKey)!
     existing.commits += 1
     existing.linesAdded += commit.linesAdded
     existing.linesDeleted += commit.linesDeleted
@@ -324,10 +359,55 @@ function getTimeSeriesData(commits: CommitData[]) {
     .sort((a, b) => a.date.localeCompare(b.date))
 }
 
+function getRepoAgeInHours(commits: CommitData[]): number {
+  if (commits.length === 0) return 0
+  const firstCommit = commits[0]
+  const lastCommit = commits[commits.length - 1]
+  if (!firstCommit || !lastCommit) return 0
+  const firstDate = new Date(firstCommit.date)
+  const lastDate = new Date(lastCommit.date)
+  return (lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60)
+}
+
+function getLinearSeriesData(commits: CommitData[]) {
+  const linearSeries: { commitIndex: number; sha: string; date: string; cumulativeLines: number }[] = []
+  
+  // Add zero starting point
+  if (commits.length > 0) {
+    const firstCommit = commits[0]
+    if (firstCommit) {
+      linearSeries.push({
+        commitIndex: 0,
+        sha: 'start',
+        date: firstCommit.date,
+        cumulativeLines: 0
+      })
+    }
+  }
+  
+  let cumulativeLines = 0
+  
+  commits.forEach((commit, index) => {
+    cumulativeLines += commit.linesAdded - commit.linesDeleted
+    
+    linearSeries.push({
+      commitIndex: index + 1,
+      sha: commit.sha,
+      date: commit.date,
+      cumulativeLines
+    })
+  })
+  
+  return linearSeries
+}
+
+
 function injectDataIntoTemplate(template: string, chartData: any, commits: CommitData[]): string {
   const contributors = getContributorStats(commits)
   const fileTypes = getFileTypeStats(commits)
   const timeSeries = getTimeSeriesData(commits)
+  
+  const linearSeries = getLinearSeriesData(commits)
   
   const chartScript = `
     <script>
@@ -335,6 +415,10 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
       const contributors = ${JSON.stringify(contributors)};
       const fileTypes = ${JSON.stringify(fileTypes)};
       const timeSeries = ${JSON.stringify(timeSeries)};
+      const linearSeries = ${JSON.stringify(linearSeries)};
+      
+      
+      let linesOfCodeChart = null;
       
       function renderCommitActivityChart() {
         const options = {
@@ -362,13 +446,154 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
       function renderLinesOfCodeChart() {
         const options = {
           chart: { type: 'area', height: 350, toolbar: { show: false } },
-          series: [{ name: 'Lines of Code', data: timeSeries.map(point => ({ x: point.date, y: point.cumulativeLines })) }],
-          xaxis: { type: 'datetime', title: { text: 'Date' } },
-          yaxis: { title: { text: 'Lines of Code' } },
+          series: [{ name: 'Lines of Code', data: timeSeries.map(point => ({ x: new Date(point.date).getTime(), y: point.cumulativeLines })) }],
+          dataLabels: {
+            enabled: false
+          },
+          stroke: {
+            curve: 'smooth'
+          },
+          xaxis: { 
+            type: 'datetime', 
+            title: { text: 'Date' },
+            labels: {
+              datetimeFormatter: {
+                year: 'yyyy',
+                month: 'MMM yyyy',
+                day: 'dd MMM',
+                hour: 'HH:mm',
+                minute: 'HH:mm',
+                second: 'HH:mm:ss'
+              },
+              datetimeUTC: false
+            }
+          },
+          yaxis: { 
+            title: { text: 'Lines of Code' },
+            min: 0
+          },
           fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.9 } },
-          colors: ['#dc3545']
+          colors: ['#dc3545'],
+          tooltip: {
+            x: {
+              format: 'dd MMM yyyy'
+            }
+          }
         };
-        new ApexCharts(document.querySelector('#linesOfCodeChart'), options).render();
+        linesOfCodeChart = new ApexCharts(document.querySelector('#linesOfCodeChart'), options);
+        linesOfCodeChart.render();
+      }
+      
+      function updateLinesOfCodeChart() {
+        const xAxis = document.querySelector('input[name="xAxis"]:checked').value;
+        
+        // Since switching between datetime and numeric axis types can cause issues,
+        // we need to destroy and recreate the chart
+        if (linesOfCodeChart) {
+          linesOfCodeChart.destroy();
+        }
+        
+        // Clear the container
+        document.querySelector('#linesOfCodeChart').innerHTML = '';
+        
+        let chartOptions;
+        
+        if (xAxis === 'date') {
+          chartOptions = {
+            series: [{ 
+              name: 'Lines of Code', 
+              data: timeSeries.map(point => ({ x: new Date(point.date).getTime(), y: point.cumulativeLines })) 
+            }],
+            chart: { 
+              type: 'area', 
+              height: 350,
+              toolbar: { show: false }
+            },
+            dataLabels: {
+              enabled: false
+            },
+            stroke: {
+              curve: 'smooth'
+            },
+            xaxis: { 
+              type: 'datetime',
+              title: { text: 'Date' },
+              labels: {
+                datetimeFormatter: {
+                  year: 'yyyy',
+                  month: 'MMM yyyy',
+                  day: 'dd MMM',
+                  hour: 'HH:mm',
+                  minute: 'HH:mm',
+                  second: 'HH:mm:ss'
+                },
+                datetimeUTC: false
+              }
+            },
+            yaxis: {
+              title: { text: 'Lines of Code' },
+              min: 0
+            },
+            fill: { 
+              type: 'gradient', 
+              gradient: { 
+                shadeIntensity: 1, 
+                opacityFrom: 0.7, 
+                opacityTo: 0.9 
+              } 
+            },
+            colors: ['#dc3545'],
+            tooltip: {
+              x: {
+                format: 'dd MMM yyyy'
+              }
+            }
+          };
+        } else {
+          // By Commit view
+          chartOptions = {
+            series: [{ 
+              name: 'Lines of Code', 
+              data: linearSeries.map(point => ({ x: point.commitIndex, y: point.cumulativeLines })) 
+            }],
+            chart: { 
+              type: 'area', 
+              height: 350,
+              toolbar: { show: false }
+            },
+            dataLabels: {
+              enabled: false
+            },
+            stroke: {
+              curve: 'smooth'
+            },
+            xaxis: {
+              type: 'numeric',
+              title: { text: 'Commit Number' },
+              labels: {
+                formatter: function(val) {
+                  return Math.floor(val);
+                }
+              }
+            },
+            yaxis: {
+              title: { text: 'Lines of Code' },
+              min: 0
+            },
+            fill: { 
+              type: 'gradient', 
+              gradient: { 
+                shadeIntensity: 1, 
+                opacityFrom: 0.7, 
+                opacityTo: 0.9 
+              } 
+            },
+            colors: ['#dc3545']
+          };
+        }
+        
+        linesOfCodeChart = new ApexCharts(document.querySelector('#linesOfCodeChart'), chartOptions);
+        linesOfCodeChart.render();
       }
       
       function renderFileTypesChart() {
@@ -403,6 +628,11 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
         renderLinesOfCodeChart();
         renderFileTypesChart();
         renderCodeChurnChart();
+        
+        // Add event listeners for axis toggles
+        document.querySelectorAll('input[name="xAxis"]').forEach(input => {
+          input.addEventListener('change', updateLinesOfCodeChart);
+        });
       });
     </script>
   `;
