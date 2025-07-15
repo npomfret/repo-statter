@@ -8,20 +8,110 @@ To create a visual tree map of the repository where files are colored based on t
 
 ## 2. Implementation Plan
 
-### Data Processing
+### Status: 📋 READY TO IMPLEMENT
 
-1.  **Calculate File Heat:** For each file, calculate a "heat" score based on:
-    *   The number of commits that have modified the file.
-    *   The recency of the last modification.
+### Analysis Summary
+✅ **Data Available**: File change data is already collected with `fileName`, `linesAdded`, `linesDeleted`, `fileType`  
+✅ **Visualization Ready**: D3.js v3 is already loaded in template with treemap support  
+✅ **Integration Clear**: Report structure and styling patterns are established  
 
-### Visualization
+### Detailed Implementation Plan
 
-1.  **Integrate a Treemap Library:** Add a library like D3.js or a similar treemap chart library to the project.
-2.  **Render the Heatmap:** Add a new section to the HTML report to render the file heatmap.
+#### 1. Data Processing (src/stats/calculator.ts)
 
-## 3. Files to Modify
+**Add `getFileHeatData()` function:**
+- **Heat Score Calculation**: 
+  - Frequency score: Number of commits that modified the file
+  - Recency score: Weight recent changes higher (exponential decay)
+  - Combined heat = `(frequency * 0.4) + (recency * 0.6)`
+- **File Size Estimation**: Use `linesAdded` as proxy for treemap sizing
+- **Data Structure**: 
+```typescript
+interface FileHeatData {
+  fileName: string;
+  heatScore: number;
+  commitCount: number;
+  lastModified: string;
+  totalLines: number;
+  fileType: string;
+}
+```
 
-*   `src/index.ts`: Add logic to calculate file heat scores.
-*   `src/report/renderer.ts`: Add a new function to render the heatmap.
-*   `src/report/template.html`: Add a new container for the heatmap.
-*   `package.json`: Add the new treemap library dependency.
+#### 2. Visualization Implementation (src/report/generator.ts)
+
+**Add `renderFileHeatmap()` function:**
+- Use D3.js `d3.layout.treemap()` for layout
+- **Color Scale**: Hot files (red) → Warm files (yellow) → Cool files (blue)
+- **Sizing**: Based on estimated file size (total lines)
+- **Interactivity**: Tooltips showing file details on hover
+- **Responsive**: Scale to container width
+
+#### 3. Template Integration (src/report/template.html)
+
+**Add new heatmap section:**
+- New card container in existing grid layout
+- Title: "File Activity Heatmap"
+- SVG container for D3.js treemap
+- Consistent styling with existing charts
+
+#### 4. Technical Approach
+
+**Heat Score Algorithm:**
+```typescript
+function calculateHeatScore(commits: CommitData[], fileName: string): number {
+  const fileCommits = commits.filter(c => 
+    c.filesChanged.some(f => f.fileName === fileName)
+  );
+  
+  const frequency = fileCommits.length;
+  const recency = Math.exp(-daysSinceLastModification / 30); // Decay over 30 days
+  
+  return (frequency * 0.4) + (recency * 0.6);
+}
+```
+
+**D3.js Treemap Setup:**
+```javascript
+const treemap = d3.layout.treemap()
+  .size([width, height])
+  .value(d => d.totalLines)
+  .round(true);
+```
+
+#### 5. Breaking Into Steps
+
+This can be implemented in a single focused commit:
+- **"feat: Add file activity heatmap visualization to reports"**
+
+**Implementation Order:**
+1. Add `getFileHeatData()` to stats calculator
+2. Add `renderFileHeatmap()` to report generator  
+3. Add heatmap container to template
+4. Test with current repository data
+5. Refine styling and interactivity
+
+### Technical Considerations
+
+**Advantages:**
+- D3.js v3 already loaded with treemap support
+- Rich file change data available
+- Dark mode theming infrastructure exists
+- Follows established patterns
+
+**Potential Challenges:**
+- Large repositories might need performance optimization
+- Color scales need careful tuning for accessibility
+- File path truncation for display
+
+### Files to Modify
+
+*   `src/stats/calculator.ts`: Add `getFileHeatData()` function
+*   `src/report/generator.ts`: Add `renderFileHeatmap()` function and template integration
+*   `src/report/template.html`: Add heatmap container section
+
+### Testing Strategy
+
+- Test with current repository (37 commits, diverse file types)
+- Verify heat scores make intuitive sense
+- Check responsive behavior and dark mode compatibility
+- Validate tooltip interactivity
