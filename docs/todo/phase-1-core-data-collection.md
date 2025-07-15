@@ -6,16 +6,29 @@ Depends on: [recommended-tech-stack.md](recommended-tech-stack.md), [data-extrac
 
 **Selected Task: Step 1 - Git Log Parsing**
 
-### Approach
-1. **Add simple-git dependency** - Use `simple-git` library as recommended in data-extraction-spec.md
+### Detailed Implementation Steps
+1. **Add simple-git dependency** - `npm install simple-git` and add to package.json dependencies
 2. **Replace placeholder code** - Remove current add/multiply functions from src/index.ts
-3. **Implement basic git parsing** - Create function to extract commit history
-4. **Use specified git command** - `git log --reverse --pretty=format:'%H|%an|%ae|%ai|%s' --date=iso-strict`
-5. **Create data structure** - Follow JSON structure from data-extraction-spec.md
-6. **Write to JSON file** - Output repo-stats.json with basic commit data
+3. **Implement git log parsing function** - Create `parseCommitHistory(repoPath: string)` function
+4. **Use simple-git API** - Leverage simple-git's `log()` method with appropriate options
+5. **Data structure mapping** - Map git log output to match JSON structure from data-extraction-spec.md:
+   - Extract: sha, authorName, authorEmail, date, message
+   - Format dates as ISO strings
+   - Structure as array of commit objects
+6. **Export main function** - Export the parsing function for use by CLI interface
+
+### Technical Details
+- Use `simple-git` instead of raw git commands for better error handling
+- Follow the chronological order (--reverse equivalent)
+- Extract metadata: %H (hash), %an (author name), %ae (author email), %ai (author date), %s (subject)
+- Return structured data matching the `commits` array format from data-extraction-spec.md
 
 ### Commit Strategy
-This can be implemented as a single small commit since it's focused on just the git log parsing functionality.
+Single focused commit: "Implement git log parsing with simple-git library"
+
+### Files to Modify
+- package.json (add simple-git dependency)
+- src/index.ts (replace placeholder code with git parsing logic)
 
 ### Next Steps After This Task
 - Step 2: Line-by-Line Stats (git diff parsing)
