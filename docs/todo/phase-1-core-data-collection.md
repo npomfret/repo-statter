@@ -4,34 +4,34 @@ Depends on: [recommended-tech-stack.md](recommended-tech-stack.md), [data-extrac
 
 ## Implementation Plan
 
-**Selected Task: Step 1 - Git Log Parsing**
+**Selected Task: Step 2 - Line-by-Line Stats (Git Diff Parsing)**
+
+### Status: Ready for Implementation
+✅ Step 1 (Git Log Parsing) - Complete
 
 ### Detailed Implementation Steps
-1. **Add simple-git dependency** - `npm install simple-git` and add to package.json dependencies
-2. **Replace placeholder code** - Remove current add/multiply functions from src/index.ts
-3. **Implement git log parsing function** - Create `parseCommitHistory(repoPath: string)` function
-4. **Use simple-git API** - Leverage simple-git's `log()` method with appropriate options
-5. **Data structure mapping** - Map git log output to match JSON structure from data-extraction-spec.md:
-   - Extract: sha, authorName, authorEmail, date, message
-   - Format dates as ISO strings
-   - Structure as array of commit objects
-6. **Export main function** - Export the parsing function for use by CLI interface
+1. **Extend CommitData interface** - Add `linesAdded`, `linesDeleted`, and `filesChanged` fields
+2. **Create file change interface** - Define `FileChange` interface with `fileName`, `linesAdded`, `linesDeleted`, `fileType`
+3. **Implement diff parsing function** - Create `parseCommitDiff(repoPath: string, commitHash: string)` helper function
+4. **Use simple-git diffSummary** - Leverage `simple-git`'s `diffSummary()` method for clean diff parsing
+5. **Add file type categorization** - Extract file extensions and categorize changes (`.ts`, `.js`, `.css`, etc.)
+6. **Integrate with existing function** - Enhance `parseCommitHistory` to include diff stats for each commit
+7. **Export additional interfaces** - Export `FileChange` and enhanced `CommitData` interfaces
 
 ### Technical Details
-- Use `simple-git` instead of raw git commands for better error handling
-- Follow the chronological order (--reverse equivalent)
-- Extract metadata: %H (hash), %an (author name), %ae (author email), %ai (author date), %s (subject)
-- Return structured data matching the `commits` array format from data-extraction-spec.md
+- Use `simple-git`'s `diffSummary(commitHash + '^!')` to get per-commit diff stats
+- Parse output to extract lines added/deleted per file
+- Categorize changes by file extension for later visualization
+- Maintain chronological order and data structure consistency
+- Handle merge commits and initial commits appropriately
 
 ### Commit Strategy
-Single focused commit: "Implement git log parsing with simple-git library"
+Single focused commit: "Add git diff parsing for line-by-line commit statistics"
 
 ### Files to Modify
-- package.json (add simple-git dependency)
-- src/index.ts (replace placeholder code with git parsing logic)
+- src/index.ts (extend interfaces and enhance parseCommitHistory function)
 
 ### Next Steps After This Task
-- Step 2: Line-by-Line Stats (git diff parsing)
 - Step 3: Source Code Size (optional, performance-intensive)
 - Step 4: Data Structuring (consolidation)
 
