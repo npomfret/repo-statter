@@ -99,13 +99,27 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
       let linesOfCodeChart = null;
       
       function renderCommitActivityChart() {
+        const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
         const options = {
-          chart: { type: 'area', height: 350, toolbar: { show: false } },
+          chart: { 
+            type: 'area', 
+            height: 350, 
+            toolbar: { show: false },
+            background: isDark ? '#161b22' : '#ffffff'
+          },
           series: [{ name: 'Commits', data: timeSeries.map(point => ({ x: point.date, y: point.commits })) }],
-          xaxis: { type: 'datetime', title: { text: 'Date' } },
-          yaxis: { title: { text: 'Commits' } },
+          xaxis: { 
+            type: 'datetime', 
+            title: { text: 'Date' },
+            labels: { style: { colors: isDark ? '#e6edf3' : '#373d3f' } }
+          },
+          yaxis: { 
+            title: { text: 'Commits' },
+            labels: { style: { colors: isDark ? '#e6edf3' : '#373d3f' } }
+          },
           fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.9 } },
-          colors: ['#0d6efd']
+          colors: ['#0d6efd'],
+          grid: { borderColor: isDark ? '#30363d' : '#e0e0e0' }
         };
         new ApexCharts(document.querySelector('#commitActivityChart'), options).render();
       }
@@ -300,6 +314,72 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
         new ApexCharts(document.querySelector('#codeChurnChart'), options).render();
       }
       
+      function renderRepositorySizeChart() {
+        const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+        const options = {
+          chart: { 
+            type: 'area', 
+            height: 350, 
+            toolbar: { show: false },
+            background: isDark ? '#161b22' : '#ffffff'
+          },
+          series: [{ name: 'Repository Size', data: timeSeries.map(point => ({ x: point.date, y: point.cumulativeBytes })) }],
+          dataLabels: { enabled: false },
+          stroke: { curve: 'smooth' },
+          xaxis: { 
+            type: 'datetime', 
+            title: { text: 'Date' },
+            labels: {
+              datetimeFormatter: {
+                year: 'yyyy',
+                month: 'MMM yyyy',
+                day: 'dd MMM',
+                hour: 'HH:mm'
+              },
+              style: { colors: isDark ? '#e6edf3' : '#373d3f' }
+            }
+          },
+          yaxis: { 
+            title: { text: 'Repository Size' },
+            min: 0,
+            labels: {
+              formatter: function (val) {
+                if (val >= 1000000000) {
+                  return (val / 1000000000).toFixed(1) + 'GB';
+                } else if (val >= 1000000) {
+                  return (val / 1000000).toFixed(1) + 'MB';
+                } else if (val >= 1000) {
+                  return (val / 1000).toFixed(1) + 'KB';
+                } else {
+                  return val.toFixed(0) + 'B';
+                }
+              },
+              style: { colors: isDark ? '#e6edf3' : '#373d3f' }
+            }
+          },
+          fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.9 } },
+          colors: ['#6f42c1'],
+          grid: { borderColor: isDark ? '#30363d' : '#e0e0e0' },
+          tooltip: {
+            theme: isDark ? 'dark' : 'light',
+            y: {
+              formatter: function (val) {
+                if (val >= 1000000000) {
+                  return (val / 1000000000).toFixed(2) + ' GB';
+                } else if (val >= 1000000) {
+                  return (val / 1000000).toFixed(2) + ' MB';
+                } else if (val >= 1000) {
+                  return (val / 1000).toFixed(2) + ' KB';
+                } else {
+                  return val.toFixed(0) + ' bytes';
+                }
+              }
+            }
+          }
+        };
+        new ApexCharts(document.querySelector('#repositorySizeChart'), options).render();
+      }
+      
       function renderWordCloud() {
         if (wordCloudData.length === 0) {
           document.querySelector('#wordCloudChart').innerHTML = '<p class="text-muted text-center">No commit messages to analyze</p>';
@@ -358,11 +438,32 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
         renderLinesOfCodeChart();
         renderFileTypesChart();
         renderCodeChurnChart();
+        renderRepositorySizeChart();
         renderWordCloud();
         
         // Add event listeners for axis toggles
         document.querySelectorAll('input[name="xAxis"]').forEach(input => {
           input.addEventListener('change', updateLinesOfCodeChart);
+        });
+        
+        // Add event listener for theme toggle
+        document.getElementById('themeToggle').addEventListener('change', function(e) {
+          if (e.target.checked) {
+            document.documentElement.setAttribute('data-bs-theme', 'dark');
+          } else {
+            document.documentElement.removeAttribute('data-bs-theme');
+          }
+          
+          // Re-render all charts to apply dark mode styling
+          setTimeout(() => {
+            renderCommitActivityChart();
+            renderContributorsChart();
+            renderLinesOfCodeChart();
+            renderFileTypesChart();
+            renderCodeChurnChart();
+            renderRepositorySizeChart();
+            renderWordCloud();
+          }, 100);
         });
       });
     </script>

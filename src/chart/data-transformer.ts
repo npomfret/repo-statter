@@ -6,6 +6,9 @@ export interface TimeSeriesPoint {
   linesAdded: number
   linesDeleted: number
   cumulativeLines: number
+  bytesAdded: number
+  bytesDeleted: number
+  cumulativeBytes: number
 }
 
 export interface LinearSeriesPoint {
@@ -45,10 +48,14 @@ export function getTimeSeriesData(commits: CommitData[]): TimeSeriesPoint[] {
     commits: 0,
     linesAdded: 0,
     linesDeleted: 0,
-    cumulativeLines: 0
+    cumulativeLines: 0,
+    bytesAdded: 0,
+    bytesDeleted: 0,
+    cumulativeBytes: 0
   })
   
   let cumulativeLines = 0
+  let cumulativeBytes = 0
   
   for (const commit of commits) {
     // For short time frames, include hours in the grouping
@@ -62,7 +69,10 @@ export function getTimeSeriesData(commits: CommitData[]): TimeSeriesPoint[] {
         commits: 0,
         linesAdded: 0,
         linesDeleted: 0,
-        cumulativeLines: 0
+        cumulativeLines: 0,
+        bytesAdded: 0,
+        bytesDeleted: 0,
+        cumulativeBytes: 0
       })
     }
     
@@ -70,8 +80,12 @@ export function getTimeSeriesData(commits: CommitData[]): TimeSeriesPoint[] {
     existing.commits += 1
     existing.linesAdded += commit.linesAdded
     existing.linesDeleted += commit.linesDeleted
+    existing.bytesAdded += commit.bytesAdded || 0
+    existing.bytesDeleted += commit.bytesDeleted || 0
     cumulativeLines += commit.linesAdded - commit.linesDeleted
+    cumulativeBytes += (commit.bytesAdded || 0) - (commit.bytesDeleted || 0)
     existing.cumulativeLines = cumulativeLines
+    existing.cumulativeBytes = cumulativeBytes
   }
   
   return Array.from(timeSeriesMap.values())
