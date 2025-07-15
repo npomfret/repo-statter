@@ -20,15 +20,15 @@
             --chart-bg: #ffffff;
             --chart-text: #24292f;
             --chart-grid: #e1e4e8;
-            
+
             /* UI accent colors */
-            --accent-primary: #0969da;
-            --accent-success: #1a7f37;
-            --accent-warning: #d1242f;
-            --accent-info: #8250df;
-            --accent-danger: #cf222e;
+            --accent-primary: #27aeef;
+            --accent-success: #87bc45;
+            --accent-warning: #ef9b20;
+            --accent-info: #b33dc6;
+            --accent-danger: #ea5545;
             --accent-secondary: #656d76;
-            
+
             /* Text colors */
             --text-primary: #24292f;
             --text-secondary: #656d76;
@@ -42,12 +42,12 @@
             --bs-body-color: #f0f6fc;
             --bs-border-color: #21262d;
             --bs-card-bg: #161b22;
-            --bs-card-border-color: #30363d;
+            --bs-card-border-color: #3036d;
             --bs-secondary-bg: #21262d;
             --chart-bg: #161b22;
             --chart-text: #f0f6fc;
             --chart-grid: #30363d;
-            
+
             /* Dark mode accent colors - desaturated for better contrast */
             --accent-primary: #58a6ff;
             --accent-success: #3fb950;
@@ -55,7 +55,7 @@
             --accent-info: #a5a5ff;
             --accent-danger: #f85149;
             --accent-secondary: #8b949e;
-            
+
             /* Dark mode text colors */
             --text-primary: #f0f6fc;
             --text-secondary: #c9d1d9;
@@ -196,15 +196,22 @@
 </head>
 <body>
     <div class="container-fluid">
-        <header class="py-4 mb-4 border-bottom">
+        <header class="py-3 mb-4 border-bottom">
             <div class="row align-items-center">
                 <div class="col">
-                    <h1 class="display-4 mb-0">{{repositoryName}}</h1>
-                    <p class="text-muted mb-0">{{repositoryName}}{{githubLink}}</p>
+                    <div class="d-flex align-items-center">
+                        <div class="me-2" style="width: 24px; height: 24px; flex-shrink: 0;">
+                            {{logoSvg}}
+                        </div>
+                        <div>
+                            <h5 class="mb-0 fw-semibold">{{repositoryName}}</h5>
+                            <small class="text-muted">Repository Statistics{{githubLink}}</small>
+                        </div>
+                    </div>
                 </div>
                 <div class="col-auto">
                     <div class="d-flex align-items-center">
-                        <span class="badge bg-secondary">Generated: {{generationDate}}</span>
+                        <span class="badge bg-secondary me-3">{{generationDate}}</span>
                         <div class="theme-controls">
                             <span class="theme-toggle-label">Dark Mode</span>
                             <label class="theme-toggle">

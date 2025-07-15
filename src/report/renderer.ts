@@ -141,7 +141,7 @@ export function renderCommitActivityChart(elementId: string, data: TimeSeriesPoi
       type: 'gradient',
       gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.9 }
     },
-    colors: ['#0d6efd']
+    colors: ['#27aeef']
   }
   
   const element = (globalThis as any).document?.querySelector(`#${elementId}`)
@@ -168,7 +168,7 @@ export function renderContributorsChart(elementId: string, contributors: Contrib
     yaxis: {
       title: { text: 'Commits' }
     },
-    colors: ['#198754']
+    colors: ['#87bc45']
   }
   
   const element = (globalThis as any).document?.querySelector(`#${elementId}`)
@@ -199,7 +199,7 @@ export function renderLinesOfCodeChart(elementId: string, data: TimeSeriesPoint[
       type: 'gradient',
       gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.9 }
     },
-    colors: ['#dc3545']
+    colors: ['#ea5545']
   }
   
   const element = (globalThis as any).document?.querySelector(`#${elementId}`)
@@ -216,7 +216,7 @@ export function renderFileTypesChart(elementId: string, fileTypes: FileTypeStats
     },
     series: fileTypes.slice(0, 8).map(ft => ft.lines),
     labels: fileTypes.slice(0, 8).map(ft => ft.type),
-    colors: ['#0d6efd', '#198754', '#dc3545', '#ffc107', '#6f42c1', '#20c997', '#fd7e14', '#6c757d']
+    colors: ['#27aeef', '#87bc45', '#ea5545', '#ef9b20', '#b33dc6', '#f46a9b', '#ede15b', '#bdcf32']
   }
   
   const element = (globalThis as any).document?.querySelector(`#${elementId}`)

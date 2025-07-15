@@ -68,6 +68,8 @@ async function transformCommitData(commits: CommitData[], repoName: string, repo
   const githubUrl = await getGitHubUrl(repoPath)
   const githubLink = githubUrl ? ` - <a href="${githubUrl}" target="_blank" class="text-decoration-none">View on GitHub</a>` : ''
   
+  const logoSvg = await readFile('src/images/logo.svg', 'utf-8')
+  
   return {
     repositoryName: repoName,
     totalCommits,
@@ -75,7 +77,8 @@ async function transformCommitData(commits: CommitData[], repoName: string, repo
     totalCodeChurn,
     topContributor,
     generationDate: new Date().toLocaleString(),
-    githubLink
+    githubLink,
+    logoSvg
   }
 }
 
@@ -124,7 +127,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             labels: { style: { colors: isDark ? '#f0f6fc' : '#24292f' } }
           },
           fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.9 } },
-          colors: [isDark ? '#58a6ff' : '#0969da'],
+          colors: [isDark ? '#58a6ff' : '#27aeef'],
           grid: { borderColor: isDark ? '#30363d' : '#e1e4e8' },
           tooltip: { theme: isDark ? 'dark' : 'light' }
         };
@@ -156,7 +159,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             },
             labels: { style: { colors: isDark ? '#f0f6fc' : '#24292f' } }
           },
-          colors: [isDark ? '#3fb950' : '#1a7f37'],
+          colors: [isDark ? '#3fb950' : '#87bc45'],
           grid: { borderColor: isDark ? '#30363d' : '#e1e4e8' },
           tooltip: { theme: isDark ? 'dark' : 'light' }
         };
@@ -207,7 +210,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             labels: { style: { colors: isDark ? '#f0f6fc' : '#24292f' } }
           },
           fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.9 } },
-          colors: [isDark ? '#f85149' : '#cf222e'],
+          colors: [isDark ? '#f85149' : '#ea5545'],
           grid: { borderColor: isDark ? '#30363d' : '#e1e4e8' },
           tooltip: {
             theme: isDark ? 'dark' : 'light',
@@ -288,7 +291,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
                 opacityTo: 0.9 
               } 
             },
-            colors: [isDark ? '#f85149' : '#cf222e'],
+            colors: [isDark ? '#f85149' : '#ea5545'],
             grid: { borderColor: isDark ? '#30363d' : '#e1e4e8' },
             tooltip: {
               theme: isDark ? 'dark' : 'light',
@@ -345,7 +348,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
                 opacityTo: 0.9 
               } 
             },
-            colors: [isDark ? '#f85149' : '#cf222e'],
+            colors: [isDark ? '#f85149' : '#ea5545'],
             grid: { borderColor: isDark ? '#30363d' : '#e1e4e8' },
             tooltip: { theme: isDark ? 'dark' : 'light' }
           };
@@ -367,7 +370,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
           labels: fileTypes.slice(0, 8).map(ft => ft.type),
           colors: isDark ? 
             ['#58a6ff', '#3fb950', '#f85149', '#d29922', '#a5a5ff', '#56d4dd', '#db6d28', '#8b949e'] :
-            ['#0969da', '#1a7f37', '#cf222e', '#d1242f', '#8250df', '#1f6feb', '#fb8500', '#656d76'],
+            ['#27aeef', '#87bc45', '#ea5545', '#ef9b20', '#b33dc6', '#f46a9b', '#ede15b', '#bdcf32'],
           legend: {
             labels: { colors: isDark ? '#f0f6fc' : '#24292f' }
           },
@@ -406,7 +409,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             labels: { style: { colors: isDark ? '#f0f6fc' : '#24292f' } }
           },
           fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.9 } },
-          colors: isDark ? ['#3fb950', '#f85149'] : ['#1a7f37', '#cf222e'],
+          colors: isDark ? ['#3fb950', '#f85149'] : ['#87bc45', '#ea5545'],
           grid: { borderColor: isDark ? '#30363d' : '#e1e4e8' },
           legend: {
             labels: { colors: isDark ? '#f0f6fc' : '#24292f' }
@@ -469,7 +472,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             }
           },
           fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.9 } },
-          colors: [isDark ? '#a5a5ff' : '#8250df'],
+          colors: [isDark ? '#a5a5ff' : '#b33dc6'],
           grid: { borderColor: isDark ? '#30363d' : '#e1e4e8' },
           tooltip: {
             theme: isDark ? 'dark' : 'light',
@@ -505,7 +508,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
         const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
         const colors = isDark ? 
           ['#58a6ff', '#3fb950', '#f85149', '#d29922', '#a5a5ff', '#56d4dd', '#db6d28', '#8b949e'] :
-          ['#0969da', '#1a7f37', '#cf222e', '#d1242f', '#8250df', '#1f6feb', '#fb8500', '#656d76'];
+          ['#27aeef', '#87bc45', '#ea5545', '#ef9b20', '#b33dc6', '#f46a9b', '#ede15b', '#bdcf32'];
         const color = d3.scale.ordinal().range(colors);
         
         const draw = function(words) {
@@ -569,7 +572,24 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
           }
           
           // Re-render all charts to apply dark mode styling
-          setTimeout(() => {
+          // Use requestAnimationFrame to ensure the theme attribute change has been
+          // processed by the browser before we read it in the chart rendering functions.
+          requestAnimationFrame(() => {
+            // Clear all chart containers before re-rendering to avoid duplicates
+            // and issues with old chart instances.
+            document.querySelector('#commitActivityChart').innerHTML = '';
+            document.querySelector('#contributorsChart').innerHTML = '';
+            document.querySelector('#fileTypesChart').innerHTML = '';
+            document.querySelector('#codeChurnChart').innerHTML = '';
+            document.querySelector('#repositorySizeChart').innerHTML = '';
+            document.querySelector('#wordCloudChart').innerHTML = '';
+            
+            // For the lines of code chart, we must destroy the existing instance
+            // before re-rendering.
+            if (linesOfCodeChart) {
+              linesOfCodeChart.destroy();
+            }
+
             renderCommitActivityChart();
             renderContributorsChart();
             renderLinesOfCodeChart();
@@ -577,7 +597,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             renderCodeChurnChart();
             renderRepositorySizeChart();
             renderWordCloud();
-          }, 100);
+          });
         });
       });
     </script>
@@ -591,5 +611,6 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
     .replace(/{{totalCodeChurn}}/g, chartData.totalCodeChurn.toString())
     .replace(/{{topContributor}}/g, chartData.topContributor)
     .replace(/{{githubLink}}/g, chartData.githubLink)
+    .replace(/{{logoSvg}}/g, chartData.logoSvg)
     .replace('</body>', chartScript + '\n</body>')
 }
