@@ -9,7 +9,7 @@ import type { CommitData } from '../git/parser.js'
 
 export async function generateReport(repoPath: string, outputMode: 'dist' | 'analysis' = 'dist'): Promise<void> {
   const commits = await parseCommitHistory(repoPath)
-  const repoName = basename(repoPath) || 'repo'
+  const repoName = repoPath === '.' ? basename(process.cwd()) : basename(repoPath) || 'repo'
   
   let outputDir: string
   let reportPath: string
@@ -66,7 +66,7 @@ async function transformCommitData(commits: CommitData[], repoName: string, repo
   const topContributor = contributors[0]?.name || 'Unknown'
   
   const githubUrl = await getGitHubUrl(repoPath)
-  const githubLink = githubUrl ? ` • <a href="${githubUrl}" target="_blank" class="text-decoration-none">View on GitHub</a>` : ''
+  const githubLink = githubUrl ? ` - <a href="${githubUrl}" target="_blank" class="text-decoration-none">View on GitHub</a>` : ''
   
   return {
     repositoryName: repoName,
@@ -74,7 +74,7 @@ async function transformCommitData(commits: CommitData[], repoName: string, repo
     totalLinesOfCode,
     totalCodeChurn,
     topContributor,
-    generationDate: new Date().toLocaleDateString(),
+    generationDate: new Date().toLocaleString(),
     githubLink
   }
 }
