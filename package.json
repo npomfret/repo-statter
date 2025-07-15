@@ -7,6 +7,7 @@
   "types": "./src/index.ts",
   "scripts": {
     "dev": "ts-node --esm src/index.ts",
+    "build": "NODE_OPTIONS='--loader ts-node/esm' node src/index.ts",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",

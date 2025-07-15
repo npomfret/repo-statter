@@ -1,5 +1,7 @@
 import { simpleGit } from 'simple-git'
-import { extname } from 'path'
+import { extname, basename } from 'path'
+import { readFile, writeFile, mkdir } from 'fs/promises'
+import { existsSync } from 'fs'
 
 export interface FileChange {
   fileName: string
@@ -124,3 +126,192 @@ async function parseCommitDiff(repoPath: string, commitHash: string): Promise<{ 
 }
 
 export const VERSION = '1.0.0' as const
+
+if (process.argv[1]?.endsWith('index.ts') && process.argv.length > 2) {
+  const repoPath = process.argv[2] || '.'
+  generateReport(repoPath)
+}
+
+export async function generateReport(repoPath: string): Promise<void> {
+  const commits = await parseCommitHistory(repoPath)
+  const repoName = basename(repoPath)
+  
+  if (!existsSync('dist')) {
+    await mkdir('dist', { recursive: true })
+  }
+  
+  const template = await readFile('src/report/template.html', 'utf-8')
+  const chartData = transformCommitData(commits, repoName)
+  
+  const html = injectDataIntoTemplate(template, chartData, commits)
+  await writeFile('dist/report.html', html)
+  
+  console.log(`Report generated: dist/report.html`)
+  console.log(`Repository: ${repoName}`)
+  console.log(`Total commits: ${commits.length}`)
+  console.log(`Total lines added: ${commits.reduce((sum, c) => sum + c.linesAdded, 0)}`)
+}
+
+function transformCommitData(commits: CommitData[], repoName: string) {
+  const totalCommits = commits.length
+  const totalLinesOfCode = commits.reduce((sum, commit) => sum + commit.linesAdded, 0)
+  
+  const contributors = getContributorStats(commits)
+  const topContributor = contributors[0]?.name || 'Unknown'
+  
+  return {
+    repositoryName: repoName,
+    totalCommits,
+    totalLinesOfCode,
+    topContributor,
+    generationDate: new Date().toLocaleDateString()
+  }
+}
+
+function getContributorStats(commits: CommitData[]) {
+  const contributorMap = new Map<string, { name: string; commits: number; linesAdded: number; linesDeleted: number }>()
+  
+  for (const commit of commits) {
+    if (!contributorMap.has(commit.authorName)) {
+      contributorMap.set(commit.authorName, {
+        name: commit.authorName,
+        commits: 0,
+        linesAdded: 0,
+        linesDeleted: 0
+      })
+    }
+    
+    const existing = contributorMap.get(commit.authorName)!
+    existing.commits += 1
+    existing.linesAdded += commit.linesAdded
+    existing.linesDeleted += commit.linesDeleted
+  }
+  
+  return Array.from(contributorMap.values())
+    .sort((a, b) => b.commits - a.commits)
+}
+
+function getFileTypeStats(commits: CommitData[]) {
+  const fileTypeMap = new Map<string, number>()
+  
+  for (const commit of commits) {
+    for (const fileChange of commit.filesChanged) {
+      const existing = fileTypeMap.get(fileChange.fileType) ?? 0
+      fileTypeMap.set(fileChange.fileType, existing + fileChange.linesAdded)
+    }
+  }
+  
+  const total = Array.from(fileTypeMap.values()).reduce((sum, lines) => sum + lines, 0)
+  
+  return Array.from(fileTypeMap.entries())
+    .map(([type, lines]) => ({
+      type,
+      lines,
+      percentage: total > 0 ? (lines / total) * 100 : 0
+    }))
+    .sort((a, b) => b.lines - a.lines)
+}
+
+function getTimeSeriesData(commits: CommitData[]) {
+  const timeSeriesMap = new Map<string, { date: string; commits: number; linesAdded: number; linesDeleted: number; cumulativeLines: number }>()
+  let cumulativeLines = 0
+  
+  for (const commit of commits) {
+    const date = new Date(commit.date).toISOString().split('T')[0]!
+    
+    if (!timeSeriesMap.has(date)) {
+      timeSeriesMap.set(date, {
+        date,
+        commits: 0,
+        linesAdded: 0,
+        linesDeleted: 0,
+        cumulativeLines: 0
+      })
+    }
+    
+    const existing = timeSeriesMap.get(date)!
+    existing.commits += 1
+    existing.linesAdded += commit.linesAdded
+    existing.linesDeleted += commit.linesDeleted
+    cumulativeLines += commit.linesAdded - commit.linesDeleted
+    existing.cumulativeLines = cumulativeLines
+  }
+  
+  return Array.from(timeSeriesMap.values())
+    .sort((a, b) => a.date.localeCompare(b.date))
+}
+
+function injectDataIntoTemplate(template: string, chartData: any, commits: CommitData[]): string {
+  const contributors = getContributorStats(commits)
+  const fileTypes = getFileTypeStats(commits)
+  const timeSeries = getTimeSeriesData(commits)
+  
+  const chartScript = `
+    <script>
+      const commits = ${JSON.stringify(commits)};
+      const contributors = ${JSON.stringify(contributors)};
+      const fileTypes = ${JSON.stringify(fileTypes)};
+      const timeSeries = ${JSON.stringify(timeSeries)};
+      
+      function renderCommitActivityChart() {
+        const options = {
+          chart: { type: 'area', height: 350, toolbar: { show: false } },
+          series: [{ name: 'Commits', data: timeSeries.map(point => ({ x: point.date, y: point.commits })) }],
+          xaxis: { type: 'datetime', title: { text: 'Date' } },
+          yaxis: { title: { text: 'Commits' } },
+          fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.9 } },
+          colors: ['#0d6efd']
+        };
+        new ApexCharts(document.querySelector('#commitActivityChart'), options).render();
+      }
+      
+      function renderContributorsChart() {
+        const options = {
+          chart: { type: 'bar', height: 350, toolbar: { show: false } },
+          series: [{ name: 'Commits', data: contributors.slice(0, 10).map(c => c.commits) }],
+          xaxis: { categories: contributors.slice(0, 10).map(c => c.name), title: { text: 'Contributors' } },
+          yaxis: { title: { text: 'Commits' } },
+          colors: ['#198754']
+        };
+        new ApexCharts(document.querySelector('#contributorsChart'), options).render();
+      }
+      
+      function renderLinesOfCodeChart() {
+        const options = {
+          chart: { type: 'area', height: 350, toolbar: { show: false } },
+          series: [{ name: 'Lines of Code', data: timeSeries.map(point => ({ x: point.date, y: point.cumulativeLines })) }],
+          xaxis: { type: 'datetime', title: { text: 'Date' } },
+          yaxis: { title: { text: 'Lines of Code' } },
+          fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.9 } },
+          colors: ['#dc3545']
+        };
+        new ApexCharts(document.querySelector('#linesOfCodeChart'), options).render();
+      }
+      
+      function renderFileTypesChart() {
+        const options = {
+          chart: { type: 'donut', height: 350 },
+          series: fileTypes.slice(0, 8).map(ft => ft.lines),
+          labels: fileTypes.slice(0, 8).map(ft => ft.type),
+          colors: ['#0d6efd', '#198754', '#dc3545', '#ffc107', '#6f42c1', '#20c997', '#fd7e14', '#6c757d']
+        };
+        new ApexCharts(document.querySelector('#fileTypesChart'), options).render();
+      }
+      
+      document.addEventListener('DOMContentLoaded', function() {
+        renderCommitActivityChart();
+        renderContributorsChart();
+        renderLinesOfCodeChart();
+        renderFileTypesChart();
+      });
+    </script>
+  `;
+  
+  return template
+    .replace(/{{repositoryName}}/g, chartData.repositoryName)
+    .replace(/{{generationDate}}/g, chartData.generationDate)
+    .replace(/{{totalCommits}}/g, chartData.totalCommits.toString())
+    .replace(/{{totalLinesOfCode}}/g, chartData.totalLinesOfCode.toString())
+    .replace(/{{topContributor}}/g, chartData.topContributor)
+    .replace('</body>', chartScript + '\n</body>')
+}

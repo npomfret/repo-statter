@@ -37,5 +37,6 @@ Thumbs.db
 .claude/commands/changes.md
 .claude/commands/next-task.md
 
-# Analysis Output
+# Generated Output
 analysis/
+dist/
