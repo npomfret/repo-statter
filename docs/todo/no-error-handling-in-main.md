@@ -44,3 +44,24 @@ if (process.argv[1]?.endsWith('index.ts')) {
 
 ## Implementation Notes
 This prevents unhandled promise rejections and provides user-friendly error messages.
+
+## Implementation Plan
+
+### Analysis
+This is a valid and worthwhile task. The current implementation has an unhandled promise at the entry point which could crash the process with unhelpful error messages. Adding error handling here will improve user experience.
+
+### Approach
+I'll use the `.catch()` approach as it's cleaner and more concise than the async IIFE. This follows the existing code style in the project.
+
+### Steps
+1. Add `.catch()` to the `handleCLI(args)` call
+2. Format error message to be user-friendly
+3. Exit with error code 1 on failure
+4. Test with various error scenarios
+
+### Testing
+- Run with valid arguments to ensure normal operation works
+- Run with invalid arguments to ensure errors are caught
+- Run tests to ensure no regressions
+
+This is a minimal change that can be completed in a single commit.
