@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{repositoryName}} - Repository Statistics</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+</head>
+<body>
+    <div class="container-fluid">
+        <header class="py-4 mb-4 border-bottom">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h1 class="display-4 mb-0">{{repositoryName}}</h1>
+                    <p class="text-muted mb-0">Repository Statistics Report</p>
+                </div>
+                <div class="col-auto">
+                    <span class="badge bg-secondary">Generated: {{generationDate}}</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Total Commits</h5>
+                        <h2 class="text-primary">{{totalCommits}}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Total Lines of Code</h5>
+                        <h2 class="text-success">{{totalLinesOfCode}}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Top Contributor</h5>
+                        <h2 class="text-info">{{topContributor}}</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Commit Activity Over Time</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="commitActivityChart"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Contributors</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="contributorsChart"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Lines of Code Growth</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="linesOfCodeChart"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">File Types</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="fileTypesChart"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
