@@ -83,6 +83,76 @@ npm run build /path/to/repo  # Generate report for specific repository
 
 ---
 
+## Step 11: CLI Integration
+
+### Status: Ready for Implementation
+
+### Analysis
+There's a discrepancy between the CLI Interface specification and the current implementation:
+- **Current implementation**: Uses `npm run build .` with positional argument
+- **CLI spec**: Requires `npm run analyse -- --repo .` with named argument
+
+### Decision
+Since Step 10 is complete and functional, I recommend keeping the existing `build` script and adding the new `analyse` script as specified. This provides backward compatibility while implementing the full CLI interface.
+
+### Implementation Plan
+
+#### 1. Install Dependencies
+- Add `yargs` for robust CLI argument parsing
+- Alternative: Use Node's built-in `process.argv` parsing (simpler, no deps)
+
+#### 2. Create CLI Entry Point
+- Option A: Update `src/index.ts` to handle both CLI and programmatic usage
+- Option B: Create new `src/cli.ts` file dedicated to CLI handling (cleaner separation)
+
+#### 3. Implement Argument Parsing
+- Parse `--repo` argument as required
+- Add validation for repository path existence
+- Add help text and usage examples
+
+#### 4. Update Output Structure
+- Current: Outputs to `dist/report.html`
+- Required: Output to `analysis/<repo-name>/report.html` and `analysis/<repo-name>/repo-stats.json`
+- Need to extract repository name from path
+- Need to save JSON data separately
+
+#### 5. Update npm Scripts
+- Add new `analyse` script to package.json
+- Keep existing `build` script for backward compatibility
+
+#### 6. Update .gitignore
+- Add `analysis/` directory to gitignore
+
+### Breaking Down Into Commits
+1. **Commit 1**: Add CLI parsing and validation
+   - Install yargs (or implement native parsing)
+   - Create CLI handler with --repo argument
+   - Add path validation
+
+2. **Commit 2**: Update output structure
+   - Change output to `analysis/` directory structure
+   - Save both HTML and JSON files
+   - Update .gitignore
+
+3. **Commit 3**: Add analyse npm script
+   - Update package.json with new script
+   - Update documentation if needed
+
+### Files to Modify
+- `src/index.ts` or create `src/cli.ts`
+- `package.json` - Add yargs dependency and analyse script
+- `.gitignore` - Add analysis/ directory
+- Potentially `src/index.ts` - Update generateReport function to support new output structure
+
+### Minimal Approach (Recommended)
+Given the CLAUDE.md guidance to "be minimal and elegant" and "do not add any superfluous code", I recommend:
+1. Use Node's built-in process.argv parsing instead of adding yargs dependency
+2. Modify existing generateReport function to accept output directory option
+3. Add simple CLI handling to src/index.ts
+4. Single commit for the complete feature
+
+---
+
 *   **Step 10: Create the Build Script:**
     *   Modify the `package.json` scripts or create a new build script (`build.sh`).
     *   The script will:
