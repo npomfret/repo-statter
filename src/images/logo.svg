@@ -1,45 +1,39 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="24" height="24">
   <defs>
-    <linearGradient id="primaryGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#58a6ff;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#8250df;stop-opacity:1" />
+    <linearGradient id="swooshGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FDD835;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#00BFFF;stop-opacity:1" />
     </linearGradient>
-    
-    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#3fb950;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#1a7f37;stop-opacity:1" />
-    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
   </defs>
-  
-  <!-- Simple chart bars -->
-  <rect x="3" y="14" width="2" height="7" fill="url(#accentGradient)" rx="1">
-    <animate attributeName="height" values="7;9;7" dur="3s" repeatCount="indefinite"/>
-  </rect>
-  <rect x="6" y="10" width="2" height="11" fill="url(#primaryGradient)" rx="1">
-    <animate attributeName="height" values="11;13;11" dur="2.5s" repeatCount="indefinite"/>
-  </rect>
-  <rect x="9" y="8" width="2" height="13" fill="url(#accentGradient)" rx="1">
-    <animate attributeName="height" values="13;15;13" dur="2s" repeatCount="indefinite"/>
-  </rect>
-  <rect x="12" y="12" width="2" height="9" fill="url(#primaryGradient)" rx="1">
-    <animate attributeName="height" values="9;11;9" dur="2.8s" repeatCount="indefinite"/>
-  </rect>
-  <rect x="15" y="6" width="2" height="15" fill="url(#accentGradient)" rx="1">
-    <animate attributeName="height" values="15;17;15" dur="3.2s" repeatCount="indefinite"/>
-  </rect>
-  <rect x="18" y="16" width="2" height="5" fill="url(#primaryGradient)" rx="1">
-    <animate attributeName="height" values="5;7;5" dur="2.3s" repeatCount="indefinite"/>
-  </rect>
-  
-  <!-- Simple connecting line -->
-  <path d="M 4,17 Q 12,5 20,18" 
-        stroke="url(#primaryGradient)" 
-        stroke-width="1" 
-        fill="none" 
-        opacity="0.4"/>
-  
-  <!-- Single central indicator -->
-  <circle cx="12" cy="4" r="1.5" fill="url(#primaryGradient)" opacity="0.8">
-    <animate attributeName="opacity" values="0.8;1;0.8" dur="2s" repeatCount="indefinite"/>
-  </circle>
+
+  <path
+    d="M 20,50 C 30,20 70,20 80,50 S 30,80 20,50 Z"
+    stroke="url(#swooshGradient)"
+    stroke-width="8"
+    fill="none"
+    stroke-linecap="round"
+    filter="url(#glow)"
+  >
+    <animateTransform
+      attributeName="transform"
+      type="rotate"
+      from="0 50 50"
+      to="360 50 50"
+      dur="8s"
+      repeatCount="indefinite"
+    />
+    <animate
+        attributeName="d"
+        values="M 20,50 C 30,20 70,20 80,50 S 30,80 20,50 Z; M 20,50 C 40,80 60,80 80,50 S 40,20 20,50 Z; M 20,50 C 30,20 70,20 80,50 S 30,80 20,50 Z"
+        dur="3s"
+        repeatCount="indefinite"
+    />
+  </path>
 </svg>
