@@ -1,7 +1,7 @@
-import { existsSync } from 'fs'
+import { access } from 'fs/promises'
 import { generateReport } from '../report/generator.js'
 
-export function handleCLI(args: string[]): void {
+export async function handleCLI(args: string[]): Promise<void> {
   if (args.includes('--repo')) {
     const repoIndex = args.indexOf('--repo')
     const repoPath = args[repoIndex + 1]
@@ -12,20 +12,16 @@ export function handleCLI(args: string[]): void {
       process.exit(1)
     }
     
-    if (!existsSync(repoPath)) {
+    try {
+      await access(repoPath)
+    } catch {
       console.error(`Error: Repository path does not exist: ${repoPath}`)
       process.exit(1)
     }
     
-    generateReport(repoPath, 'analysis').catch(error => {
-      console.error('Error generating report:', error)
-      process.exit(1)
-    })
+    await generateReport(repoPath, 'analysis')
   } else if (args.length > 0 && args[0]) {
-    generateReport(args[0], 'dist').catch(error => {
-      console.error('Error generating report:', error)
-      process.exit(1)
-    })
+    await generateReport(args[0], 'dist')
   } else {
     console.error('Usage:')
     console.error('  npm run start <repo-path>')

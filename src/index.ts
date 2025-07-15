@@ -10,5 +10,5 @@ export const VERSION = '1.0.0' as const
 
 if (process.argv[1]?.endsWith('index.ts')) {
   const args = process.argv.slice(2)
-  handleCLI(args)
+  await handleCLI(args)
 }
