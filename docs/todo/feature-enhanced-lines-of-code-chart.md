@@ -4,6 +4,8 @@ Depends on: [phase-3-visualization-and-interactivity.md](phase-3-visualization-a
 
 ## 1. Goal
 
+**IMPORTANT FEATURE**
+
 To enhance the "Lines of Code Over Time" chart with the ability to switch between different y-axis and x-axis scales, providing a more flexible and insightful view of the data.
 
 ## 2. Implementation Plan
@@ -11,7 +13,7 @@ To enhance the "Lines of Code Over Time" chart with the ability to switch betwee
 ### UI Elements
 
 1.  **Add Axis Toggles:** Add UI controls (e.g., buttons or a dropdown) to the chart to allow the user to switch between:
-    *   **Y-Axis:** "Lines of Code" and "Bytes"
+    *   **Y-Axis:** "Lines of Code" and "Bytes" (These are important metrics)
     *   **X-Axis:** "Time Series" (by date) and "Linear" (commit by commit)
 
 ### Logic
