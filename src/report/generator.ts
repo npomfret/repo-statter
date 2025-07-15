@@ -2,7 +2,7 @@ import { basename } from 'path'
 import { readFile, writeFile, mkdir } from 'fs/promises'
 import { existsSync } from 'fs'
 import { parseCommitHistory, getGitHubUrl } from '../git/parser.js'
-import { getContributorStats, getFileTypeStats } from '../stats/calculator.js'
+import { getContributorStats, getFileTypeStats, getFileHeatData } from '../stats/calculator.js'
 import { getTimeSeriesData, getLinearSeriesData } from '../chart/data-transformer.js'
 import { processCommitMessages } from '../text/processor.js'
 import type { CommitData } from '../git/parser.js'
@@ -88,6 +88,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
   const timeSeries = getTimeSeriesData(commits)
   const linearSeries = getLinearSeriesData(commits)
   const wordCloudData = processCommitMessages(commits.map(c => c.message))
+  const fileHeatData = getFileHeatData(commits)
   
   const chartScript = `
     <script>
@@ -97,6 +98,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
       const timeSeries = ${JSON.stringify(timeSeries)};
       const linearSeries = ${JSON.stringify(linearSeries)};
       const wordCloudData = ${JSON.stringify(wordCloudData)};
+      const fileHeatData = ${JSON.stringify(fileHeatData)};
       
       
       let linesOfCodeChart = null;
@@ -549,6 +551,91 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
         layout.start();
       }
       
+      function renderFileHeatmap() {
+        if (fileHeatData.length === 0) {
+          document.querySelector('#fileHeatmapChart').innerHTML = '<p class="text-muted text-center">No file data to analyze</p>';
+          return;
+        }
+        
+        const container = document.querySelector('#fileHeatmapChart');
+        const width = container.offsetWidth;
+        const height = 400;
+        
+        // Theme-aware colors
+        const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+        
+        // Create color scale for heat values
+        const maxHeat = Math.max(...fileHeatData.map(d => d.heatScore));
+        const minHeat = Math.min(...fileHeatData.map(d => d.heatScore));
+        
+        const colorScale = d3.scale.linear()
+          .domain([minHeat, maxHeat])
+          .range(isDark ? ['#0d1117', '#f85149'] : ['#f0f6fc', '#ea5545']);
+        
+        // Create treemap layout
+        const treemap = d3.layout.treemap()
+          .size([width, height])
+          .value(function(d) { return d.totalLines; })
+          .round(true);
+        
+        // Clear previous content
+        d3.select('#fileHeatmapChart').selectAll('*').remove();
+        
+        // Create SVG
+        const svg = d3.select('#fileHeatmapChart')
+          .append('svg')
+          .attr('width', width)
+          .attr('height', height)
+          .style('background', isDark ? '#161b22' : '#ffffff');
+        
+        // Create treemap nodes
+        const nodes = treemap.nodes({children: fileHeatData});
+        
+        // Create rectangles for each file
+        const cell = svg.selectAll('g')
+          .data(nodes.filter(function(d) { return !d.children; }))
+          .enter().append('g')
+          .attr('transform', function(d) { return 'translate(' + d.x + ',' + d.y + ')'; });
+        
+        cell.append('rect')
+          .attr('width', function(d) { return d.dx; })
+          .attr('height', function(d) { return d.dy; })
+          .style('fill', function(d) { return colorScale(d.heatScore); })
+          .style('stroke', isDark ? '#30363d' : '#e1e4e8')
+          .style('stroke-width', '1px')
+          .style('cursor', 'pointer');
+        
+        // Add file names (only if rectangle is large enough)
+        cell.append('text')
+          .attr('x', function(d) { return d.dx / 2; })
+          .attr('y', function(d) { return d.dy / 2; })
+          .attr('dy', '.35em')
+          .attr('text-anchor', 'middle')
+          .style('font-size', function(d) { 
+            const fontSize = Math.min(d.dx / 8, d.dy / 2, 12);
+            return fontSize > 8 ? fontSize + 'px' : '0px';
+          })
+          .style('fill', isDark ? '#f0f6fc' : '#24292f')
+          .style('font-family', "'Inter', -apple-system, sans-serif")
+          .style('font-weight', '500')
+          .style('pointer-events', 'none')
+          .text(function(d) { 
+            const fileName = d.fileName.split('/').pop();
+            return d.dx > 40 && d.dy > 20 ? fileName : '';
+          });
+        
+        // Add tooltips
+        cell.append('title')
+          .text(function(d) { 
+            return d.fileName + '\\n' +
+                   'Heat Score: ' + d.heatScore.toFixed(2) + '\\n' +
+                   'Commits: ' + d.commitCount + '\\n' +
+                   'Lines: ' + d.totalLines + '\\n' +
+                   'Type: ' + d.fileType + '\\n' +
+                   'Last Modified: ' + new Date(d.lastModified).toLocaleDateString();
+          });
+      }
+      
       document.addEventListener('DOMContentLoaded', function() {
         renderCommitActivityChart();
         renderContributorsChart();
@@ -557,6 +644,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
         renderCodeChurnChart();
         renderRepositorySizeChart();
         renderWordCloud();
+        renderFileHeatmap();
         
         // Add event listeners for axis toggles
         document.querySelectorAll('input[name="xAxis"]').forEach(input => {
@@ -583,6 +671,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             document.querySelector('#codeChurnChart').innerHTML = '';
             document.querySelector('#repositorySizeChart').innerHTML = '';
             document.querySelector('#wordCloudChart').innerHTML = '';
+            document.querySelector('#fileHeatmapChart').innerHTML = '';
             
             // For the lines of code chart, we must destroy the existing instance
             // before re-rendering.
@@ -597,6 +686,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             renderCodeChurnChart();
             renderRepositorySizeChart();
             renderWordCloud();
+            renderFileHeatmap();
           });
         });
       });
