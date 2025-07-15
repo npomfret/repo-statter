@@ -372,13 +372,18 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             if (point && point.sha !== 'start') {
               const commit = commits.find(c => c.sha === point.sha);
               if (commit) {
+                const truncateMessage = function(msg, maxLength) {
+                  if (msg.length <= maxLength) return msg;
+                  return msg.substring(0, maxLength) + '...';
+                };
+                
                 let content = '<div class="custom-tooltip">' +
                   '<div class="tooltip-title">Commit #' + point.commitIndex + '</div>' +
                   '<div class="tooltip-content">' +
                   '<div><strong>SHA:</strong> ' + commit.sha.substring(0, 7) + '</div>' +
                   '<div><strong>Author:</strong> ' + commit.author + '</div>' +
                   '<div><strong>Date:</strong> ' + new Date(commit.date).toLocaleString() + '</div>' +
-                  '<div><strong>Message:</strong> ' + commit.message + '</div>';
+                  '<div class="tooltip-message"><strong>Message:</strong> ' + truncateMessage(commit.message, 200) + '</div>';
                 
                 if (customContent) {
                   content += customContent(commit, point);
