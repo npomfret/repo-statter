@@ -110,7 +110,10 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
       let filteredWordCloudData = wordCloudData;
       let filteredFileHeatData = fileHeatData;
       
+      let commitActivityChart = null;
       let linesOfCodeChart = null;
+      let codeChurnChart = null;
+      let repositorySizeChart = null;
       
       // Filtering functions
       function applyFilters() {
@@ -289,9 +292,21 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
         document.querySelector('#wordCloudChart').innerHTML = '';
         document.querySelector('#fileHeatmapChart').innerHTML = '';
         
+        if (commitActivityChart) {
+          commitActivityChart.destroy();
+          commitActivityChart = null;
+        }
         if (linesOfCodeChart) {
           linesOfCodeChart.destroy();
           linesOfCodeChart = null;
+        }
+        if (codeChurnChart) {
+          codeChurnChart.destroy();
+          codeChurnChart = null;
+        }
+        if (repositorySizeChart) {
+          repositorySizeChart.destroy();
+          repositorySizeChart = null;
         }
       }
       
@@ -339,7 +354,14 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
       }
       
       function renderCommitActivityChart() {
+        const xAxis = document.querySelector('input[name="commitActivityXAxis"]:checked').value;
         const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+        
+        if (commitActivityChart) {
+          commitActivityChart.destroy();
+        }
+        document.querySelector('#commitActivityChart').innerHTML = '';
+
         const options = {
           chart: { 
             type: 'area', 
@@ -347,14 +369,22 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             toolbar: { show: false },
             background: isDark ? '#161b22' : '#ffffff'
           },
-          series: [{ name: 'Commits', data: filteredTimeSeries.map(point => ({ x: point.date, y: point.commits })) }],
+          series: [{
+            name: 'Commits',
+            data: xAxis === 'date'
+              ? filteredTimeSeries.map(point => ({ x: point.date, y: point.commits }))
+              : filteredLinearSeries.map(point => ({ x: point.commitIndex, y: point.commits }))
+          }],
           xaxis: { 
-            type: 'datetime', 
+            type: xAxis === 'date' ? 'datetime' : 'numeric', 
             title: { 
-              text: 'Date',
+              text: xAxis === 'date' ? 'Date' : 'Commit Number',
               style: { color: isDark ? '#f0f6fc' : '#24292f' }
             },
-            labels: { style: { colors: isDark ? '#f0f6fc' : '#24292f' } }
+            labels: { 
+              style: { colors: isDark ? '#f0f6fc' : '#24292f' },
+              formatter: xAxis === 'commit' ? function(val) { return Math.floor(val); } : undefined
+            }
           },
           yaxis: { 
             title: { 
@@ -366,9 +396,15 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
           fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.9 } },
           colors: [isDark ? '#58a6ff' : '#27aeef'],
           grid: { borderColor: isDark ? '#30363d' : '#e1e4e8' },
-          tooltip: { theme: isDark ? 'dark' : 'light' }
+          tooltip: { 
+            theme: isDark ? 'dark' : 'light',
+            x: {
+              format: xAxis === 'date' ? 'dd MMM yyyy' : undefined
+            }
+          }
         };
-        new ApexCharts(document.querySelector('#commitActivityChart'), options).render();
+        commitActivityChart = new ApexCharts(document.querySelector('#commitActivityChart'), options);
+        commitActivityChart.render();
       }
       
       function renderContributorsChart() {
@@ -404,7 +440,14 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
       }
       
       function renderLinesOfCodeChart() {
+        const xAxis = document.querySelector('input[name="linesOfCodeXAxis"]:checked').value;
         const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+        
+        if (linesOfCodeChart) {
+          linesOfCodeChart.destroy();
+        }
+        document.querySelector('#linesOfCodeChart').innerHTML = '';
+
         const options = {
           chart: { 
             type: 'area', 
@@ -412,7 +455,12 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             toolbar: { show: false },
             background: isDark ? '#161b22' : '#ffffff'
           },
-          series: [{ name: 'Lines of Code', data: filteredTimeSeries.map(point => ({ x: new Date(point.date).getTime(), y: point.cumulativeLines })) }],
+          series: [{
+            name: 'Lines of Code',
+            data: xAxis === 'date'
+              ? filteredTimeSeries.map(point => ({ x: new Date(point.date).getTime(), y: point.cumulativeLines }))
+              : filteredLinearSeries.map(point => ({ x: point.commitIndex, y: point.cumulativeLines }))
+          }],
           dataLabels: {
             enabled: false
           },
@@ -420,9 +468,9 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             curve: 'smooth'
           },
           xaxis: { 
-            type: 'datetime', 
+            type: xAxis === 'date' ? 'datetime' : 'numeric', 
             title: { 
-              text: 'Date',
+              text: xAxis === 'date' ? 'Date' : 'Commit Number',
               style: { color: isDark ? '#f0f6fc' : '#24292f' }
             },
             labels: {
@@ -435,7 +483,8 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
                 second: 'HH:mm:ss'
               },
               datetimeUTC: false,
-              style: { colors: isDark ? '#f0f6fc' : '#24292f' }
+              style: { colors: isDark ? '#f0f6fc' : '#24292f' },
+              formatter: xAxis === 'commit' ? function(val) { return Math.floor(val); } : undefined
             }
           },
           yaxis: { 
@@ -452,7 +501,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
           tooltip: {
             theme: isDark ? 'dark' : 'light',
             x: {
-              format: 'dd MMM yyyy'
+              format: xAxis === 'date' ? 'dd MMM yyyy' : undefined
             }
           }
         };
@@ -460,140 +509,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
         linesOfCodeChart.render();
       }
       
-      function updateLinesOfCodeChart() {
-        const xAxis = document.querySelector('input[name="xAxis"]:checked').value;
-        const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
-        
-        // Since switching between datetime and numeric axis types can cause issues,
-        // we need to destroy and recreate the chart
-        if (linesOfCodeChart) {
-          linesOfCodeChart.destroy();
-        }
-        
-        // Clear the container
-        document.querySelector('#linesOfCodeChart').innerHTML = '';
-        
-        let chartOptions;
-        
-        if (xAxis === 'date') {
-          chartOptions = {
-            series: [{ 
-              name: 'Lines of Code', 
-              data: filteredTimeSeries.map(point => ({ x: new Date(point.date).getTime(), y: point.cumulativeLines })) 
-            }],
-            chart: { 
-              type: 'area', 
-              height: 350,
-              toolbar: { show: false },
-              background: isDark ? '#161b22' : '#ffffff'
-            },
-            dataLabels: {
-              enabled: false
-            },
-            stroke: {
-              curve: 'smooth'
-            },
-            xaxis: { 
-              type: 'datetime',
-              title: { 
-                text: 'Date',
-                style: { color: isDark ? '#f0f6fc' : '#24292f' }
-              },
-              labels: {
-                datetimeFormatter: {
-                  year: 'yyyy',
-                  month: 'MMM yyyy',
-                  day: 'dd MMM',
-                  hour: 'HH:mm',
-                  minute: 'HH:mm',
-                  second: 'HH:mm:ss'
-                },
-                datetimeUTC: false,
-                style: { colors: isDark ? '#f0f6fc' : '#24292f' }
-              }
-            },
-            yaxis: {
-              title: { 
-                text: 'Lines of Code',
-                style: { color: isDark ? '#f0f6fc' : '#24292f' }
-              },
-              min: 0,
-              labels: { style: { colors: isDark ? '#f0f6fc' : '#24292f' } }
-            },
-            fill: { 
-              type: 'gradient', 
-              gradient: { 
-                shadeIntensity: 1, 
-                opacityFrom: 0.7, 
-                opacityTo: 0.9 
-              } 
-            },
-            colors: [isDark ? '#f85149' : '#ea5545'],
-            grid: { borderColor: isDark ? '#30363d' : '#e1e4e8' },
-            tooltip: {
-              theme: isDark ? 'dark' : 'light',
-              x: {
-                format: 'dd MMM yyyy'
-              }
-            }
-          };
-        } else {
-          // By Commit view
-          chartOptions = {
-            series: [{ 
-              name: 'Lines of Code', 
-              data: filteredLinearSeries.map(point => ({ x: point.commitIndex, y: point.cumulativeLines })) 
-            }],
-            chart: { 
-              type: 'area', 
-              height: 350,
-              toolbar: { show: false },
-              background: isDark ? '#161b22' : '#ffffff'
-            },
-            dataLabels: {
-              enabled: false
-            },
-            stroke: {
-              curve: 'smooth'
-            },
-            xaxis: {
-              type: 'numeric',
-              title: { 
-                text: 'Commit Number',
-                style: { color: isDark ? '#f0f6fc' : '#24292f' }
-              },
-              labels: {
-                formatter: function(val) {
-                  return Math.floor(val);
-                },
-                style: { colors: isDark ? '#f0f6fc' : '#24292f' }
-              }
-            },
-            yaxis: {
-              title: { 
-                text: 'Lines of Code',
-                style: { color: isDark ? '#f0f6fc' : '#24292f' }
-              },
-              min: 0,
-              labels: { style: { colors: isDark ? '#f0f6fc' : '#24292f' } }
-            },
-            fill: { 
-              type: 'gradient', 
-              gradient: { 
-                shadeIntensity: 1, 
-                opacityFrom: 0.7, 
-                opacityTo: 0.9 
-              } 
-            },
-            colors: [isDark ? '#f85149' : '#ea5545'],
-            grid: { borderColor: isDark ? '#30363d' : '#e1e4e8' },
-            tooltip: { theme: isDark ? 'dark' : 'light' }
-          };
-        }
-        
-        linesOfCodeChart = new ApexCharts(document.querySelector('#linesOfCodeChart'), chartOptions);
-        linesOfCodeChart.render();
-      }
+      
       
       function renderFileTypesChart() {
         const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
@@ -617,7 +533,14 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
       }
       
       function renderCodeChurnChart() {
+        const xAxis = document.querySelector('input[name="codeChurnXAxis"]:checked').value;
         const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+
+        if (codeChurnChart) {
+          codeChurnChart.destroy();
+        }
+        document.querySelector('#codeChurnChart').innerHTML = '';
+
         const options = {
           chart: { 
             type: 'area', 
@@ -627,16 +550,29 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             background: isDark ? '#161b22' : '#ffffff'
           },
           series: [
-            { name: 'Lines Added', data: filteredTimeSeries.map(point => ({ x: point.date, y: point.linesAdded })) },
-            { name: 'Lines Deleted', data: filteredTimeSeries.map(point => ({ x: point.date, y: point.linesDeleted })) }
+            { 
+              name: 'Lines Added', 
+              data: xAxis === 'date'
+                ? filteredTimeSeries.map(point => ({ x: point.date, y: point.linesAdded }))
+                : filteredLinearSeries.map(point => ({ x: point.commitIndex, y: point.linesAdded }))
+            },
+            { 
+              name: 'Lines Deleted', 
+              data: xAxis === 'date'
+                ? filteredTimeSeries.map(point => ({ x: point.date, y: point.linesDeleted }))
+                : filteredLinearSeries.map(point => ({ x: point.commitIndex, y: point.linesDeleted }))
+            }
           ],
           xaxis: { 
-            type: 'datetime', 
+            type: xAxis === 'date' ? 'datetime' : 'numeric', 
             title: { 
-              text: 'Date',
+              text: xAxis === 'date' ? 'Date' : 'Commit Number',
               style: { color: isDark ? '#f0f6fc' : '#24292f' }
             },
-            labels: { style: { colors: isDark ? '#f0f6fc' : '#24292f' } }
+            labels: { 
+              style: { colors: isDark ? '#f0f6fc' : '#24292f' },
+              formatter: xAxis === 'commit' ? function(val) { return Math.floor(val); } : undefined
+            }
           },
           yaxis: { 
             title: { 
@@ -653,14 +589,25 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
           },
           tooltip: { 
             shared: true,
-            theme: isDark ? 'dark' : 'light'
+            theme: isDark ? 'dark' : 'light',
+            x: {
+              format: xAxis === 'date' ? 'dd MMM yyyy' : undefined
+            }
           }
         };
-        new ApexCharts(document.querySelector('#codeChurnChart'), options).render();
+        codeChurnChart = new ApexCharts(document.querySelector('#codeChurnChart'), options);
+        codeChurnChart.render();
       }
       
       function renderRepositorySizeChart() {
+        const xAxis = document.querySelector('input[name="repoSizeXAxis"]:checked').value;
         const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+
+        if (repositorySizeChart) {
+          repositorySizeChart.destroy();
+        }
+        document.querySelector('#repositorySizeChart').innerHTML = '';
+
         const options = {
           chart: { 
             type: 'area', 
@@ -668,13 +615,18 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             toolbar: { show: false },
             background: isDark ? '#161b22' : '#ffffff'
           },
-          series: [{ name: 'Repository Size', data: filteredTimeSeries.map(point => ({ x: point.date, y: point.cumulativeBytes })) }],
+          series: [{
+            name: 'Repository Size',
+            data: xAxis === 'date'
+              ? filteredTimeSeries.map(point => ({ x: point.date, y: point.cumulativeBytes }))
+              : filteredLinearSeries.map(point => ({ x: point.commitIndex, y: point.cumulativeBytes }))
+          }],
           dataLabels: { enabled: false },
           stroke: { curve: 'smooth' },
           xaxis: { 
-            type: 'datetime', 
+            type: xAxis === 'date' ? 'datetime' : 'numeric', 
             title: { 
-              text: 'Date',
+              text: xAxis === 'date' ? 'Date' : 'Commit Number',
               style: { color: isDark ? '#f0f6fc' : '#24292f' }
             },
             labels: {
@@ -684,7 +636,8 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
                 day: 'dd MMM',
                 hour: 'HH:mm'
               },
-              style: { colors: isDark ? '#f0f6fc' : '#24292f' }
+              style: { colors: isDark ? '#f0f6fc' : '#24292f' },
+              formatter: xAxis === 'commit' ? function(val) { return Math.floor(val); } : undefined
             }
           },
           yaxis: { 
@@ -713,6 +666,9 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
           grid: { borderColor: isDark ? '#30363d' : '#e1e4e8' },
           tooltip: {
             theme: isDark ? 'dark' : 'light',
+            x: {
+              format: xAxis === 'date' ? 'dd MMM yyyy' : undefined
+            },
             y: {
               formatter: function (val) {
                 if (val >= 1000000000) {
@@ -728,7 +684,8 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             }
           }
         };
-        new ApexCharts(document.querySelector('#repositorySizeChart'), options).render();
+        repositorySizeChart = new ApexCharts(document.querySelector('#repositorySizeChart'), options);
+        repositorySizeChart.render();
       }
       
       function renderWordCloud() {
@@ -889,8 +846,17 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
         document.getElementById('clearFilters').addEventListener('click', clearFilters);
         
         // Add event listeners for axis toggles
-        document.querySelectorAll('input[name="xAxis"]').forEach(input => {
-          input.addEventListener('change', updateLinesOfCodeChart);
+        document.querySelectorAll('input[name="commitActivityXAxis"]').forEach(input => {
+          input.addEventListener('change', renderCommitActivityChart);
+        });
+        document.querySelectorAll('input[name="linesOfCodeXAxis"]').forEach(input => {
+          input.addEventListener('change', renderLinesOfCodeChart);
+        });
+        document.querySelectorAll('input[name="codeChurnXAxis"]').forEach(input => {
+          input.addEventListener('change', renderCodeChurnChart);
+        });
+        document.querySelectorAll('input[name="repoSizeXAxis"]').forEach(input => {
+          input.addEventListener('change', renderRepositorySizeChart);
         });
         
         // Add event listener for theme toggle
