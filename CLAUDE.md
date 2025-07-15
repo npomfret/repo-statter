@@ -6,6 +6,7 @@
 - after any work, suggest next steps
 - After any change, run the appropriate build and tests
 - Look at nearby/associated code for patterns and techniques - reuse them where appropriate
+- IMPORTANT! never commit code unless told do to so
 
 # Your behaviour
 - Don't be sycophantic
