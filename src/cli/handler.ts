@@ -28,7 +28,7 @@ export function handleCLI(args: string[]): void {
     })
   } else {
     console.error('Usage:')
-    console.error('  npm run build <repo-path>')
+    console.error('  npm run start <repo-path>')
     console.error('  npm run analyse -- --repo <repo-path>')
     process.exit(1)
   }

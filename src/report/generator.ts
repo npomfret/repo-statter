@@ -17,11 +17,11 @@ export async function generateReport(repoPath: string, outputMode: 'dist' | 'ana
   
   if (outputMode === 'analysis') {
     outputDir = `analysis/${repoName}`
-    reportPath = `${outputDir}/report.html`
+    reportPath = `${outputDir}/${repoName}.html`
     statsPath = `${outputDir}/repo-stats.json`
   } else {
     outputDir = 'dist'
-    reportPath = `${outputDir}/report.html`
+    reportPath = `${outputDir}/${repoName}.html`
   }
   
   if (!existsSync(outputDir)) {
