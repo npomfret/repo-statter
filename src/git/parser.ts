@@ -117,51 +117,34 @@ export async function getGitHubUrl(repoPath: string): Promise<string | null> {
   return null
 }
 
+const FILE_TYPE_MAP = {
+  '.ts': 'TypeScript',
+  '.tsx': 'TypeScript',
+  '.js': 'JavaScript',
+  '.jsx': 'JavaScript',
+  '.css': 'CSS',
+  '.scss': 'SCSS',
+  '.sass': 'SCSS',
+  '.html': 'HTML',
+  '.json': 'JSON',
+  '.md': 'Markdown',
+  '.py': 'Python',
+  '.java': 'Java',
+  '.cpp': 'C++',
+  '.cc': 'C++',
+  '.cxx': 'C++',
+  '.c': 'C',
+  '.go': 'Go',
+  '.rs': 'Rust',
+  '.php': 'PHP',
+  '.rb': 'Ruby',
+  '.swift': 'Swift',
+  '.kt': 'Kotlin'
+} as const
+
 function getFileType(fileName: string): string {
   const ext = extname(fileName).toLowerCase()
-  switch (ext) {
-    case '.ts':
-    case '.tsx':
-      return 'TypeScript'
-    case '.js':
-    case '.jsx':
-      return 'JavaScript'
-    case '.css':
-      return 'CSS'
-    case '.scss':
-    case '.sass':
-      return 'SCSS'
-    case '.html':
-      return 'HTML'
-    case '.json':
-      return 'JSON'
-    case '.md':
-      return 'Markdown'
-    case '.py':
-      return 'Python'
-    case '.java':
-      return 'Java'
-    case '.cpp':
-    case '.cc':
-    case '.cxx':
-      return 'C++'
-    case '.c':
-      return 'C'
-    case '.go':
-      return 'Go'
-    case '.rs':
-      return 'Rust'
-    case '.php':
-      return 'PHP'
-    case '.rb':
-      return 'Ruby'
-    case '.swift':
-      return 'Swift'
-    case '.kt':
-      return 'Kotlin'
-    default:
-      return ext || 'Other'
-  }
+  return FILE_TYPE_MAP[ext as keyof typeof FILE_TYPE_MAP] || ext || 'Other'
 }
 
 async function parseCommitDiff(repoPath: string, commitHash: string): Promise<{ linesAdded: number; linesDeleted: number; bytesAdded: number; bytesDeleted: number; filesChanged: FileChange[] }> {
