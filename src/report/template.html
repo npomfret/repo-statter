@@ -312,6 +312,12 @@
                         <h5 class="card-title mb-0">Commit Activity Over Time</h5>
                     </div>
                     <div class="card-body">
+                        <div class="btn-group btn-group-sm mb-3" role="group">
+                            <input type="radio" class="btn-check" name="commitActivityXAxis" id="commitActivityXAxisDate" value="date" checked>
+                            <label class="btn btn-outline-primary" for="commitActivityXAxisDate">By Date</label>
+                            <input type="radio" class="btn-check" name="commitActivityXAxis" id="commitActivityXAxisCommit" value="commit">
+                            <label class="btn btn-outline-primary" for="commitActivityXAxisCommit">By Commit</label>
+                        </div>
                         <div id="commitActivityChart"></div>
                     </div>
                 </div>
@@ -323,10 +329,10 @@
                     </div>
                     <div class="card-body">
                         <div class="btn-group btn-group-sm mb-3" role="group">
-                            <input type="radio" class="btn-check" name="xAxis" id="xAxisDate" value="date" checked>
-                            <label class="btn btn-outline-primary" for="xAxisDate">By Date</label>
-                            <input type="radio" class="btn-check" name="xAxis" id="xAxisCommit" value="commit">
-                            <label class="btn btn-outline-primary" for="xAxisCommit">By Commit</label>
+                            <input type="radio" class="btn-check" name="linesOfCodeXAxis" id="linesOfCodeXAxisDate" value="date" checked>
+                            <label class="btn btn-outline-primary" for="linesOfCodeXAxisDate">By Date</label>
+                            <input type="radio" class="btn-check" name="linesOfCodeXAxis" id="linesOfCodeXAxisCommit" value="commit">
+                            <label class="btn btn-outline-primary" for="linesOfCodeXAxisCommit">By Commit</label>
                         </div>
                         <div id="linesOfCodeChart"></div>
                     </div>
@@ -338,6 +344,12 @@
                         <h5 class="card-title mb-0">Code Churn Over Time</h5>
                     </div>
                     <div class="card-body">
+                        <div class="btn-group btn-group-sm mb-3" role="group">
+                            <input type="radio" class="btn-check" name="codeChurnXAxis" id="codeChurnXAxisDate" value="date" checked>
+                            <label class="btn btn-outline-primary" for="codeChurnXAxisDate">By Date</label>
+                            <input type="radio" class="btn-check" name="codeChurnXAxis" id="codeChurnXAxisCommit" value="commit">
+                            <label class="btn btn-outline-primary" for="codeChurnXAxisCommit">By Commit</label>
+                        </div>
                         <div id="codeChurnChart"></div>
                     </div>
                 </div>
@@ -348,6 +360,12 @@
                         <h5 class="card-title mb-0">Repository Size Over Time</h5>
                     </div>
                     <div class="card-body">
+                        <div class="btn-group btn-group-sm mb-3" role="group">
+                            <input type="radio" class="btn-check" name="repoSizeXAxis" id="repoSizeXAxisDate" value="date" checked>
+                            <label class="btn btn-outline-primary" for="repoSizeXAxisDate">By Date</label>
+                            <input type="radio" class="btn-check" name="repoSizeXAxis" id="repoSizeXAxisCommit" value="commit">
+                            <label class="btn btn-outline-primary" for="repoSizeXAxisCommit">By Commit</label>
+                        </div>
                         <div id="repositorySizeChart"></div>
                     </div>
                 </div>
