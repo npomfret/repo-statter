@@ -3,6 +3,20 @@ export interface WordFrequency {
   size: number
 }
 
+export interface WordCloudConfig {
+  minWordLength: number
+  maxWords: number
+  minSize: number
+  maxSize: number
+}
+
+const DEFAULT_CONFIG: WordCloudConfig = {
+  minWordLength: 3,
+  maxWords: 100,
+  minSize: 10,
+  maxSize: 80
+}
+
 const STOP_WORDS = new Set([
   'the', 'is', 'are', 'was', 'were', 'been', 'be', 'have', 'has', 'had',
   'do', 'does', 'did', 'will', 'would', 'should', 'could', 'may', 'might', 'must',
@@ -39,15 +53,15 @@ export function extractWords(messages: string[]): string[] {
   return words
 }
 
-export function filterStopWords(words: string[]): string[] {
+export function filterStopWords(words: string[], config = DEFAULT_CONFIG): string[] {
   return words.filter(word => 
-    word.length >= 3 && 
+    word.length >= config.minWordLength && 
     !STOP_WORDS.has(word) && 
     !/^\d+$/.test(word) // Filter out pure numbers
   )
 }
 
-export function getWordFrequencies(words: string[]): WordFrequency[] {
+export function getWordFrequencies(words: string[], config = DEFAULT_CONFIG): WordFrequency[] {
   const frequencyMap = new Map<string, number>()
   
   for (const word of words) {
@@ -59,19 +73,19 @@ export function getWordFrequencies(words: string[]): WordFrequency[] {
     .map(([text, count]) => ({ text, size: count }))
     .sort((a, b) => b.size - a.size)
   
-  // Take top 100 words and scale sizes for better visualization
-  const top100 = frequencies.slice(0, 100)
+  // Take top words and scale sizes for better visualization
+  const topWords = frequencies.slice(0, config.maxWords)
   
-  if (top100.length === 0) return []
+  if (topWords.length === 0) return []
   
-  // Scale sizes: largest word = 80, smallest = 10
-  const maxCount = top100[0]!.size
-  const minCount = top100[top100.length - 1]!.size
+  // Scale sizes based on config
+  const maxCount = topWords[0]!.size
+  const minCount = topWords[topWords.length - 1]!.size
   const range = maxCount - minCount || 1
   
-  return top100.map(item => ({
+  return topWords.map(item => ({
     text: item.text,
-    size: 10 + (70 * (item.size - minCount) / range)
+    size: config.minSize + ((config.maxSize - config.minSize) * (item.size - minCount) / range)
   }))
 }
 
