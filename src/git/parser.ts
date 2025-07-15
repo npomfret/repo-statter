@@ -2,6 +2,7 @@ import { simpleGit } from 'simple-git'
 import { extname } from 'path'
 import { exec } from 'child_process'
 import { promisify } from 'util'
+import { isFileExcluded } from '../utils/exclusions.js'
 
 const execAsync = promisify(exec)
 
@@ -145,23 +146,28 @@ async function parseCommitDiff(repoPath: string, commitHash: string): Promise<{ 
     // Get byte changes using git diff --stat
     const byteChanges = await getByteChanges(repoPath, commitHash)
     
-    const filesChanged: FileChange[] = diffSummary.files.map(file => ({
-      fileName: file.file,
-      linesAdded: 'insertions' in file ? file.insertions : 0,
-      linesDeleted: 'deletions' in file ? file.deletions : 0,
-      fileType: getFileType(file.file),
-      bytesAdded: byteChanges.fileChanges[file.file]?.bytesAdded || 0,
-      bytesDeleted: byteChanges.fileChanges[file.file]?.bytesDeleted || 0
-    }))
+    const filesChanged: FileChange[] = diffSummary.files
+      .filter(file => !isFileExcluded(file.file))
+      .map(file => ({
+        fileName: file.file,
+        linesAdded: 'insertions' in file ? file.insertions : 0,
+        linesDeleted: 'deletions' in file ? file.deletions : 0,
+        fileType: getFileType(file.file),
+        bytesAdded: byteChanges.fileChanges[file.file]?.bytesAdded || 0,
+        bytesDeleted: byteChanges.fileChanges[file.file]?.bytesDeleted || 0
+      }))
     
-    const linesAdded = diffSummary.insertions
-    const linesDeleted = diffSummary.deletions
+    const linesAdded = filesChanged.reduce((sum, file) => sum + file.linesAdded, 0)
+    const linesDeleted = filesChanged.reduce((sum, file) => sum + file.linesDeleted, 0)
+    
+    const bytesAdded = filesChanged.reduce((sum, file) => sum + (file.bytesAdded || 0), 0)
+    const bytesDeleted = filesChanged.reduce((sum, file) => sum + (file.bytesDeleted || 0), 0)
     
     return { 
       linesAdded, 
       linesDeleted, 
-      bytesAdded: byteChanges.totalBytesAdded,
-      bytesDeleted: byteChanges.totalBytesDeleted,
+      bytesAdded,
+      bytesDeleted,
       filesChanged 
     }
   } catch (error) {
