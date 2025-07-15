@@ -9,16 +9,14 @@
     "start": "tsx src/index.ts",
     "analyse": "tsx src/index.ts",
     "analyse:self": "tsx src/index.ts .",
-    "test": "vitest",
-    "test:run": "vitest run",
+    "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit"
   },
   "dependencies": {
     "minimatch": "^10.0.1",
-    "simple-git": "^3.28.0",
-    "ts-node": "^10.9.2"
+    "simple-git": "^3.28.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",

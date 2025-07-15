@@ -5,6 +5,8 @@
 - small commits are preferred - break a problem down and suggest next steps
 - after any work, suggest next steps
 - After any change, run the appropriate build and tests
+  - Use `npm run test` for running tests
+  - Use `npm run typecheck` for type checking
 - Look at nearby/associated code for patterns and techniques - reuse them where appropriate
 - IMPORTANT! never commit code unless told do to so
 
