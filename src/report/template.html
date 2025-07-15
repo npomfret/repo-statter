@@ -224,6 +224,48 @@
             </div>
         </header>
 
+        <!-- Filter Controls -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">Filter Data</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Author</label>
+                                <select class="form-select" id="authorFilter">
+                                    <option value="">All Authors</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Date Range</label>
+                                <div class="input-group">
+                                    <input type="date" class="form-control" id="dateFromFilter">
+                                    <span class="input-group-text">to</span>
+                                    <input type="date" class="form-control" id="dateToFilter">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">File Type</label>
+                                <select class="form-select" id="fileTypeFilter">
+                                    <option value="">All File Types</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <button class="btn btn-primary btn-sm" id="applyFilters">Apply Filters</button>
+                                <button class="btn btn-outline-secondary btn-sm ms-2" id="clearFilters">Clear Filters</button>
+                                <small class="text-muted ms-3" id="filterStatus">Showing all commits</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="row mb-4">
             <div class="col-md-3">
                 <div class="card">

@@ -100,8 +100,243 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
       const wordCloudData = ${JSON.stringify(wordCloudData)};
       const fileHeatData = ${JSON.stringify(fileHeatData)};
       
+      // Filtering variables
+      let originalCommits = commits;
+      let filteredCommits = commits;
+      let filteredContributors = contributors;
+      let filteredFileTypes = fileTypes;
+      let filteredTimeSeries = timeSeries;
+      let filteredLinearSeries = linearSeries;
+      let filteredWordCloudData = wordCloudData;
+      let filteredFileHeatData = fileHeatData;
       
       let linesOfCodeChart = null;
+      
+      // Filtering functions
+      function applyFilters() {
+        const authorFilter = document.getElementById('authorFilter').value;
+        const dateFromFilter = document.getElementById('dateFromFilter').value;
+        const dateToFilter = document.getElementById('dateToFilter').value;
+        const fileTypeFilter = document.getElementById('fileTypeFilter').value;
+        
+        filteredCommits = originalCommits.filter(commit => {
+          // Author filter
+          if (authorFilter && commit.authorName !== authorFilter) return false;
+          
+          // Date range filter
+          const commitDate = new Date(commit.date);
+          if (dateFromFilter && commitDate < new Date(dateFromFilter)) return false;
+          if (dateToFilter && commitDate > new Date(dateToFilter)) return false;
+          
+          // File type filter
+          if (fileTypeFilter && !commit.filesChanged.some(f => f.fileType === fileTypeFilter)) return false;
+          
+          return true;
+        });
+        
+        updateFilterStatus();
+        recalculateData();
+        reRenderAllCharts();
+      }
+      
+      function clearFilters() {
+        document.getElementById('authorFilter').value = '';
+        document.getElementById('dateFromFilter').value = '';
+        document.getElementById('dateToFilter').value = '';
+        document.getElementById('fileTypeFilter').value = '';
+        
+        filteredCommits = originalCommits;
+        updateFilterStatus();
+        recalculateData();
+        reRenderAllCharts();
+      }
+      
+      function updateFilterStatus() {
+        const statusElement = document.getElementById('filterStatus');
+        statusElement.textContent = \`Showing \${filteredCommits.length} of \${originalCommits.length} commits\`;
+      }
+      
+      function recalculateData() {
+        // Recalculate contributors
+        const contributorMap = new Map();
+        for (const commit of filteredCommits) {
+          if (!contributorMap.has(commit.authorName)) {
+            contributorMap.set(commit.authorName, { name: commit.authorName, commits: 0, linesAdded: 0, linesDeleted: 0 });
+          }
+          const existing = contributorMap.get(commit.authorName);
+          existing.commits += 1;
+          existing.linesAdded += commit.linesAdded;
+          existing.linesDeleted += commit.linesDeleted;
+        }
+        filteredContributors = Array.from(contributorMap.values()).sort((a, b) => b.commits - a.commits);
+        
+        // Recalculate file types
+        const fileTypeMap = new Map();
+        for (const commit of filteredCommits) {
+          for (const fileChange of commit.filesChanged) {
+            const existing = fileTypeMap.get(fileChange.fileType) ?? 0;
+            fileTypeMap.set(fileChange.fileType, existing + fileChange.linesAdded);
+          }
+        }
+        const total = Array.from(fileTypeMap.values()).reduce((sum, lines) => sum + lines, 0);
+        filteredFileTypes = Array.from(fileTypeMap.entries())
+          .map(([type, lines]) => ({ type, lines, percentage: total > 0 ? (lines / total) * 100 : 0 }))
+          .sort((a, b) => b.lines - a.lines);
+        
+        // Recalculate time series data
+        const timeSeriesMap = new Map();
+        let cumulativeLines = 0;
+        let cumulativeBytes = 0;
+        
+        for (const commit of filteredCommits) {
+          const dateKey = new Date(commit.date).toISOString().split('T')[0];
+          if (!timeSeriesMap.has(dateKey)) {
+            timeSeriesMap.set(dateKey, { date: dateKey, commits: 0, linesAdded: 0, linesDeleted: 0 });
+          }
+          const existing = timeSeriesMap.get(dateKey);
+          existing.commits += 1;
+          existing.linesAdded += commit.linesAdded;
+          existing.linesDeleted += commit.linesDeleted;
+          cumulativeLines += commit.linesAdded;
+          cumulativeBytes += commit.estimatedBytes || (commit.linesAdded * 50);
+        }
+        
+        filteredTimeSeries = Array.from(timeSeriesMap.values())
+          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        
+        // Add cumulative data
+        let runningLines = 0;
+        let runningBytes = 0;
+        filteredTimeSeries.forEach(point => {
+          runningLines += point.linesAdded;
+          runningBytes += point.linesAdded * 50;
+          point.cumulativeLines = runningLines;
+          point.cumulativeBytes = runningBytes;
+        });
+        
+        // Recalculate linear series
+        filteredLinearSeries = filteredCommits.map((commit, index) => ({
+          commitIndex: index + 1,
+          cumulativeLines: filteredCommits.slice(0, index + 1).reduce((sum, c) => sum + c.linesAdded, 0),
+          cumulativeBytes: filteredCommits.slice(0, index + 1).reduce((sum, c) => sum + (c.estimatedBytes || c.linesAdded * 50), 0)
+        }));
+        
+        // Recalculate word cloud data
+        const messages = filteredCommits.map(c => c.message);
+        const words = messages.join(' ').toLowerCase()
+          .replace(/[^a-z\\s]/g, ' ')
+          .split(/\\s+/)
+          .filter(word => word.length > 2)
+          .filter(word => !['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'had', 'her', 'was', 'one', 'our', 'out', 'day', 'get', 'has', 'him', 'his', 'how', 'may', 'new', 'now', 'old', 'see', 'two', 'who', 'boy', 'did', 'its', 'let', 'put', 'say', 'she', 'too', 'use'].includes(word));
+        
+        const wordFreq = new Map();
+        words.forEach(word => wordFreq.set(word, (wordFreq.get(word) || 0) + 1));
+        
+        filteredWordCloudData = Array.from(wordFreq.entries())
+          .map(([text, freq]) => ({ text, size: Math.min(freq * 10 + 12, 60) }))
+          .sort((a, b) => b.size - a.size)
+          .slice(0, 50);
+        
+        // Recalculate file heat data
+        const fileMap = new Map();
+        for (const commit of filteredCommits) {
+          const commitDate = new Date(commit.date);
+          for (const fileChange of commit.filesChanged) {
+            const existing = fileMap.get(fileChange.fileName);
+            if (!existing) {
+              fileMap.set(fileChange.fileName, {
+                commitCount: 1,
+                lastModified: commitDate,
+                totalLines: fileChange.linesAdded,
+                fileType: fileChange.fileType
+              });
+            } else {
+              existing.commitCount += 1;
+              existing.totalLines += fileChange.linesAdded;
+              if (commitDate > existing.lastModified) {
+                existing.lastModified = commitDate;
+              }
+            }
+          }
+        }
+        
+        const now = new Date();
+        filteredFileHeatData = [];
+        for (const [fileName, data] of fileMap.entries()) {
+          const daysSinceLastModification = (now.getTime() - data.lastModified.getTime()) / (1000 * 60 * 60 * 24);
+          const frequency = data.commitCount;
+          const recency = Math.exp(-daysSinceLastModification / 30);
+          const heatScore = (frequency * 0.4) + (recency * 0.6);
+          
+          filteredFileHeatData.push({
+            fileName,
+            heatScore,
+            commitCount: data.commitCount,
+            lastModified: data.lastModified.toISOString(),
+            totalLines: Math.max(data.totalLines, 1),
+            fileType: data.fileType
+          });
+        }
+        filteredFileHeatData.sort((a, b) => b.heatScore - a.heatScore);
+      }
+      
+      function clearAllCharts() {
+        document.querySelector('#commitActivityChart').innerHTML = '';
+        document.querySelector('#contributorsChart').innerHTML = '';
+        document.querySelector('#fileTypesChart').innerHTML = '';
+        document.querySelector('#codeChurnChart').innerHTML = '';
+        document.querySelector('#repositorySizeChart').innerHTML = '';
+        document.querySelector('#wordCloudChart').innerHTML = '';
+        document.querySelector('#fileHeatmapChart').innerHTML = '';
+        
+        if (linesOfCodeChart) {
+          linesOfCodeChart.destroy();
+          linesOfCodeChart = null;
+        }
+      }
+      
+      function reRenderAllCharts() {
+        clearAllCharts();
+        
+        renderCommitActivityChart();
+        renderContributorsChart();
+        renderLinesOfCodeChart();
+        renderFileTypesChart();
+        renderCodeChurnChart();
+        renderRepositorySizeChart();
+        renderWordCloud();
+        renderFileHeatmap();
+      }
+      
+      function populateFilters() {
+        // Populate author filter
+        const authors = [...new Set(originalCommits.map(c => c.authorName))].sort();
+        const authorSelect = document.getElementById('authorFilter');
+        authors.forEach(author => {
+          const option = document.createElement('option');
+          option.value = author;
+          option.textContent = author;
+          authorSelect.appendChild(option);
+        });
+        
+        // Populate file type filter
+        const fileTypes = [...new Set(originalCommits.flatMap(c => c.filesChanged.map(f => f.fileType)))].sort();
+        const fileTypeSelect = document.getElementById('fileTypeFilter');
+        fileTypes.forEach(type => {
+          const option = document.createElement('option');
+          option.value = type;
+          option.textContent = type;
+          fileTypeSelect.appendChild(option);
+        });
+        
+        // Set default date range
+        const dates = originalCommits.map(c => new Date(c.date));
+        const minDate = new Date(Math.min(...dates));
+        const maxDate = new Date(Math.max(...dates));
+        
+        document.getElementById('dateFromFilter').value = minDate.toISOString().split('T')[0];
+        document.getElementById('dateToFilter').value = maxDate.toISOString().split('T')[0];
+      }
       
       function renderCommitActivityChart() {
         const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
@@ -112,7 +347,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             toolbar: { show: false },
             background: isDark ? '#161b22' : '#ffffff'
           },
-          series: [{ name: 'Commits', data: timeSeries.map(point => ({ x: point.date, y: point.commits })) }],
+          series: [{ name: 'Commits', data: filteredTimeSeries.map(point => ({ x: point.date, y: point.commits })) }],
           xaxis: { 
             type: 'datetime', 
             title: { 
@@ -145,9 +380,9 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             toolbar: { show: false },
             background: isDark ? '#161b22' : '#ffffff'
           },
-          series: [{ name: 'Commits', data: contributors.slice(0, 10).map(c => c.commits) }],
+          series: [{ name: 'Commits', data: filteredContributors.slice(0, 10).map(c => c.commits) }],
           xaxis: { 
-            categories: contributors.slice(0, 10).map(c => c.name), 
+            categories: filteredContributors.slice(0, 10).map(c => c.name), 
             title: { 
               text: 'Contributors',
               style: { color: isDark ? '#f0f6fc' : '#24292f' }
@@ -177,7 +412,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             toolbar: { show: false },
             background: isDark ? '#161b22' : '#ffffff'
           },
-          series: [{ name: 'Lines of Code', data: timeSeries.map(point => ({ x: new Date(point.date).getTime(), y: point.cumulativeLines })) }],
+          series: [{ name: 'Lines of Code', data: filteredTimeSeries.map(point => ({ x: new Date(point.date).getTime(), y: point.cumulativeLines })) }],
           dataLabels: {
             enabled: false
           },
@@ -244,7 +479,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
           chartOptions = {
             series: [{ 
               name: 'Lines of Code', 
-              data: timeSeries.map(point => ({ x: new Date(point.date).getTime(), y: point.cumulativeLines })) 
+              data: filteredTimeSeries.map(point => ({ x: new Date(point.date).getTime(), y: point.cumulativeLines })) 
             }],
             chart: { 
               type: 'area', 
@@ -307,7 +542,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
           chartOptions = {
             series: [{ 
               name: 'Lines of Code', 
-              data: linearSeries.map(point => ({ x: point.commitIndex, y: point.cumulativeLines })) 
+              data: filteredLinearSeries.map(point => ({ x: point.commitIndex, y: point.cumulativeLines })) 
             }],
             chart: { 
               type: 'area', 
@@ -368,8 +603,8 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             height: 350,
             background: isDark ? '#161b22' : '#ffffff'
           },
-          series: fileTypes.slice(0, 8).map(ft => ft.lines),
-          labels: fileTypes.slice(0, 8).map(ft => ft.type),
+          series: filteredFileTypes.slice(0, 8).map(ft => ft.lines),
+          labels: filteredFileTypes.slice(0, 8).map(ft => ft.type),
           colors: isDark ? 
             ['#58a6ff', '#3fb950', '#f85149', '#d29922', '#a5a5ff', '#56d4dd', '#db6d28', '#8b949e'] :
             ['#27aeef', '#87bc45', '#ea5545', '#ef9b20', '#b33dc6', '#f46a9b', '#ede15b', '#bdcf32'],
@@ -392,8 +627,8 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             background: isDark ? '#161b22' : '#ffffff'
           },
           series: [
-            { name: 'Lines Added', data: timeSeries.map(point => ({ x: point.date, y: point.linesAdded })) },
-            { name: 'Lines Deleted', data: timeSeries.map(point => ({ x: point.date, y: point.linesDeleted })) }
+            { name: 'Lines Added', data: filteredTimeSeries.map(point => ({ x: point.date, y: point.linesAdded })) },
+            { name: 'Lines Deleted', data: filteredTimeSeries.map(point => ({ x: point.date, y: point.linesDeleted })) }
           ],
           xaxis: { 
             type: 'datetime', 
@@ -433,7 +668,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             toolbar: { show: false },
             background: isDark ? '#161b22' : '#ffffff'
           },
-          series: [{ name: 'Repository Size', data: timeSeries.map(point => ({ x: point.date, y: point.cumulativeBytes })) }],
+          series: [{ name: 'Repository Size', data: filteredTimeSeries.map(point => ({ x: point.date, y: point.cumulativeBytes })) }],
           dataLabels: { enabled: false },
           stroke: { curve: 'smooth' },
           xaxis: { 
@@ -497,7 +732,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
       }
       
       function renderWordCloud() {
-        if (wordCloudData.length === 0) {
+        if (filteredWordCloudData.length === 0) {
           document.querySelector('#wordCloudChart').innerHTML = '<p class="text-muted text-center">No commit messages to analyze</p>';
           return;
         }
@@ -539,7 +774,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
         
         const layout = d3.layout.cloud()
           .size([width, height])
-          .words(wordCloudData.map(function(d) {
+          .words(filteredWordCloudData.map(function(d) {
             return {text: d.text, size: d.size};
           }))
           .padding(5)
@@ -552,7 +787,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
       }
       
       function renderFileHeatmap() {
-        if (fileHeatData.length === 0) {
+        if (filteredFileHeatData.length === 0) {
           document.querySelector('#fileHeatmapChart').innerHTML = '<p class="text-muted text-center">No file data to analyze</p>';
           return;
         }
@@ -565,8 +800,8 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
         const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
         
         // Create color scale for heat values
-        const maxHeat = Math.max(...fileHeatData.map(d => d.heatScore));
-        const minHeat = Math.min(...fileHeatData.map(d => d.heatScore));
+        const maxHeat = Math.max(...filteredFileHeatData.map(d => d.heatScore));
+        const minHeat = Math.min(...filteredFileHeatData.map(d => d.heatScore));
         
         const colorScale = d3.scale.linear()
           .domain([minHeat, maxHeat])
@@ -589,7 +824,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
           .style('background', isDark ? '#161b22' : '#ffffff');
         
         // Create treemap nodes
-        const nodes = treemap.nodes({children: fileHeatData});
+        const nodes = treemap.nodes({children: filteredFileHeatData});
         
         // Create rectangles for each file
         const cell = svg.selectAll('g')
@@ -637,6 +872,9 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
       }
       
       document.addEventListener('DOMContentLoaded', function() {
+        // Initialize filters
+        populateFilters();
+        
         renderCommitActivityChart();
         renderContributorsChart();
         renderLinesOfCodeChart();
@@ -645,6 +883,10 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
         renderRepositorySizeChart();
         renderWordCloud();
         renderFileHeatmap();
+        
+        // Add event listeners for filters
+        document.getElementById('applyFilters').addEventListener('click', applyFilters);
+        document.getElementById('clearFilters').addEventListener('click', clearFilters);
         
         // Add event listeners for axis toggles
         document.querySelectorAll('input[name="xAxis"]').forEach(input => {
