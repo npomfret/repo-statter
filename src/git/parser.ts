@@ -101,7 +101,8 @@ export async function getGitHubUrl(repoPath: string): Promise<string | null> {
       }
     }
   } catch (error) {
-    // Silent fail - not all repos have GitHub remotes
+    // Expected: not all repos have GitHub remotes, or remote might not be accessible
+    // This is a non-critical feature, so we return null to indicate no GitHub URL
   }
   return null
 }
@@ -170,6 +171,8 @@ async function parseCommitDiff(repoPath: string, commitHash: string): Promise<{ 
       filesChanged 
     }
   } catch (error) {
+    console.warn(`Failed to parse diff for commit ${commitHash}:`, error instanceof Error ? error.message : String(error))
+    // Return safe defaults to avoid breaking report generation
     return { linesAdded: 0, linesDeleted: 0, bytesAdded: 0, bytesDeleted: 0, filesChanged: [] }
   }
 }
@@ -194,12 +197,15 @@ async function getRepositorySize(repoPath: string, commitHash: string): Promise<
         })
         totalSize += parseInt(sizeOutput.trim()) || 0
       } catch {
-        // Skip files that can't be read (deleted, binary, etc.)
+        // Expected: files might be deleted, binary, or too large to process
+        // We skip these files and continue with the rest
       }
     }
     
     return totalSize
   } catch (error) {
+    // Repository size calculation is non-critical - we return null to indicate
+    // the size couldn't be determined rather than failing the entire operation
     return null
   }
 }
@@ -241,6 +247,8 @@ async function getByteChanges(repoPath: string, commitHash: string): Promise<{
     
     return { totalBytesAdded, totalBytesDeleted, fileChanges }
   } catch (error) {
+    console.warn(`Failed to calculate byte changes for commit ${commitHash}:`, error instanceof Error ? error.message : String(error))
+    // Return safe defaults to avoid breaking report generation
     return { totalBytesAdded: 0, totalBytesDeleted: 0, fileChanges: {} }
   }
 }

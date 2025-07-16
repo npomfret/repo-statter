@@ -19,6 +19,7 @@ export interface LinearSeriesPoint {
   commits: number
   linesAdded: number
   linesDeleted: number
+  netLines: number
   cumulativeBytes: number
 }
 
@@ -111,6 +112,7 @@ export function getLinearSeriesData(commits: CommitData[]): LinearSeriesPoint[] 
         commits: 0,
         linesAdded: 0,
         linesDeleted: 0,
+        netLines: 0,
         cumulativeBytes: 0
       })
     }
@@ -131,6 +133,7 @@ export function getLinearSeriesData(commits: CommitData[]): LinearSeriesPoint[] 
       commits: 1,
       linesAdded: commit.linesAdded,
       linesDeleted: commit.linesDeleted,
+      netLines: commit.linesAdded - commit.linesDeleted,
       cumulativeBytes
     })
   })

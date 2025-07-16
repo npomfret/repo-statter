@@ -381,7 +381,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
                   '<div class="tooltip-title">Commit #' + point.commitIndex + '</div>' +
                   '<div class="tooltip-content">' +
                   '<div><strong>SHA:</strong> ' + commit.sha.substring(0, 7) + '</div>' +
-                  '<div><strong>Author:</strong> ' + commit.author + '</div>' +
+                  '<div><strong>Author:</strong> ' + commit.authorName + '</div>' +
                   '<div><strong>Date:</strong> ' + new Date(commit.date).toLocaleString() + '</div>' +
                   '<div class="tooltip-message"><strong>Message:</strong> ' + truncateMessage(commit.message, 200) + '</div>';
                 
@@ -549,7 +549,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
               format: xAxis === 'date' ? 'dd MMM yyyy' : undefined
             },
             custom: createCommitTooltip(xAxis, filteredLinearSeries, commits, function(commit, point) {
-              return '<div><strong>Lines:</strong> +' + commit.linesAdded + ' / -' + commit.linesDeleted + '</div>' +
+              return '<div><strong>Lines:</strong> +' + commit.linesAdded + ' / -' + commit.linesDeleted + ' (Net: ' + (point.netLines > 0 ? '+' : '') + point.netLines + ')</div>' +
                      '<div><strong>Total Lines:</strong> ' + point.cumulativeLines.toLocaleString() + '</div>';
             })
           }
