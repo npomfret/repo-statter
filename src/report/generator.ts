@@ -549,7 +549,29 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
               format: xAxis === 'date' ? 'dd MMM yyyy' : undefined
             },
             custom: createCommitTooltip(xAxis, filteredLinearSeries, commits, function(commit, point) {
-              return '<div><strong>Lines:</strong> +' + commit.linesAdded + ' / -' + commit.linesDeleted + ' (Net: ' + (point.netLines > 0 ? '+' : '') + point.netLines + ')</div>' +
+              let linesDisplay = '';
+              const added = commit.linesAdded;
+              const deleted = commit.linesDeleted;
+              const net = point.netLines;
+
+              if (added > 0) {
+                  linesDisplay += '+' + added;
+              }
+              if (deleted > 0) {
+                  if (linesDisplay !== '') {
+                      linesDisplay += ' / ';
+                  }
+                  linesDisplay += '-' + deleted;
+              }
+
+              let netDisplay = '';
+              if (added > 0 && deleted > 0) {
+                  netDisplay = ' (Net: ' + (net > 0 ? '+' : '') + net + ')';
+              } else if (added === 0 && deleted === 0) {
+                  linesDisplay = '0';
+              }
+
+              return '<div><strong>Lines:</strong> ' + linesDisplay + netDisplay + '</div>' +
                      '<div><strong>Total Lines:</strong> ' + point.cumulativeLines.toLocaleString() + '</div>';
             })
           }
