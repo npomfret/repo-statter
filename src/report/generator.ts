@@ -481,11 +481,27 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
           let cumulativeBytesAdded = 0;
           let cumulativeBytesRemoved = 0;
           
-          filteredTimeSeries.forEach(point => {
-            const dateContributions = userCommits.filter(commit => {
-              const commitDate = new Date(commit.date).toISOString().split('T')[0];
-              return commitDate === point.date;
-            });
+          // Group user commits by date
+          const userCommitsByDate = {};
+          userCommits.forEach(commit => {
+            const commitDate = new Date(commit.date).toISOString().split('T')[0];
+            if (!userCommitsByDate[commitDate]) {
+              userCommitsByDate[commitDate] = [];
+            }
+            userCommitsByDate[commitDate].push(commit);
+          });
+          
+          // Get all unique dates from both filteredTimeSeries and user commits
+          const allDates = new Set();
+          filteredTimeSeries.forEach(point => allDates.add(point.date));
+          Object.keys(userCommitsByDate).forEach(date => allDates.add(date));
+          
+          // Sort dates chronologically and process each one
+          const sortedDates = Array.from(allDates).sort((a, b) => 
+            new Date(a).getTime() - new Date(b).getTime()
+          );
+          sortedDates.forEach(date => {
+            const dateContributions = userCommitsByDate[date] || [];
             
             const dayAdded = dateContributions.reduce((sum, c) => sum + c.linesAdded, 0);
             const dayRemoved = dateContributions.reduce((sum, c) => sum + c.linesDeleted, 0);
@@ -497,13 +513,17 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             cumulativeBytesAdded += dayBytesAdded;
             cumulativeBytesRemoved += dayBytesRemoved;
             
-            const timestamp = new Date(point.date).getTime();
-            if (metric === 'lines') {
-              addedData.push({ x: timestamp, y: cumulativeAdded });
-              removedData.push({ x: timestamp, y: -cumulativeRemoved });
-            } else {
-              addedData.push({ x: timestamp, y: cumulativeBytesAdded });
-              removedData.push({ x: timestamp, y: -cumulativeBytesRemoved });
+            // Only add data points if there's any cumulative data to show
+            if (cumulativeAdded > 0 || cumulativeRemoved > 0 || 
+                cumulativeBytesAdded > 0 || cumulativeBytesRemoved > 0) {
+              const timestamp = new Date(date).getTime();
+              if (metric === 'lines') {
+                addedData.push({ x: timestamp, y: cumulativeAdded });
+                removedData.push({ x: timestamp, y: -cumulativeRemoved });
+              } else {
+                addedData.push({ x: timestamp, y: cumulativeBytesAdded });
+                removedData.push({ x: timestamp, y: -cumulativeBytesRemoved });
+              }
             }
           });
         } else {
