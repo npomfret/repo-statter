@@ -76,6 +76,15 @@ async function transformCommitData(commits: CommitData[], repoName: string, repo
   
   const logoSvg = await readFile('src/images/logo.svg', 'utf-8')
   
+  const trophySvgs = {
+    contributors: await readFile('src/images/trophy-contributors.svg', 'utf-8'),
+    files: await readFile('src/images/trophy-files.svg', 'utf-8'),
+    bytesAdded: await readFile('src/images/trophy-bytes-added.svg', 'utf-8'),
+    bytesRemoved: await readFile('src/images/trophy-bytes-removed.svg', 'utf-8'),
+    linesAdded: await readFile('src/images/trophy-lines-added.svg', 'utf-8'),
+    linesRemoved: await readFile('src/images/trophy-lines-removed.svg', 'utf-8')
+  }
+  
   return {
     repositoryName: repoName,
     totalCommits,
@@ -83,7 +92,8 @@ async function transformCommitData(commits: CommitData[], repoName: string, repo
     totalCodeChurn,
     generationDate: new Date().toLocaleString(),
     githubLink,
-    logoSvg
+    logoSvg,
+    trophySvgs
   }
 }
 
@@ -114,6 +124,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
       const wordCloudData = ${JSON.stringify(wordCloudData)};
       const fileHeatData = ${JSON.stringify(fileHeatData)};
       const awards = ${JSON.stringify(awards)};
+      const trophySvgs = ${JSON.stringify(chartData.trophySvgs)};
       
       // Filtering variables
       let originalCommits = commits;
@@ -909,12 +920,12 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
         container.innerHTML = '';
         
         const awardCategories = [
-          { title: 'Top Contributors', data: awards.topContributors, formatValue: (v) => v.commits + ' commits', showAuthor: false },
-          { title: 'Most Files Modified', data: awards.mostFilesModified, formatValue: (v) => v + ' files' },
-          { title: 'Most Bytes Added', data: awards.mostBytesAdded, formatValue: formatBytes },
-          { title: 'Most Bytes Removed', data: awards.mostBytesRemoved, formatValue: formatBytes },
-          { title: 'Most Lines Added', data: awards.mostLinesAdded, formatValue: (v) => v.toLocaleString() + ' lines' },
-          { title: 'Most Lines Removed', data: awards.mostLinesRemoved, formatValue: (v) => v.toLocaleString() + ' lines' }
+          { title: 'Top Contributors', data: awards.topContributors, formatValue: (v) => v.commits + ' commits', showAuthor: false, trophy: trophySvgs.contributors },
+          { title: 'Most Files Modified', data: awards.mostFilesModified, formatValue: (v) => v + ' files', trophy: trophySvgs.files },
+          { title: 'Most Bytes Added', data: awards.mostBytesAdded, formatValue: formatBytes, trophy: trophySvgs.bytesAdded },
+          { title: 'Most Bytes Removed', data: awards.mostBytesRemoved, formatValue: formatBytes, trophy: trophySvgs.bytesRemoved },
+          { title: 'Most Lines Added', data: awards.mostLinesAdded, formatValue: (v) => v.toLocaleString() + ' lines', trophy: trophySvgs.linesAdded },
+          { title: 'Most Lines Removed', data: awards.mostLinesRemoved, formatValue: (v) => v.toLocaleString() + ' lines', trophy: trophySvgs.linesRemoved }
         ];
         
         awardCategories.forEach(category => {
@@ -925,8 +936,9 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
           card.className = 'card h-100';
           
           const cardHeader = document.createElement('div');
-          cardHeader.className = 'card-header';
-          cardHeader.innerHTML = '<h6 class="mb-0">' + category.title + '</h6>';
+          cardHeader.className = 'card-header d-flex align-items-center justify-content-between';
+          cardHeader.innerHTML = '<h6 class="mb-0">' + category.title + '</h6>' +
+                                '<div style="width: 40px; height: 40px;">' + category.trophy + '</div>';
           
           const cardBody = document.createElement('div');
           cardBody.className = 'card-body';

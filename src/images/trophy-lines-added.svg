@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <linearGradient id="sapphireGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0F52BA;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#0047AB;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0F52BA;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="sapphireBase" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#002FA7;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#002366;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Trophy Star Shape -->
+  <path d="M 50 15 L 56 30 L 72 30 L 59 40 L 65 55 L 50 45 L 35 55 L 41 40 L 28 30 L 44 30 Z" fill="url(#sapphireGradient)" stroke="#0047AB" stroke-width="2"/>
+  
+  <!-- Code Lines -->
+  <g transform="translate(40, 32)">
+    <rect x="0" y="0" width="20" height="2" fill="#FFF" opacity="0.9"/>
+    <rect x="0" y="4" width="15" height="2" fill="#FFF" opacity="0.7"/>
+    <rect x="0" y="8" width="18" height="2" fill="#FFF" opacity="0.8"/>
+    <rect x="0" y="12" width="12" height="2" fill="#FFF" opacity="0.6"/>
+  </g>
+  
+  <!-- Plus signs on sides -->
+  <g transform="translate(25, 35)">
+    <rect x="-3" y="-0.5" width="6" height="1" fill="#FFF" opacity="0.8"/>
+    <rect x="-0.5" y="-3" width="1" height="6" fill="#FFF" opacity="0.8"/>
+  </g>
+  <g transform="translate(75, 35)">
+    <rect x="-3" y="-0.5" width="6" height="1" fill="#FFF" opacity="0.8"/>
+    <rect x="-0.5" y="-3" width="1" height="6" fill="#FFF" opacity="0.8"/>
+  </g>
+  
+  <!-- Stem with ridges -->
+  <rect x="48" y="55" width="4" height="15" fill="url(#sapphireGradient)"/>
+  <rect x="46" y="58" width="8" height="1" fill="#0047AB" opacity="0.5"/>
+  <rect x="46" y="62" width="8" height="1" fill="#0047AB" opacity="0.5"/>
+  <rect x="46" y="66" width="8" height="1" fill="#0047AB" opacity="0.5"/>
+  
+  <!-- Base -->
+  <path d="M 35 70 L 40 75 L 60 75 L 65 70 Z" fill="url(#sapphireBase)"/>
+  <rect x="30" y="75" width="40" height="5" fill="url(#sapphireBase)"/>
+  <path d="M 25 80 L 30 85 L 70 85 L 75 80 Z" fill="url(#sapphireBase)"/>
+  
+  <!-- Shine -->
+  <ellipse cx="50" cy="25" rx="8" ry="4" fill="#FFF" opacity="0.4"/>
+</svg>

@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <linearGradient id="amethystGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#9966CC;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#8B3A8B;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#9966CC;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="amethystBase" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#663399;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4B0082;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Trophy Flame/Teardrop Shape -->
+  <path d="M 50 15 Q 35 25 35 40 Q 35 55 50 60 Q 65 55 65 40 Q 65 25 50 15 Z" fill="url(#amethystGradient)" stroke="#8B3A8B" stroke-width="2"/>
+  
+  <!-- Code Lines with strikethrough effect -->
+  <g transform="translate(42, 30)">
+    <rect x="0" y="0" width="16" height="1.5" fill="#FFF" opacity="0.4"/>
+    <rect x="0" y="5" width="12" height="1.5" fill="#FFF" opacity="0.4"/>
+    <rect x="0" y="10" width="14" height="1.5" fill="#FFF" opacity="0.4"/>
+    <rect x="0" y="15" width="10" height="1.5" fill="#FFF" opacity="0.4"/>
+    <!-- Diagonal strikethrough -->
+    <line x1="-2" y1="-2" x2="18" y2="18" stroke="#FFF" stroke-width="2" opacity="0.9"/>
+  </g>
+  
+  <!-- Minus symbols floating -->
+  <rect x="25" y="35" width="8" height="2" fill="#FFF" opacity="0.7"/>
+  <rect x="67" y="35" width="8" height="2" fill="#FFF" opacity="0.7"/>
+  
+  <!-- Crystal facets -->
+  <path d="M 50 15 L 42 30 L 50 45" fill="none" stroke="#FFF" stroke-width="1" opacity="0.3"/>
+  <path d="M 50 15 L 58 30 L 50 45" fill="none" stroke="#FFF" stroke-width="1" opacity="0.3"/>
+  
+  <!-- Stem -->
+  <rect x="47" y="60" width="6" height="10" fill="url(#amethystGradient)"/>
+  
+  <!-- Ornate Base -->
+  <ellipse cx="50" cy="70" rx="12" ry="2" fill="url(#amethystBase)"/>
+  <path d="M 38 70 Q 35 72 35 75 L 35 78 Q 35 80 38 80 L 62 80 Q 65 80 65 78 L 65 75 Q 65 72 62 70 Z" fill="url(#amethystBase)"/>
+  <rect x="30" y="80" width="40" height="5" fill="url(#amethystBase)"/>
+  
+  <!-- Shine -->
+  <ellipse cx="48" cy="25" rx="6" ry="8" fill="#FFF" opacity="0.3"/>
+</svg>

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <linearGradient id="silverGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#E0E0E0;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#C0C0C0;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#E0E0E0;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="silverBase" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#696969;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4A4A4A;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Trophy Diamond Shape -->
+  <path d="M 50 15 L 65 30 L 65 45 L 50 60 L 35 45 L 35 30 Z" fill="url(#silverGradient)" stroke="#A9A9A9" stroke-width="2"/>
+  
+  <!-- Side facets -->
+  <path d="M 35 30 L 20 35 L 20 40 L 35 45" fill="url(#silverGradient)" stroke="#A9A9A9" stroke-width="1.5"/>
+  <path d="M 65 30 L 80 35 L 80 40 L 65 45" fill="url(#silverGradient)" stroke="#A9A9A9" stroke-width="1.5"/>
+  
+  <!-- File/Folder Icons -->
+  <g transform="translate(44, 30)">
+    <rect x="0" y="0" width="12" height="15" fill="#FFF" opacity="0.8" rx="1"/>
+    <rect x="0" y="0" width="12" height="3" fill="#4A90E2" opacity="0.8"/>
+  </g>
+  <g transform="translate(40, 38)">
+    <rect x="0" y="0" width="12" height="15" fill="#FFF" opacity="0.6" rx="1"/>
+    <rect x="0" y="0" width="12" height="3" fill="#4A90E2" opacity="0.6"/>
+  </g>
+  <g transform="translate(48, 38)">
+    <rect x="0" y="0" width="12" height="15" fill="#FFF" opacity="0.6" rx="1"/>
+    <rect x="0" y="0" width="12" height="3" fill="#4A90E2" opacity="0.6"/>
+  </g>
+  
+  <!-- Stem -->
+  <rect x="47" y="60" width="6" height="10" fill="url(#silverGradient)"/>
+  
+  <!-- Base -->
+  <path d="M 40 70 L 40 75 L 35 80 L 65 80 L 60 75 L 60 70 Z" fill="url(#silverBase)"/>
+  <rect x="30" y="80" width="40" height="5" fill="url(#silverBase)"/>
+  
+  <!-- Shine -->
+  <ellipse cx="50" cy="25" rx="10" ry="5" fill="#FFF" opacity="0.4"/>
+</svg>

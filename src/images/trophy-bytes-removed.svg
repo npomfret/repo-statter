@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <linearGradient id="rubyGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#E0115F;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#DC143C;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#E0115F;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="rubyBase" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8B0000;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#660000;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Trophy Shield Shape -->
+  <path d="M 50 15 Q 30 15 30 30 L 30 40 Q 30 55 50 60 Q 70 55 70 40 L 70 30 Q 70 15 50 15 Z" fill="url(#rubyGradient)" stroke="#DC143C" stroke-width="2"/>
+  
+  <!-- Binary/Byte Pattern with Strike-through -->
+  <text x="50" y="35" text-anchor="middle" fill="#FFF" font-family="monospace" font-size="8" font-weight="bold" opacity="0.5" text-decoration="line-through">11010</text>
+  <text x="50" y="43" text-anchor="middle" fill="#FFF" font-family="monospace" font-size="8" font-weight="bold" opacity="0.5" text-decoration="line-through">10011</text>
+  
+  <!-- Minus Symbol -->
+  <rect x="42" y="36" width="16" height="3" fill="#FFF" opacity="0.9"/>
+  
+  <!-- Decorative elements -->
+  <circle cx="35" cy="25" r="3" fill="#FFF" opacity="0.3"/>
+  <circle cx="65" cy="25" r="3" fill="#FFF" opacity="0.3"/>
+  
+  <!-- Stem -->
+  <rect x="47" y="60" width="6" height="10" fill="url(#rubyGradient)"/>
+  
+  <!-- Base with layers -->
+  <rect x="40" y="70" width="20" height="3" fill="url(#rubyBase)"/>
+  <rect x="35" y="73" width="30" height="3" fill="url(#rubyBase)"/>
+  <rect x="30" y="76" width="40" height="4" fill="url(#rubyBase)"/>
+  <ellipse cx="50" cy="80" rx="20" ry="5" fill="url(#rubyBase)"/>
+  
+  <!-- Shine -->
+  <ellipse cx="45" cy="23" rx="10" ry="5" fill="#FFF" opacity="0.3"/>
+</svg>
