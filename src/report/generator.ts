@@ -474,6 +474,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
       function buildUserTimeSeriesData(userCommits, xAxis, metric) {
         const addedData = [];
         const removedData = [];
+        const netData = [];
         
         if (xAxis === 'date') {
           let cumulativeAdded = 0;
@@ -501,6 +502,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             const firstTimestamp = new Date(sortedDates[0]).getTime();
             addedData.push({ x: firstTimestamp, y: 0 });
             removedData.push({ x: firstTimestamp, y: 0 });
+            netData.push({ x: firstTimestamp, y: 0 });
           }
           
           sortedDates.forEach((date, index) => {
@@ -524,15 +526,18 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             if (metric === 'lines') {
               addedData.push({ x: timestamp, y: cumulativeAdded });
               removedData.push({ x: timestamp, y: -cumulativeRemoved });
+              netData.push({ x: timestamp, y: cumulativeAdded - cumulativeRemoved });
             } else {
               addedData.push({ x: timestamp, y: cumulativeBytesAdded });
               removedData.push({ x: timestamp, y: -cumulativeBytesRemoved });
+              netData.push({ x: timestamp, y: cumulativeBytesAdded - cumulativeBytesRemoved });
             }
           });
           
         } else {
           addedData.push({ x: 0, y: 0 });
           removedData.push({ x: 0, y: 0 });
+          netData.push({ x: 0, y: 0 });
           
           let cumulativeAdded = 0;
           let cumulativeRemoved = 0;
@@ -551,14 +556,16 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             if (metric === 'lines') {
               addedData.push({ x, y: cumulativeAdded });
               removedData.push({ x, y: -cumulativeRemoved });
+              netData.push({ x, y: cumulativeAdded - cumulativeRemoved });
             } else {
               addedData.push({ x, y: cumulativeBytesAdded });
               removedData.push({ x, y: -cumulativeBytesRemoved });
+              netData.push({ x, y: cumulativeBytesAdded - cumulativeBytesRemoved });
             }
           });
         }
         
-        return { addedData, removedData };
+        return { addedData, removedData, netData };
       }
       
       function renderCommitActivityChart() {
@@ -781,10 +788,9 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
 
         const options = {
           chart: { 
-            type: 'area', 
+            type: 'line', 
             height: 350, 
             toolbar: { show: false }, 
-            stacked: true,
             background: isDark ? '#161b22' : '#ffffff'
           },
           series: [
@@ -802,6 +808,14 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
                 filteredLinearSeries,
                 xAxis,
                 point => point.linesDeleted
+              )
+            },
+            { 
+              name: 'Net Lines', 
+              data: buildTimeSeriesData(
+                filteredLinearSeries,
+                xAxis,
+                point => point.linesAdded - point.linesDeleted
               )
             }
           ],
@@ -823,8 +837,11 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             },
             labels: { style: { colors: isDark ? '#f0f6fc' : '#24292f' } }
           },
-          fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.9 } },
-          colors: isDark ? ['#3fb950', '#f85149'] : ['#87bc45', '#ea5545'],
+          stroke: {
+            curve: 'smooth',
+            width: 2
+          },
+          colors: isDark ? ['#3fb950', '#f85149', '#58a6ff'] : ['#87bc45', '#ea5545', '#27aeef'],
           grid: { borderColor: isDark ? '#30363d' : '#e1e4e8' },
           legend: {
             labels: { colors: isDark ? '#f0f6fc' : '#24292f' }
@@ -1326,7 +1343,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
             
             // Prepare data using the common builder
-            const { addedData, removedData } = buildUserTimeSeriesData(userCommits, xAxis, metric);
+            const { addedData, removedData, netData } = buildUserTimeSeriesData(userCommits, xAxis, metric);
             
             // Destroy existing chart
             if (userChartInstances[index]) {
@@ -1348,6 +1365,10 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
                 {
                   name: metric === 'lines' ? 'Total Lines Removed' : 'Total Bytes Removed',
                   data: removedData
+                },
+                {
+                  name: metric === 'lines' ? 'Net Lines' : 'Net Bytes',
+                  data: netData
                 }
               ],
               stroke: {
@@ -1384,7 +1405,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
                   formatter: createYAxisFormatter(metric)
                 }
               },
-              colors: isDark ? ['#3fb950', '#f85149'] : ['#87bc45', '#ea5545'],
+              colors: isDark ? ['#3fb950', '#f85149', '#58a6ff'] : ['#87bc45', '#ea5545', '#27aeef'],
               grid: { borderColor: isDark ? '#30363d' : '#e1e4e8' },
               tooltip: {
                 theme: isDark ? 'dark' : 'light',
