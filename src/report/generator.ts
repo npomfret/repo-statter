@@ -2,7 +2,16 @@ import { basename } from 'path'
 import { readFile, writeFile, mkdir } from 'fs/promises'
 import { existsSync } from 'fs'
 import { parseCommitHistory, getGitHubUrl } from '../git/parser.js'
-import { getContributorStats, getFileTypeStats, getFileHeatData } from '../stats/calculator.js'
+import { 
+  getContributorStats, 
+  getFileTypeStats, 
+  getFileHeatData,
+  getTopCommitsByFilesModified,
+  getTopCommitsByBytesAdded,
+  getTopCommitsByBytesRemoved,
+  getTopCommitsByLinesAdded,
+  getTopCommitsByLinesRemoved
+} from '../stats/calculator.js'
 import { getTimeSeriesData, getLinearSeriesData } from '../chart/data-transformer.js'
 import { processCommitMessages } from '../text/processor.js'
 import type { CommitData } from '../git/parser.js'
@@ -62,9 +71,6 @@ async function transformCommitData(commits: CommitData[], repoName: string, repo
   const totalLinesOfCode = commits.reduce((sum, commit) => sum + commit.linesAdded, 0)
   const totalCodeChurn = commits.reduce((sum, commit) => sum + commit.linesAdded + commit.linesDeleted, 0)
   
-  const contributors = getContributorStats(commits)
-  const topContributor = contributors[0]?.name || 'Unknown'
-  
   const githubUrl = await getGitHubUrl(repoPath)
   const githubLink = githubUrl ? ` - <a href="${githubUrl}" target="_blank" class="text-decoration-none">View on GitHub</a>` : ''
   
@@ -75,7 +81,6 @@ async function transformCommitData(commits: CommitData[], repoName: string, repo
     totalCommits,
     totalLinesOfCode,
     totalCodeChurn,
-    topContributor,
     generationDate: new Date().toLocaleString(),
     githubLink,
     logoSvg
@@ -90,6 +95,15 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
   const wordCloudData = processCommitMessages(commits.map(c => c.message))
   const fileHeatData = getFileHeatData(commits)
   
+  const awards = {
+    topContributors: contributors.slice(0, 5),
+    mostFilesModified: getTopCommitsByFilesModified(commits),
+    mostBytesAdded: getTopCommitsByBytesAdded(commits),
+    mostBytesRemoved: getTopCommitsByBytesRemoved(commits),
+    mostLinesAdded: getTopCommitsByLinesAdded(commits),
+    mostLinesRemoved: getTopCommitsByLinesRemoved(commits)
+  }
+  
   const chartScript = `
     <script>
       const commits = ${JSON.stringify(commits)};
@@ -99,6 +113,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
       const linearSeries = ${JSON.stringify(linearSeries)};
       const wordCloudData = ${JSON.stringify(wordCloudData)};
       const fileHeatData = ${JSON.stringify(fileHeatData)};
+      const awards = ${JSON.stringify(awards)};
       
       // Filtering variables
       let originalCommits = commits;
@@ -321,6 +336,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
         renderRepositorySizeChart();
         renderWordCloud();
         renderFileHeatmap();
+        renderAwards();
       }
       
       function populateFilters() {
@@ -888,6 +904,64 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
           });
       }
       
+      function renderAwards() {
+        const container = document.getElementById('awardsContainer');
+        container.innerHTML = '';
+        
+        const awardCategories = [
+          { title: 'Top Contributors', data: awards.topContributors, formatValue: (v) => v.commits + ' commits', showAuthor: false },
+          { title: 'Most Files Modified', data: awards.mostFilesModified, formatValue: (v) => v + ' files' },
+          { title: 'Most Bytes Added', data: awards.mostBytesAdded, formatValue: formatBytes },
+          { title: 'Most Bytes Removed', data: awards.mostBytesRemoved, formatValue: formatBytes },
+          { title: 'Most Lines Added', data: awards.mostLinesAdded, formatValue: (v) => v.toLocaleString() + ' lines' },
+          { title: 'Most Lines Removed', data: awards.mostLinesRemoved, formatValue: (v) => v.toLocaleString() + ' lines' }
+        ];
+        
+        awardCategories.forEach(category => {
+          const col = document.createElement('div');
+          col.className = 'col-md-4 mb-4';
+          
+          const card = document.createElement('div');
+          card.className = 'card h-100';
+          
+          const cardHeader = document.createElement('div');
+          cardHeader.className = 'card-header';
+          cardHeader.innerHTML = '<h6 class="mb-0">' + category.title + '</h6>';
+          
+          const cardBody = document.createElement('div');
+          cardBody.className = 'card-body';
+          
+          const list = document.createElement('ol');
+          list.className = 'mb-0';
+          
+          if (category.title === 'Top Contributors') {
+            category.data.forEach((contributor, index) => {
+              const item = document.createElement('li');
+              item.innerHTML = '<strong>' + contributor.name + '</strong>: ' + category.formatValue(contributor);
+              list.appendChild(item);
+            });
+          } else {
+            category.data.forEach((commit, index) => {
+              const item = document.createElement('li');
+              const truncatedMessage = commit.message.length > 50 ? commit.message.substring(0, 50) + '...' : commit.message;
+              item.innerHTML = 
+                '<div>' +
+                '<strong>' + truncatedMessage + '</strong><br>' +
+                '<small class="text-muted">' + commit.authorName + ' - ' + new Date(commit.date).toLocaleDateString() + '</small><br>' +
+                '<small class="text-muted">SHA: ' + commit.sha.substring(0, 7) + ' - ' + category.formatValue(commit.value) + '</small>' +
+                '</div>';
+              list.appendChild(item);
+            });
+          }
+          
+          cardBody.appendChild(list);
+          card.appendChild(cardHeader);
+          card.appendChild(cardBody);
+          col.appendChild(card);
+          container.appendChild(col);
+        });
+      }
+      
       document.addEventListener('DOMContentLoaded', function() {
         // Initialize filters
         populateFilters();
@@ -900,6 +974,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
         renderRepositorySizeChart();
         renderWordCloud();
         renderFileHeatmap();
+        renderAwards();
         
         // Add event listeners for filters
         document.getElementById('applyFilters').addEventListener('click', applyFilters);
@@ -967,7 +1042,6 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
     .replace(/{{totalCommits}}/g, chartData.totalCommits.toString())
     .replace(/{{totalLinesOfCode}}/g, chartData.totalLinesOfCode.toString())
     .replace(/{{totalCodeChurn}}/g, chartData.totalCodeChurn.toString())
-    .replace(/{{topContributor}}/g, chartData.topContributor)
     .replace(/{{githubLink}}/g, chartData.githubLink)
     .replace(/{{logoSvg}}/g, chartData.logoSvg)
     .replace('</body>', chartScript + '\n</body>')

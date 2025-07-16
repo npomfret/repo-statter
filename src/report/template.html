@@ -307,7 +307,7 @@
         </div>
 
         <div class="row mb-4">
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <div class="card">
                     <div class="card-body text-center">
                         <h5 class="card-title">Total Commits</h5>
@@ -315,7 +315,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <div class="card">
                     <div class="card-body text-center">
                         <h5 class="card-title">Total Lines of Code</h5>
@@ -323,19 +323,11 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <div class="card">
                     <div class="card-body text-center">
                         <h5 class="card-title">Total Code Churn</h5>
                         <h2 class="text-warning">{{totalCodeChurn}}</h2>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Top Contributor</h5>
-                        <h2 class="text-info">{{topContributor}}</h2>
                     </div>
                 </div>
             </div>
@@ -453,6 +445,22 @@
                     <div class="card-body" style="min-height: 400px;">
                         <p class="card-text">Interactive treemap showing file activity based on commit frequency and recency. Larger rectangles represent files with more lines of code, while color intensity indicates higher activity.</p>
                         <div id="fileHeatmapChart" style="width: 100%; height: 400px; display: flex; align-items: center; justify-content: center;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Awards Section -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Commit Awards</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row" id="awardsContainer">
+                            <!-- Awards will be populated dynamically -->
+                        </div>
                     </div>
                 </div>
             </div>
