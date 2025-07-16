@@ -192,13 +192,12 @@ Never proceed with a broken state. Every commit must leave the app in a working 
 ### ✅ COMPLETED
 - **Setup**: Reverted failed refactor, preserved test script and .gitignore
 - **Planning**: Created this comprehensive refactor plan
+- **Commit 1**: Remove all try/catch blocks ✓
 
 ### 🔄 IN PROGRESS
-- None currently
+- **Commit 2**: Add assert utilities - COMPLETED CHANGES, READY FOR REVIEW
 
-### ⏳ PENDING
-- **Commit 1**: Remove all try/catch blocks
-- **Commit 2**: Add assert utilities  
+### ⏳ PENDING  
 - **Commit 3**: Fix generator.ts types
 - **Commit 4**: Extract data transformation functions
 - **Commit 5**: Extract Contributors chart
@@ -210,5 +209,27 @@ Never proceed with a broken state. Every commit must leave the app in a working 
 *This section will be updated after each change to show what's ready for review*
 
 ---
-**READY FOR REVIEW**: None currently
-**LAST UPDATED**: Initial plan creation
+**READY FOR REVIEW**: ✅ **Commit 2: Add assert utilities and replace defensive checks**
+
+**CHANGES MADE**:
+- ✅ Added assert utilities to `src/git/parser.ts`:
+  - `assert()` - Basic assertion that throws on false condition
+  - `assertDefined()` - Checks value is not null/undefined
+  - `assertNumber()` - Validates number type and not NaN
+- ✅ Added `assert()` to `src/stats/calculator.ts`, `src/chart/data-transformer.ts`, `src/text/processor.ts`
+- ✅ Replaced defensive patterns:
+  - Changed `|| 0` to `?? 0` for proper null coalescing (5 locations)
+  - Changed `|| 'repo'` to proper type check with assert
+  - Added assertions where data must exist (4 locations)
+- ✅ Tests pass: `npm run typecheck` ✓ `npm run test` ✓
+- ✅ Integration test: Generated report for test-repo successfully ✓
+
+**FILES MODIFIED**: 
+- `src/git/parser.ts`
+- `src/stats/calculator.ts`
+- `src/chart/data-transformer.ts`
+- `src/text/processor.ts`
+
+**WAITING FOR**: User approval to commit these changes
+
+**LAST UPDATED**: Commit 2 completed, awaiting review
