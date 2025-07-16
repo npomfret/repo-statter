@@ -26,7 +26,6 @@ export interface CommitData {
   linesDeleted: number
   bytesAdded?: number
   bytesDeleted?: number
-  totalBytes?: number
   filesChanged: FileChange[]
 }
 
@@ -66,8 +65,6 @@ export async function parseCommitHistory(repoPath: string): Promise<CommitData[]
   
   for (const commit of log.all) {
     const diffStats = await parseCommitDiff(repoPath, commit.hash)
-    const totalBytes = await getRepositorySize(repoPath, commit.hash)
-    
     const bytesAdded = diffStats.bytesAdded || 0
     const bytesDeleted = diffStats.bytesDeleted || 0
     cumulativeBytes += (bytesAdded - bytesDeleted)
@@ -82,7 +79,6 @@ export async function parseCommitHistory(repoPath: string): Promise<CommitData[]
       linesDeleted: diffStats.linesDeleted,
       bytesAdded,
       bytesDeleted,
-      totalBytes: totalBytes || cumulativeBytes,
       filesChanged: diffStats.filesChanged
     })
     
@@ -187,38 +183,6 @@ async function parseCommitDiff(repoPath: string, commitHash: string): Promise<{ 
   }
 }
 
-async function getRepositorySize(repoPath: string, commitHash: string): Promise<number | null> {
-  try {
-    const { stdout } = await execAsync(`cd "${repoPath}" && git show ${commitHash} --name-only --format=""`, { 
-      timeout: 10000 
-    })
-    
-    if (!stdout.trim()) {
-      return null
-    }
-    
-    const files = stdout.trim().split('\n').filter(f => f.trim())
-    let totalSize = 0
-    
-    for (const file of files) {
-      try {
-        const { stdout: sizeOutput } = await execAsync(`cd "${repoPath}" && git show ${commitHash}:"${file}" | wc -c`, { 
-          timeout: 5000 
-        })
-        totalSize += parseInt(sizeOutput.trim()) || 0
-      } catch {
-        // Expected: files might be deleted, binary, or too large to process
-        // We skip these files and continue with the rest
-      }
-    }
-    
-    return totalSize
-  } catch (error) {
-    // Repository size calculation is non-critical - we return null to indicate
-    // the size couldn't be determined rather than failing the entire operation
-    return null
-  }
-}
 
 async function getByteChanges(repoPath: string, commitHash: string): Promise<{ 
   totalBytesAdded: number; 
@@ -243,7 +207,7 @@ async function getByteChanges(repoPath: string, commitHash: string): Promise<{
         const deleted = parseInt(parts[1] || '0') || 0
         const fileName = parts[2]
         
-        if (fileName) {
+        if (fileName && !isFileExcluded(fileName)) {
           // Rough estimate: 1 line ≈ 50 bytes (average line length)
           const bytesAdded = added * 50
           const bytesDeleted = deleted * 50
