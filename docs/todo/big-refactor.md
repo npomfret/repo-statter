@@ -277,9 +277,10 @@ Never proceed with a broken state. Every commit must leave the app in a working 
 - **Commit 4**: Extract and test git data parsing ✓
 - **Commit 5**: Extract and test contributor calculations ✓
 - **Commit 6**: Extract and test file statistics ✓
+- **Commit 7**: Extract and test award calculations ✓
 
 ### 🔄 IN PROGRESS
-- **Commit 7**: Extract and test award calculations
+- **Commit 8**: Extract and test time series transformations
 
 ### ⏳ PENDING  
 **Phase 2: Data Layer (NEW - Added based on lessons learned)**
@@ -308,32 +309,37 @@ Never proceed with a broken state. Every commit must leave the app in a working 
 *This section will be updated after each change to show what's ready for review*
 
 ---
-**READY FOR REVIEW**: ✅ **Commit 6: Extract and test file statistics**
+**READY FOR REVIEW**: ✅ **Commit 7: Extract and test award calculations**
 
 **CHANGES MADE**:
-- ✅ Created `src/data/file-calculator.ts` with pure functions:
-  - `getFileTypeStats`: Calculates statistics for each file type (lines, percentage)
-  - `getFileHeatData`: Calculates heat scores for files based on frequency and recency
-- ✅ Created comprehensive tests in `src/data/file-calculator.test.ts`:
-  - 14 tests covering all edge cases
-  - Tests for single/multiple file types
-  - Tests for sorting and percentage calculations
-  - Tests for heat score algorithm with time-based decay
-  - Tests for empty data handling
+- ✅ Created `src/data/award-calculator.ts` with pure functions:
+  - `getTopCommitsByFilesModified`: Top 5 commits by number of files changed
+  - `getTopCommitsByBytesAdded`: Top 5 commits by bytes added
+  - `getTopCommitsByBytesRemoved`: Top 5 commits by bytes deleted
+  - `getTopCommitsByLinesAdded`: Top 5 commits by lines added
+  - `getTopCommitsByLinesRemoved`: Top 5 commits by lines deleted
+  - Private `isRealCommit` helper to filter out merge commits
+- ✅ Created comprehensive tests in `src/data/award-calculator.test.ts`:
+  - 13 tests covering all edge cases
+  - Tests for empty commit arrays
+  - Tests for sorting and top-5 limiting
+  - Tests for merge commit exclusion
+  - Tests for handling ties
+  - Tests for commits without byte information
+  - Tests for multi-file aggregation
+  - Tests for consistent award structure
 - ✅ Updated `src/stats/calculator.ts` to re-export from new module
-- ✅ Enhanced `src/test/builders.ts` with `withFileType` method
-- ✅ Cleaned up unused imports and assert functions
+- ✅ Removed all award calculation code from calculator.ts
 
 **VERIFICATION**:
-- ✅ All 14 new tests pass
-- ✅ All 84 total tests pass
+- ✅ All 13 new tests pass
+- ✅ All 97 total tests pass
 - ✅ Integration test: Generated report successfully for test-repo
 - ✅ No breaking changes to existing functionality
 
 **FILES MODIFIED**: 
-- `src/data/file-calculator.ts` (new)
-- `src/data/file-calculator.test.ts` (new)
+- `src/data/award-calculator.ts` (new)
+- `src/data/award-calculator.test.ts` (new)
 - `src/stats/calculator.ts` (refactored to re-export from new module)
-- `src/test/builders.ts` (added withFileType method)
 
-**LAST UPDATED**: File statistics extraction completed
+**LAST UPDATED**: Award calculations extraction completed
