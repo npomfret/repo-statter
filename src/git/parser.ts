@@ -7,6 +7,25 @@ import { validateGitRepository } from '../utils/git-validation.js'
 
 const execAsync = promisify(exec)
 
+// Assert utilities for fail-fast error handling
+function assert(condition: boolean, message: string): asserts condition {
+  if (!condition) {
+    throw new Error(message)
+  }
+}
+
+function assertDefined<T>(value: T | undefined | null, name: string): asserts value is T {
+  if (value === undefined || value === null) {
+    throw new Error(`${name} is required but was ${value}`)
+  }
+}
+
+function assertNumber(value: unknown, name: string): asserts value is number {
+  if (typeof value !== 'number' || isNaN(value)) {
+    throw new Error(`${name} must be a valid number, got ${typeof value}: ${value}`)
+  }
+}
+
 export interface FileChange {
   fileName: string
   linesAdded: number
@@ -31,9 +50,7 @@ export interface CommitData {
 
 export async function parseCommitHistory(repoPath: string): Promise<CommitData[]> {
   // Validate input
-  if (!repoPath || typeof repoPath !== 'string') {
-    throw new Error('Repository path is required and must be a string')
-  }
+  assert(repoPath.length > 0, 'Repository path cannot be empty')
   
   // Validate git repository
   await validateGitRepository(repoPath)
@@ -65,8 +82,8 @@ export async function parseCommitHistory(repoPath: string): Promise<CommitData[]
   
   for (const commit of log.all) {
     const diffStats = await parseCommitDiff(repoPath, commit.hash)
-    const bytesAdded = diffStats.bytesAdded || 0
-    const bytesDeleted = diffStats.bytesDeleted || 0
+    const bytesAdded = diffStats.bytesAdded ?? 0
+    const bytesDeleted = diffStats.bytesDeleted ?? 0
     cumulativeBytes += (bytesAdded - bytesDeleted)
     
     commits.push({
@@ -135,7 +152,7 @@ const FILE_TYPE_MAP = {
 
 function getFileType(fileName: string): string {
   const ext = extname(fileName).toLowerCase()
-  return FILE_TYPE_MAP[ext as keyof typeof FILE_TYPE_MAP] || ext || 'Other'
+  return FILE_TYPE_MAP[ext as keyof typeof FILE_TYPE_MAP] ?? ext ?? 'Other'
 }
 
 async function parseCommitDiff(repoPath: string, commitHash: string): Promise<{ linesAdded: number; linesDeleted: number; bytesAdded: number; bytesDeleted: number; filesChanged: FileChange[] }> {
@@ -153,15 +170,15 @@ async function parseCommitDiff(repoPath: string, commitHash: string): Promise<{ 
       linesAdded: 'insertions' in file ? file.insertions : 0,
       linesDeleted: 'deletions' in file ? file.deletions : 0,
       fileType: getFileType(file.file),
-      bytesAdded: byteChanges.fileChanges[file.file]?.bytesAdded || 0,
-      bytesDeleted: byteChanges.fileChanges[file.file]?.bytesDeleted || 0
+      bytesAdded: byteChanges.fileChanges[file.file]?.bytesAdded ?? 0,
+      bytesDeleted: byteChanges.fileChanges[file.file]?.bytesDeleted ?? 0
     }))
   
   const linesAdded = filesChanged.reduce((sum, file) => sum + file.linesAdded, 0)
   const linesDeleted = filesChanged.reduce((sum, file) => sum + file.linesDeleted, 0)
   
-  const bytesAdded = filesChanged.reduce((sum, file) => sum + (file.bytesAdded || 0), 0)
-  const bytesDeleted = filesChanged.reduce((sum, file) => sum + (file.bytesDeleted || 0), 0)
+  const bytesAdded = filesChanged.reduce((sum, file) => sum + (file.bytesAdded ?? 0), 0)
+  const bytesDeleted = filesChanged.reduce((sum, file) => sum + (file.bytesDeleted ?? 0), 0)
   
   return { 
     linesAdded, 
@@ -191,11 +208,14 @@ async function getByteChanges(repoPath: string, commitHash: string): Promise<{
   for (const line of lines) {
     const parts = line.split('\t')
     if (parts.length >= 3) {
-      const added = parseInt(parts[0] || '0') || 0
-      const deleted = parseInt(parts[1] || '0') || 0
+      const added = parseInt(parts[0] ?? '0')
+      const deleted = parseInt(parts[1] ?? '0')
+      assertNumber(added, 'lines added')
+      assertNumber(deleted, 'lines deleted')
       const fileName = parts[2]
+      assertDefined(fileName, 'file name in numstat output')
       
-      if (fileName && !isFileExcluded(fileName)) {
+      if (!isFileExcluded(fileName)) {
         // Rough estimate: 1 line ≈ 50 bytes (average line length)
         const bytesAdded = added * 50
         const bytesDeleted = deleted * 50

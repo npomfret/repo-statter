@@ -1,5 +1,12 @@
 import type { CommitData } from '../git/parser.js'
 
+// Assert utilities for fail-fast error handling
+function assert(condition: boolean, message: string): asserts condition {
+  if (!condition) {
+    throw new Error(message)
+  }
+}
+
 export interface ContributorStats {
   name: string
   commits: number
@@ -37,6 +44,7 @@ export interface FileHeatData {
 }
 
 export function getContributorStats(commits: CommitData[]): ContributorStats[] {
+  assert(commits.length > 0, 'Cannot calculate contributor stats from empty commits array')
   const contributorMap = new Map<string, ContributorStats>()
   
   for (const commit of commits) {
@@ -158,7 +166,7 @@ export function getTopCommitsByBytesAdded(commits: CommitData[]): CommitAward[] 
       authorName: commit.authorName,
       date: commit.date,
       message: commit.message,
-      value: commit.bytesAdded || 0
+      value: commit.bytesAdded ?? 0
     }))
     .sort((a, b) => b.value - a.value)
     .slice(0, 5)
@@ -172,7 +180,7 @@ export function getTopCommitsByBytesRemoved(commits: CommitData[]): CommitAward[
       authorName: commit.authorName,
       date: commit.date,
       message: commit.message,
-      value: commit.bytesDeleted || 0
+      value: commit.bytesDeleted ?? 0
     }))
     .sort((a, b) => b.value - a.value)
     .slice(0, 5)

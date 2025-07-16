@@ -1,5 +1,12 @@
 import type { CommitData } from '../git/parser.js'
 
+// Assert utilities for fail-fast error handling  
+function assert(condition: boolean, message: string): asserts condition {
+  if (!condition) {
+    throw new Error(message)
+  }
+}
+
 export interface TimeSeriesPoint {
   date: string
   commits: number
@@ -31,8 +38,8 @@ export function getTimeSeriesData(commits: CommitData[]): TimeSeriesPoint[] {
   const useHourlyData = repoAgeHours < 48 // Use hourly data for repos less than 2 days old
   
   // Add a starting point just before the first commit
-  const firstCommit = commits[0]
-  if (!firstCommit) return []
+  assert(commits.length > 0, 'Cannot create time series from empty commits array')
+  const firstCommit = commits[0]!
   const firstCommitDate = new Date(firstCommit.date)
   const startDate = new Date(firstCommitDate)
   if (useHourlyData) {
@@ -85,10 +92,10 @@ export function getTimeSeriesData(commits: CommitData[]): TimeSeriesPoint[] {
     existing.commits += 1
     existing.linesAdded += commit.linesAdded
     existing.linesDeleted += commit.linesDeleted
-    existing.bytesAdded += commit.bytesAdded || 0
-    existing.bytesDeleted += commit.bytesDeleted || 0
+    existing.bytesAdded += commit.bytesAdded ?? 0
+    existing.bytesDeleted += commit.bytesDeleted ?? 0
     cumulativeLines += commit.linesAdded - commit.linesDeleted
-    cumulativeBytes += (commit.bytesAdded || 0) - (commit.bytesDeleted || 0)
+    cumulativeBytes += (commit.bytesAdded ?? 0) - (commit.bytesDeleted ?? 0)
     existing.cumulativeLines = cumulativeLines
     existing.cumulativeBytes = cumulativeBytes
   }
@@ -123,7 +130,7 @@ export function getLinearSeriesData(commits: CommitData[]): LinearSeriesPoint[] 
   
   commits.forEach((commit, index) => {
     cumulativeLines += commit.linesAdded - commit.linesDeleted
-    cumulativeBytes += (commit.bytesAdded || 0) - (commit.bytesDeleted || 0)
+    cumulativeBytes += (commit.bytesAdded ?? 0) - (commit.bytesDeleted ?? 0)
     
     linearSeries.push({
       commitIndex: index + 1,

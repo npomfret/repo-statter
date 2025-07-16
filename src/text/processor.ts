@@ -1,3 +1,10 @@
+// Assert utilities for fail-fast error handling
+function assert(condition: boolean, message: string): asserts condition {
+  if (!condition) {
+    throw new Error(message)
+  }
+}
+
 export interface WordFrequency {
   text: string
   size: number
@@ -65,7 +72,7 @@ export function getWordFrequencies(words: string[], config = DEFAULT_CONFIG): Wo
   const frequencyMap = new Map<string, number>()
   
   for (const word of words) {
-    frequencyMap.set(word, (frequencyMap.get(word) || 0) + 1)
+    frequencyMap.set(word, (frequencyMap.get(word) ?? 0) + 1)
   }
   
   // Convert to array and sort by frequency
@@ -90,6 +97,7 @@ export function getWordFrequencies(words: string[], config = DEFAULT_CONFIG): Wo
 }
 
 export function processCommitMessages(messages: string[]): WordFrequency[] {
+  assert(messages.length > 0, 'Cannot process empty messages array')
   const words = extractWords(messages)
   const filteredWords = filterStopWords(words)
   return getWordFrequencies(filteredWords)
