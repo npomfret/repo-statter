@@ -934,11 +934,30 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
           
           const card = document.createElement('div');
           card.className = 'card h-100';
+          card.style.position = 'relative';
+          
+          // Add trophy in top-right corner of the card
+          const trophyWrapper = document.createElement('div');
+          trophyWrapper.style.cssText = 'position: absolute; top: 10px; right: 10px; width: 80px; height: 80px; z-index: 10;';
+          trophyWrapper.innerHTML = category.trophy;
+          
+          // Ensure SVG fits properly within the wrapper
+          const svgElement = trophyWrapper.querySelector('svg');
+          if (svgElement) {
+            svgElement.style.width = '100%';
+            svgElement.style.height = '100%';
+            svgElement.style.display = 'block';
+          }
+          
+          card.appendChild(trophyWrapper);
           
           const cardHeader = document.createElement('div');
-          cardHeader.className = 'card-header d-flex align-items-center justify-content-between';
-          cardHeader.innerHTML = '<h6 class="mb-0">' + category.title + '</h6>' +
-                                '<div style="width: 40px; height: 40px;">' + category.trophy + '</div>';
+          cardHeader.className = 'card-header';
+          
+          const titleElement = document.createElement('h6');
+          titleElement.className = 'mb-0';
+          titleElement.textContent = category.title;
+          cardHeader.appendChild(titleElement);
           
           const cardBody = document.createElement('div');
           cardBody.className = 'card-body';
