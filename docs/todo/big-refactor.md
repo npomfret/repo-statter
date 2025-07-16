@@ -76,9 +76,97 @@ npm run dev test-repo    # Generate report
   - Remove all silent "return early" patterns
 - **Test**: Verify assertions throw on invalid data, app still works with valid data
 
-### Phase 2: Type Safety (One File at a Time)
+### Phase 2: Data Layer Extraction and Testing
 
-#### **Commit 3: Fix generator.ts types**
+#### **Commit 3: Create test builders for data structures**
+- **Goal**: Create test data builders before we extract anything
+- **Files**: `src/test/builders.ts` (new)
+- **Changes**:
+  - Create builder pattern for CommitData
+  - Create builder pattern for FileChange
+  - Create factory functions for common test scenarios
+  - Use these in existing tests
+- **Test**: Update existing tests to use builders, ensure they still pass
+
+#### **Commit 4: Extract and test git data parsing**
+- **Goal**: Move git parsing to pure, testable functions
+- **Files**: `src/data/git-extractor.ts` (new), `src/data/git-extractor.test.ts` (new)
+- **Changes**:
+  - Extract parseCommitDiff as pure function that takes git output string
+  - Extract getByteChanges as pure function
+  - Add comprehensive unit tests for all edge cases
+  - Keep parseCommitHistory in parser.ts for now (it needs git exec)
+- **Test**: New unit tests pass + integration still works
+
+#### **Commit 5: Extract and test contributor calculations**
+- **Goal**: Pure functions for contributor statistics
+- **Files**: `src/data/contributor-calculator.ts` (new), `src/data/contributor-calculator.test.ts` (new)
+- **Changes**:
+  - Move getContributorStats to new file as pure function
+  - Move average line calculation functions
+  - Add unit tests with edge cases (0 commits, 1 commit, many commits)
+  - Update imports in generator.ts
+- **Test**: Unit tests for all calculations + integration test
+
+#### **Commit 6: Extract and test file statistics**
+- **Goal**: Pure functions for file analysis
+- **Files**: `src/data/file-calculator.ts` (new), `src/data/file-calculator.test.ts` (new)
+- **Changes**:
+  - Move getFileTypeStats as pure function
+  - Move getFileHeatData with heat score algorithm
+  - Test edge cases (no files, unknown types, heat scoring)
+  - Update imports
+- **Test**: Unit tests for percentages and heat scores
+
+#### **Commit 7: Extract and test award calculations**
+- **Goal**: Pure functions for commit awards
+- **Files**: `src/data/award-calculator.ts` (new), `src/data/award-calculator.test.ts` (new)
+- **Changes**:
+  - Move all getTopCommitsBy* functions
+  - Test sorting and edge cases (ties, empty data)
+  - Ensure consistent award structure
+- **Test**: Unit tests for each award type
+
+#### **Commit 8: Extract and test time series transformations**
+- **Goal**: Pure functions for time-based data grouping
+- **Files**: `src/data/time-series-transformer.ts` (new), `src/data/time-series-transformer.test.ts` (new)
+- **Changes**:
+  - Move getTimeSeriesData as pure function
+  - Move getRepoAgeInHours
+  - Test hourly vs daily grouping logic
+  - Test cumulative calculations
+- **Test**: Unit tests for grouping and accumulation
+
+#### **Commit 9: Extract and test linear transformations**
+- **Goal**: Pure functions for linear progression data
+- **Files**: `src/data/linear-transformer.ts` (new), `src/data/linear-transformer.test.ts` (new)
+- **Changes**:
+  - Move getLinearSeriesData
+  - Test cumulative calculations
+  - Test index progression
+- **Test**: Unit tests for progression accuracy
+
+#### **Commit 10: Extract and test text processing**
+- **Goal**: Pure functions for commit message analysis
+- **Files**: Already exists, just needs tests
+- **Changes**:
+  - Add comprehensive tests for processCommitMessages
+  - Test word extraction, filtering, frequency calculation
+  - Test edge cases (empty messages, special characters)
+- **Test**: Unit tests for word cloud data generation
+
+#### **Commit 11: Create integration tests for data pipeline**
+- **Goal**: Ensure all extracted modules work together
+- **Files**: `src/data/data-pipeline.test.ts` (new)
+- **Changes**:
+  - Test complete flow: commits → stats → transformations
+  - Test with various repository scenarios
+  - Verify data consistency through pipeline
+- **Test**: Integration tests covering full data flow
+
+### Phase 3: Type Safety
+
+#### **Commit 12: Fix generator.ts types**
 - **Goal**: Replace all `any` with proper types, keep everything in one file for now
 - **Files**: `src/report/generator.ts`
 - **Changes**:
@@ -87,18 +175,9 @@ npm run dev test-repo    # Generate report
   - Add return type annotations to all functions
 - **Test**: TypeScript must compile without errors
 
-#### **Commit 4: Extract data transformation functions**
-- **Goal**: Move time series/linear series logic to pure, testable functions
-- **Files**: `src/report/generator.ts`, `src/utils/data-transformers.ts` (new)
-- **Changes**:
-  - Extract buildTimeSeriesData, buildLinearSeriesData to utils
-  - Add unit tests for these pure functions
-  - Keep everything else in generator.ts
-- **Test**: Unit tests for transformers + integration test still works
+### Phase 4: Chart Extraction (One Chart at a Time)
 
-### Phase 3: Chart Extraction (One Chart at a Time)
-
-#### **Commit 5: Extract Contributors chart**
+#### **Commit 13: Extract Contributors chart**
 - **Goal**: Pull out just one chart to establish pattern
 - **Files**: `src/report/generator.ts`, `src/charts/contributors-chart.ts` (new)
 - **Changes**:
@@ -107,7 +186,7 @@ npm run dev test-repo    # Generate report
   - Keep all other charts in generator.ts
 - **Test**: Contributors chart still works exactly the same
 
-#### **Commit 6-11: Extract remaining charts one by one**
+#### **Commit 14-19: Extract remaining charts one by one**
 - File Types Chart
 - Lines of Code Chart  
 - Commit Activity Chart
@@ -116,9 +195,9 @@ npm run dev test-repo    # Generate report
 - Word Cloud Chart
 - Each follows same pattern: one commit, one chart, test immediately
 
-### Phase 4: Template Cleanup
+### Phase 5: Template Cleanup
 
-#### **Commit 12: Extract template engine**
+#### **Commit 20: Extract template engine**
 - **Goal**: Move string replacement logic to separate module
 - **Files**: `src/report/generator.ts`, `src/utils/template-engine.ts` (new)
 - **Changes**:
@@ -126,7 +205,7 @@ npm run dev test-repo    # Generate report
   - Keep script generation in generator.ts for now
 - **Test**: Generated HTML identical to before
 
-#### **Commit 13: Extract script builder**
+#### **Commit 21: Extract script builder**
 - **Goal**: Move client-side script generation to separate module
 - **Files**: `src/report/generator.ts`, `src/utils/script-builder.ts` (new)
 - **Changes**:
@@ -193,43 +272,54 @@ Never proceed with a broken state. Every commit must leave the app in a working 
 - **Setup**: Reverted failed refactor, preserved test script and .gitignore
 - **Planning**: Created this comprehensive refactor plan
 - **Commit 1**: Remove all try/catch blocks ✓
+- **Commit 2**: Add assert utilities and replace defensive checks ✓
 
 ### 🔄 IN PROGRESS
-- **Commit 2**: Add assert utilities - COMPLETED CHANGES, READY FOR REVIEW
+- **Commit 3**: Fix generator.ts types (Phase 3) - COMPLETED CHANGES
 
 ### ⏳ PENDING  
-- **Commit 3**: Fix generator.ts types
-- **Commit 4**: Extract data transformation functions
-- **Commit 5**: Extract Contributors chart
-- **Commit 6-11**: Extract remaining charts
-- **Commit 12**: Extract template engine
-- **Commit 13**: Extract script builder
+**Phase 2: Data Layer (NEW - Added based on lessons learned)**
+- **Commit 3**: Create test builders for data structures
+- **Commit 4**: Extract and test git data parsing
+- **Commit 5**: Extract and test contributor calculations
+- **Commit 6**: Extract and test file statistics
+- **Commit 7**: Extract and test award calculations
+- **Commit 8**: Extract and test time series transformations
+- **Commit 9**: Extract and test linear transformations
+- **Commit 10**: Extract and test text processing
+- **Commit 11**: Create integration tests for data pipeline
+
+**Phase 3: Type Safety**
+- **Commit 12**: Fix generator.ts types ✓ (Already done, renumbered)
+
+**Phase 4: Chart Extraction**
+- **Commit 13**: Extract Contributors chart
+- **Commit 14-19**: Extract remaining charts
+
+**Phase 5: Template Cleanup**
+- **Commit 20**: Extract template engine
+- **Commit 21**: Extract script builder
 
 ### 📝 COMMIT STATUS
 *This section will be updated after each change to show what's ready for review*
 
 ---
-**READY FOR REVIEW**: ✅ **Commit 2: Add assert utilities and replace defensive checks**
+**READY FOR REVIEW**: ✅ **Commit 3 (Phase 3): Fix generator.ts types**
 
 **CHANGES MADE**:
-- ✅ Added assert utilities to `src/git/parser.ts`:
-  - `assert()` - Basic assertion that throws on false condition
-  - `assertDefined()` - Checks value is not null/undefined
-  - `assertNumber()` - Validates number type and not NaN
-- ✅ Added `assert()` to `src/stats/calculator.ts`, `src/chart/data-transformer.ts`, `src/text/processor.ts`
-- ✅ Replaced defensive patterns:
-  - Changed `|| 0` to `?? 0` for proper null coalescing (5 locations)
-  - Changed `|| 'repo'` to proper type check with assert
-  - Added assertions where data must exist (4 locations)
-- ✅ Tests pass: `npm run typecheck` ✓ `npm run test` ✓
-- ✅ Integration test: Generated report for test-repo successfully ✓
+- ✅ Created ChartData interface with all properties properly typed
+- ✅ Replaced `any` type in `injectDataIntoTemplate` parameter with `ChartData`
+- ✅ Added return type `Promise<ChartData>` to `transformCommitData` function
+- ✅ All `any` types have been eliminated from generator.ts
+
+**VERIFICATION**:
+- ✅ No more `any` types in generator.ts (verified with grep)
+- ✅ Tests pass: `npm run test` ✓
+- ✅ Integration test: Generated report successfully ✓
 
 **FILES MODIFIED**: 
-- `src/git/parser.ts`
-- `src/stats/calculator.ts`
-- `src/chart/data-transformer.ts`
-- `src/text/processor.ts`
+- `src/report/generator.ts`
 
-**WAITING FOR**: User approval to commit these changes
+**NOTE**: We've completed what was originally Commit 3 in the old plan (now Commit 12 in the new plan with data layer extraction). This gives us proper type safety in the generator before we start extracting the data layer.
 
-**LAST UPDATED**: Commit 2 completed, awaiting review
+**LAST UPDATED**: Type fixes completed, awaiting review
