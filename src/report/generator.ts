@@ -348,6 +348,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
         renderWordCloud();
         renderFileHeatmap();
         renderAwards();
+        renderUserCharts();
       }
       
       function populateFilters() {
@@ -390,6 +391,31 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
         } else {
           return bytes.toFixed(0) + ' bytes';
         }
+      }
+      
+      function formatNumber(value) {
+        return Math.abs(value).toLocaleString();
+      }
+      
+      function createYAxisFormatter(metric) {
+        return function(val) {
+          const absVal = Math.abs(val);
+          if (metric === 'bytes') {
+            return formatBytes(absVal);
+          }
+          return formatNumber(absVal);
+        };
+      }
+      
+      function createTooltipFormatter(metric) {
+        return function(val) {
+          const prefix = val < 0 ? '-' : '';
+          const absVal = Math.abs(val);
+          if (metric === 'bytes') {
+            return prefix + formatBytes(absVal);
+          }
+          return prefix + formatNumber(absVal);
+        };
       }
       
       function createCommitTooltip(xAxis, filteredLinearSeries, commits, customContent) {
@@ -991,6 +1017,333 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
         });
       }
       
+      let userChartInstances = [];
+      
+      function createUserChartTooltip(xAxis, userCommits, metric) {
+        return function({ seriesIndex, dataPointIndex, w }) {
+          if (xAxis === 'commit' && dataPointIndex > 0) {
+            const commit = userCommits[dataPointIndex - 1]; // -1 because we have a zero starting point
+            if (commit) {
+              const truncateMessage = function(msg, maxLength) {
+                if (msg.length <= maxLength) return msg;
+                return msg.substring(0, maxLength) + '...';
+              };
+              
+              let content = '<div class="custom-tooltip">' +
+                '<div class="tooltip-title">Commit #' + dataPointIndex + '</div>' +
+                '<div class="tooltip-content">' +
+                '<div><strong>SHA:</strong> ' + commit.sha.substring(0, 7) + '</div>' +
+                '<div><strong>Date:</strong> ' + new Date(commit.date).toLocaleString() + '</div>' +
+                '<div class="tooltip-message"><strong>Message:</strong> ' + truncateMessage(commit.message, 200) + '</div>';
+              
+              if (metric === 'lines') {
+                content += '<div><strong>Lines Added:</strong> +' + commit.linesAdded.toLocaleString() + '</div>';
+                content += '<div><strong>Lines Removed:</strong> -' + commit.linesDeleted.toLocaleString() + '</div>';
+              } else {
+                const bytesAdded = commit.bytesAdded || commit.linesAdded * 50;
+                const bytesRemoved = commit.bytesDeleted || commit.linesDeleted * 50;
+                content += '<div><strong>Bytes Added:</strong> +' + formatBytes(bytesAdded) + '</div>';
+                content += '<div><strong>Bytes Removed:</strong> -' + formatBytes(bytesRemoved) + '</div>';
+              }
+              
+              content += '</div></div>';
+              return content;
+            }
+          }
+          return null;
+        };
+      }
+      
+      function renderUserCharts() {
+        const container = document.getElementById('userChartsContainer');
+        container.innerHTML = '';
+        
+        // Destroy existing chart instances
+        userChartInstances.forEach(chart => {
+          if (chart) chart.destroy();
+        });
+        userChartInstances = [];
+        
+        // Get contributors sorted by commit count
+        const sortedContributors = [...filteredContributors].sort((a, b) => b.commits - a.commits);
+        
+        sortedContributors.forEach((contributor, index) => {
+          // Get commits for this user
+          const userCommits = filteredCommits.filter(c => c.authorName === contributor.name);
+          
+          // Create chart container
+          const col = document.createElement('div');
+          col.className = 'col-12 mb-4';
+          
+          const card = document.createElement('div');
+          card.className = 'card';
+          
+          const cardHeader = document.createElement('div');
+          cardHeader.className = 'card-header';
+          
+          const titleWrapper = document.createElement('div');
+          titleWrapper.className = 'd-flex justify-content-between align-items-center';
+          
+          const title = document.createElement('h5');
+          title.className = 'card-title mb-0';
+          title.textContent = contributor.name + ' - Code Changes';
+          
+          const stats = document.createElement('small');
+          stats.className = 'text-muted';
+          stats.textContent = contributor.commits + ' commits | +' + contributor.linesAdded.toLocaleString() + ' / -' + contributor.linesDeleted.toLocaleString() + ' lines';
+          
+          titleWrapper.appendChild(title);
+          titleWrapper.appendChild(stats);
+          cardHeader.appendChild(titleWrapper);
+          
+          const cardBody = document.createElement('div');
+          cardBody.className = 'card-body';
+          
+          // Create controls
+          const controls = document.createElement('div');
+          controls.className = 'mb-3';
+          
+          // X-axis toggle
+          const xAxisGroup = document.createElement('div');
+          xAxisGroup.className = 'btn-group btn-group-sm me-3';
+          xAxisGroup.setAttribute('role', 'group');
+          
+          const dateRadio = document.createElement('input');
+          dateRadio.type = 'radio';
+          dateRadio.className = 'btn-check';
+          dateRadio.name = 'userXAxis' + index;
+          dateRadio.id = 'userXAxisDate' + index;
+          dateRadio.value = 'date';
+          dateRadio.checked = true;
+          
+          const dateLabel = document.createElement('label');
+          dateLabel.className = 'btn btn-outline-primary';
+          dateLabel.setAttribute('for', 'userXAxisDate' + index);
+          dateLabel.textContent = 'By Date';
+          
+          const commitRadio = document.createElement('input');
+          commitRadio.type = 'radio';
+          commitRadio.className = 'btn-check';
+          commitRadio.name = 'userXAxis' + index;
+          commitRadio.id = 'userXAxisCommit' + index;
+          commitRadio.value = 'commit';
+          
+          const commitLabel = document.createElement('label');
+          commitLabel.className = 'btn btn-outline-primary';
+          commitLabel.setAttribute('for', 'userXAxisCommit' + index);
+          commitLabel.textContent = 'By Commit';
+          
+          xAxisGroup.appendChild(dateRadio);
+          xAxisGroup.appendChild(dateLabel);
+          xAxisGroup.appendChild(commitRadio);
+          xAxisGroup.appendChild(commitLabel);
+          
+          // Metric toggle
+          const metricGroup = document.createElement('div');
+          metricGroup.className = 'btn-group btn-group-sm';
+          metricGroup.setAttribute('role', 'group');
+          
+          const linesRadio = document.createElement('input');
+          linesRadio.type = 'radio';
+          linesRadio.className = 'btn-check';
+          linesRadio.name = 'userMetric' + index;
+          linesRadio.id = 'userMetricLines' + index;
+          linesRadio.value = 'lines';
+          linesRadio.checked = true;
+          
+          const linesLabel = document.createElement('label');
+          linesLabel.className = 'btn btn-outline-secondary';
+          linesLabel.setAttribute('for', 'userMetricLines' + index);
+          linesLabel.textContent = 'Lines';
+          
+          const bytesRadio = document.createElement('input');
+          bytesRadio.type = 'radio';
+          bytesRadio.className = 'btn-check';
+          bytesRadio.name = 'userMetric' + index;
+          bytesRadio.id = 'userMetricBytes' + index;
+          bytesRadio.value = 'bytes';
+          
+          const bytesLabel = document.createElement('label');
+          bytesLabel.className = 'btn btn-outline-secondary';
+          bytesLabel.setAttribute('for', 'userMetricBytes' + index);
+          bytesLabel.textContent = 'Bytes';
+          
+          metricGroup.appendChild(linesRadio);
+          metricGroup.appendChild(linesLabel);
+          metricGroup.appendChild(bytesRadio);
+          metricGroup.appendChild(bytesLabel);
+          
+          controls.appendChild(xAxisGroup);
+          controls.appendChild(metricGroup);
+          
+          // Create chart container
+          const chartDiv = document.createElement('div');
+          chartDiv.id = 'userChart' + index;
+          
+          cardBody.appendChild(controls);
+          cardBody.appendChild(chartDiv);
+          card.appendChild(cardHeader);
+          card.appendChild(cardBody);
+          col.appendChild(card);
+          container.appendChild(col);
+          
+          // Render the chart
+          function renderUserChart() {
+            const xAxis = document.querySelector('input[name="userXAxis' + index + '"]:checked').value;
+            const metric = document.querySelector('input[name="userMetric' + index + '"]:checked').value;
+            const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+            
+            // Prepare data
+            let addedData = [];
+            let removedData = [];
+            
+            if (xAxis === 'date') {
+              // Use the same time series data structure as other charts
+              let cumulativeAdded = 0;
+              let cumulativeRemoved = 0;
+              let cumulativeBytesAdded = 0;
+              let cumulativeBytesRemoved = 0;
+              
+              // Process all dates in filteredTimeSeries to ensure consistent x-axis
+              filteredTimeSeries.forEach(point => {
+                // Sum up this user's contributions for this date
+                const dateContributions = userCommits.filter(commit => {
+                  const commitDate = new Date(commit.date).toISOString().split('T')[0];
+                  return commitDate === point.date;
+                });
+                
+                const dayAdded = dateContributions.reduce((sum, c) => sum + c.linesAdded, 0);
+                const dayRemoved = dateContributions.reduce((sum, c) => sum + c.linesDeleted, 0);
+                const dayBytesAdded = dateContributions.reduce((sum, c) => sum + (c.bytesAdded || c.linesAdded * 50), 0);
+                const dayBytesRemoved = dateContributions.reduce((sum, c) => sum + (c.bytesDeleted || c.linesDeleted * 50), 0);
+                
+                cumulativeAdded += dayAdded;
+                cumulativeRemoved += dayRemoved;
+                cumulativeBytesAdded += dayBytesAdded;
+                cumulativeBytesRemoved += dayBytesRemoved;
+                
+                if (metric === 'lines') {
+                  addedData.push({ x: point.date, y: cumulativeAdded });
+                  removedData.push({ x: point.date, y: -cumulativeRemoved });
+                } else {
+                  addedData.push({ x: point.date, y: cumulativeBytesAdded });
+                  removedData.push({ x: point.date, y: -cumulativeBytesRemoved });
+                }
+              });
+            } else {
+              // By commit - add zero starting point
+              addedData.push({ x: 0, y: 0 });
+              removedData.push({ x: 0, y: 0 });
+              
+              // Calculate cumulative values
+              let cumulativeAdded = 0;
+              let cumulativeRemoved = 0;
+              let cumulativeBytesAdded = 0;
+              let cumulativeBytesRemoved = 0;
+              
+              userCommits.forEach((commit, i) => {
+                const x = i + 1;
+                cumulativeAdded += commit.linesAdded;
+                cumulativeRemoved += commit.linesDeleted;
+                const bytesAdded = commit.bytesAdded || commit.linesAdded * 50;
+                const bytesRemoved = commit.bytesDeleted || commit.linesDeleted * 50;
+                cumulativeBytesAdded += bytesAdded;
+                cumulativeBytesRemoved += bytesRemoved;
+                
+                if (metric === 'lines') {
+                  addedData.push({ x, y: cumulativeAdded });
+                  removedData.push({ x, y: -cumulativeRemoved });
+                } else {
+                  addedData.push({ x, y: cumulativeBytesAdded });
+                  removedData.push({ x, y: -cumulativeBytesRemoved });
+                }
+              });
+            }
+            
+            // Destroy existing chart
+            if (userChartInstances[index]) {
+              userChartInstances[index].destroy();
+            }
+            
+            const options = {
+              chart: {
+                type: 'line',
+                height: 350,
+                toolbar: { show: false },
+                background: isDark ? '#161b22' : '#ffffff'
+              },
+              series: [
+                {
+                  name: metric === 'lines' ? 'Total Lines Added' : 'Total Bytes Added',
+                  data: addedData
+                },
+                {
+                  name: metric === 'lines' ? 'Total Lines Removed' : 'Total Bytes Removed',
+                  data: removedData
+                }
+              ],
+              stroke: {
+                curve: 'smooth',
+                width: 2
+              },
+              xaxis: {
+                type: xAxis === 'date' ? 'datetime' : 'numeric',
+                title: {
+                  text: xAxis === 'date' ? 'Date' : 'Commit Number',
+                  style: { color: isDark ? '#f0f6fc' : '#24292f' }
+                },
+                labels: {
+                  datetimeFormatter: {
+                    year: 'yyyy',
+                    month: 'MMM yyyy',
+                    day: 'dd MMM',
+                    hour: 'HH:mm',
+                    minute: 'HH:mm',
+                    second: 'HH:mm:ss'
+                  },
+                  datetimeUTC: false,
+                  style: { colors: isDark ? '#f0f6fc' : '#24292f' },
+                  formatter: xAxis === 'commit' ? function(val) { return Math.floor(val); } : undefined
+                }
+              },
+              yaxis: {
+                title: {
+                  text: metric === 'lines' ? 'Lines' : 'Bytes',
+                  style: { color: isDark ? '#f0f6fc' : '#24292f' }
+                },
+                labels: {
+                  style: { colors: isDark ? '#f0f6fc' : '#24292f' },
+                  formatter: createYAxisFormatter(metric)
+                }
+              },
+              colors: isDark ? ['#3fb950', '#f85149'] : ['#87bc45', '#ea5545'],
+              grid: { borderColor: isDark ? '#30363d' : '#e1e4e8' },
+              tooltip: {
+                theme: isDark ? 'dark' : 'light',
+                x: {
+                  format: xAxis === 'date' ? 'dd MMM yyyy' : undefined
+                },
+                y: {
+                  formatter: createTooltipFormatter(metric)
+                },
+                custom: xAxis === 'commit' ? createUserChartTooltip(xAxis, userCommits, metric) : undefined
+              }
+            };
+            
+            userChartInstances[index] = new ApexCharts(document.getElementById('userChart' + index), options);
+            userChartInstances[index].render();
+          }
+          
+          renderUserChart();
+          
+          // Add event listeners
+          dateRadio.addEventListener('change', renderUserChart);
+          commitRadio.addEventListener('change', renderUserChart);
+          linesRadio.addEventListener('change', renderUserChart);
+          bytesRadio.addEventListener('change', renderUserChart);
+        });
+      }
+      
       document.addEventListener('DOMContentLoaded', function() {
         // Initialize filters
         populateFilters();
@@ -1004,6 +1357,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
         renderWordCloud();
         renderFileHeatmap();
         renderAwards();
+        renderUserCharts();
         
         // Add event listeners for filters
         document.getElementById('applyFilters').addEventListener('click', applyFilters);
@@ -1059,6 +1413,7 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             renderRepositorySizeChart();
             renderWordCloud();
             renderFileHeatmap();
+            renderUserCharts();
           });
         });
       });
