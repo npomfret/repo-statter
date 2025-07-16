@@ -457,6 +457,86 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
         };
       }
       
+      function buildTimeSeriesData(data, xAxis, yValueExtractor) {
+        if (xAxis === 'date') {
+          return filteredTimeSeries.map(point => ({
+            x: new Date(point.date).getTime(),
+            y: yValueExtractor(point)
+          }));
+        } else {
+          return data.map(point => ({
+            x: point.commitIndex,
+            y: yValueExtractor(point)
+          }));
+        }
+      }
+      
+      function buildUserTimeSeriesData(userCommits, xAxis, metric) {
+        const addedData = [];
+        const removedData = [];
+        
+        if (xAxis === 'date') {
+          let cumulativeAdded = 0;
+          let cumulativeRemoved = 0;
+          let cumulativeBytesAdded = 0;
+          let cumulativeBytesRemoved = 0;
+          
+          filteredTimeSeries.forEach(point => {
+            const dateContributions = userCommits.filter(commit => {
+              const commitDate = new Date(commit.date).toISOString().split('T')[0];
+              return commitDate === point.date;
+            });
+            
+            const dayAdded = dateContributions.reduce((sum, c) => sum + c.linesAdded, 0);
+            const dayRemoved = dateContributions.reduce((sum, c) => sum + c.linesDeleted, 0);
+            const dayBytesAdded = dateContributions.reduce((sum, c) => sum + (c.bytesAdded || c.linesAdded * 50), 0);
+            const dayBytesRemoved = dateContributions.reduce((sum, c) => sum + (c.bytesDeleted || c.linesDeleted * 50), 0);
+            
+            cumulativeAdded += dayAdded;
+            cumulativeRemoved += dayRemoved;
+            cumulativeBytesAdded += dayBytesAdded;
+            cumulativeBytesRemoved += dayBytesRemoved;
+            
+            const timestamp = new Date(point.date).getTime();
+            if (metric === 'lines') {
+              addedData.push({ x: timestamp, y: cumulativeAdded });
+              removedData.push({ x: timestamp, y: -cumulativeRemoved });
+            } else {
+              addedData.push({ x: timestamp, y: cumulativeBytesAdded });
+              removedData.push({ x: timestamp, y: -cumulativeBytesRemoved });
+            }
+          });
+        } else {
+          addedData.push({ x: 0, y: 0 });
+          removedData.push({ x: 0, y: 0 });
+          
+          let cumulativeAdded = 0;
+          let cumulativeRemoved = 0;
+          let cumulativeBytesAdded = 0;
+          let cumulativeBytesRemoved = 0;
+          
+          userCommits.forEach((commit, i) => {
+            const x = i + 1;
+            cumulativeAdded += commit.linesAdded;
+            cumulativeRemoved += commit.linesDeleted;
+            const bytesAdded = commit.bytesAdded || commit.linesAdded * 50;
+            const bytesRemoved = commit.bytesDeleted || commit.linesDeleted * 50;
+            cumulativeBytesAdded += bytesAdded;
+            cumulativeBytesRemoved += bytesRemoved;
+            
+            if (metric === 'lines') {
+              addedData.push({ x, y: cumulativeAdded });
+              removedData.push({ x, y: -cumulativeRemoved });
+            } else {
+              addedData.push({ x, y: cumulativeBytesAdded });
+              removedData.push({ x, y: -cumulativeBytesRemoved });
+            }
+          });
+        }
+        
+        return { addedData, removedData };
+      }
+      
       function renderCommitActivityChart() {
         const xAxis = document.querySelector('input[name="commitActivityXAxis"]:checked').value;
         const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
@@ -475,9 +555,11 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
           },
           series: [{
             name: 'Commits',
-            data: xAxis === 'date'
-              ? filteredTimeSeries.map(point => ({ x: point.date, y: point.commits }))
-              : filteredLinearSeries.map(point => ({ x: point.commitIndex, y: point.commits }))
+            data: buildTimeSeriesData(
+              filteredLinearSeries,
+              xAxis,
+              point => point.commits
+            )
           }],
           xaxis: { 
             type: xAxis === 'date' ? 'datetime' : 'numeric', 
@@ -561,9 +643,11 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
           },
           series: [{
             name: 'Lines of Code',
-            data: xAxis === 'date'
-              ? filteredTimeSeries.map(point => ({ x: new Date(point.date).getTime(), y: point.cumulativeLines }))
-              : filteredLinearSeries.map(point => ({ x: point.commitIndex, y: point.cumulativeLines }))
+            data: buildTimeSeriesData(
+              filteredLinearSeries,
+              xAxis,
+              point => point.cumulativeLines
+            )
           }],
           dataLabels: {
             enabled: false
@@ -682,15 +766,19 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
           series: [
             { 
               name: 'Lines Added', 
-              data: xAxis === 'date'
-                ? filteredTimeSeries.map(point => ({ x: point.date, y: point.linesAdded }))
-                : filteredLinearSeries.map(point => ({ x: point.commitIndex, y: point.linesAdded }))
+              data: buildTimeSeriesData(
+                filteredLinearSeries,
+                xAxis,
+                point => point.linesAdded
+              )
             },
             { 
               name: 'Lines Deleted', 
-              data: xAxis === 'date'
-                ? filteredTimeSeries.map(point => ({ x: point.date, y: point.linesDeleted }))
-                : filteredLinearSeries.map(point => ({ x: point.commitIndex, y: point.linesDeleted }))
+              data: buildTimeSeriesData(
+                filteredLinearSeries,
+                xAxis,
+                point => point.linesDeleted
+              )
             }
           ],
           xaxis: { 
@@ -751,9 +839,11 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
           },
           series: [{
             name: 'Repository Size',
-            data: xAxis === 'date'
-              ? filteredTimeSeries.map(point => ({ x: point.date, y: point.cumulativeBytes }))
-              : filteredLinearSeries.map(point => ({ x: point.commitIndex, y: point.cumulativeBytes }))
+            data: buildTimeSeriesData(
+              filteredLinearSeries,
+              xAxis,
+              point => point.cumulativeBytes
+            )
           }],
           dataLabels: { enabled: false },
           stroke: { curve: 'smooth' },
@@ -1211,72 +1301,8 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             const metric = document.querySelector('input[name="userMetric' + index + '"]:checked').value;
             const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
             
-            // Prepare data
-            let addedData = [];
-            let removedData = [];
-            
-            if (xAxis === 'date') {
-              // Use the same time series data structure as other charts
-              let cumulativeAdded = 0;
-              let cumulativeRemoved = 0;
-              let cumulativeBytesAdded = 0;
-              let cumulativeBytesRemoved = 0;
-              
-              // Process all dates in filteredTimeSeries to ensure consistent x-axis
-              filteredTimeSeries.forEach(point => {
-                // Sum up this user's contributions for this date
-                const dateContributions = userCommits.filter(commit => {
-                  const commitDate = new Date(commit.date).toISOString().split('T')[0];
-                  return commitDate === point.date;
-                });
-                
-                const dayAdded = dateContributions.reduce((sum, c) => sum + c.linesAdded, 0);
-                const dayRemoved = dateContributions.reduce((sum, c) => sum + c.linesDeleted, 0);
-                const dayBytesAdded = dateContributions.reduce((sum, c) => sum + (c.bytesAdded || c.linesAdded * 50), 0);
-                const dayBytesRemoved = dateContributions.reduce((sum, c) => sum + (c.bytesDeleted || c.linesDeleted * 50), 0);
-                
-                cumulativeAdded += dayAdded;
-                cumulativeRemoved += dayRemoved;
-                cumulativeBytesAdded += dayBytesAdded;
-                cumulativeBytesRemoved += dayBytesRemoved;
-                
-                if (metric === 'lines') {
-                  addedData.push({ x: point.date, y: cumulativeAdded });
-                  removedData.push({ x: point.date, y: -cumulativeRemoved });
-                } else {
-                  addedData.push({ x: point.date, y: cumulativeBytesAdded });
-                  removedData.push({ x: point.date, y: -cumulativeBytesRemoved });
-                }
-              });
-            } else {
-              // By commit - add zero starting point
-              addedData.push({ x: 0, y: 0 });
-              removedData.push({ x: 0, y: 0 });
-              
-              // Calculate cumulative values
-              let cumulativeAdded = 0;
-              let cumulativeRemoved = 0;
-              let cumulativeBytesAdded = 0;
-              let cumulativeBytesRemoved = 0;
-              
-              userCommits.forEach((commit, i) => {
-                const x = i + 1;
-                cumulativeAdded += commit.linesAdded;
-                cumulativeRemoved += commit.linesDeleted;
-                const bytesAdded = commit.bytesAdded || commit.linesAdded * 50;
-                const bytesRemoved = commit.bytesDeleted || commit.linesDeleted * 50;
-                cumulativeBytesAdded += bytesAdded;
-                cumulativeBytesRemoved += bytesRemoved;
-                
-                if (metric === 'lines') {
-                  addedData.push({ x, y: cumulativeAdded });
-                  removedData.push({ x, y: -cumulativeRemoved });
-                } else {
-                  addedData.push({ x, y: cumulativeBytesAdded });
-                  removedData.push({ x, y: -cumulativeBytesRemoved });
-                }
-              });
-            }
+            // Prepare data using the common builder
+            const { addedData, removedData } = buildUserTimeSeriesData(userCommits, xAxis, metric);
             
             // Destroy existing chart
             if (userChartInstances[index]) {
