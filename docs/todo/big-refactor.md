@@ -278,9 +278,10 @@ Never proceed with a broken state. Every commit must leave the app in a working 
 - **Commit 5**: Extract and test contributor calculations ✓
 - **Commit 6**: Extract and test file statistics ✓
 - **Commit 7**: Extract and test award calculations ✓
+- **Commit 8**: Extract and test time series transformations ✓
 
 ### 🔄 IN PROGRESS
-- **Commit 8**: Extract and test time series transformations
+- **Commit 9**: Extract and test linear transformations
 
 ### ⏳ PENDING  
 **Phase 2: Data Layer (NEW - Added based on lessons learned)**
@@ -309,37 +310,34 @@ Never proceed with a broken state. Every commit must leave the app in a working 
 *This section will be updated after each change to show what's ready for review*
 
 ---
-**READY FOR REVIEW**: ✅ **Commit 7: Extract and test award calculations**
+**READY FOR REVIEW**: ✅ **Commit 8: Extract and test time series transformations**
 
 **CHANGES MADE**:
-- ✅ Created `src/data/award-calculator.ts` with pure functions:
-  - `getTopCommitsByFilesModified`: Top 5 commits by number of files changed
-  - `getTopCommitsByBytesAdded`: Top 5 commits by bytes added
-  - `getTopCommitsByBytesRemoved`: Top 5 commits by bytes deleted
-  - `getTopCommitsByLinesAdded`: Top 5 commits by lines added
-  - `getTopCommitsByLinesRemoved`: Top 5 commits by lines deleted
-  - Private `isRealCommit` helper to filter out merge commits
-- ✅ Created comprehensive tests in `src/data/award-calculator.test.ts`:
-  - 13 tests covering all edge cases
+- ✅ Created `src/data/time-series-transformer.ts` with pure functions:
+  - `getTimeSeriesData`: Transforms commits into time-based data points with automatic hourly/daily grouping
+  - `getRepoAgeInHours`: Calculates repository age to determine granularity
+  - Private `assert` helper for fail-fast error handling
+- ✅ Created comprehensive tests in `src/data/time-series-transformer.test.ts`:
+  - 12 tests covering all edge cases
   - Tests for empty commit arrays
-  - Tests for sorting and top-5 limiting
-  - Tests for merge commit exclusion
-  - Tests for handling ties
-  - Tests for commits without byte information
-  - Tests for multi-file aggregation
-  - Tests for consistent award structure
-- ✅ Updated `src/stats/calculator.ts` to re-export from new module
-- ✅ Removed all award calculation code from calculator.ts
+  - Tests for hourly vs daily grouping logic based on repo age
+  - Tests for cumulative calculations (lines and bytes)
+  - Tests for handling commits without byte data
+  - Tests for date sorting and formatting
+  - Tests for single commit scenarios
+  - Tests for multi-day repository scenarios
+- ✅ Updated `src/chart/data-transformer.ts` to re-export from new module
+- ✅ Removed all time series transformation code from data-transformer.ts
 
 **VERIFICATION**:
-- ✅ All 13 new tests pass
-- ✅ All 97 total tests pass
+- ✅ All 12 new tests pass
+- ✅ All 109 total tests pass
 - ✅ Integration test: Generated report successfully for test-repo
 - ✅ No breaking changes to existing functionality
 
 **FILES MODIFIED**: 
-- `src/data/award-calculator.ts` (new)
-- `src/data/award-calculator.test.ts` (new)
-- `src/stats/calculator.ts` (refactored to re-export from new module)
+- `src/data/time-series-transformer.ts` (new)
+- `src/data/time-series-transformer.test.ts` (new)
+- `src/chart/data-transformer.ts` (refactored to re-export from new module)
 
-**LAST UPDATED**: Award calculations extraction completed
+**LAST UPDATED**: Time series transformations extraction completed
