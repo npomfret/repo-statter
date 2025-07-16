@@ -276,9 +276,10 @@ Never proceed with a broken state. Every commit must leave the app in a working 
 - **Commit 3**: Create test builders for data structures ✓ (Already existed in src/test/builders.ts)
 - **Commit 4**: Extract and test git data parsing ✓
 - **Commit 5**: Extract and test contributor calculations ✓
+- **Commit 6**: Extract and test file statistics ✓
 
 ### 🔄 IN PROGRESS
-- **Commit 6**: Extract and test file statistics
+- **Commit 7**: Extract and test award calculations
 
 ### ⏳ PENDING  
 **Phase 2: Data Layer (NEW - Added based on lessons learned)**
@@ -307,34 +308,32 @@ Never proceed with a broken state. Every commit must leave the app in a working 
 *This section will be updated after each change to show what's ready for review*
 
 ---
-**READY FOR REVIEW**: ✅ **Commit 5: Extract and test contributor calculations**
+**READY FOR REVIEW**: ✅ **Commit 6: Extract and test file statistics**
 
 **CHANGES MADE**:
-- ✅ Created `src/data/contributor-calculator.ts` with pure functions:
-  - `getContributorStats`: Calculates contributor statistics from commits
-  - `getContributorsByAverageLinesChanged`: Gets contributors with average lines changed metrics
-  - `getLowestAverageLinesChanged`: Returns contributors with smallest average changes
-  - `getHighestAverageLinesChanged`: Returns contributors with largest average changes
-- ✅ Created comprehensive tests in `src/data/contributor-calculator.test.ts`:
-  - 14 tests covering all functions
-  - Tests for single/multiple contributors
-  - Tests for sorting and filtering logic
-  - Tests for merge commit exclusion
-  - Tests for minimum commit threshold
+- ✅ Created `src/data/file-calculator.ts` with pure functions:
+  - `getFileTypeStats`: Calculates statistics for each file type (lines, percentage)
+  - `getFileHeatData`: Calculates heat scores for files based on frequency and recency
+- ✅ Created comprehensive tests in `src/data/file-calculator.test.ts`:
+  - 14 tests covering all edge cases
+  - Tests for single/multiple file types
+  - Tests for sorting and percentage calculations
+  - Tests for heat score algorithm with time-based decay
+  - Tests for empty data handling
 - ✅ Updated `src/stats/calculator.ts` to re-export from new module
-- ✅ Fixed `src/test/builders.ts` to properly use override parameters
-- ✅ Used proper TypeScript module exports (`export type` for types)
+- ✅ Enhanced `src/test/builders.ts` with `withFileType` method
+- ✅ Cleaned up unused imports and assert functions
 
 **VERIFICATION**:
 - ✅ All 14 new tests pass
-- ✅ All 70 total tests pass
+- ✅ All 84 total tests pass
 - ✅ Integration test: Generated report successfully for test-repo
 - ✅ No breaking changes to existing functionality
 
 **FILES MODIFIED**: 
-- `src/data/contributor-calculator.ts` (new)
-- `src/data/contributor-calculator.test.ts` (new)
+- `src/data/file-calculator.ts` (new)
+- `src/data/file-calculator.test.ts` (new)
 - `src/stats/calculator.ts` (refactored to re-export from new module)
-- `src/test/builders.ts` (enhanced to support overrides)
+- `src/test/builders.ts` (added withFileType method)
 
-**LAST UPDATED**: Contributor calculations extraction completed
+**LAST UPDATED**: File statistics extraction completed

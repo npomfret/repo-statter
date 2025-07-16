@@ -1,13 +1,8 @@
 import type { CommitData } from '../git/parser.js'
 export type { ContributorStats, ContributorAward } from '../data/contributor-calculator.js'
 export { getContributorStats, getLowestAverageLinesChanged, getHighestAverageLinesChanged } from '../data/contributor-calculator.js'
-
-// Assert utilities for fail-fast error handling
-function assert(condition: boolean, message: string): asserts condition {
-  if (!condition) {
-    throw new Error(message)
-  }
-}
+export type { FileTypeStats, FileHeatData } from '../data/file-calculator.js'
+export { getFileTypeStats, getFileHeatData } from '../data/file-calculator.js'
 
 export interface CommitAward {
   sha: string
@@ -17,90 +12,6 @@ export interface CommitAward {
   value: number
 }
 
-export interface FileTypeStats {
-  type: string
-  lines: number
-  percentage: number
-}
-
-export interface FileHeatData {
-  fileName: string
-  heatScore: number
-  commitCount: number
-  lastModified: string
-  totalLines: number
-  fileType: string
-}
-
-
-export function getFileTypeStats(commits: CommitData[]): FileTypeStats[] {
-  const fileTypeMap = new Map<string, number>()
-  
-  for (const commit of commits) {
-    for (const fileChange of commit.filesChanged) {
-      const existing = fileTypeMap.get(fileChange.fileType) ?? 0
-      fileTypeMap.set(fileChange.fileType, existing + fileChange.linesAdded)
-    }
-  }
-  
-  const total = Array.from(fileTypeMap.values()).reduce((sum, lines) => sum + lines, 0)
-  
-  return Array.from(fileTypeMap.entries())
-    .map(([type, lines]) => ({
-      type,
-      lines,
-      percentage: total > 0 ? (lines / total) * 100 : 0
-    }))
-    .sort((a, b) => b.lines - a.lines)
-}
-
-export function getFileHeatData(commits: CommitData[]): FileHeatData[] {
-  const fileMap = new Map<string, { commitCount: number; lastModified: Date; totalLines: number; fileType: string }>()
-  
-  for (const commit of commits) {
-    const commitDate = new Date(commit.date)
-    
-    for (const fileChange of commit.filesChanged) {
-      const existing = fileMap.get(fileChange.fileName)
-      
-      if (!existing) {
-        fileMap.set(fileChange.fileName, {
-          commitCount: 1,
-          lastModified: commitDate,
-          totalLines: fileChange.linesAdded,
-          fileType: fileChange.fileType
-        })
-      } else {
-        existing.commitCount += 1
-        existing.totalLines += fileChange.linesAdded
-        if (commitDate > existing.lastModified) {
-          existing.lastModified = commitDate
-        }
-      }
-    }
-  }
-  
-  const now = new Date()
-  const results: FileHeatData[] = []
-  
-  for (const [fileName, data] of fileMap.entries()) {
-    const daysSinceLastModification = (now.getTime() - data.lastModified.getTime()) / (1000 * 60 * 60 * 24)
-    const frequency = data.commitCount
-    const recency = Math.exp(-daysSinceLastModification / 30)
-    const heatScore = (frequency * 0.4) + (recency * 0.6)
-    
-    results.push({
-      fileName,
-      heatScore,
-      commitCount: data.commitCount,
-      lastModified: data.lastModified.toISOString(),
-      totalLines: Math.max(data.totalLines, 1),
-      fileType: data.fileType
-    })
-  }
-  
-  return results.sort((a, b) => b.heatScore - a.heatScore)
-}
 
 function isRealCommit(commit: CommitData): boolean {
   const message = commit.message.toLowerCase()

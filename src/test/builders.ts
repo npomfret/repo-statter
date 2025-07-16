@@ -1,5 +1,5 @@
 import type { CommitData, FileChange } from '../git/parser.js'
-import type { ContributorStats, FileTypeStats, FileHeatData, ContributorAward, CommitAward } from '../stats/calculator.js'
+import type { ContributorStats } from '../stats/calculator.js'
 import type { TimeSeriesPoint, LinearSeriesPoint } from '../chart/data-transformer.js'
 
 export class CommitDataBuilder {
@@ -74,6 +74,11 @@ export class FileChangeBuilder {
   withPath(path: string): this {
     this.fileChange.fileName = path
     this.fileChange.fileType = path.split('.').pop() || ''
+    return this
+  }
+
+  withFileType(fileType: string): this {
+    this.fileChange.fileType = fileType
     return this
   }
 
