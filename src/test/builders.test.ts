@@ -132,7 +132,7 @@ describe('Factory functions', () => {
     const commit = createTestCommit()
     expect(commit.authorName).toBe('Test Author')
     expect(commit.filesChanged).toHaveLength(1)
-    expect(commit.filesChanged[0].fileName).toBe('src/index.js')
+    expect(commit.filesChanged[0]!.fileName).toBe('src/index.js')
     expect(commit.linesAdded).toBe(10)
   })
 

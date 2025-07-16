@@ -100,10 +100,10 @@ describe('parseCommitDiff', () => {
     
     const result = parseCommitDiff(diffSummary, byteChanges)
     
-    expect(result.filesChanged[0].linesAdded).toBe(0)
-    expect(result.filesChanged[0].linesDeleted).toBe(0)
-    expect(result.filesChanged[1].linesAdded).toBe(0)
-    expect(result.filesChanged[1].linesDeleted).toBe(100)
+    expect(result.filesChanged[0]!.linesAdded).toBe(0)
+    expect(result.filesChanged[0]!.linesDeleted).toBe(0)
+    expect(result.filesChanged[1]!.linesAdded).toBe(0)
+    expect(result.filesChanged[1]!.linesDeleted).toBe(100)
   })
 
   it('filters excluded files', () => {
@@ -126,7 +126,7 @@ describe('parseCommitDiff', () => {
     const result = parseCommitDiff(diffSummary, byteChanges)
     
     expect(result.filesChanged).toHaveLength(1)
-    expect(result.filesChanged[0].fileName).toBe('src/app.ts')
+    expect(result.filesChanged[0]!.fileName).toBe('src/app.ts')
     expect(result.linesAdded).toBe(10)
     expect(result.linesDeleted).toBe(5)
   })
@@ -146,8 +146,8 @@ describe('parseCommitDiff', () => {
     
     const result = parseCommitDiff(diffSummary, byteChanges)
     
-    expect(result.filesChanged[0].bytesAdded).toBe(0)
-    expect(result.filesChanged[0].bytesDeleted).toBe(0)
+    expect(result.filesChanged[0]!.bytesAdded).toBe(0)
+    expect(result.filesChanged[0]!.bytesDeleted).toBe(0)
     expect(result.bytesAdded).toBe(0)
     expect(result.bytesDeleted).toBe(0)
   })

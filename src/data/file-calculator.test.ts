@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { getFileTypeStats, getFileHeatData } from './file-calculator.js'
 import { createTestCommit, FileChangeBuilder } from '../test/builders.js'
 
@@ -19,7 +19,7 @@ describe('getFileTypeStats', () => {
     const stats = getFileTypeStats(commits)
     
     expect(stats).toHaveLength(1)
-    expect(stats[0]).toEqual({
+    expect(stats[0]!).toEqual({
       type: 'JavaScript',
       lines: 100,
       percentage: 100
@@ -56,12 +56,12 @@ describe('getFileTypeStats', () => {
     const stats = getFileTypeStats(commits)
     
     expect(stats).toHaveLength(2)
-    expect(stats[0]).toEqual({
+    expect(stats[0]!).toEqual({
       type: 'JavaScript',
       lines: 150,
       percentage: 75
     })
-    expect(stats[1]).toEqual({
+    expect(stats[1]!).toEqual({
       type: 'CSS',
       lines: 50,
       percentage: 25
@@ -113,7 +113,7 @@ describe('getFileTypeStats', () => {
     const stats = getFileTypeStats(commits)
     
     expect(stats).toHaveLength(1)
-    expect(stats[0].percentage).toBe(0)
+    expect(stats[0]!.percentage).toBe(0)
   })
 })
 
@@ -144,12 +144,12 @@ describe('getFileHeatData', () => {
     const heatData = getFileHeatData(commits)
     
     expect(heatData).toHaveLength(1)
-    expect(heatData[0].fileName).toBe('src/index.js')
-    expect(heatData[0].commitCount).toBe(1)
-    expect(heatData[0].lastModified).toBe('2024-01-10T10:00:00.000Z')
-    expect(heatData[0].totalLines).toBe(100)
-    expect(heatData[0].fileType).toBe('JavaScript')
-    expect(heatData[0].heatScore).toBeGreaterThan(0)
+    expect(heatData[0]!.fileName).toBe('src/index.js')
+    expect(heatData[0]!.commitCount).toBe(1)
+    expect(heatData[0]!.lastModified).toBe('2024-01-10T10:00:00.000Z')
+    expect(heatData[0]!.totalLines).toBe(100)
+    expect(heatData[0]!.fileType).toBe('JavaScript')
+    expect(heatData[0]!.heatScore).toBeGreaterThan(0)
   })
   
   it('accumulates data for files modified multiple times', () => {
@@ -177,9 +177,9 @@ describe('getFileHeatData', () => {
     const heatData = getFileHeatData(commits)
     
     expect(heatData).toHaveLength(1)
-    expect(heatData[0].commitCount).toBe(2)
-    expect(heatData[0].totalLines).toBe(150)
-    expect(heatData[0].lastModified).toBe('2024-01-10T10:00:00.000Z')
+    expect(heatData[0]!.commitCount).toBe(2)
+    expect(heatData[0]!.totalLines).toBe(150)
+    expect(heatData[0]!.lastModified).toBe('2024-01-10T10:00:00.000Z')
   })
   
   it('tracks the most recent modification date', () => {
@@ -204,7 +204,7 @@ describe('getFileHeatData', () => {
     
     const heatData = getFileHeatData(commits)
     
-    expect(heatData[0].lastModified).toBe('2024-01-10T10:00:00.000Z')
+    expect(heatData[0]!.lastModified).toBe('2024-01-10T10:00:00.000Z')
   })
   
   it('calculates heat score based on frequency and recency', () => {
@@ -240,8 +240,8 @@ describe('getFileHeatData', () => {
     const heatData = getFileHeatData(commits)
     
     expect(heatData).toHaveLength(2)
-    expect(heatData[0].fileName).toBe('recent.js')
-    expect(heatData[0].heatScore).toBeGreaterThan(heatData[1].heatScore)
+    expect(heatData[0]!.fileName).toBe('recent.js')
+    expect(heatData[0]!.heatScore).toBeGreaterThan(heatData[1]!.heatScore)
   })
   
   it('sorts files by heat score in descending order', () => {
@@ -280,7 +280,7 @@ describe('getFileHeatData', () => {
     
     const heatData = getFileHeatData(commits)
     
-    expect(heatData[0].totalLines).toBe(1)
+    expect(heatData[0]!.totalLines).toBe(1)
   })
   
   it('handles empty commits array', () => {
@@ -302,6 +302,6 @@ describe('getFileHeatData', () => {
     
     const heatData = getFileHeatData(commits)
     
-    expect(heatData[0].fileType).toBe('TypeScript')
+    expect(heatData[0]!.fileType).toBe('TypeScript')
   })
 })

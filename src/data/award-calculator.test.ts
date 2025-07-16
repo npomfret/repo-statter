@@ -37,12 +37,12 @@ describe('Award Calculator', () => {
       const result = getTopCommitsByFilesModified(commits)
       
       expect(result).toHaveLength(3)
-      expect(result[0].value).toBe(3)
-      expect(result[0].sha).toBe('2')
-      expect(result[1].value).toBe(2)
-      expect(result[1].sha).toBe('3')
-      expect(result[2].value).toBe(1)
-      expect(result[2].sha).toBe('1')
+      expect(result[0]!.value).toBe(3)
+      expect(result[0]!.sha).toBe('2')
+      expect(result[1]!.value).toBe(2)
+      expect(result[1]!.sha).toBe('3')
+      expect(result[2]!.value).toBe(1)
+      expect(result[2]!.sha).toBe('1')
     })
 
     it('should exclude merge commits', () => {
@@ -65,7 +65,7 @@ describe('Award Calculator', () => {
       const result = getTopCommitsByFilesModified(commits)
       
       expect(result).toHaveLength(1)
-      expect(result[0].sha).toBe('2')
+      expect(result[0]!.sha).toBe('2')
     })
 
     it('should limit to top 5 commits', () => {
@@ -84,8 +84,8 @@ describe('Award Calculator', () => {
       const result = getTopCommitsByFilesModified(commits)
       
       expect(result).toHaveLength(5)
-      expect(result[0].value).toBe(10) // 10 files
-      expect(result[4].value).toBe(6)  // 6 files
+      expect(result[0]!.value).toBe(10) // 10 files
+      expect(result[4]!.value).toBe(6)  // 6 files
     })
 
     it('should handle ties by preserving order', () => {
@@ -107,9 +107,9 @@ describe('Award Calculator', () => {
       const result = getTopCommitsByFilesModified(commits)
       
       expect(result).toHaveLength(3)
-      expect(result[0].sha).toBe('1') // First one with 2 files
-      expect(result[1].sha).toBe('2') // Second one with 2 files
-      expect(result[2].sha).toBe('3') // Third one with 2 files
+      expect(result[0]!.sha).toBe('1') // First one with 2 files
+      expect(result[1]!.sha).toBe('2') // Second one with 2 files
+      expect(result[2]!.sha).toBe('3') // Third one with 2 files
     })
   })
 
@@ -153,12 +153,12 @@ describe('Award Calculator', () => {
       const result = getTopCommitsByBytesAdded(commits)
       
       expect(result).toHaveLength(3)
-      expect(result[0].value).toBe(5000)
-      expect(result[0].sha).toBe('2')
-      expect(result[1].value).toBe(2500)
-      expect(result[1].sha).toBe('3')
-      expect(result[2].value).toBe(500)
-      expect(result[2].sha).toBe('1')
+      expect(result[0]!.value).toBe(5000)
+      expect(result[0]!.sha).toBe('2')
+      expect(result[1]!.value).toBe(2500)
+      expect(result[1]!.sha).toBe('3')
+      expect(result[2]!.value).toBe(500)
+      expect(result[2]!.sha).toBe('1')
     })
 
     it('should handle commits without bytesAdded', () => {
@@ -184,12 +184,12 @@ describe('Award Calculator', () => {
       ]
 
       // Manually set bytesAdded to undefined for the second commit
-      commits[1].bytesAdded = undefined
+      delete (commits[1]! as any).bytesAdded
 
       const result = getTopCommitsByBytesAdded(commits)
       
       expect(result).toHaveLength(1)
-      expect(result[0].sha).toBe('1')
+      expect(result[0]!.sha).toBe('1')
     })
   })
 
@@ -219,10 +219,10 @@ describe('Award Calculator', () => {
       const result = getTopCommitsByBytesRemoved(commits)
       
       expect(result).toHaveLength(2)
-      expect(result[0].value).toBe(10000)
-      expect(result[0].sha).toBe('2')
-      expect(result[1].value).toBe(500)
-      expect(result[1].sha).toBe('1')
+      expect(result[0]!.value).toBe(10000)
+      expect(result[0]!.sha).toBe('2')
+      expect(result[1]!.value).toBe(500)
+      expect(result[1]!.sha).toBe('1')
     })
   })
 
@@ -261,12 +261,12 @@ describe('Award Calculator', () => {
       const result = getTopCommitsByLinesAdded(commits)
       
       expect(result).toHaveLength(3)
-      expect(result[0].value).toBe(150)
-      expect(result[0].sha).toBe('2')
-      expect(result[1].value).toBe(100)
-      expect(result[1].sha).toBe('3')
-      expect(result[2].value).toBe(50)
-      expect(result[2].sha).toBe('1')
+      expect(result[0]!.value).toBe(150)
+      expect(result[0]!.sha).toBe('2')
+      expect(result[1]!.value).toBe(100)
+      expect(result[1]!.sha).toBe('3')
+      expect(result[2]!.value).toBe(50)
+      expect(result[2]!.sha).toBe('1')
     })
 
     it('should aggregate lines from multiple files', () => {
@@ -291,7 +291,7 @@ describe('Award Calculator', () => {
       const result = getTopCommitsByLinesAdded(commits)
       
       expect(result).toHaveLength(1)
-      expect(result[0].value).toBe(50)
+      expect(result[0]!.value).toBe(50)
     })
   })
 
@@ -321,10 +321,10 @@ describe('Award Calculator', () => {
       const result = getTopCommitsByLinesRemoved(commits)
       
       expect(result).toHaveLength(2)
-      expect(result[0].value).toBe(125)
-      expect(result[0].sha).toBe('2')
-      expect(result[1].value).toBe(75)
-      expect(result[1].sha).toBe('1')
+      expect(result[0]!.value).toBe(125)
+      expect(result[0]!.sha).toBe('2')
+      expect(result[1]!.value).toBe(75)
+      expect(result[1]!.sha).toBe('1')
     })
   })
 
@@ -344,9 +344,9 @@ describe('Award Calculator', () => {
         )
         .build()
 
-      const filesResult = getTopCommitsByFilesModified([commit])[0]
-      const bytesAddedResult = getTopCommitsByBytesAdded([commit])[0]
-      const linesAddedResult = getTopCommitsByLinesAdded([commit])[0]
+      const filesResult = getTopCommitsByFilesModified([commit])[0]!
+      const bytesAddedResult = getTopCommitsByBytesAdded([commit])[0]!
+      const linesAddedResult = getTopCommitsByLinesAdded([commit])[0]!
 
       // Check all have the same structure
       const checkAward = (award: any) => {

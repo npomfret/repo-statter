@@ -5,7 +5,7 @@ import {
   getLowestAverageLinesChanged,
   getHighestAverageLinesChanged
 } from './contributor-calculator.js'
-import { createTestCommit, createEmptyCommit, CommitDataBuilder } from '../test/builders.js'
+import { createTestCommit, createEmptyCommit } from '../test/builders.js'
 
 describe('getContributorStats', () => {
   it('calculates stats for a single contributor', () => {
@@ -25,7 +25,7 @@ describe('getContributorStats', () => {
     const stats = getContributorStats(commits)
     
     expect(stats).toHaveLength(1)
-    expect(stats[0]).toEqual({
+    expect(stats[0]!).toEqual({
       name: 'Alice',
       commits: 2,
       linesAdded: 30,
@@ -44,13 +44,13 @@ describe('getContributorStats', () => {
     const stats = getContributorStats(commits)
     
     expect(stats).toHaveLength(3)
-    expect(stats[0].name).toBe('Alice') // 2 commits, should be first
-    expect(stats[0].commits).toBe(2)
-    expect(stats[0].linesAdded).toBe(30)
-    expect(stats[0].linesDeleted).toBe(8)
+    expect(stats[0]!.name).toBe('Alice') // 2 commits, should be first
+    expect(stats[0]!.commits).toBe(2)
+    expect(stats[0]!.linesAdded).toBe(30)
+    expect(stats[0]!.linesDeleted).toBe(8)
     
-    expect(stats[1].name).toBe('Bob')
-    expect(stats[2].name).toBe('Charlie')
+    expect(stats[1]!.name).toBe('Bob')
+    expect(stats[2]!.name).toBe('Charlie')
   })
   
   it('sorts contributors by commit count descending', () => {
@@ -77,7 +77,7 @@ describe('getContributorStats', () => {
     
     const stats = getContributorStats(commits)
     
-    expect(stats[0]).toEqual({
+    expect(stats[0]!).toEqual({
       name: 'Alice',
       commits: 2,
       linesAdded: 10,
@@ -104,7 +104,7 @@ describe('getContributorsByAverageLinesChanged', () => {
     const stats = getContributorsByAverageLinesChanged(commits)
     
     expect(stats).toHaveLength(1)
-    expect(stats[0]).toEqual({
+    expect(stats[0]!).toEqual({
       name: 'Alice',
       commits: 5,
       averageLinesChanged: 14
@@ -126,7 +126,7 @@ describe('getContributorsByAverageLinesChanged', () => {
     const stats = getContributorsByAverageLinesChanged(commits)
     
     expect(stats).toHaveLength(1)
-    expect(stats[0].name).toBe('Bob')
+    expect(stats[0]!.name).toBe('Bob')
   })
   
   it('excludes merge commits from calculations', () => {
@@ -158,8 +158,8 @@ describe('getContributorsByAverageLinesChanged', () => {
     const stats = getContributorsByAverageLinesChanged(commits)
     
     expect(stats).toHaveLength(1)
-    expect(stats[0].commits).toBe(5) // Only real commits counted
-    expect(stats[0].averageLinesChanged).toBe(10) // 50 lines / 5 commits
+    expect(stats[0]!.commits).toBe(5) // Only real commits counted
+    expect(stats[0]!.averageLinesChanged).toBe(10) // 50 lines / 5 commits
   })
   
   it('handles multiple contributors with different averages', () => {
@@ -205,10 +205,10 @@ describe('getLowestAverageLinesChanged', () => {
     const stats = getLowestAverageLinesChanged(commits)
     
     expect(stats).toHaveLength(3)
-    expect(stats[0].name).toBe('Charlie')
-    expect(stats[0].averageLinesChanged).toBe(5)
-    expect(stats[1].name).toBe('Alice')
-    expect(stats[2].name).toBe('Bob')
+    expect(stats[0]!.name).toBe('Charlie')
+    expect(stats[0]!.averageLinesChanged).toBe(5)
+    expect(stats[1]!.name).toBe('Alice')
+    expect(stats[2]!.name).toBe('Bob')
   })
   
   it('returns at most 5 contributors', () => {
@@ -229,8 +229,8 @@ describe('getLowestAverageLinesChanged', () => {
     const stats = getLowestAverageLinesChanged(commits)
     
     expect(stats).toHaveLength(5)
-    expect(stats[0].averageLinesChanged).toBe(2) // Contributor1
-    expect(stats[4].averageLinesChanged).toBe(10) // Contributor5
+    expect(stats[0]!.averageLinesChanged).toBe(2) // Contributor1
+    expect(stats[4]!.averageLinesChanged).toBe(10) // Contributor5
   })
   
   it('returns empty array when no contributors qualify', () => {
@@ -266,10 +266,10 @@ describe('getHighestAverageLinesChanged', () => {
     const stats = getHighestAverageLinesChanged(commits)
     
     expect(stats).toHaveLength(3)
-    expect(stats[0].name).toBe('Bob')
-    expect(stats[0].averageLinesChanged).toBe(20)
-    expect(stats[1].name).toBe('Alice')
-    expect(stats[2].name).toBe('Charlie')
+    expect(stats[0]!.name).toBe('Bob')
+    expect(stats[0]!.averageLinesChanged).toBe(20)
+    expect(stats[1]!.name).toBe('Alice')
+    expect(stats[2]!.name).toBe('Charlie')
   })
   
   it('handles edge case with one qualifying contributor', () => {
@@ -287,7 +287,7 @@ describe('getHighestAverageLinesChanged', () => {
     const stats = getHighestAverageLinesChanged(commits)
     
     expect(stats).toHaveLength(1)
-    expect(stats[0].name).toBe('Alice')
-    expect(stats[0].averageLinesChanged).toBe(150)
+    expect(stats[0]!.name).toBe('Alice')
+    expect(stats[0]!.averageLinesChanged).toBe(150)
   })
 })

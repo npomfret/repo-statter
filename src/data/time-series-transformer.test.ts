@@ -68,23 +68,23 @@ describe('Time Series Transformer', () => {
       expect(result).toHaveLength(3)
       
       // First point should be starting point (one day before first commit)
-      expect(result[0].date).toBe('2023-12-31')
-      expect(result[0].commits).toBe(0)
-      expect(result[0].cumulativeLines).toBe(0)
+      expect(result[0]!.date).toBe('2023-12-31')
+      expect(result[0]!.commits).toBe(0)
+      expect(result[0]!.cumulativeLines).toBe(0)
       
       // Second point should be Jan 1 with aggregated data
-      expect(result[1].date).toBe('2024-01-01')
-      expect(result[1].commits).toBe(2)
-      expect(result[1].linesAdded).toBe(30)
-      expect(result[1].linesDeleted).toBe(8)
-      expect(result[1].cumulativeLines).toBe(22) // 30 - 8
+      expect(result[1]!.date).toBe('2024-01-01')
+      expect(result[1]!.commits).toBe(2)
+      expect(result[1]!.linesAdded).toBe(30)
+      expect(result[1]!.linesDeleted).toBe(8)
+      expect(result[1]!.cumulativeLines).toBe(22) // 30 - 8
       
       // Third point should be Jan 4
-      expect(result[2].date).toBe('2024-01-04')
-      expect(result[2].commits).toBe(1)
-      expect(result[2].linesAdded).toBe(15)
-      expect(result[2].linesDeleted).toBe(8)
-      expect(result[2].cumulativeLines).toBe(29) // 22 + 15 - 8
+      expect(result[2]!.date).toBe('2024-01-04')
+      expect(result[2]!.commits).toBe(1)
+      expect(result[2]!.linesAdded).toBe(15)
+      expect(result[2]!.linesDeleted).toBe(8)
+      expect(result[2]!.cumulativeLines).toBe(29) // 22 + 15 - 8
     })
 
     it('should use hourly grouping for repos younger than 48 hours', () => {
@@ -109,20 +109,20 @@ describe('Time Series Transformer', () => {
       expect(result).toHaveLength(3)
       
       // First point should be starting point (one hour before first commit)
-      expect(result[0].date).toBe('2024-01-01T09:00:00')
-      expect(result[0].commits).toBe(0)
+      expect(result[0]!.date).toBe('2024-01-01T09:00:00')
+      expect(result[0]!.commits).toBe(0)
       
       // Second point should be 10:00 hour with aggregated data
-      expect(result[1].date).toBe('2024-01-01T10:00:00')
-      expect(result[1].commits).toBe(2)
-      expect(result[1].linesAdded).toBe(30)
-      expect(result[1].linesDeleted).toBe(8)
+      expect(result[1]!.date).toBe('2024-01-01T10:00:00')
+      expect(result[1]!.commits).toBe(2)
+      expect(result[1]!.linesAdded).toBe(30)
+      expect(result[1]!.linesDeleted).toBe(8)
       
       // Third point should be 11:00 hour
-      expect(result[2].date).toBe('2024-01-01T11:00:00')
-      expect(result[2].commits).toBe(1)
-      expect(result[2].linesAdded).toBe(15)
-      expect(result[2].linesDeleted).toBe(8)
+      expect(result[2]!.date).toBe('2024-01-01T11:00:00')
+      expect(result[2]!.commits).toBe(1)
+      expect(result[2]!.linesAdded).toBe(15)
+      expect(result[2]!.linesDeleted).toBe(8)
     })
 
     it('should handle byte calculations correctly', () => {
@@ -153,14 +153,14 @@ describe('Time Series Transformer', () => {
       expect(result).toHaveLength(3)
       
       // Jan 1 point
-      expect(result[1].bytesAdded).toBe(1000)
-      expect(result[1].bytesDeleted).toBe(500)
-      expect(result[1].cumulativeBytes).toBe(500) // 1000 - 500
+      expect(result[1]!.bytesAdded).toBe(1000)
+      expect(result[1]!.bytesDeleted).toBe(500)
+      expect(result[1]!.cumulativeBytes).toBe(500) // 1000 - 500
       
       // Jan 3 point
-      expect(result[2].bytesAdded).toBe(2000)
-      expect(result[2].bytesDeleted).toBe(300)
-      expect(result[2].cumulativeBytes).toBe(2200) // 500 + 2000 - 300
+      expect(result[2]!.bytesAdded).toBe(2000)
+      expect(result[2]!.bytesDeleted).toBe(300)
+      expect(result[2]!.cumulativeBytes).toBe(2200) // 500 + 2000 - 300
     })
 
     it('should handle commits without byte data', () => {
@@ -186,19 +186,19 @@ describe('Time Series Transformer', () => {
       ]
 
       // Manually set bytes to undefined for first commit
-      commits[0].bytesAdded = undefined
-      commits[0].bytesDeleted = undefined
+      delete (commits[0]! as any).bytesAdded
+      delete (commits[0]! as any).bytesDeleted
 
       const result = getTimeSeriesData(commits)
       
       // Should handle missing byte data gracefully
-      expect(result[1].bytesAdded).toBe(0)
-      expect(result[1].bytesDeleted).toBe(0)
-      expect(result[1].cumulativeBytes).toBe(0)
+      expect(result[1]!.bytesAdded).toBe(0)
+      expect(result[1]!.bytesDeleted).toBe(0)
+      expect(result[1]!.cumulativeBytes).toBe(0)
       
-      expect(result[2].bytesAdded).toBe(2000)
-      expect(result[2].bytesDeleted).toBe(300)
-      expect(result[2].cumulativeBytes).toBe(1700) // 0 + 2000 - 300
+      expect(result[2]!.bytesAdded).toBe(2000)
+      expect(result[2]!.bytesDeleted).toBe(300)
+      expect(result[2]!.cumulativeBytes).toBe(1700) // 0 + 2000 - 300
     })
 
     it('should sort results by date', () => {
@@ -224,7 +224,7 @@ describe('Time Series Transformer', () => {
       
       // Check dates are in ascending order
       for (let i = 1; i < result.length; i++) {
-        expect(result[i].date >= result[i-1].date).toBe(true)
+        expect(result[i]!.date >= result[i-1]!.date).toBe(true)
       }
       
       // Check that all expected dates are present (in hourly format since this is a short repo)
@@ -252,10 +252,10 @@ describe('Time Series Transformer', () => {
 
       const result = getTimeSeriesData(commits)
       
-      expect(result[0].cumulativeLines).toBe(0) // Start point
-      expect(result[1].cumulativeLines).toBe(80) // 100 - 20
-      expect(result[2].cumulativeLines).toBe(100) // 80 + 50 - 30
-      expect(result[3].cumulativeLines).toBe(50) // 100 + 25 - 75
+      expect(result[0]!.cumulativeLines).toBe(0) // Start point
+      expect(result[1]!.cumulativeLines).toBe(80) // 100 - 20
+      expect(result[2]!.cumulativeLines).toBe(100) // 80 + 50 - 30
+      expect(result[3]!.cumulativeLines).toBe(50) // 100 + 25 - 75
     })
 
     it('should handle single commit correctly', () => {
@@ -271,15 +271,15 @@ describe('Time Series Transformer', () => {
       // Should have 2 points: start point and the commit
       expect(result).toHaveLength(2)
       
-      expect(result[0].date).toBe('2024-01-01T09:00:00') // Start point (hourly for single commit)
-      expect(result[0].commits).toBe(0)
-      expect(result[0].cumulativeLines).toBe(0)
+      expect(result[0]!.date).toBe('2024-01-01T09:00:00') // Start point (hourly for single commit)
+      expect(result[0]!.commits).toBe(0)
+      expect(result[0]!.cumulativeLines).toBe(0)
       
-      expect(result[1].date).toBe('2024-01-01T10:00:00')
-      expect(result[1].commits).toBe(1)
-      expect(result[1].linesAdded).toBe(50)
-      expect(result[1].linesDeleted).toBe(10)
-      expect(result[1].cumulativeLines).toBe(40)
+      expect(result[1]!.date).toBe('2024-01-01T10:00:00')
+      expect(result[1]!.commits).toBe(1)
+      expect(result[1]!.linesAdded).toBe(50)
+      expect(result[1]!.linesDeleted).toBe(10)
+      expect(result[1]!.cumulativeLines).toBe(40)
     })
   })
 })

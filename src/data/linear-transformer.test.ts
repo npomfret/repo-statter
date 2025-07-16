@@ -30,7 +30,7 @@ describe('Linear Transformer', () => {
       expect(result).toHaveLength(2)
       
       // Starting point
-      expect(result[0]).toEqual({
+      expect(result[0]!).toEqual({
         commitIndex: 0,
         sha: 'start',
         date: '2024-01-01T10:00:00Z',
@@ -43,7 +43,7 @@ describe('Linear Transformer', () => {
       })
       
       // First commit
-      expect(result[1]).toEqual({
+      expect(result[1]!).toEqual({
         commitIndex: 1,
         sha: 'abc123',
         date: '2024-01-01T10:00:00Z',
