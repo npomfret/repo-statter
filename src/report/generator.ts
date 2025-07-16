@@ -502,24 +502,53 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
           const sortedDates = filteredTimeSeries.map(point => point.date);
           
           
-          // Always start with zero at the first date
-          if (sortedDates.length > 0) {
-            const firstTimestamp = new Date(sortedDates[0]).getTime();
-            addedData.push({ x: firstTimestamp, y: 0 });
-            removedData.push({ x: firstTimestamp, y: 0 });
-            netData.push({ x: firstTimestamp, y: 0 });
+          // Find the first date where this user has commits
+          let firstUserCommitDate = null;
+          for (const date of sortedDates) {
+            const dateKey = date.split('T')[0];
+            if (userCommitsByDate[dateKey] && userCommitsByDate[dateKey].length > 0) {
+              firstUserCommitDate = date;
+              break;
+            }
+          }
+          
+          // Add a zero point before the user's first commit
+          if (firstUserCommitDate) {
+            const firstCommitDate = new Date(firstUserCommitDate);
+            const startDate = new Date(firstCommitDate);
+            
+            // Check if we're using hourly data (repo less than 2 days old)
+            const firstDate = new Date(sortedDates[0]);
+            const lastDate = new Date(sortedDates[sortedDates.length - 1]);
+            const repoAgeHours = (lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60);
+            const useHourlyData = repoAgeHours < 48;
+            
+            if (useHourlyData) {
+              startDate.setHours(startDate.getHours() - 1); // One hour before
+            } else {
+              startDate.setDate(startDate.getDate() - 1); // One day before
+            }
+            
+            const startTimestamp = startDate.getTime();
+            addedData.push({ x: startTimestamp, y: 0 });
+            removedData.push({ x: startTimestamp, y: 0 });
+            netData.push({ x: startTimestamp, y: 0 });
           }
           
           sortedDates.forEach((date, index) => {
+            // Skip dates before the user's first commit
+            if (firstUserCommitDate && new Date(date) < new Date(firstUserCommitDate)) {
+              return;
+            }
+            
             // Extract just the date part to match with userCommitsByDate
             const dateKey = date.split('T')[0];
-            const dateContributions = userCommitsByDate[dateKey] || [];
-            
+            const dateContributions = userCommitsByDate[dateKey] ?? [];
             
             const dayAdded = dateContributions.reduce((sum, c) => sum + c.linesAdded, 0);
             const dayRemoved = dateContributions.reduce((sum, c) => sum + c.linesDeleted, 0);
-            const dayBytesAdded = dateContributions.reduce((sum, c) => sum + (c.bytesAdded || c.linesAdded * 50), 0);
-            const dayBytesRemoved = dateContributions.reduce((sum, c) => sum + (c.bytesDeleted || c.linesDeleted * 50), 0);
+            const dayBytesAdded = dateContributions.reduce((sum, c) => sum + (c.bytesAdded ?? c.linesAdded * 50), 0);
+            const dayBytesRemoved = dateContributions.reduce((sum, c) => sum + (c.bytesDeleted ?? c.linesDeleted * 50), 0);
             
             cumulativeAdded += dayAdded;
             cumulativeRemoved += dayRemoved;
@@ -553,8 +582,8 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             const x = i + 1;
             cumulativeAdded += commit.linesAdded;
             cumulativeRemoved += commit.linesDeleted;
-            const bytesAdded = commit.bytesAdded || commit.linesAdded * 50;
-            const bytesRemoved = commit.bytesDeleted || commit.linesDeleted * 50;
+            const bytesAdded = commit.bytesAdded ?? commit.linesAdded * 50;
+            const bytesRemoved = commit.bytesDeleted ?? commit.linesDeleted * 50;
             cumulativeBytesAdded += bytesAdded;
             cumulativeBytesRemoved += bytesRemoved;
             
