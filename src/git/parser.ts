@@ -97,18 +97,13 @@ export async function parseCommitHistory(repoPath: string): Promise<CommitData[]
 
 export async function getGitHubUrl(repoPath: string): Promise<string | null> {
   const git = simpleGit(repoPath)
-  try {
-    const remotes = await git.getRemotes(true)
-    const origin = remotes.find(r => r.name === 'origin')
-    if (origin && origin.refs.fetch) {
-      const match = origin.refs.fetch.match(/github\.com[:/](.+?)(?:\.git)?$/)
-      if (match) {
-        return `https://github.com/${match[1]}`
-      }
+  const remotes = await git.getRemotes(true)
+  const origin = remotes.find(r => r.name === 'origin')
+  if (origin && origin.refs.fetch) {
+    const match = origin.refs.fetch.match(/github\.com[:/](.+?)(?:\.git)?$/)
+    if (match) {
+      return `https://github.com/${match[1]}`
     }
-  } catch (error) {
-    // Expected: not all repos have GitHub remotes, or remote might not be accessible
-    // This is a non-critical feature, so we return null to indicate no GitHub URL
   }
   return null
 }
@@ -146,40 +141,34 @@ function getFileType(fileName: string): string {
 async function parseCommitDiff(repoPath: string, commitHash: string): Promise<{ linesAdded: number; linesDeleted: number; bytesAdded: number; bytesDeleted: number; filesChanged: FileChange[] }> {
   const git = simpleGit(repoPath)
   
-  try {
-    const diffSummary = await git.diffSummary([commitHash + '^!'])
-    
-    // Get byte changes using git diff --stat
-    const byteChanges = await getByteChanges(repoPath, commitHash)
-    
-    const filesChanged: FileChange[] = diffSummary.files
-      .filter(file => !isFileExcluded(file.file))
-      .map(file => ({
-        fileName: file.file,
-        linesAdded: 'insertions' in file ? file.insertions : 0,
-        linesDeleted: 'deletions' in file ? file.deletions : 0,
-        fileType: getFileType(file.file),
-        bytesAdded: byteChanges.fileChanges[file.file]?.bytesAdded || 0,
-        bytesDeleted: byteChanges.fileChanges[file.file]?.bytesDeleted || 0
-      }))
-    
-    const linesAdded = filesChanged.reduce((sum, file) => sum + file.linesAdded, 0)
-    const linesDeleted = filesChanged.reduce((sum, file) => sum + file.linesDeleted, 0)
-    
-    const bytesAdded = filesChanged.reduce((sum, file) => sum + (file.bytesAdded || 0), 0)
-    const bytesDeleted = filesChanged.reduce((sum, file) => sum + (file.bytesDeleted || 0), 0)
-    
-    return { 
-      linesAdded, 
-      linesDeleted, 
-      bytesAdded,
-      bytesDeleted,
-      filesChanged 
-    }
-  } catch (error) {
-    console.warn(`Failed to parse diff for commit ${commitHash}:`, error instanceof Error ? error.message : String(error))
-    // Return safe defaults to avoid breaking report generation
-    return { linesAdded: 0, linesDeleted: 0, bytesAdded: 0, bytesDeleted: 0, filesChanged: [] }
+  const diffSummary = await git.diffSummary([commitHash + '^!'])
+  
+  // Get byte changes using git diff --stat
+  const byteChanges = await getByteChanges(repoPath, commitHash)
+  
+  const filesChanged: FileChange[] = diffSummary.files
+    .filter(file => !isFileExcluded(file.file))
+    .map(file => ({
+      fileName: file.file,
+      linesAdded: 'insertions' in file ? file.insertions : 0,
+      linesDeleted: 'deletions' in file ? file.deletions : 0,
+      fileType: getFileType(file.file),
+      bytesAdded: byteChanges.fileChanges[file.file]?.bytesAdded || 0,
+      bytesDeleted: byteChanges.fileChanges[file.file]?.bytesDeleted || 0
+    }))
+  
+  const linesAdded = filesChanged.reduce((sum, file) => sum + file.linesAdded, 0)
+  const linesDeleted = filesChanged.reduce((sum, file) => sum + file.linesDeleted, 0)
+  
+  const bytesAdded = filesChanged.reduce((sum, file) => sum + (file.bytesAdded || 0), 0)
+  const bytesDeleted = filesChanged.reduce((sum, file) => sum + (file.bytesDeleted || 0), 0)
+  
+  return { 
+    linesAdded, 
+    linesDeleted, 
+    bytesAdded,
+    bytesDeleted,
+    filesChanged 
   }
 }
 
@@ -189,40 +178,34 @@ async function getByteChanges(repoPath: string, commitHash: string): Promise<{
   totalBytesDeleted: number; 
   fileChanges: Record<string, { bytesAdded: number; bytesDeleted: number }> 
 }> {
-  try {
-    const { stdout } = await execAsync(`cd "${repoPath}" && git show ${commitHash} --numstat --format=""`, { 
-      timeout: 10000 
-    })
-    
-    const fileChanges: Record<string, { bytesAdded: number; bytesDeleted: number }> = {}
-    let totalBytesAdded = 0
-    let totalBytesDeleted = 0
-    
-    const lines = stdout.trim().split('\n').filter(l => l.trim())
-    
-    for (const line of lines) {
-      const parts = line.split('\t')
-      if (parts.length >= 3) {
-        const added = parseInt(parts[0] || '0') || 0
-        const deleted = parseInt(parts[1] || '0') || 0
-        const fileName = parts[2]
+  const { stdout } = await execAsync(`cd "${repoPath}" && git show ${commitHash} --numstat --format=""`, { 
+    timeout: 10000 
+  })
+  
+  const fileChanges: Record<string, { bytesAdded: number; bytesDeleted: number }> = {}
+  let totalBytesAdded = 0
+  let totalBytesDeleted = 0
+  
+  const lines = stdout.trim().split('\n').filter(l => l.trim())
+  
+  for (const line of lines) {
+    const parts = line.split('\t')
+    if (parts.length >= 3) {
+      const added = parseInt(parts[0] || '0') || 0
+      const deleted = parseInt(parts[1] || '0') || 0
+      const fileName = parts[2]
+      
+      if (fileName && !isFileExcluded(fileName)) {
+        // Rough estimate: 1 line ≈ 50 bytes (average line length)
+        const bytesAdded = added * 50
+        const bytesDeleted = deleted * 50
         
-        if (fileName && !isFileExcluded(fileName)) {
-          // Rough estimate: 1 line ≈ 50 bytes (average line length)
-          const bytesAdded = added * 50
-          const bytesDeleted = deleted * 50
-          
-          fileChanges[fileName] = { bytesAdded, bytesDeleted }
-          totalBytesAdded += bytesAdded
-          totalBytesDeleted += bytesDeleted
-        }
+        fileChanges[fileName] = { bytesAdded, bytesDeleted }
+        totalBytesAdded += bytesAdded
+        totalBytesDeleted += bytesDeleted
       }
     }
-    
-    return { totalBytesAdded, totalBytesDeleted, fileChanges }
-  } catch (error) {
-    console.warn(`Failed to calculate byte changes for commit ${commitHash}:`, error instanceof Error ? error.message : String(error))
-    // Return safe defaults to avoid breaking report generation
-    return { totalBytesAdded: 0, totalBytesDeleted: 0, fileChanges: {} }
   }
+  
+  return { totalBytesAdded, totalBytesDeleted, fileChanges }
 }
