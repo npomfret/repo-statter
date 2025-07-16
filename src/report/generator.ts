@@ -934,11 +934,18 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
           
           const card = document.createElement('div');
           card.className = 'card h-100';
-          card.style.position = 'relative';
           
-          // Add trophy in top-right corner of the card
+          const cardHeader = document.createElement('div');
+          cardHeader.className = 'card-header d-flex justify-content-between align-items-center';
+          
+          const titleElement = document.createElement('h6');
+          titleElement.className = 'mb-0';
+          titleElement.textContent = category.title;
+          cardHeader.appendChild(titleElement);
+
+          // Trophy now inside the header, aligned with flexbox
           const trophyWrapper = document.createElement('div');
-          trophyWrapper.style.cssText = 'position: absolute; top: 10px; right: 10px; width: 80px; height: 80px; z-index: 10;';
+          trophyWrapper.style.cssText = 'width: 60px; height: 60px; flex-shrink: 0;';
           trophyWrapper.innerHTML = category.trophy;
           
           // Ensure SVG fits properly within the wrapper
@@ -948,17 +955,8 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             svgElement.style.height = '100%';
             svgElement.style.display = 'block';
           }
-          
-          card.appendChild(trophyWrapper);
-          
-          const cardHeader = document.createElement('div');
-          cardHeader.className = 'card-header';
-          
-          const titleElement = document.createElement('h6');
-          titleElement.className = 'mb-0';
-          titleElement.textContent = category.title;
-          cardHeader.appendChild(titleElement);
-          
+          cardHeader.appendChild(trophyWrapper);
+
           const cardBody = document.createElement('div');
           cardBody.className = 'card-body';
           
