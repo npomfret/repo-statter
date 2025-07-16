@@ -481,27 +481,33 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
           let cumulativeBytesAdded = 0;
           let cumulativeBytesRemoved = 0;
           
-          // Group user commits by date
+          // Group user commits by date (matching the format used in filteredTimeSeries)
           const userCommitsByDate = {};
           userCommits.forEach(commit => {
-            const commitDate = new Date(commit.date).toISOString().split('T')[0];
-            if (!userCommitsByDate[commitDate]) {
-              userCommitsByDate[commitDate] = [];
+            // Use the same date key format as filteredTimeSeries (YYYY-MM-DD)
+            const dateKey = new Date(commit.date).toISOString().split('T')[0];
+            if (!userCommitsByDate[dateKey]) {
+              userCommitsByDate[dateKey] = [];
             }
-            userCommitsByDate[commitDate].push(commit);
+            userCommitsByDate[dateKey].push(commit);
           });
           
-          // Get all unique dates from both filteredTimeSeries and user commits
-          const allDates = new Set();
-          filteredTimeSeries.forEach(point => allDates.add(point.date));
-          Object.keys(userCommitsByDate).forEach(date => allDates.add(date));
+          // Use ONLY filteredTimeSeries dates to match other charts' x-axis
+          const sortedDates = filteredTimeSeries.map(point => point.date);
           
-          // Sort dates chronologically and process each one
-          const sortedDates = Array.from(allDates).sort((a, b) => 
-            new Date(a).getTime() - new Date(b).getTime()
-          );
-          sortedDates.forEach(date => {
-            const dateContributions = userCommitsByDate[date] || [];
+          
+          // Always start with zero at the first date
+          if (sortedDates.length > 0) {
+            const firstTimestamp = new Date(sortedDates[0]).getTime();
+            addedData.push({ x: firstTimestamp, y: 0 });
+            removedData.push({ x: firstTimestamp, y: 0 });
+          }
+          
+          sortedDates.forEach((date, index) => {
+            // Extract just the date part to match with userCommitsByDate
+            const dateKey = date.split('T')[0];
+            const dateContributions = userCommitsByDate[dateKey] || [];
+            
             
             const dayAdded = dateContributions.reduce((sum, c) => sum + c.linesAdded, 0);
             const dayRemoved = dateContributions.reduce((sum, c) => sum + c.linesDeleted, 0);
@@ -513,19 +519,17 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
             cumulativeBytesAdded += dayBytesAdded;
             cumulativeBytesRemoved += dayBytesRemoved;
             
-            // Only add data points if there's any cumulative data to show
-            if (cumulativeAdded > 0 || cumulativeRemoved > 0 || 
-                cumulativeBytesAdded > 0 || cumulativeBytesRemoved > 0) {
-              const timestamp = new Date(date).getTime();
-              if (metric === 'lines') {
-                addedData.push({ x: timestamp, y: cumulativeAdded });
-                removedData.push({ x: timestamp, y: -cumulativeRemoved });
-              } else {
-                addedData.push({ x: timestamp, y: cumulativeBytesAdded });
-                removedData.push({ x: timestamp, y: -cumulativeBytesRemoved });
-              }
+            // Add data point for this date
+            const timestamp = new Date(date).getTime();
+            if (metric === 'lines') {
+              addedData.push({ x: timestamp, y: cumulativeAdded });
+              removedData.push({ x: timestamp, y: -cumulativeRemoved });
+            } else {
+              addedData.push({ x: timestamp, y: cumulativeBytesAdded });
+              removedData.push({ x: timestamp, y: -cumulativeBytesRemoved });
             }
           });
+          
         } else {
           addedData.push({ x: 0, y: 0 });
           removedData.push({ x: 0, y: 0 });
