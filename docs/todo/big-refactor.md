@@ -273,9 +273,11 @@ Never proceed with a broken state. Every commit must leave the app in a working 
 - **Planning**: Created this comprehensive refactor plan
 - **Commit 1**: Remove all try/catch blocks ✓
 - **Commit 2**: Add assert utilities and replace defensive checks ✓
+- **Commit 3**: Create test builders for data structures ✓ (Already existed in src/test/builders.ts)
+- **Commit 4**: Extract and test git data parsing ✓
 
 ### 🔄 IN PROGRESS
-- **Commit 3**: Fix generator.ts types (Phase 3) - COMPLETED CHANGES
+- **Commit 5**: Extract and test contributor calculations
 
 ### ⏳ PENDING  
 **Phase 2: Data Layer (NEW - Added based on lessons learned)**
@@ -304,22 +306,28 @@ Never proceed with a broken state. Every commit must leave the app in a working 
 *This section will be updated after each change to show what's ready for review*
 
 ---
-**READY FOR REVIEW**: ✅ **Commit 3 (Phase 3): Fix generator.ts types**
+**READY FOR REVIEW**: ✅ **Commit 4: Extract and test git data parsing**
 
 **CHANGES MADE**:
-- ✅ Created ChartData interface with all properties properly typed
-- ✅ Replaced `any` type in `injectDataIntoTemplate` parameter with `ChartData`
-- ✅ Added return type `Promise<ChartData>` to `transformCommitData` function
-- ✅ All `any` types have been eliminated from generator.ts
+- ✅ Created `src/data/git-extractor.ts` with pure functions:
+  - `getFileType`: Extracts file type detection logic
+  - `parseCommitDiff`: Pure function for processing diff summaries and byte changes
+  - `parseByteChanges`: Pure function for parsing git numstat output
+- ✅ Created comprehensive tests in `src/data/git-extractor.test.ts`:
+  - Tests for file type identification
+  - Tests for diff parsing with various edge cases
+  - Tests for byte change parsing including binary files and malformed input
+- ✅ Updated `src/git/parser.ts` to use the extracted functions
+- ✅ Removed unused imports and utilities from parser.ts
 
 **VERIFICATION**:
-- ✅ No more `any` types in generator.ts (verified with grep)
-- ✅ Tests pass: `npm run test` ✓
-- ✅ Integration test: Generated report successfully ✓
+- ✅ All 17 new tests pass
+- ✅ Integration test: Generated report successfully
+- ✅ No breaking changes to existing functionality
 
 **FILES MODIFIED**: 
-- `src/report/generator.ts`
+- `src/data/git-extractor.ts` (new)
+- `src/data/git-extractor.test.ts` (new)
+- `src/git/parser.ts` (refactored to use extracted functions)
 
-**NOTE**: We've completed what was originally Commit 3 in the old plan (now Commit 12 in the new plan with data layer extraction). This gives us proper type safety in the generator before we start extracting the data layer.
-
-**LAST UPDATED**: Type fixes completed, awaiting review
+**LAST UPDATED**: Git data parsing extraction completed
