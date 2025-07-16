@@ -250,17 +250,17 @@
                     </div>
                 </div>
                 <div class="col-auto">
-                    <div class="d-flex align-items-center">
-                        <span class="text-muted me-2">Report Generated:</span><span class="badge bg-dark me-3">{{generationDate}}</span>
-                        <div class="theme-controls">
+                    <div class="d-flex flex-column align-items-end">
+                        <div class="theme-controls mb-2">
                             <span class="theme-toggle-label">Dark Mode</span>
                             <label class="theme-toggle">
                                 <input type="checkbox" id="themeToggle">
                                 <span class="theme-slider"></span>
                             </label>
                         </div>
+                        <div class="text-muted small">Report Generated: <span class="badge bg-dark">{{generationDate}}</span></div>
+                        <div class="text-muted small">Latest Commit: <span class="fw-semibold">{{latestCommitHash}}</span> by <span class="fw-semibold">{{latestCommitAuthor}}</span> on <span class="fw-semibold">{{latestCommitDate}}</span></div>
                     </div>
-                    <div class="text-muted mt-1 text-end"><small>Latest Commit: <span class="fw-semibold">{{latestCommitHash}}</span> by <span class="fw-semibold">{{latestCommitAuthor}}</span> on <span class="fw-semibold">{{latestCommitDate}}</span></small></div>
                 </div>
             </div>
         </header>
