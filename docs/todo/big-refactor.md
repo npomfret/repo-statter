@@ -275,9 +275,10 @@ Never proceed with a broken state. Every commit must leave the app in a working 
 - **Commit 2**: Add assert utilities and replace defensive checks ✓
 - **Commit 3**: Create test builders for data structures ✓ (Already existed in src/test/builders.ts)
 - **Commit 4**: Extract and test git data parsing ✓
+- **Commit 5**: Extract and test contributor calculations ✓
 
 ### 🔄 IN PROGRESS
-- **Commit 5**: Extract and test contributor calculations
+- **Commit 6**: Extract and test file statistics
 
 ### ⏳ PENDING  
 **Phase 2: Data Layer (NEW - Added based on lessons learned)**
@@ -306,28 +307,34 @@ Never proceed with a broken state. Every commit must leave the app in a working 
 *This section will be updated after each change to show what's ready for review*
 
 ---
-**READY FOR REVIEW**: ✅ **Commit 4: Extract and test git data parsing**
+**READY FOR REVIEW**: ✅ **Commit 5: Extract and test contributor calculations**
 
 **CHANGES MADE**:
-- ✅ Created `src/data/git-extractor.ts` with pure functions:
-  - `getFileType`: Extracts file type detection logic
-  - `parseCommitDiff`: Pure function for processing diff summaries and byte changes
-  - `parseByteChanges`: Pure function for parsing git numstat output
-- ✅ Created comprehensive tests in `src/data/git-extractor.test.ts`:
-  - Tests for file type identification
-  - Tests for diff parsing with various edge cases
-  - Tests for byte change parsing including binary files and malformed input
-- ✅ Updated `src/git/parser.ts` to use the extracted functions
-- ✅ Removed unused imports and utilities from parser.ts
+- ✅ Created `src/data/contributor-calculator.ts` with pure functions:
+  - `getContributorStats`: Calculates contributor statistics from commits
+  - `getContributorsByAverageLinesChanged`: Gets contributors with average lines changed metrics
+  - `getLowestAverageLinesChanged`: Returns contributors with smallest average changes
+  - `getHighestAverageLinesChanged`: Returns contributors with largest average changes
+- ✅ Created comprehensive tests in `src/data/contributor-calculator.test.ts`:
+  - 14 tests covering all functions
+  - Tests for single/multiple contributors
+  - Tests for sorting and filtering logic
+  - Tests for merge commit exclusion
+  - Tests for minimum commit threshold
+- ✅ Updated `src/stats/calculator.ts` to re-export from new module
+- ✅ Fixed `src/test/builders.ts` to properly use override parameters
+- ✅ Used proper TypeScript module exports (`export type` for types)
 
 **VERIFICATION**:
-- ✅ All 17 new tests pass
-- ✅ Integration test: Generated report successfully
+- ✅ All 14 new tests pass
+- ✅ All 70 total tests pass
+- ✅ Integration test: Generated report successfully for test-repo
 - ✅ No breaking changes to existing functionality
 
 **FILES MODIFIED**: 
-- `src/data/git-extractor.ts` (new)
-- `src/data/git-extractor.test.ts` (new)
-- `src/git/parser.ts` (refactored to use extracted functions)
+- `src/data/contributor-calculator.ts` (new)
+- `src/data/contributor-calculator.test.ts` (new)
+- `src/stats/calculator.ts` (refactored to re-export from new module)
+- `src/test/builders.ts` (enhanced to support overrides)
 
-**LAST UPDATED**: Git data parsing extraction completed
+**LAST UPDATED**: Contributor calculations extraction completed

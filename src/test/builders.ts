@@ -96,9 +96,34 @@ export class FileChangeBuilder {
 
 // Factory functions for common test scenarios
 export function createTestCommit(overrides?: Partial<CommitData>): CommitData {
-  return new CommitDataBuilder()
-    .withFileChange(new FileChangeBuilder().withPath('src/index.js').withAdditions(10).build())
-    .build()
+  const builder = new CommitDataBuilder()
+  
+  if (overrides?.sha) builder.withHash(overrides.sha)
+  if (overrides?.authorName) builder.withAuthor(overrides.authorName, overrides.authorEmail)
+  if (overrides?.date) builder.withDate(overrides.date)
+  if (overrides?.message) builder.withMessage(overrides.message)
+  
+  // If filesChanged provided, use them directly
+  if (overrides?.filesChanged) {
+    builder.withFileChanges(overrides.filesChanged)
+  } else {
+    // Otherwise create default file change
+    const defaultFile = new FileChangeBuilder()
+      .withPath('src/index.js')
+      .withAdditions(overrides?.linesAdded ?? 10)
+      .withDeletions(overrides?.linesDeleted ?? 0)
+    
+    if (overrides?.bytesAdded !== undefined) {
+      defaultFile.withAdditions(overrides.linesAdded ?? 10, overrides.bytesAdded)
+    }
+    if (overrides?.bytesDeleted !== undefined) {
+      defaultFile.withDeletions(overrides.linesDeleted ?? 0, overrides.bytesDeleted)
+    }
+    
+    builder.withFileChange(defaultFile.build())
+  }
+  
+  return builder.build()
 }
 
 export function createEmptyCommit(author: string = 'Test Author'): CommitData {
