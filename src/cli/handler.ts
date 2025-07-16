@@ -1,5 +1,5 @@
-import { access } from 'fs/promises'
 import { generateReport } from '../report/generator.js'
+import { validateGitRepository } from '../utils/git-validation.js'
 
 export async function handleCLI(args: string[]): Promise<void> {
   if (args.includes('--repo')) {
@@ -13,14 +13,20 @@ export async function handleCLI(args: string[]): Promise<void> {
     }
     
     try {
-      await access(repoPath)
-    } catch {
-      console.error(`Error: Repository path does not exist: ${repoPath}`)
+      await validateGitRepository(repoPath)
+    } catch (error: any) {
+      console.error(`Error: ${error.message}`)
       process.exit(1)
     }
     
     await generateReport(repoPath, 'analysis')
   } else if (args.length > 0 && args[0]) {
+    try {
+      await validateGitRepository(args[0])
+    } catch (error: any) {
+      console.error(`Error: ${error.message}`)
+      process.exit(1)
+    }
     await generateReport(args[0], 'dist')
   } else {
     console.error('Usage:')

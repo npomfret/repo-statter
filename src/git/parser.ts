@@ -1,9 +1,9 @@
 import { simpleGit } from 'simple-git'
-import { extname, join } from 'path'
+import { extname } from 'path'
 import { exec } from 'child_process'
 import { promisify } from 'util'
-import { access } from 'fs/promises'
 import { isFileExcluded } from '../utils/exclusions.js'
+import { validateGitRepository } from '../utils/git-validation.js'
 
 const execAsync = promisify(exec)
 
@@ -36,19 +36,8 @@ export async function parseCommitHistory(repoPath: string): Promise<CommitData[]
     throw new Error('Repository path is required and must be a string')
   }
   
-  // Check if path exists
-  try {
-    await access(repoPath)
-  } catch {
-    throw new Error(`Repository path does not exist: ${repoPath}`)
-  }
-  
-  // Check if it's a git repository
-  try {
-    await access(join(repoPath, '.git'))
-  } catch {
-    throw new Error(`Path is not a git repository: ${repoPath}`)
-  }
+  // Validate git repository
+  await validateGitRepository(repoPath)
   
   const git = simpleGit(repoPath)
   
