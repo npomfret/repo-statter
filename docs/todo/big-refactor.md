@@ -283,6 +283,67 @@ Never proceed with a broken state. Every commit must leave the app in a working 
 ### 🔄 IN PROGRESS
 - **Commit 9**: Extract and test linear transformations
 
+## Detailed Implementation Plan for Commit 9: Extract and test linear transformations
+
+**Goal**: Move getLinearSeriesData as pure function to src/data/linear-transformer.ts with comprehensive tests
+
+**Current State**: 
+- `getLinearSeriesData` function is in `src/chart/data-transformer.ts` (lines 19-61)
+- Function handles cumulative calculations for lines and bytes
+- Adds starting point with index 0 and 'start' sha
+- Iterates through commits calculating cumulative values
+
+**Implementation Steps**:
+
+1. **Create src/data/linear-transformer.ts**:
+   - Move `LinearSeriesPoint` interface from data-transformer.ts
+   - Move `getLinearSeriesData` function as pure function
+   - Add fail-fast assert helper for validation
+   - Ensure proper handling of missing byte data with null coalescing
+
+2. **Create comprehensive tests in src/data/linear-transformer.test.ts**:
+   - Test empty commits array (should return empty array)
+   - Test single commit (should have start point + 1 commit)
+   - Test multiple commits with cumulative calculation accuracy
+   - Test index progression (0, 1, 2, 3...)
+   - Test byte data handling (with and without byte data)
+   - Test edge cases (commits without file changes)
+   - Test date handling and commit ordering
+   - Test the special 'start' entry properties
+
+3. **Update src/chart/data-transformer.ts**:
+   - Remove `LinearSeriesPoint` interface
+   - Remove `getLinearSeriesData` function
+   - Add re-export: `export type { LinearSeriesPoint } from '../data/linear-transformer.js'`
+   - Add re-export: `export { getLinearSeriesData } from '../data/linear-transformer.js'`
+
+4. **Verification**:
+   - All new tests must pass
+   - All existing tests must continue to pass
+   - Integration test must work (generate report successfully)
+   - TypeScript compilation must pass
+
+**Key Test Cases to Cover**:
+- Empty array handling
+- Single commit progression
+- Multi-commit cumulative accuracy
+- Index sequence validation (0, 1, 2, 3...)
+- Byte data null coalescing
+- Starting point generation
+- Date preservation
+- SHA preservation
+
+**Files to Modify**:
+- `src/data/linear-transformer.ts` (new)
+- `src/data/linear-transformer.test.ts` (new)  
+- `src/chart/data-transformer.ts` (refactor to re-export)
+
+**Success Criteria**:
+- All cumulative calculations tested and verified
+- Index progression logic tested
+- Backward compatibility maintained through re-exports
+- No breaking changes to existing functionality
+
 ### ⏳ PENDING  
 **Phase 2: Data Layer (NEW - Added based on lessons learned)**
 - **Commit 3**: Create test builders for data structures
