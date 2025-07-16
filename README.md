@@ -1,51 +1,65 @@
 # Repo Statter
 
-A powerful Git repository analysis tool that generates beautiful, interactive HTML reports with detailed statistics about your codebase.
+Repo Statter is a work-in-progress Git repository analysis tool designed to generate insightful, interactive HTML reports. It provides detailed statistics about your codebase, helping you understand its evolution and characteristics.
 
-## Features
+**Please Note:** This project is currently under active development. There is no official NPM package available yet. Please note that it is currently designed for small to medium-sized projects and may not scale efficiently for very large repositories (yet).
 
-- **Comprehensive Git Analysis**: Analyzes complete commit history with line-by-line statistics
-- **Interactive Visualizations**: Beautiful charts showing commit activity, contributor statistics, file type distribution, and lines of code growth
-- **Self-Contained Reports**: Generates standalone HTML files with embedded data and charts
-- **Flexible Output**: Choose between quick builds or structured analysis output
-- **Zero Runtime Dependencies**: Reports work offline with no external dependencies
+## How to Use (Development Version)
 
-## Installation
+To use Repo Statter, you'll need to clone the repository and run it directly.
+
+### Prerequisites
+
+- Node.js (version 18 or higher)
+- Git
+
+### Setup
+
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/yourusername/repo-statter.git
+    cd repo-statter
+    ```
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
+
+### Generating Reports
+
+You can generate reports in two modes:
+
+#### Quick Build Mode
+
+This mode generates a standalone HTML report in the `dist/` directory.
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/repo-statter.git
-cd repo-statter
-
-# Install dependencies
-npm install
-```
-
-## Usage
-
-### Quick Build Mode
-
-Generate a report in the `dist/` directory:
-
-```bash
-npm run build .                    # Analyze current directory
-npm run build /path/to/repository  # Analyze specific repository
+npm run build .                    # Analyze the current directory's Git repository
+npm run build /path/to/your/repo   # Analyze a specific Git repository
 ```
 
 Output: `dist/report.html`
 
-### Full Analysis Mode
+#### Full Analysis Mode
 
-Generate a structured analysis with both HTML report and JSON data:
+This mode generates both an interactive HTML report and a raw JSON data file with detailed statistics. The output will be placed in an `analysis/` directory, structured by repository name.
 
 ```bash
-npm run analyse -- --repo .                    # Analyze current directory
-npm run analyse -- --repo /path/to/repository  # Analyze specific repository
+npm run analyse -- --repo .                    # Analyze the current directory's Git repository
+npm run analyse -- --repo /path/to/your/repo   # Analyze a specific Git repository
 ```
 
 Output:
 - `analysis/<repository-name>/report.html` - Interactive HTML report
 - `analysis/<repository-name>/repo-stats.json` - Raw statistics data
+
+## Features
+
+-   **Comprehensive Git Analysis**: Analyzes complete commit history with line-by-line statistics.
+-   **Interactive Visualizations**: Beautiful charts showing commit activity, contributor statistics, file type distribution, and lines of code growth.
+-   **Self-Contained Reports**: Generates standalone HTML files with embedded data and charts, requiring no external dependencies to view.
+-   **Flexible Output**: Choose between quick builds or structured analysis output.
+-   **Zero Runtime Dependencies**: Reports work offline with no external dependencies.
 
 ## Report Contents
 
