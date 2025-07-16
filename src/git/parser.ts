@@ -62,6 +62,7 @@ export async function parseCommitHistory(repoPath: string): Promise<CommitData[]
   
   const commits: CommitData[] = []
   let cumulativeBytes = 0
+  let processedCommits = 0
   
   for (const commit of log.all) {
     const diffStats = await parseCommitDiff(repoPath, commit.hash)
@@ -84,6 +85,15 @@ export async function parseCommitHistory(repoPath: string): Promise<CommitData[]
       totalBytes: totalBytes || cumulativeBytes,
       filesChanged: diffStats.filesChanged
     })
+    
+    processedCommits++
+    if (processedCommits % 25 === 0) {
+      const commitInfo = commit.hash.substring(0, 7) + ' ' +
+                         new Date(commit.date).toLocaleString() + ' ' +
+                         commit.author_name + ': ' +
+                         commit.message.substring(0, 20) + (commit.message.length > 20 ? '...' : '')
+      console.log(`Processed ${processedCommits} commits: ${commitInfo}`)
+    }
   }
   
   return commits
