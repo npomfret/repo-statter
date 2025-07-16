@@ -292,9 +292,10 @@ Never proceed with a broken state. Every commit must leave the app in a working 
 - **Commit 7**: Extract and test award calculations ✓
 - **Commit 8**: Extract and test time series transformations ✓
 - **Commit 9**: Extract and test linear transformations ✓
+- **Commit 10**: Extract and test text processing ✓
 
 ### 🔄 IN PROGRESS
-- **Commit 10**: Extract and test text processing
+- **Commit 11**: Create integration tests for data pipeline
 
 ## Detailed Implementation Plan for Commit 9: Extract and test linear transformations
 
@@ -384,9 +385,28 @@ Never proceed with a broken state. Every commit must leave the app in a working 
 *This section will be updated after each change to show what's ready for review*
 
 ---
-**READY FOR REVIEW**: ✅ **Commit 9: Extract and test linear transformations**
+**READY FOR REVIEW**: ✅ **Commit 10: Extract and test text processing**
 
 **CHANGES MADE**:
+- ✅ Added comprehensive tests to `src/text/processor.test.ts`:
+  - 29 tests covering all functions in the text processing module
+  - Tests for `extractWords`: empty arrays, single/multiple messages, case conversion, special character removal, unicode handling
+  - Tests for `filterStopWords`: empty input, stop word filtering, minimum word length, number filtering, custom config
+  - Tests for `getWordFrequencies`: empty input, single/multiple occurrences, frequency sorting, size scaling, max words limit
+  - Tests for `processCommitMessages`: error handling, message processing, stop word filtering, real-world commit messages
+- ✅ Fixed test expectations to match actual behavior (single word gets minSize, "over" is not a stop word)
+
+**VERIFICATION**:
+- ✅ All 29 new tests pass
+- ✅ All 148 total tests pass
+- ✅ TypeScript compilation successful
+- ✅ Integration test: Generated report successfully for test-repo
+- ✅ No changes to existing functionality needed - text processing was already extracted
+
+**FILES MODIFIED**: 
+- `src/text/processor.test.ts` (new - 29 comprehensive tests)
+
+**PREVIOUS COMMIT 9 CHANGES**:
 - ✅ Created `src/data/linear-transformer.ts` with pure functions:
   - `getLinearSeriesData`: Transforms commits into linear progression data points with cumulative calculations
   - `LinearSeriesPoint` interface: Defines the structure for linear series data points
@@ -417,4 +437,4 @@ Never proceed with a broken state. Every commit must leave the app in a working 
 - `src/data/linear-transformer.test.ts` (new)
 - `src/chart/data-transformer.ts` (refactored to re-export from new module)
 
-**LAST UPDATED**: Linear transformations extraction completed
+**LAST UPDATED**: Text processing tests completed
