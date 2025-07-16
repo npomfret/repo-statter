@@ -1,3 +1,4 @@
+import ApexCharts from 'apexcharts'
 import { BaseChart } from './base-chart.js'
 import type { LinearSeriesPoint, TimeSeriesPoint } from '../chart/data-transformer.js'
 import type { CommitData } from '../git/parser.js'
@@ -48,16 +49,19 @@ export class LinesOfCodeChart extends BaseChart {
           },
           labels: {
             ...this.getAxisLabelStyle(),
-            datetimeFormatter: {
-              year: 'yyyy',
-              month: 'MMM yyyy',
-              day: 'dd MMM',
-              hour: 'HH:mm',
-              minute: 'HH:mm',
-              second: 'HH:mm:ss'
-            },
-            datetimeUTC: false,
-            formatter: xAxis === 'commit' ? function(val) { return Math.floor(val as number) } : undefined
+            ...(xAxis === 'date' ? {
+              datetimeFormatter: {
+                year: 'yyyy',
+                month: 'MMM yyyy',
+                day: 'dd MMM',
+                hour: 'HH:mm',
+                minute: 'HH:mm',
+                second: 'HH:mm:ss'
+              },
+              datetimeUTC: false
+            } : {
+              formatter: function(val: string) { return Math.floor(val as unknown as number).toString() }
+            })
           }
         },
         yaxis: {
@@ -66,7 +70,7 @@ export class LinesOfCodeChart extends BaseChart {
             ...this.getTitleStyle()
           },
           min: 0,
-          labels: this.getAxisLabelStyle()
+          labels: this.getAxisLabelStyle() as any
         },
         fill: {
           type: 'gradient',
@@ -80,7 +84,7 @@ export class LinesOfCodeChart extends BaseChart {
         tooltip: {
           ...this.getBaseOptions().tooltip,
           x: {
-            format: xAxis === 'date' ? 'dd MMM yyyy' : undefined
+            format: xAxis === 'date' ? 'dd MMM yyyy' : ''
           },
           custom: createCommitTooltip(xAxis, data.linearSeries, data.commits, function(commit, point) {
             let linesDisplay = ''

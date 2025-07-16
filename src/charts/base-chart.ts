@@ -1,3 +1,4 @@
+import ApexCharts from 'apexcharts'
 import type { ChartOptions } from '../types/index.js'
 
 export abstract class BaseChart {
@@ -29,7 +30,7 @@ export abstract class BaseChart {
     }
   }
   
-  protected getAxisLabelStyle(): ApexCharts.ApexXAxis['labels'] {
+  protected getAxisLabelStyle(): ApexXAxis['labels'] {
     return {
       style: { 
         colors: this.isDark ? '#f0f6fc' : '#24292f' 
@@ -37,7 +38,7 @@ export abstract class BaseChart {
     }
   }
   
-  protected getTitleStyle(): ApexCharts.ApexTitleSubtitle {
+  protected getTitleStyle(): ApexTitleSubtitle {
     return {
       style: { 
         color: this.isDark ? '#f0f6fc' : '#24292f' 

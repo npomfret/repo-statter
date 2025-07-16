@@ -1,3 +1,4 @@
+import ApexCharts from 'apexcharts'
 import { BaseChart } from './base-chart.js'
 import type { ContributorStats } from '../stats/calculator.js'
 
@@ -23,14 +24,14 @@ export class ContributorsChart extends BaseChart {
             text: 'Contributors',
             ...this.getTitleStyle()
           },
-          labels: this.getAxisLabelStyle()
+          labels: this.getAxisLabelStyle() as any
         },
         yaxis: {
           title: {
             text: 'Commits',
             ...this.getTitleStyle()
           },
-          labels: this.getAxisLabelStyle()
+          labels: this.getAxisLabelStyle() as any
         },
         colors: [this.isDark ? '#3fb950' : '#87bc45']
       }

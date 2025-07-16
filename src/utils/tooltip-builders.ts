@@ -11,7 +11,7 @@ export function createCommitTooltip(
   commits: CommitData[],
   customContent?: CustomContentFunction
 ): (context: TooltipContext) => string | null {
-  return function({ seriesIndex, dataPointIndex, w }: TooltipContext): string | null {
+  return function({ dataPointIndex }: TooltipContext): string | null {
     if (xAxis === 'commit') {
       const point = filteredLinearSeries[dataPointIndex]
       if (point && point.sha !== 'start') {
@@ -43,7 +43,7 @@ export function createUserChartTooltip(
   userCommits: CommitData[],
   metric: 'lines' | 'bytes'
 ): (context: TooltipContext) => string | null {
-  return function({ seriesIndex, dataPointIndex, w }: TooltipContext): string | null {
+  return function({ dataPointIndex }: TooltipContext): string | null {
     if (xAxis === 'commit' && dataPointIndex > 0) {
       const commit = userCommits[dataPointIndex - 1] // -1 because we have a zero starting point
       if (commit) {

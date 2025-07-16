@@ -15,11 +15,6 @@ function assertDefined<T>(value: T | undefined | null, name: string): asserts va
   }
 }
 
-function assertNumber(value: unknown, name: string): asserts value is number {
-  if (typeof value !== 'number' || isNaN(value)) {
-    throw new Error(`${name} must be a valid number, got ${typeof value}: ${value}`)
-  }
-}
 
 const FILE_TYPE_MAP = {
   '.ts': 'TypeScript',
@@ -80,11 +75,11 @@ export function parseCommitDiff(
   diffSummary: DiffSummary,
   byteChanges: ByteChanges
 ): ParsedCommitDiff {
-  assert(diffSummary, 'diffSummary must have files property')
-  assert(diffSummary.files, 'diffSummary must have files property')
+  assert(!!diffSummary, 'diffSummary must exist')
+  assert(!!diffSummary.files, 'diffSummary must have files property')
   assert(Array.isArray(diffSummary.files), 'diffSummary.files must be an array')
-  assert(byteChanges, 'byteChanges must have fileChanges property')
-  assert(byteChanges.fileChanges, 'byteChanges must have fileChanges property')
+  assert(!!byteChanges, 'byteChanges must exist')
+  assert(!!byteChanges.fileChanges, 'byteChanges must have fileChanges property')
   
   const filesChanged: FileChange[] = diffSummary.files
     .filter(file => {

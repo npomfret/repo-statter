@@ -1,3 +1,4 @@
+import ApexCharts from 'apexcharts'
 import type { CommitData } from '../git/parser.js'
 import type { ContributorStats, FileTypeStats, FileHeatData, ContributorAward, CommitAward } from '../stats/calculator.js'
 import type { TimeSeriesPoint, LinearSeriesPoint } from '../chart/data-transformer.js'

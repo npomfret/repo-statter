@@ -69,7 +69,7 @@ export class DataRecalculator {
     const timeSeriesMap = new Map<string, TimeSeriesPoint>()
     
     for (const commit of commits) {
-      const dateKey = new Date(commit.date).toISOString().split('T')[0]
+      const dateKey = new Date(commit.date).toISOString().split('T')[0]!
       if (!timeSeriesMap.has(dateKey)) {
         timeSeriesMap.set(dateKey, {
           date: dateKey,

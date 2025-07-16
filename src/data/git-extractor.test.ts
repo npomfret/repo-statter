@@ -153,9 +153,9 @@ describe('parseCommitDiff', () => {
   })
 
   it('throws on invalid input', () => {
-    expect(() => parseCommitDiff(null as any, {} as any)).toThrow('diffSummary must have files property')
+    expect(() => parseCommitDiff(null as any, {} as any)).toThrow('diffSummary must exist')
     expect(() => parseCommitDiff({ files: null as any }, {} as any)).toThrow('diffSummary must have files property')
-    expect(() => parseCommitDiff({ files: [] }, null as any)).toThrow('byteChanges must have fileChanges property')
+    expect(() => parseCommitDiff({ files: [] }, null as any)).toThrow('byteChanges must exist')
   })
 })
 

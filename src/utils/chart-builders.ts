@@ -46,11 +46,11 @@ export function buildUserTimeSeriesData(
     // Group user commits by date
     const userCommitsByDate: Record<string, CommitData[]> = {}
     userCommits.forEach(commit => {
-      const dateKey = new Date(commit.date).toISOString().split('T')[0]
+      const dateKey = new Date(commit.date).toISOString().split('T')[0]!
       if (!userCommitsByDate[dateKey]) {
         userCommitsByDate[dateKey] = []
       }
-      userCommitsByDate[dateKey].push(commit)
+      userCommitsByDate[dateKey]!.push(commit)
     })
     
     // Use ONLY filteredTimeSeries dates to match other charts' x-axis
@@ -58,20 +58,20 @@ export function buildUserTimeSeriesData(
     
     // Always start with zero at the first date
     if (sortedDates.length > 0) {
-      const firstTimestamp = new Date(sortedDates[0]).getTime()
+      const firstTimestamp = new Date(sortedDates[0]!).getTime()
       addedData.push({ x: firstTimestamp, y: 0 })
       removedData.push({ x: firstTimestamp, y: 0 })
       netData.push({ x: firstTimestamp, y: 0 })
     }
     
     sortedDates.forEach(date => {
-      const dateKey = date.split('T')[0]
+      const dateKey = date.split('T')[0]!
       const dateContributions = userCommitsByDate[dateKey] || []
       
-      const dayAdded = dateContributions.reduce((sum, c) => sum + c.linesAdded, 0)
-      const dayRemoved = dateContributions.reduce((sum, c) => sum + c.linesDeleted, 0)
-      const dayBytesAdded = dateContributions.reduce((sum, c) => sum + (c.bytesAdded || c.linesAdded * 50), 0)
-      const dayBytesRemoved = dateContributions.reduce((sum, c) => sum + (c.bytesDeleted || c.linesDeleted * 50), 0)
+      const dayAdded = dateContributions.reduce((sum: number, c: CommitData) => sum + c.linesAdded, 0)
+      const dayRemoved = dateContributions.reduce((sum: number, c: CommitData) => sum + c.linesDeleted, 0)
+      const dayBytesAdded = dateContributions.reduce((sum: number, c: CommitData) => sum + (c.bytesAdded || c.linesAdded * 50), 0)
+      const dayBytesRemoved = dateContributions.reduce((sum: number, c: CommitData) => sum + (c.bytesDeleted || c.linesDeleted * 50), 0)
       
       cumulativeAdded += dayAdded
       cumulativeRemoved += dayRemoved

@@ -1,3 +1,4 @@
+import ApexCharts from 'apexcharts'
 import type { ChartInstances, FilteredData } from '../types/index.js'
 import type { CommitData } from '../git/parser.js'
 import { ContributorsChart } from './contributors-chart.js'
@@ -90,7 +91,6 @@ export class ChartManager {
   
   public handleThemeChange(): void {
     // Re-initialize charts with new theme
-    const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark'
     
     // Request animation frame to ensure theme change has been processed
     requestAnimationFrame(() => {

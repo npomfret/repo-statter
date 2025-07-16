@@ -1,3 +1,4 @@
+import ApexCharts from 'apexcharts'
 import { BaseChart } from './base-chart.js'
 import type { FileTypeStats } from '../stats/calculator.js'
 

@@ -1,7 +1,5 @@
 import type { FilterState, FilteredData } from '../types/index.js'
 import type { CommitData } from '../git/parser.js'
-import type { ContributorStats, FileTypeStats } from '../stats/calculator.js'
-import type { TimeSeriesPoint, LinearSeriesPoint } from '../chart/data-transformer.js'
 import { DataRecalculator } from './data-recalculator.js'
 
 export class FilterManager {
