@@ -108,8 +108,10 @@ export class DataRecalculator {
     return commits.map((commit, index) => ({
       commitIndex: index + 1,
       cumulativeLines: commits.slice(0, index + 1).reduce((sum, c) => sum + c.linesAdded, 0),
-      cumulativeBytes: commits.slice(0, index + 1).reduce((sum, c) => sum + (c.estimatedBytes || c.linesAdded * 50), 0),
+      cumulativeBytes: commits.slice(0, index + 1).reduce((sum, c) => sum + (c.bytesAdded || c.linesAdded * 50), 0),
       sha: commit.sha,
+      date: commit.date,
+      commits: 1,
       linesAdded: commit.linesAdded,
       linesDeleted: commit.linesDeleted,
       netLines: commit.linesAdded - commit.linesDeleted

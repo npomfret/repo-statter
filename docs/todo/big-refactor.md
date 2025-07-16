@@ -38,12 +38,14 @@
 ### Testing Strategy for Every Commit
 ```bash
 # After every change, run this sequence:
-npm run typecheck        # Must pass
+npm run typecheck        # Must pass - ALWAYS compile before testing
 npm run test             # Must pass
 ./scripts/create-test-repo.sh  # Generate test data
-npm run dev test-repo    # Generate report
+npm start test-repo      # Generate report
 # Manually verify: open dist/test-repo.html and check all charts render
 ```
+
+**CRITICAL RULE**: Always run `npm run typecheck` before any test or run target. TypeScript compilation errors must be fixed before proceeding with tests or integration.
 
 ## Incremental Plan
 
@@ -235,10 +237,10 @@ npm run dev test-repo    # Generate report
 - **Every line of code must have a clear, immediate purpose**
 
 ### Testing Requirements
-- TypeScript compilation must pass: `npm run typecheck`
+- **ALWAYS compile first**: `npm run typecheck` - Must pass before any testing
 - All tests must pass: `npm run test`
 - Integration test: Generate report and verify charts work
-- If ANY test fails, fix immediately before proceeding
+- If ANY compilation error or test fails, fix immediately before proceeding
 
 ### Error Handling Rules
 - **NEVER use try/catch unless there's a specific recovery strategy**
@@ -280,8 +282,19 @@ Never proceed with a broken state. Every commit must leave the app in a working 
 - **Commit 7**: Extract and test award calculations ✓
 - **Commit 8**: Extract and test time series transformations ✓
 
+### ✅ COMPLETED
+- **Commit 1**: Remove all try/catch blocks ✓
+- **Commit 2**: Add assert utilities and replace defensive checks ✓
+- **Commit 3**: Create test builders for data structures ✓ (Already existed in src/test/builders.ts)
+- **Commit 4**: Extract and test git data parsing ✓
+- **Commit 5**: Extract and test contributor calculations ✓
+- **Commit 6**: Extract and test file statistics ✓
+- **Commit 7**: Extract and test award calculations ✓
+- **Commit 8**: Extract and test time series transformations ✓
+- **Commit 9**: Extract and test linear transformations ✓
+
 ### 🔄 IN PROGRESS
-- **Commit 9**: Extract and test linear transformations
+- **Commit 10**: Extract and test text processing
 
 ## Detailed Implementation Plan for Commit 9: Extract and test linear transformations
 
@@ -371,34 +384,37 @@ Never proceed with a broken state. Every commit must leave the app in a working 
 *This section will be updated after each change to show what's ready for review*
 
 ---
-**READY FOR REVIEW**: ✅ **Commit 8: Extract and test time series transformations**
+**READY FOR REVIEW**: ✅ **Commit 9: Extract and test linear transformations**
 
 **CHANGES MADE**:
-- ✅ Created `src/data/time-series-transformer.ts` with pure functions:
-  - `getTimeSeriesData`: Transforms commits into time-based data points with automatic hourly/daily grouping
-  - `getRepoAgeInHours`: Calculates repository age to determine granularity
+- ✅ Created `src/data/linear-transformer.ts` with pure functions:
+  - `getLinearSeriesData`: Transforms commits into linear progression data points with cumulative calculations
+  - `LinearSeriesPoint` interface: Defines the structure for linear series data points
   - Private `assert` helper for fail-fast error handling
-- ✅ Created comprehensive tests in `src/data/time-series-transformer.test.ts`:
-  - 12 tests covering all edge cases
+- ✅ Created comprehensive tests in `src/data/linear-transformer.test.ts`:
+  - 10 tests covering all edge cases and functionality
   - Tests for empty commit arrays
-  - Tests for hourly vs daily grouping logic based on repo age
-  - Tests for cumulative calculations (lines and bytes)
-  - Tests for handling commits without byte data
-  - Tests for date sorting and formatting
-  - Tests for single commit scenarios
-  - Tests for multi-day repository scenarios
+  - Tests for single commit scenarios (start point + 1 commit)
+  - Tests for multi-commit cumulative calculation accuracy
+  - Tests for index progression validation (0, 1, 2, 3...)
+  - Tests for byte data handling (with/without byte data)
+  - Tests for net lines calculation
+  - Tests for multi-file commit aggregation
+  - Tests for commits with no file changes
+  - Tests for date and SHA preservation
+  - Tests for starting point properties
 - ✅ Updated `src/chart/data-transformer.ts` to re-export from new module
-- ✅ Removed all time series transformation code from data-transformer.ts
+- ✅ Removed all linear transformation code from data-transformer.ts
 
 **VERIFICATION**:
-- ✅ All 12 new tests pass
-- ✅ All 109 total tests pass
+- ✅ All 10 new tests pass
+- ✅ All 119 total tests pass
 - ✅ Integration test: Generated report successfully for test-repo
 - ✅ No breaking changes to existing functionality
 
 **FILES MODIFIED**: 
-- `src/data/time-series-transformer.ts` (new)
-- `src/data/time-series-transformer.test.ts` (new)
+- `src/data/linear-transformer.ts` (new)
+- `src/data/linear-transformer.test.ts` (new)
 - `src/chart/data-transformer.ts` (refactored to re-export from new module)
 
-**LAST UPDATED**: Time series transformations extraction completed
+**LAST UPDATED**: Linear transformations extraction completed
