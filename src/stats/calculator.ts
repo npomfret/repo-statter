@@ -7,6 +7,12 @@ export interface ContributorStats {
   linesDeleted: number
 }
 
+export interface ContributorAward {
+  name: string
+  commits: number
+  averageLinesChanged: number
+}
+
 export interface CommitAward {
   sha: string
   authorName: string
@@ -197,5 +203,44 @@ export function getTopCommitsByLinesRemoved(commits: CommitData[]): CommitAward[
       value: commit.linesDeleted
     }))
     .sort((a, b) => b.value - a.value)
+    .slice(0, 5)
+}
+
+export function getContributorsByAverageLinesChanged(commits: CommitData[]): ContributorAward[] {
+  const contributorMap = new Map<string, { commits: number; totalLinesChanged: number }>()
+  
+  for (const commit of commits) {
+    if (!isRealCommit(commit)) continue
+    
+    if (!contributorMap.has(commit.authorName)) {
+      contributorMap.set(commit.authorName, {
+        commits: 0,
+        totalLinesChanged: 0
+      })
+    }
+    
+    const existing = contributorMap.get(commit.authorName)!
+    existing.commits += 1
+    existing.totalLinesChanged += commit.linesAdded + commit.linesDeleted
+  }
+  
+  return Array.from(contributorMap.entries())
+    .filter(([_, stats]) => stats.commits >= 5) // Only include contributors with at least 5 commits
+    .map(([name, stats]) => ({
+      name,
+      commits: stats.commits,
+      averageLinesChanged: stats.totalLinesChanged / stats.commits
+    }))
+}
+
+export function getLowestAverageLinesChanged(commits: CommitData[]): ContributorAward[] {
+  return getContributorsByAverageLinesChanged(commits)
+    .sort((a, b) => a.averageLinesChanged - b.averageLinesChanged)
+    .slice(0, 5)
+}
+
+export function getHighestAverageLinesChanged(commits: CommitData[]): ContributorAward[] {
+  return getContributorsByAverageLinesChanged(commits)
+    .sort((a, b) => b.averageLinesChanged - a.averageLinesChanged)
     .slice(0, 5)
 }

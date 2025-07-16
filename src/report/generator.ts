@@ -10,7 +10,9 @@ import {
   getTopCommitsByBytesAdded,
   getTopCommitsByBytesRemoved,
   getTopCommitsByLinesAdded,
-  getTopCommitsByLinesRemoved
+  getTopCommitsByLinesRemoved,
+  getLowestAverageLinesChanged,
+  getHighestAverageLinesChanged
 } from '../stats/calculator.js'
 import { getTimeSeriesData, getLinearSeriesData } from '../chart/data-transformer.js'
 import { processCommitMessages } from '../text/processor.js'
@@ -82,7 +84,9 @@ async function transformCommitData(commits: CommitData[], repoName: string, repo
     bytesAdded: await readFile('src/images/trophy-bytes-added.svg', 'utf-8'),
     bytesRemoved: await readFile('src/images/trophy-bytes-removed.svg', 'utf-8'),
     linesAdded: await readFile('src/images/trophy-lines-added.svg', 'utf-8'),
-    linesRemoved: await readFile('src/images/trophy-lines-removed.svg', 'utf-8')
+    linesRemoved: await readFile('src/images/trophy-lines-removed.svg', 'utf-8'),
+    averageLow: await readFile('src/images/trophy-average-low.svg', 'utf-8'),
+    averageHigh: await readFile('src/images/trophy-average-high.svg', 'utf-8')
   }
   
   return {
@@ -111,7 +115,9 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
     mostBytesAdded: getTopCommitsByBytesAdded(commits),
     mostBytesRemoved: getTopCommitsByBytesRemoved(commits),
     mostLinesAdded: getTopCommitsByLinesAdded(commits),
-    mostLinesRemoved: getTopCommitsByLinesRemoved(commits)
+    mostLinesRemoved: getTopCommitsByLinesRemoved(commits),
+    lowestAverageLinesChanged: getLowestAverageLinesChanged(commits),
+    highestAverageLinesChanged: getHighestAverageLinesChanged(commits)
   }
   
   const chartScript = `
@@ -951,7 +957,9 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
           { title: 'Most Bytes Added', data: awards.mostBytesAdded, formatValue: formatBytes, trophy: trophySvgs.bytesAdded },
           { title: 'Most Bytes Removed', data: awards.mostBytesRemoved, formatValue: formatBytes, trophy: trophySvgs.bytesRemoved },
           { title: 'Most Lines Added', data: awards.mostLinesAdded, formatValue: (v) => v.toLocaleString() + ' lines', trophy: trophySvgs.linesAdded },
-          { title: 'Most Lines Removed', data: awards.mostLinesRemoved, formatValue: (v) => v.toLocaleString() + ' lines', trophy: trophySvgs.linesRemoved }
+          { title: 'Most Lines Removed', data: awards.mostLinesRemoved, formatValue: (v) => v.toLocaleString() + ' lines', trophy: trophySvgs.linesRemoved },
+          { title: 'Smallest Average Changes', data: awards.lowestAverageLinesChanged, formatValue: (v) => v.toFixed(1) + ' lines/commit', showAuthor: false, trophy: trophySvgs.averageLow },
+          { title: 'Largest Average Changes', data: awards.highestAverageLinesChanged, formatValue: (v) => v.toFixed(1) + ' lines/commit', showAuthor: false, trophy: trophySvgs.averageHigh }
         ];
         
         awardCategories.forEach(category => {
@@ -989,10 +997,20 @@ function injectDataIntoTemplate(template: string, chartData: any, commits: Commi
           const list = document.createElement('ol');
           list.className = 'mb-0';
           
-          if (category.title === 'Top Contributors') {
+          if (category.title === 'Top Contributors' || category.title === 'Smallest Average Changes' || category.title === 'Largest Average Changes') {
             category.data.forEach((contributor, index) => {
               const item = document.createElement('li');
-              item.innerHTML = '<strong>' + contributor.name + '</strong>: ' + category.formatValue(contributor);
+              if (category.title === 'Top Contributors') {
+                item.innerHTML = '<strong>' + contributor.name + '</strong>: ' + category.formatValue(contributor);
+              } else {
+                // For average changes awards
+                item.innerHTML = 
+                  '<div>' +
+                  '<strong>' + contributor.name + '</strong><br>' +
+                  '<small class="text-muted">' + contributor.commits + ' commits</small><br>' +
+                  '<small class="text-muted">Average: ' + category.formatValue(contributor.averageLinesChanged) + '</small>' +
+                  '</div>';
+              }
               list.appendChild(item);
             });
           } else {
