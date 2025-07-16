@@ -550,7 +550,40 @@ EOF
 
 commit_as 2 "Add configuration management system"
 
-# Commit 10: Alice adds final TypeScript service layer
+# Commit 10: Carol does major cleanup - removes old code
+set_user "${USERS[2]}"
+# Remove validation.js entirely
+rm validation.js
+# Heavily reduce utils.js
+cat > utils.js << 'EOF'
+// Minimal utilities after cleanup
+
+function generateId() {
+    return Math.random().toString(36).substr(2, 9);
+}
+
+module.exports = { generateId };
+EOF
+# Also cleanup app.js
+cat > app.js << 'EOF'
+const { generateId } = require('./utils');
+
+class Application {
+    constructor() {
+        this.id = generateId();
+    }
+    
+    run() {
+        console.log('App running with ID:', this.id);
+    }
+}
+
+module.exports = Application;
+EOF
+
+commit_as 2 "Major cleanup: Remove validation system and simplify utils"
+
+# Commit 11: Alice adds final TypeScript service layer
 set_user "${USERS[0]}"
 cat > src/services.ts << 'EOF'
 import { User, Status } from './types';
@@ -611,7 +644,7 @@ EOF
 
 commit_as 0 "Add service layer with event integration"
 
-# Commit 11: Bob adds a README
+# Commit 12: Bob adds a README
 set_user "${USERS[1]}"
 cat > README.md << 'EOF'
 # Test Repository
@@ -652,7 +685,7 @@ EOF
 
 commit_as 1 "Add README documentation"
 
-# Commit 12: Carol makes final cleanup
+# Commit 13: Carol makes final cleanup
 set_user "${USERS[2]}"
 # Update package.json with more realistic content
 cat > package.json << 'EOF'
