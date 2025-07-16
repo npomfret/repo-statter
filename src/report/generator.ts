@@ -89,6 +89,8 @@ async function transformCommitData(commits: CommitData[], repoName: string, repo
     averageHigh: await readFile('src/images/trophy-average-high.svg', 'utf-8')
   }
   
+  const latestCommit = commits[0]; // Assuming commits are sorted by date, latest first
+
   return {
     repositoryName: repoName,
     totalCommits,
@@ -97,7 +99,10 @@ async function transformCommitData(commits: CommitData[], repoName: string, repo
     generationDate: new Date().toLocaleString(),
     githubLink,
     logoSvg,
-    trophySvgs
+    trophySvgs,
+    latestCommitHash: latestCommit ? latestCommit.sha.substring(0, 7) : 'N/A',
+    latestCommitAuthor: latestCommit ? latestCommit.authorName : 'N/A',
+    latestCommitDate: latestCommit ? new Date(latestCommit.date).toLocaleString() : 'N/A'
   }
 }
 

@@ -251,7 +251,7 @@
                 </div>
                 <div class="col-auto">
                     <div class="d-flex align-items-center">
-                        <span class="badge bg-dark me-3">{{generationDate}}</span>
+                        <span class="text-muted me-2">Report Generated:</span><span class="badge bg-dark me-3">{{generationDate}}</span>
                         <div class="theme-controls">
                             <span class="theme-toggle-label">Dark Mode</span>
                             <label class="theme-toggle">
@@ -260,6 +260,7 @@
                             </label>
                         </div>
                     </div>
+                    <div class="text-muted mt-1 text-end"><small>Latest Commit: <span class="fw-semibold">{{latestCommitHash}}</span> by <span class="fw-semibold">{{latestCommitAuthor}}</span> on <span class="fw-semibold">{{latestCommitDate}}</span></small></div>
                 </div>
             </div>
         </header>
