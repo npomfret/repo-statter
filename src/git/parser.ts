@@ -3,6 +3,7 @@ import { exec } from 'child_process'
 import { promisify } from 'util'
 import { validateGitRepository } from '../utils/git-validation.js'
 import { parseCommitDiff as parseCommitDiffData, parseByteChanges } from '../data/git-extractor.js'
+import { isFileExcluded } from '../utils/exclusions.js'
 
 const execAsync = promisify(exec)
 
@@ -118,15 +119,120 @@ async function parseCommitDiff(repoPath: string, commitHash: string): Promise<{ 
 }
 
 
+export function parseLsTreeOutput(lsTreeOutput: string): Record<string, number> {
+  const sizeMap: Record<string, number> = {}
+  const lines = lsTreeOutput.trim().split('\n').filter(l => l.trim())
+  
+  for (const line of lines) {
+    // Format: <mode> <type> <hash> <size> <path>
+    const match = line.match(/^\d{6}\s+blob\s+\w+\s+(\d+)\s+(.+)$/)
+    if (match && match[1] && match[2]) {
+      const [, size, path] = match
+      sizeMap[path] = parseInt(size) || 0
+    }
+  }
+  
+  return sizeMap
+}
+
+export function calculateByteChanges(
+  currentSizes: string,
+  parentSizes: string,
+  changedFiles: string
+): { totalBytesAdded: number; totalBytesDeleted: number; fileChanges: Record<string, { bytesAdded: number; bytesDeleted: number }> } {
+  const currentSizeMap = parseLsTreeOutput(currentSizes)
+  const parentSizeMap = parseLsTreeOutput(parentSizes)
+  
+  const fileChanges: Record<string, { bytesAdded: number; bytesDeleted: number }> = {}
+  let totalBytesAdded = 0
+  let totalBytesDeleted = 0
+  
+  const changes = changedFiles.trim().split('\n').filter(l => l.trim())
+  
+  for (const change of changes) {
+    const [status, ...fileNameParts] = change.split('\t')
+    const fileName = fileNameParts.join('\t')
+    
+    if (!fileName || isFileExcluded(fileName)) continue
+    
+    let bytesAdded = 0
+    let bytesDeleted = 0
+    
+    if (status === 'A') {
+      bytesAdded = currentSizeMap[fileName] || 0
+    } else if (status === 'D') {
+      bytesDeleted = parentSizeMap[fileName] || 0
+    } else if (status === 'M') {
+      const currentSize = currentSizeMap[fileName] || 0
+      const parentSize = parentSizeMap[fileName] || 0
+      const diff = currentSize - parentSize
+      if (diff > 0) {
+        bytesAdded = diff
+      } else {
+        bytesDeleted = -diff
+      }
+    }
+    
+    if (bytesAdded > 0 || bytesDeleted > 0) {
+      fileChanges[fileName] = { bytesAdded, bytesDeleted }
+      totalBytesAdded += bytesAdded
+      totalBytesDeleted += bytesDeleted
+    }
+  }
+  
+  return { totalBytesAdded, totalBytesDeleted, fileChanges }
+}
+
 async function getByteChanges(repoPath: string, commitHash: string): Promise<{ 
   totalBytesAdded: number; 
   totalBytesDeleted: number; 
   fileChanges: Record<string, { bytesAdded: number; bytesDeleted: number }> 
 }> {
-  const { stdout } = await execAsync(`cd "${repoPath}" && git show ${commitHash} --numstat --format=""`, { 
-    timeout: 10000 
-  })
-  
-  // Use the extracted pure function
-  return parseByteChanges(stdout)
+  try {
+    // Get file sizes at current commit
+    const { stdout: currentSizes } = await execAsync(
+      `cd "${repoPath}" && git ls-tree -r -l ${commitHash}`,
+      { timeout: 10000 }
+    )
+    
+    // Get file sizes at parent commit (if not first commit)
+    let parentSizes = ''
+    try {
+      const { stdout } = await execAsync(
+        `cd "${repoPath}" && git ls-tree -r -l ${commitHash}^`,
+        { timeout: 10000 }
+      )
+      parentSizes = stdout
+    } catch {
+      // First commit - no parent
+    }
+    
+    // Get list of changed files with status
+    let changedFiles: string
+    const { stdout } = await execAsync(
+      `cd "${repoPath}" && git diff-tree --no-commit-id --name-status -r ${commitHash}`,
+      { timeout: 10000 }
+    )
+    
+    // If no changes detected (first commit), get all files as additions
+    if (!stdout.trim()) {
+      const { stdout: showOutput } = await execAsync(
+        `cd "${repoPath}" && git show ${commitHash} --name-status --format=""`,
+        { timeout: 10000 }
+      )
+      changedFiles = showOutput
+    } else {
+      changedFiles = stdout
+    }
+    
+    return calculateByteChanges(currentSizes, parentSizes, changedFiles)
+  } catch (error) {
+    console.warn(`Failed to calculate exact byte changes for ${commitHash}, falling back to estimation`)
+    // Fall back to numstat estimation
+    const { stdout } = await execAsync(
+      `cd "${repoPath}" && git show ${commitHash} --numstat --format=""`,
+      { timeout: 10000 }
+    )
+    return parseByteChanges(stdout)
+  }
 }
