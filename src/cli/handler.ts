@@ -1,37 +1,29 @@
+import { program } from 'commander'
 import { generateReport } from '../report/generator.js'
 import { validateGitRepository } from '../utils/git-validation.js'
 
 export async function handleCLI(args: string[]): Promise<void> {
-  if (args.includes('--repo')) {
-    const repoIndex = args.indexOf('--repo')
-    const repoPath = args[repoIndex + 1]
+  program
+    .name('repo-statter')
+    .description('Generate repository statistics and reports')
+    .version('1.0.0')
     
-    if (!repoPath) {
-      console.error('Error: --repo requires a path argument')
-      console.error('Usage: npm run analyse -- --repo /path/to/repository')
-      process.exit(1)
-    }
+  program
+    .argument('[repo-path]', 'Repository path (defaults to current directory)')
+    .option('-r, --repo <path>', 'Repository path (alternative to positional argument)')
+    .option('-o, --output <dir>', 'Output directory', 'dist')
+    .action(async (repoPath, options) => {
+      const finalRepoPath = options.repo || repoPath || process.cwd()
+      const outputDir = options.repo ? 'analysis' : options.output
+      
+      try {
+        await validateGitRepository(finalRepoPath)
+        await generateReport(finalRepoPath, outputDir)
+      } catch (error: any) {
+        console.error(`Error: ${error.message}`)
+        process.exit(1)
+      }
+    })
     
-    try {
-      await validateGitRepository(repoPath)
-    } catch (error: any) {
-      console.error(`Error: ${error.message}`)
-      process.exit(1)
-    }
-    
-    await generateReport(repoPath, 'analysis')
-  } else if (args.length > 0 && args[0]) {
-    try {
-      await validateGitRepository(args[0])
-    } catch (error: any) {
-      console.error(`Error: ${error.message}`)
-      process.exit(1)
-    }
-    await generateReport(args[0], 'dist')
-  } else {
-    console.error('Usage:')
-    console.error('  npm run start <repo-path>')
-    console.error('  npm run analyse -- --repo <repo-path>')
-    process.exit(1)
-  }
+  program.parse(args, { from: 'user' })
 }

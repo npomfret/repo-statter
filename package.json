@@ -15,10 +15,12 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "commander": "^14.0.0",
     "minimatch": "^10.0.1",
     "simple-git": "^3.28.0"
   },
   "devDependencies": {
+    "@types/commander": "^2.12.0",
     "@types/node": "^22.10.5",
     "@vitest/coverage-v8": "^2.1.8",
     "apexcharts": "^5.2.0",
