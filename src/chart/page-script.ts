@@ -7,6 +7,17 @@ import type { FileTypeStats, FileHeatData } from '../data/file-calculator.js'
 import type { TimeSeriesPoint, LinearSeriesPoint } from '../chart/data-transformer.js'
 import type { WordFrequency } from '../text/processor.js'
 
+interface TrophySvgs {
+  contributors: string
+  files: string
+  bytesAdded: string
+  bytesRemoved: string
+  linesAdded: string
+  linesRemoved: string
+  averageLow: string
+  averageHigh: string
+}
+
 declare global {
   interface Window {
     ApexCharts: any
@@ -31,6 +42,7 @@ export interface PageScriptData {
     lowestAverage: ContributorAward[]
     highestAverage: ContributorAward[]
   }
+  trophySvgs: TrophySvgs
 }
 
 export class PageScript {

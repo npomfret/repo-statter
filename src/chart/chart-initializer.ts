@@ -75,13 +75,13 @@ export class ChartInitializer {
     const awards = this.data.awards
     
     const awardCategories = [
-      { title: 'Most Files Modified', data: awards.filesModified, icon: 'fa-folder-open', color: 'primary', type: 'commit' },
-      { title: 'Most Bytes Added', data: awards.bytesAdded, icon: 'fa-plus-circle', color: 'success', type: 'commit' },
-      { title: 'Most Bytes Removed', data: awards.bytesRemoved, icon: 'fa-minus-circle', color: 'danger', type: 'commit' },
-      { title: 'Most Lines Added', data: awards.linesAdded, icon: 'fa-code', color: 'info', type: 'commit' },
-      { title: 'Most Lines Removed', data: awards.linesRemoved, icon: 'fa-eraser', color: 'warning', type: 'commit' },
-      { title: 'Lowest Average Lines Changed', data: awards.lowestAverage, icon: 'fa-compress', color: 'secondary', type: 'contributor' },
-      { title: 'Highest Average Lines Changed', data: awards.highestAverage, icon: 'fa-expand', color: 'dark', type: 'contributor' }
+      { title: 'Most Files Modified', data: awards.filesModified, icon: '📁', color: 'primary', type: 'commit' },
+      { title: 'Most Bytes Added', data: awards.bytesAdded, icon: '➕', color: 'success', type: 'commit' },
+      { title: 'Most Bytes Removed', data: awards.bytesRemoved, icon: '➖', color: 'danger', type: 'commit' },
+      { title: 'Most Lines Added', data: awards.linesAdded, icon: '📈', color: 'info', type: 'commit' },
+      { title: 'Most Lines Removed', data: awards.linesRemoved, icon: '📉', color: 'warning', type: 'commit' },
+      { title: 'Lowest Average Lines Changed', data: awards.lowestAverage, icon: '🎯', color: 'secondary', type: 'contributor' },
+      { title: 'Highest Average Lines Changed', data: awards.highestAverage, icon: '💥', color: 'dark', type: 'contributor' }
     ]
     
     container.innerHTML = ''
@@ -99,7 +99,7 @@ export class ChartInitializer {
       cardHeader.className = `card-header bg-${category.color} text-white`
       cardHeader.innerHTML = `
         <h6 class="mb-0">
-          <i class="fas ${category.icon} me-2"></i>
+          <span class="me-2" style="font-size: 1.2em;">${category.icon}</span>
           ${category.title}
         </h6>
       `

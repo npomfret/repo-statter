@@ -152,7 +152,8 @@ async function injectDataIntoTemplate(template: string, chartData: ChartData, co
         linearSeries: ${JSON.stringify(linearSeries)},
         wordCloudData: ${JSON.stringify(wordCloudData)},
         fileHeatData: ${JSON.stringify(fileHeatData)},
-        awards: ${JSON.stringify(awards)}
+        awards: ${JSON.stringify(awards)},
+        trophySvgs: ${JSON.stringify(chartData.trophySvgs)}
       };
       
       // Initialize when DOM is ready
