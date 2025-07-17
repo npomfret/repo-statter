@@ -385,6 +385,52 @@ Never proceed with a broken state. Every commit must leave the app in a working 
 - **Commit 20**: Extract template engine
 - **Commit 21**: Extract script builder
 
+## Future Considerations: JavaScript Code Organization
+
+### Current State Analysis
+- `generator.ts` is 1761 lines with ~1300 lines of inline JavaScript
+- Each chart exists in two versions: TypeScript (source) and JavaScript (browser)
+- Inline JavaScript lacks syntax highlighting and direct testing
+- Duplication requires maintaining changes in two places
+
+### Recommended Approach: Continue Current Pattern Through Refactor
+
+#### For Current Refactor (Commits 16-21):
+1. **Continue chart extraction** with TypeScript + JavaScript pattern
+2. **Complete all planned commits** before addressing duplication
+3. **Focus on functionality** over build complexity
+
+#### For Commits 20-21 Enhancement:
+Consider extracting non-chart JavaScript code:
+- Filter logic and event handlers (~200 lines)
+- Utility functions (formatNumber, buildTimeSeriesData, etc.) (~150 lines)
+- Theme switching and DOM manipulation (~100 lines)
+- User chart generation (~200 lines)
+
+This would reduce `generator.ts` by ~650 lines without adding build complexity.
+
+### Post-Refactor Options:
+
+#### Option 1: Build Process (Recommended Long-term)
+- Add build step to transpile TypeScript charts to JavaScript
+- Use bundler (esbuild, rollup) for zero-config builds
+- Single source of truth with type safety
+- Enables direct testing of browser code
+
+#### Option 2: Module Extraction (Quick Win)
+- Extract large JavaScript blocks to separate modules
+- Read and inject at runtime
+- Improves organization without build tools
+
+### Why This Approach?
+1. **Maintains refactor momentum** - no disruption to current plan
+2. **Incremental improvement** - reduces file size progressively
+3. **Defers complexity** - build tools can be added when stable
+4. **Pragmatic trade-off** - chart duplication is manageable (small, stable files)
+5. **Fail-fast principle** - working code over perfect architecture
+
+The duplication is acceptable technical debt that can be addressed after achieving a stable, well-organized codebase.
+
 ### 📝 COMMIT STATUS
 *This section will be updated after each change to show what's ready for review*
 
