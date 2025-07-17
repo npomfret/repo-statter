@@ -1,9 +1,40 @@
 # Plan: Merge "Lines of Code" and "Repository Size" Charts with a Toggle
 
+## Task Analysis
+This task is valid and worthwhile. The two charts (Lines of Code and Repository Size) are currently separate but show similar growth patterns over time. Merging them will:
+- Reduce UI clutter
+- Make it easier to correlate code size with repository size
+- Maintain consistency with the existing toggle pattern
+
 ## Objective
 Combine the "Lines of Code Growth" and "Repository Size Over Time" charts into a single, unified chart. This new chart will feature a toggle switch, identical to the one on the "Code Changes" chart, allowing users to switch the x-axis between a "by date" (time-series) view and a "by commit" (linear progression) view.
 
-## Implementation Plan
+## Revised Implementation Plan
+
+### Breaking down into smaller commits:
+
+#### Commit 1: Create new GrowthChart class
+1. Create `src/charts/growth-chart.ts` that combines the functionality
+2. Support multi-axis (different scales for lines vs bytes)
+3. Reuse existing tooltip patterns from both charts
+4. Follow the existing chart class pattern
+
+#### Commit 2: Update HTML template
+1. Remove the two separate chart containers (lines 363-393)
+2. Add single merged "Growth Over Time" chart with toggle
+3. Keep it in the same location in the time series column
+
+#### Commit 3: Wire up the new chart
+1. Update `src/chart/chart-renderers.ts` to use new GrowthChart
+2. Remove old chart instances and imports
+3. Update render calls
+
+#### Commit 4: Clean up old code
+1. Delete `src/charts/lines-of-code-chart.ts`
+2. Delete `src/charts/repository-size-chart.ts`
+3. Run tests and rebuild
+
+## Original Implementation Plan (for reference)
 
 ### 1. Update HTML Template
 -   **File**: `src/report/template.html`
