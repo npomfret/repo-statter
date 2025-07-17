@@ -31,7 +31,7 @@ export class WordCloudChart {
     const colors = isDark ? 
       ['#58a6ff', '#3fb950', '#f85149', '#d29922', '#a5a5ff', '#56d4dd', '#db6d28', '#8b949e'] :
       ['#27aeef', '#87bc45', '#ea5545', '#ef9b20', '#b33dc6', '#f46a9b', '#ede15b', '#bdcf32']
-    const color = (window as any).d3.scale.ordinal().range(colors)
+    const color = (window as any).d3.scaleOrdinal().range(colors)
     
     const draw = (words: any[]) => {
       (window as any).d3.select('#' + this.containerId)
@@ -53,8 +53,10 @@ export class WordCloudChart {
         })
         .text(function(d: any) { return d.text })
         .style('cursor', 'default')
-        .append('title')
-        .text(function(d: any) { return d.text + ': ' + Math.round(d.size) })
+        .each(function(this: any, d: any) {
+          (window as any).d3.select(this).append('title')
+            .text(d.text + ': ' + Math.round(d.size))
+        })
     }
     
     const layout = (window as any).d3.layout.cloud()
