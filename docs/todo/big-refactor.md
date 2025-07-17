@@ -193,7 +193,7 @@ npm start test-repo      # Generate report
 - Lines of Code Chart ✓ 
 - Commit Activity Chart ✓
 - Code Churn Chart ✓
-- Repository Size Chart
+- Repository Size Chart ✓
 - Word Cloud Chart
 - Each follows same pattern: one commit, one chart, test immediately
 
@@ -214,6 +214,20 @@ npm start test-repo      # Generate report
   - Move script string building to utility
   - Validate data before injection
 - **Test**: Client-side functionality unchanged
+
+#### **Commit 22: Implement TypeScript-to-JavaScript compilation for charts**
+- **Goal**: Eliminate code duplication by compiling TypeScript charts to JavaScript
+- **Files**: Build process, `src/report/generator.ts`
+- **Changes**:
+  - Add build step to compile TypeScript chart classes to JavaScript
+  - Replace manual JavaScript class definitions with compiled versions
+  - Inject compiled JavaScript into template instead of maintaining two codebases
+- **Benefits**:
+  - Single source of truth (TypeScript)
+  - No duplication to maintain
+  - Better testing (can test actual browser code)
+  - Type safety during development
+- **Test**: All charts work identically, no functional changes
 
 ## Rules for Every Commit
 
@@ -616,7 +630,40 @@ The duplication is acceptable technical debt that can be addressed after achievi
 **LAST UPDATED**: Code Churn chart extraction completed
 
 ---
-**READY FOR REVIEW**: ✅ **Commit 17: Extract Code Churn Chart**
+**READY FOR REVIEW**: ✅ **Commit 18: Extract Repository Size Chart**
+
+**CHANGES MADE**:
+- ✅ Created simple RepositorySizeChart class in `src/charts/repository-size-chart.ts`
+  - No base class abstraction (following fail-fast principles)
+  - Simple constructor and render method accepting linearSeries, timeSeries, xAxis, and commits
+  - Assert functions for validation
+  - Destroy method for cleanup
+  - Shows repository size (cumulative bytes) over time with area chart visualization
+  - Custom tooltip showing bytes added/deleted/total with proper formatting
+  - Includes inline `formatBytes` utility function for byte formatting
+- ✅ Modified `src/report/generator.ts` to use RepositorySizeChart
+  - Added RepositorySizeChart class definition (JavaScript version) after CodeChurnChart
+  - Replaced inline renderRepositorySizeChart function with class instantiation
+  - Chart already tracked and cleaned up in clearAllCharts
+- ✅ All tests passing (155 tests)
+- ✅ TypeScript compilation successful
+- ✅ Integration test successful - repository size area chart renders correctly with both date and commit views
+
+**VERIFICATION**:
+- ✅ TypeScript compiles without errors
+- ✅ All tests pass
+- ✅ Generated report displays repository size chart correctly
+- ✅ Chart supports both date and commit x-axis views
+- ✅ Area chart shows cumulative bytes over time
+- ✅ Custom tooltip shows bytes added/deleted/total with proper formatting (KB/MB/GB)
+- ✅ No breaking changes to existing functionality
+
+**FILES MODIFIED**: 
+- `src/charts/repository-size-chart.ts` (new file)
+- `src/report/generator.ts` (modified to use RepositorySizeChart class)
+
+---
+**PREVIOUS**: ✅ **Commit 17: Extract Code Churn Chart**
 
 **CHANGES MADE**:
 - ✅ Created simple CodeChurnChart class in `src/charts/code-churn-chart.ts`
