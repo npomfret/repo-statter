@@ -293,9 +293,10 @@ Never proceed with a broken state. Every commit must leave the app in a working 
 - **Commit 8**: Extract and test time series transformations ✓
 - **Commit 9**: Extract and test linear transformations ✓
 - **Commit 10**: Extract and test text processing ✓
+- **Commit 11**: Create integration tests for data pipeline ✓
+- **Commit 12**: Fix generator.ts types (replace all any with proper types) ✓
 
 ### 🔄 IN PROGRESS
-- **Commit 12**: Fix generator.ts types (replace all any with proper types)
 
 ## Detailed Implementation Plan for Commit 9: Extract and test linear transformations
 
@@ -385,7 +386,28 @@ Never proceed with a broken state. Every commit must leave the app in a working 
 *This section will be updated after each change to show what's ready for review*
 
 ---
-**READY FOR REVIEW**: ✅ **Commit 11: Create integration tests for data pipeline**
+**READY FOR REVIEW**: ✅ **Commit 12: Fix generator.ts types**
+
+**CHANGES MADE**:
+- ✅ Added `TrophySvgs` interface to define structure for trophy SVG strings
+- ✅ Added `ChartData` interface to define return type of `transformCommitData`
+- ✅ Added explicit return type `Promise<ChartData>` to `transformCommitData` function
+- ✅ Replaced `chartData: any` parameter with `chartData: ChartData` in `injectDataIntoTemplate`
+- ✅ TypeScript compilation successful - no more `any` types in generator.ts
+- ✅ All 155 tests passing
+- ✅ Integration test successful - generated report for test-repo
+
+**VERIFICATION**:
+- ✅ TypeScript compiles without errors
+- ✅ All tests pass
+- ✅ Generated report displays correctly
+- ✅ No functional changes - only type safety improvements
+
+**FILES MODIFIED**: 
+- `src/report/generator.ts` (added interfaces and proper types)
+
+---
+**PREVIOUS**: ✅ **Commit 11: Create integration tests for data pipeline**
 
 **CHANGES MADE**:
 - ✅ Created comprehensive integration test suite in `src/data/data-pipeline.test.ts`

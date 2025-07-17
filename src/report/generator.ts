@@ -68,7 +68,32 @@ export async function generateReport(repoPath: string, outputMode: 'dist' | 'ana
   console.log(`Total lines added: ${commits.reduce((sum, c) => sum + c.linesAdded, 0)}`)
 }
 
-async function transformCommitData(commits: CommitData[], repoName: string, repoPath: string) {
+interface TrophySvgs {
+  contributors: string
+  files: string
+  bytesAdded: string
+  bytesRemoved: string
+  linesAdded: string
+  linesRemoved: string
+  averageLow: string
+  averageHigh: string
+}
+
+interface ChartData {
+  repositoryName: string
+  totalCommits: number
+  totalLinesOfCode: number
+  totalCodeChurn: number
+  generationDate: string
+  githubLink: string
+  logoSvg: string
+  trophySvgs: TrophySvgs
+  latestCommitHash: string
+  latestCommitAuthor: string
+  latestCommitDate: string
+}
+
+async function transformCommitData(commits: CommitData[], repoName: string, repoPath: string): Promise<ChartData> {
   const totalCommits = commits.length
   const totalLinesOfCode = commits.reduce((sum, commit) => sum + commit.linesAdded, 0)
   const totalCodeChurn = commits.reduce((sum, commit) => sum + commit.linesAdded + commit.linesDeleted, 0)
@@ -78,7 +103,7 @@ async function transformCommitData(commits: CommitData[], repoName: string, repo
   
   const logoSvg = await readFile('src/images/logo.svg', 'utf-8')
   
-  const trophySvgs = {
+  const trophySvgs: TrophySvgs = {
     contributors: await readFile('src/images/trophy-contributors.svg', 'utf-8'),
     files: await readFile('src/images/trophy-files.svg', 'utf-8'),
     bytesAdded: await readFile('src/images/trophy-bytes-added.svg', 'utf-8'),
@@ -106,7 +131,7 @@ async function transformCommitData(commits: CommitData[], repoName: string, repo
   }
 }
 
-function injectDataIntoTemplate(template: string, chartData: any, commits: CommitData[]): string {
+function injectDataIntoTemplate(template: string, chartData: ChartData, commits: CommitData[]): string {
   const contributors = getContributorStats(commits)
   const fileTypes = getFileTypeStats(commits)
   const timeSeries = getTimeSeriesData(commits)
