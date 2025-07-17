@@ -191,7 +191,7 @@ npm start test-repo      # Generate report
 #### **Commit 14-19: Extract remaining charts one by one**
 - File Types Chart ✓
 - Lines of Code Chart ✓ 
-- Commit Activity Chart
+- Commit Activity Chart ✓
 - Code Churn Chart
 - Repository Size Chart
 - Word Cloud Chart
@@ -613,10 +613,40 @@ The duplication is acceptable technical debt that can be addressed after achievi
 - `src/data/linear-transformer.test.ts` (new)
 - `src/chart/data-transformer.ts` (refactored to re-export from new module)
 
-**LAST UPDATED**: Lines of Code chart extraction completed
+**LAST UPDATED**: Commit Activity chart extraction completed
 
 ---
-**READY FOR REVIEW**: ✅ **Commit 15: Extract Lines of Code Chart**
+**READY FOR REVIEW**: ✅ **Commit 16: Extract Commit Activity Chart**
+
+**CHANGES MADE**:
+- ✅ Created simple CommitActivityChart class in `src/charts/commit-activity-chart.ts`
+  - No base class abstraction (following fail-fast principles)
+  - Simple constructor and render method accepting linearSeries, timeSeries, and xAxis
+  - Assert functions for validation
+  - Destroy method for cleanup
+  - Shows commit count over time with area chart visualization
+- ✅ Modified `src/report/generator.ts` to use CommitActivityChart
+  - Added CommitActivityChart class definition (JavaScript version) after LinesOfCodeChart
+  - Replaced inline renderCommitActivityChart with class instantiation
+  - Chart already tracked and cleaned up in clearAllCharts
+  - Updated theme toggle to destroy chart before re-rendering
+- ✅ All tests passing (155 tests)
+- ✅ TypeScript compilation successful
+- ✅ Integration test successful - commit activity area chart renders correctly with both date and commit views
+
+**VERIFICATION**:
+- ✅ TypeScript compiles without errors
+- ✅ All tests pass
+- ✅ Generated report displays commit activity chart correctly
+- ✅ Chart supports both date and commit x-axis views
+- ✅ No breaking changes to existing functionality
+
+**FILES MODIFIED**: 
+- `src/charts/commit-activity-chart.ts` (new file)
+- `src/report/generator.ts` (modified to use CommitActivityChart class)
+
+---
+**PREVIOUS**: ✅ **Commit 15: Extract Lines of Code Chart**
 
 **CHANGES MADE**:
 - ✅ Created simple LinesOfCodeChart class in `src/charts/lines-of-code-chart.ts`
