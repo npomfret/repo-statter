@@ -78,7 +78,6 @@ interface ChartData {
   repositoryName: string
   totalCommits: number
   totalLinesOfCode: number
-  totalCodeChurn: number
   generationDate: string
   githubLink: string
   logoSvg: string
@@ -87,9 +86,7 @@ interface ChartData {
 
 async function transformCommitData(commits: CommitData[], repoName: string, repoPath: string): Promise<ChartData> {
   const totalLinesAdded = commits.reduce((sum, c) => sum + c.linesAdded, 0)
-  const totalLinesDeleted = commits.reduce((sum, c) => sum + c.linesDeleted, 0)
   const totalLinesOfCode = totalLinesAdded
-  const totalCodeChurn = totalLinesAdded + totalLinesDeleted
   
   const logoSvg = await readFile('src/images/logo.svg', 'utf-8')
   const trophySvgs = {
@@ -109,7 +106,6 @@ async function transformCommitData(commits: CommitData[], repoName: string, repo
     repositoryName: repoName,
     totalCommits: commits.length,
     totalLinesOfCode,
-    totalCodeChurn,
     generationDate: new Date().toLocaleString(),
     githubLink: githubUrl ? ` • <a href="${githubUrl}" target="_blank" class="text-decoration-none">GitHub</a>` : '',
     logoSvg,
@@ -174,7 +170,6 @@ async function injectDataIntoTemplate(template: string, chartData: ChartData, co
     generationDate: chartData.generationDate,
     totalCommits: chartData.totalCommits.toString(),
     totalLinesOfCode: chartData.totalLinesOfCode.toString(),
-    totalCodeChurn: chartData.totalCodeChurn.toString(),
     githubLink: chartData.githubLink,
     logoSvg: chartData.logoSvg,
     latestCommitHash: latestCommit ? latestCommit.sha.substring(0, 7) : 'N/A',
