@@ -1,763 +1,119 @@
-# Big Refactor Plan: Fail-Fast, Incremental Approach
+# Big Refactor Plan - Compacted
 
-## What Went Wrong in the Previous Attempt
+## Current Status
 
-### 1. **Too Much at Once**
-- Created 20+ files in one massive commit
-- Tried to change architecture, data flow, error handling, and types all at once
-- Lost working state and couldn't identify what broke what
-- Created complex abstractions before proving they were needed
+### ✅ COMPLETED (Phases 1-4)
+- **Fail-fast foundation**: Removed try/catch blocks, added assertions
+- **Data layer**: Extracted all data transformation modules with comprehensive tests
+- **Type safety**: Fixed all `any` types in generator.ts
+- **Chart extraction**: All 6 chart types extracted into individual classes
+- **Template engine**: Simple string replacement utility extracted
+- **Script utilities**: Formatters, tooltips, data builders, and filters extracted
 
-### 2. **Defensive Programming Anti-patterns**
-- Added try/catch blocks everywhere that masked real errors
-- Created fallbacks and "safe" defaults that hid bugs
-- Multiple code paths doing the same thing (old vs new)
-- Silent failures that made debugging impossible
+### ⏳ REMAINING WORK
 
-### 3. **No Testing Between Steps**
-- Didn't verify each change worked before moving to the next
-- Lost confidence in what was working vs broken
-- No integration testing with real data during development
+#### **Next: Commit 22 - TypeScript-to-JavaScript Compilation**
+- **Goal**: Replace inline script generation with proper TypeScript compilation
+- **Approach**: Write page logic in TypeScript, compile to JavaScript bundle, template into HTML
+- **Files to create**:
+  - `src/chart/page-script.ts` - Main entry point
+  - `src/chart/chart-renderers.ts` - ApexCharts + D3 rendering
+  - `src/chart/event-handlers.ts` - Event listeners
+  - `src/build/bundle-page-script.ts` - Build script
+- **Benefits**: Full TypeScript development, proper testing, no string templating
 
-### 4. **Over-engineering**
-- Created base classes and managers before understanding the actual needs
-- Abstract architectures that added complexity without proven benefits
-- Premature optimization and generalization
-
-## New Approach: Fail-Fast, Test-First, Incremental
-
-### Core Principles
+## Key Principles
 1. **App must work after every commit**
 2. **One change at a time, tested immediately**
 3. **Fail fast and loud - no silent errors**
-4. **No try/catch blocks - let errors bubble up**
-5. **No fallbacks or defensive programming**
-6. **One way to do each thing**
-7. **Assert early, crash on invalid state**
+4. **Always run `npm run typecheck` before testing**
 
-### Testing Strategy for Every Commit
+## Testing Workflow
 ```bash
-# After every change, run this sequence:
-npm run typecheck        # Must pass - ALWAYS compile before testing
-npm run test             # Must pass
-./scripts/create-test-repo.sh  # Generate test data
-npm start test-repo      # Generate report
-# Manually verify: open dist/test-repo.html and check all charts render
+npm run typecheck  # Must pass first
+npm run test       # Must pass
+./scripts/create-test-repo.sh
+npm start test-repo
+# Verify: open dist/test-repo.html
 ```
 
-**CRITICAL RULE**: Always run `npm run typecheck` before any test or run target. TypeScript compilation errors must be fixed before proceeding with tests or integration.
+## What We've Accomplished
 
-## Incremental Plan
+### Data Layer (Commits 1-11)
+- Extracted all data transformation functions into testable modules
+- Added comprehensive unit tests (148 tests total)
+- Created integration tests for complete data pipeline
+- Removed all try/catch blocks and added fail-fast assertions
+- Replaced all `any` types with proper TypeScript interfaces
 
-### Phase 1: Foundation (Fail-Fast)
+### Chart Layer (Commits 12-20)
+- Extracted all 6 chart types into individual classes:
+  - ContributorsChart (donut chart)
+  - FileTypesChart (donut chart)
+  - LinesOfCodeChart (area chart)
+  - CommitActivityChart (calendar heatmap)
+  - CodeChurnChart (multi-line chart)
+  - RepositorySizeChart (area chart)
+  - WordCloudChart (D3.js word cloud)
+- Simple class-based pattern with render() and destroy() methods
+- No base class abstractions (following fail-fast principles)
 
-#### **Commit 1: Remove all try/catch blocks**
-- **Goal**: Let errors bubble up naturally, crash on broken state
-- **Files**: `src/report/generator.ts`
-- **Changes**:
-  - Remove every try/catch block
-  - Remove all "safe" fallbacks and defaults
-  - Let functions throw on invalid input
-- **Test**: Generate report for test-repo, verify it crashes appropriately on bad input
+### Utilities (Commits 21a-21d)
+- **Formatters**: `formatBytes`, `formatNumber`, axis formatters
+- **Tooltips**: `createCommitTooltip`, `createUserChartTooltip`
+- **Data builders**: `buildTimeSeriesData`, `buildUserTimeSeriesData`
+- **Filter system**: Complete filtering and recalculation logic
+- **Template engine**: Simple string replacement utility
 
-#### **Commit 2: Add assert utilities**
-- **Goal**: Replace defensive `if` checks with assertions that throw
-- **Files**: `src/report/generator.ts`
-- **Changes**:
-  - Add simple assert functions at top of file
-  ```typescript
-  function assert(condition: boolean, message: string): asserts condition {
-    if (!condition) throw new Error(message)
-  }
-  
-  function assertArray<T>(value: unknown, name: string): asserts value is T[] {
-    assert(Array.isArray(value), `${name} must be an array, got ${typeof value}`)
-  }
-  ```
-  - Replace defensive checks with assertions
-  - Remove all silent "return early" patterns
-- **Test**: Verify assertions throw on invalid data, app still works with valid data
-
-### Phase 2: Data Layer Extraction and Testing
-
-#### **Commit 3: Create test builders for data structures**
-- **Goal**: Create test data builders before we extract anything
-- **Files**: `src/test/builders.ts` (new)
-- **Changes**:
-  - Create builder pattern for CommitData
-  - Create builder pattern for FileChange
-  - Create factory functions for common test scenarios
-  - Use these in existing tests
-- **Test**: Update existing tests to use builders, ensure they still pass
-
-#### **Commit 4: Extract and test git data parsing**
-- **Goal**: Move git parsing to pure, testable functions
-- **Files**: `src/data/git-extractor.ts` (new), `src/data/git-extractor.test.ts` (new)
-- **Changes**:
-  - Extract parseCommitDiff as pure function that takes git output string
-  - Extract getByteChanges as pure function
-  - Add comprehensive unit tests for all edge cases
-  - Keep parseCommitHistory in parser.ts for now (it needs git exec)
-- **Test**: New unit tests pass + integration still works
-
-#### **Commit 5: Extract and test contributor calculations**
-- **Goal**: Pure functions for contributor statistics
-- **Files**: `src/data/contributor-calculator.ts` (new), `src/data/contributor-calculator.test.ts` (new)
-- **Changes**:
-  - Move getContributorStats to new file as pure function
-  - Move average line calculation functions
-  - Add unit tests with edge cases (0 commits, 1 commit, many commits)
-  - Update imports in generator.ts
-- **Test**: Unit tests for all calculations + integration test
-
-#### **Commit 6: Extract and test file statistics**
-- **Goal**: Pure functions for file analysis
-- **Files**: `src/data/file-calculator.ts` (new), `src/data/file-calculator.test.ts` (new)
-- **Changes**:
-  - Move getFileTypeStats as pure function
-  - Move getFileHeatData with heat score algorithm
-  - Test edge cases (no files, unknown types, heat scoring)
-  - Update imports
-- **Test**: Unit tests for percentages and heat scores
-
-#### **Commit 7: Extract and test award calculations**
-- **Goal**: Pure functions for commit awards
-- **Files**: `src/data/award-calculator.ts` (new), `src/data/award-calculator.test.ts` (new)
-- **Changes**:
-  - Move all getTopCommitsBy* functions
-  - Test sorting and edge cases (ties, empty data)
-  - Ensure consistent award structure
-- **Test**: Unit tests for each award type
-
-#### **Commit 8: Extract and test time series transformations**
-- **Goal**: Pure functions for time-based data grouping
-- **Files**: `src/data/time-series-transformer.ts` (new), `src/data/time-series-transformer.test.ts` (new)
-- **Changes**:
-  - Move getTimeSeriesData as pure function
-  - Move getRepoAgeInHours
-  - Test hourly vs daily grouping logic
-  - Test cumulative calculations
-- **Test**: Unit tests for grouping and accumulation
-
-#### **Commit 9: Extract and test linear transformations**
-- **Goal**: Pure functions for linear progression data
-- **Files**: `src/data/linear-transformer.ts` (new), `src/data/linear-transformer.test.ts` (new)
-- **Changes**:
-  - Move getLinearSeriesData
-  - Test cumulative calculations
-  - Test index progression
-- **Test**: Unit tests for progression accuracy
-
-#### **Commit 10: Extract and test text processing**
-- **Goal**: Pure functions for commit message analysis
-- **Files**: Already exists, just needs tests
-- **Changes**:
-  - Add comprehensive tests for processCommitMessages
-  - Test word extraction, filtering, frequency calculation
-  - Test edge cases (empty messages, special characters)
-- **Test**: Unit tests for word cloud data generation
-
-#### **Commit 11: Create integration tests for data pipeline**
-- **Goal**: Ensure all extracted modules work together
-- **Files**: `src/data/data-pipeline.test.ts` (new)
-- **Changes**:
-  - Test complete flow: commits → stats → transformations
-  - Test with various repository scenarios
-  - Verify data consistency through pipeline
-- **Test**: Integration tests covering full data flow
-
-### Phase 3: Type Safety
-
-#### **Commit 12: Fix generator.ts types**
-- **Goal**: Replace all `any` with proper types, keep everything in one file for now
-- **Files**: `src/report/generator.ts`
-- **Changes**:
-  - Define interfaces inline in the same file (ChartData, FilteredData, etc.)
-  - Replace every `any` with proper TypeScript types
-  - Add return type annotations to all functions
-- **Test**: TypeScript must compile without errors
-
-### Phase 4: Chart Extraction (One Chart at a Time)
-
-#### **Commit 13: Extract Contributors chart**
-- **Goal**: Pull out just one chart to establish pattern
-- **Files**: `src/report/generator.ts`, `src/charts/contributors-chart.ts` (new)
-- **Changes**:
-  - Create simple ContributorsChart class with render(data) method
-  - Move only contributors chart logic out of generator.ts
-  - Keep all other charts in generator.ts
-- **Test**: Contributors chart still works exactly the same
-
-#### **Commit 14-19: Extract remaining charts one by one**
-- File Types Chart ✓
-- Lines of Code Chart ✓ 
-- Commit Activity Chart ✓
-- Code Churn Chart ✓
-- Repository Size Chart ✓
-- Word Cloud Chart ✓
-- Each follows same pattern: one commit, one chart, test immediately
-
-### Phase 5: Template Cleanup
-
-#### **Commit 20: Extract template engine**
-- **Goal**: Move string replacement logic to separate module
-- **Files**: `src/report/generator.ts`, `src/utils/template-engine.ts` (new)
-- **Changes**:
-  - Simple string replacement utility
-  - Keep script generation in generator.ts for now
-- **Test**: Generated HTML identical to before
-
-#### **Commit 21: Extract script builder**
-- **Goal**: Move client-side script generation to separate module
-- **Files**: `src/report/generator.ts`, `src/utils/script-builder.ts` (new)
-- **Changes**:
-  - Move script string building to utility
-  - Validate data before injection
-- **Test**: Client-side functionality unchanged
-
-#### **Commit 22: Implement TypeScript-to-JavaScript compilation for charts**
-- **Goal**: Eliminate code duplication by compiling TypeScript charts to JavaScript
-- **Files**: Build process, `src/report/generator.ts`
-- **Changes**:
-  - Add build step to compile TypeScript chart classes to JavaScript
-  - Replace manual JavaScript class definitions with compiled versions
-  - Inject compiled JavaScript into template instead of maintaining two codebases
-- **Benefits**:
-  - Single source of truth (TypeScript)
-  - No duplication to maintain
-  - Better testing (can test actual browser code)
-  - Type safety during development
-- **Test**: All charts work identically, no functional changes
-
-## Rules for Every Commit
-
-### Before Making Any Changes
-1. Run `pwd` to confirm you're in the right directory
-2. Run tests to ensure current state is working
-3. Make one small, focused change
-4. Test immediately
-
-### **IMPORTANT: Commit Approval Process**
-- **NEVER commit without explicit user approval**
-- Update this MD file with progress after each change
-- Mark each commit as "READY FOR REVIEW" when complete
-- Wait for user to say "ok to commit" before running git commit
-- This ensures user can review all changes before they become permanent
-
-### Change Guidelines
-- **Maximum 3-5 files per commit**
-- **Each commit has one clear purpose**
-- **No speculative changes or "might be useful later" code**
-- **Every line of code must have a clear, immediate purpose**
-
-### Testing Requirements
-- **ALWAYS compile first**: `npm run typecheck` - Must pass before any testing
-- All tests must pass: `npm run test`
-- Integration test: Generate report and verify charts work
-- If ANY compilation error or test fails, fix immediately before proceeding
-
-### Error Handling Rules
-- **NEVER use try/catch unless there's a specific recovery strategy**
-- **NEVER fail silently or return default values**
-- **ALWAYS let errors bubble up to show real problems**
-- **Use assertions to validate data early and crash fast**
-
-## Success Criteria
-
-At the end of this refactor:
-1. **Working app**: All charts render correctly
-2. **Type safety**: No `any` types, full TypeScript coverage
-3. **Testable**: Each component can be tested in isolation
-4. **Maintainable**: Clear separation of concerns
-5. **Reliable**: Crashes on invalid state instead of producing broken output
-6. **Simple**: No unnecessary abstractions or complexity
+### Generator.ts Status
+- **Before**: 1761 lines (monolithic)
+- **After**: ~800 lines (focused on orchestration)
+- **Reduced by**: ~960 lines moved to focused modules
+- **Inline JavaScript**: Still present (~400 lines) - will be eliminated in Commit 22
 
 ## Emergency Procedures
+If anything breaks:
+1. `git reset --hard HEAD~1` (immediate revert)
+2. Analyze the diff
+3. Make smaller change
+4. Test incrementally
 
-If a commit breaks the app:
-1. **Immediately revert**: `git reset --hard HEAD~1`
-2. **Analyze what went wrong**: Look at the diff
-3. **Make smaller change**: Break the commit into smaller pieces
-4. **Test each piece**: Verify incrementally
-
-Never proceed with a broken state. Every commit must leave the app in a working condition.
-
-## Progress Tracking
-
-### ✅ COMPLETED
-- **Setup**: Reverted failed refactor, preserved test script and .gitignore
-- **Planning**: Created this comprehensive refactor plan
-- **Commit 1**: Remove all try/catch blocks ✓
-- **Commit 2**: Add assert utilities and replace defensive checks ✓
-- **Commit 3**: Create test builders for data structures ✓ (Already existed in src/test/builders.ts)
-- **Commit 4**: Extract and test git data parsing ✓
-- **Commit 5**: Extract and test contributor calculations ✓
-- **Commit 6**: Extract and test file statistics ✓
-- **Commit 7**: Extract and test award calculations ✓
-- **Commit 8**: Extract and test time series transformations ✓
-
-### ✅ COMPLETED
-- **Commit 1**: Remove all try/catch blocks ✓
-- **Commit 2**: Add assert utilities and replace defensive checks ✓
-- **Commit 3**: Create test builders for data structures ✓ (Already existed in src/test/builders.ts)
-- **Commit 4**: Extract and test git data parsing ✓
-- **Commit 5**: Extract and test contributor calculations ✓
-- **Commit 6**: Extract and test file statistics ✓
-- **Commit 7**: Extract and test award calculations ✓
-- **Commit 8**: Extract and test time series transformations ✓
-- **Commit 9**: Extract and test linear transformations ✓
-- **Commit 10**: Extract and test text processing ✓
-- **Commit 11**: Create integration tests for data pipeline ✓
-- **Commit 12**: Fix generator.ts types (replace all any with proper types) ✓
-- **Commit 13**: Extract Contributors chart ✓
-
-### 🔄 IN PROGRESS
-
-### ⏳ PENDING
-
-## Detailed Implementation Plan for Commit 9: Extract and test linear transformations
-
-**Goal**: Move getLinearSeriesData as pure function to src/data/linear-transformer.ts with comprehensive tests
-
-**Current State**: 
-- `getLinearSeriesData` function is in `src/chart/data-transformer.ts` (lines 19-61)
-- Function handles cumulative calculations for lines and bytes
-- Adds starting point with index 0 and 'start' sha
-- Iterates through commits calculating cumulative values
-
-**Implementation Steps**:
-
-1. **Create src/data/linear-transformer.ts**:
-   - Move `LinearSeriesPoint` interface from data-transformer.ts
-   - Move `getLinearSeriesData` function as pure function
-   - Add fail-fast assert helper for validation
-   - Ensure proper handling of missing byte data with null coalescing
-
-2. **Create comprehensive tests in src/data/linear-transformer.test.ts**:
-   - Test empty commits array (should return empty array)
-   - Test single commit (should have start point + 1 commit)
-   - Test multiple commits with cumulative calculation accuracy
-   - Test index progression (0, 1, 2, 3...)
-   - Test byte data handling (with and without byte data)
-   - Test edge cases (commits without file changes)
-   - Test date handling and commit ordering
-   - Test the special 'start' entry properties
-
-3. **Update src/chart/data-transformer.ts**:
-   - Remove `LinearSeriesPoint` interface
-   - Remove `getLinearSeriesData` function
-   - Add re-export: `export type { LinearSeriesPoint } from '../data/linear-transformer.js'`
-   - Add re-export: `export { getLinearSeriesData } from '../data/linear-transformer.js'`
-
-4. **Verification**:
-   - All new tests must pass
-   - All existing tests must continue to pass
-   - Integration test must work (generate report successfully)
-   - TypeScript compilation must pass
-
-**Key Test Cases to Cover**:
-- Empty array handling
-- Single commit progression
-- Multi-commit cumulative accuracy
-- Index sequence validation (0, 1, 2, 3...)
-- Byte data null coalescing
-- Starting point generation
-- Date preservation
-- SHA preservation
-
-**Files to Modify**:
-- `src/data/linear-transformer.ts` (new)
-- `src/data/linear-transformer.test.ts` (new)  
-- `src/chart/data-transformer.ts` (refactor to re-export)
-
-**Success Criteria**:
-- All cumulative calculations tested and verified
-- Index progression logic tested
-- Backward compatibility maintained through re-exports
-- No breaking changes to existing functionality
-
-### ⏳ PENDING  
-**Phase 2: Data Layer (NEW - Added based on lessons learned)**
-- **Commit 3**: Create test builders for data structures
-- **Commit 4**: Extract and test git data parsing
-- **Commit 5**: Extract and test contributor calculations
-- **Commit 6**: Extract and test file statistics
-- **Commit 7**: Extract and test award calculations
-- **Commit 8**: Extract and test time series transformations
-- **Commit 9**: Extract and test linear transformations
-- **Commit 10**: Extract and test text processing
-- **Commit 11**: Create integration tests for data pipeline
-
-**Phase 3: Type Safety**
-- **Commit 12**: Fix generator.ts types ✓ (Already done, renumbered)
-
-**Phase 4: Chart Extraction**
-- **Commit 13**: Extract Contributors chart
-- **Commit 14-19**: Extract remaining charts
-
-**Phase 5: Template Cleanup**
-- **Commit 20**: Extract template engine
-- **Commit 21**: Extract script builder
-
-## Future Considerations: JavaScript Code Organization
-
-### Current State Analysis
-- `generator.ts` is 1761 lines with ~1300 lines of inline JavaScript
-- Each chart exists in two versions: TypeScript (source) and JavaScript (browser)
-- Inline JavaScript lacks syntax highlighting and direct testing
-- Duplication requires maintaining changes in two places
-
-### Recommended Approach: Continue Current Pattern Through Refactor
-
-#### For Current Refactor (Commits 16-21):
-1. **Continue chart extraction** with TypeScript + JavaScript pattern
-2. **Complete all planned commits** before addressing duplication
-3. **Focus on functionality** over build complexity
-
-#### For Commits 20-21 Enhancement:
-Consider extracting non-chart JavaScript code:
-- Filter logic and event handlers (~200 lines)
-- Utility functions (formatNumber, buildTimeSeriesData, etc.) (~150 lines)
-- Theme switching and DOM manipulation (~100 lines)
-- User chart generation (~200 lines)
-
-This would reduce `generator.ts` by ~650 lines without adding build complexity.
-
-### Post-Refactor Options:
-
-#### Option 1: Build Process (Recommended Long-term)
-- Add build step to transpile TypeScript charts to JavaScript
-- Use bundler (esbuild, rollup) for zero-config builds
-- Single source of truth with type safety
-- Enables direct testing of browser code
-
-#### Option 2: Module Extraction (Quick Win)
-- Extract large JavaScript blocks to separate modules
-- Read and inject at runtime
-- Improves organization without build tools
-
-### Why This Approach?
-1. **Maintains refactor momentum** - no disruption to current plan
-2. **Incremental improvement** - reduces file size progressively
-3. **Defers complexity** - build tools can be added when stable
-4. **Pragmatic trade-off** - chart duplication is manageable (small, stable files)
-5. **Fail-fast principle** - working code over perfect architecture
-
-The duplication is acceptable technical debt that can be addressed after achieving a stable, well-organized codebase.
-
-### 📝 COMMIT STATUS
-*This section will be updated after each change to show what's ready for review*
+## Success Criteria
+- ✅ Working app (all charts render correctly)
+- ✅ Type safety (no `any` types)
+- ✅ Testable (each component isolated)
+- ✅ Maintainable (clear separation of concerns)
+- ✅ Reliable (crashes on invalid state)
+- ⏳ **Final goal**: No inline JavaScript (Commit 22)
 
 ---
-**READY FOR REVIEW**: ✅ **Commit 14: Extract File Types Chart**
 
-**CHANGES MADE**:
-- ✅ Created simple FileTypesChart class in `src/charts/file-types-chart.ts`
-  - No base class abstraction (following fail-fast principles)
-  - Simple constructor and render method
-  - Assert functions for validation
-  - Destroy method for cleanup
-- ✅ Modified `src/report/generator.ts` to use FileTypesChart
-  - Added FileTypesChart class definition (JavaScript version) after ContributorsChart
-  - Replaced inline renderFileTypesChart with class instantiation
-  - Added fileTypesChart variable to track instance
-  - Added cleanup in clearAllCharts function
-- ✅ All tests passing (155 tests)
-- ✅ TypeScript compilation successful
-- ✅ Integration test successful - file types donut chart renders correctly
+## Commit 22 Implementation Plan
 
-**VERIFICATION**:
-- ✅ TypeScript compiles without errors
-- ✅ All tests pass
-- ✅ Generated report displays file types chart correctly
-- ✅ Chart still works exactly the same as before (donut chart with up to 8 file types)
-- ✅ No breaking changes to existing functionality
+### Architecture
+```
+src/
+├── chart/
+│   ├── page-script.ts          # Main entry point
+│   ├── chart-renderers.ts      # ApexCharts + D3 rendering
+│   ├── event-handlers.ts       # Event listeners
+│   └── chart-initializer.ts    # Initialization logic
+├── build/
+│   └── bundle-page-script.ts   # Build script
+└── report/
+    └── generator.ts            # Templates bundled JS
+```
 
-**FILES MODIFIED**: 
-- `src/charts/file-types-chart.ts` (new file)
-- `src/report/generator.ts` (modified to use FileTypesChart class)
+### Benefits
+- Full TypeScript development experience
+- Complete type safety and IntelliSense
+- Comprehensive testing capability
+- Single compiled JavaScript output
+- No more string template maintenance
 
----
-**PREVIOUS**: ✅ **Commit 13: Extract Contributors chart**
-
-**CHANGES MADE**:
-- ✅ Created simple ContributorsChart class in `src/charts/contributors-chart.ts`
-  - No base class abstraction (following fail-fast principles)
-  - Simple constructor and render method
-  - Assert functions for validation
-  - Destroy method for cleanup
-- ✅ Modified `src/report/generator.ts` to use ContributorsChart
-  - Injected ContributorsChart class definition into browser script
-  - Replaced inline renderContributorsChart with class instantiation
-  - Added contributorsChart variable to track instance
-  - Added cleanup in clearAllCharts function
-- ✅ Cleaned up unused files from previous failed refactor
-  - Removed base-chart.ts, chart-manager.ts, and other unused chart files
-  - Removed unused filter-manager.ts, template-engine.ts, script-builder.ts
-  - Removed unused utils files and empty directories
-- ✅ All tests passing (155 tests)
-- ✅ TypeScript compilation successful
-- ✅ Integration test successful - contributors chart renders correctly
-
-**VERIFICATION**:
-- ✅ TypeScript compiles without errors
-- ✅ All tests pass
-- ✅ Generated report displays contributors chart correctly
-- ✅ Chart still works exactly the same as before
-- ✅ No breaking changes to existing functionality
-
-**FILES MODIFIED**: 
-- `src/charts/contributors-chart.ts` (simplified from previous version)
-- `src/report/generator.ts` (modified to use ContributorsChart class)
-
-**FILES REMOVED** (cleanup from previous failed refactor):
-- `src/charts/base-chart.ts`
-- `src/charts/chart-manager.ts`
-- `src/charts/file-types-chart.ts`
-- `src/charts/lines-of-code-chart.ts`
-- `src/filters/filter-manager.ts`
-- `src/filters/data-recalculator.ts`
-- `src/report/template-engine.ts`
-- `src/report/script-builder.ts`
-- `src/utils/chart-builders.ts`
-- `src/utils/formatters.ts`
-- `src/utils/tooltip-builders.ts`
-- `src/types/index.ts`
-- Empty directories: `src/filters/`, `src/types/`
-
----
-**PREVIOUS**: ✅ **Commit 12: Fix generator.ts types**
-
-**CHANGES MADE**:
-- ✅ Added `TrophySvgs` interface to define structure for trophy SVG strings
-- ✅ Added `ChartData` interface to define return type of `transformCommitData`
-- ✅ Added explicit return type `Promise<ChartData>` to `transformCommitData` function
-- ✅ Replaced `chartData: any` parameter with `chartData: ChartData` in `injectDataIntoTemplate`
-- ✅ TypeScript compilation successful - no more `any` types in generator.ts
-- ✅ All 155 tests passing
-- ✅ Integration test successful - generated report for test-repo
-
-**VERIFICATION**:
-- ✅ TypeScript compiles without errors
-- ✅ All tests pass
-- ✅ Generated report displays correctly
-- ✅ No functional changes - only type safety improvements
-
-**FILES MODIFIED**: 
-- `src/report/generator.ts` (added interfaces and proper types)
-
----
-**PREVIOUS**: ✅ **Commit 11: Create integration tests for data pipeline**
-
-**CHANGES MADE**:
-- ✅ Created comprehensive integration test suite in `src/data/data-pipeline.test.ts`
-  - 7 test scenarios covering the complete data flow
-  - Tests for empty commits handling with proper error expectations
-  - Tests for single contributor/commit scenarios  
-  - Tests for multiple contributors with diverse file types
-  - Tests for time-based data aggregation
-  - Tests for data consistency across transformations
-  - Tests for error handling and edge cases
-  - Tests for git extractor integration
-- ✅ Fixed imports to use correct exports (CommitDataBuilder not commitBuilder)
-- ✅ Fixed test expectations to match actual data structures
-- ✅ All 155 tests passing (added 7 new tests)
-- ✅ TypeScript compilation successful
-- ✅ Integration test successful - generated report for test-repo
-
-**VERIFICATION**:
-- ✅ All tests pass
-- ✅ TypeScript compilation successful
-- ✅ Integration verified with test repository
-- ✅ Data flows correctly through all transformation modules
-
-**FILES MODIFIED**: 
-- `src/data/data-pipeline.test.ts` (new - comprehensive integration tests)
-
----
-**PREVIOUS**: ✅ **Commit 10: Extract and test text processing**
-
-**CHANGES MADE**:
-- ✅ Added comprehensive tests to `src/text/processor.test.ts`:
-  - 29 tests covering all functions in the text processing module
-  - Tests for `extractWords`: empty arrays, single/multiple messages, case conversion, special character removal, unicode handling
-  - Tests for `filterStopWords`: empty input, stop word filtering, minimum word length, number filtering, custom config
-  - Tests for `getWordFrequencies`: empty input, single/multiple occurrences, frequency sorting, size scaling, max words limit
-  - Tests for `processCommitMessages`: error handling, message processing, stop word filtering, real-world commit messages
-- ✅ Fixed test expectations to match actual behavior (single word gets minSize, "over" is not a stop word)
-
-**VERIFICATION**:
-- ✅ All 29 new tests pass
-- ✅ All 148 total tests pass
-- ✅ TypeScript compilation successful
-- ✅ Integration test: Generated report successfully for test-repo
-- ✅ No changes to existing functionality needed - text processing was already extracted
-
-**FILES MODIFIED**: 
-- `src/text/processor.test.ts` (new - 29 comprehensive tests)
-
-**PREVIOUS COMMIT 9 CHANGES**:
-- ✅ Created `src/data/linear-transformer.ts` with pure functions:
-  - `getLinearSeriesData`: Transforms commits into linear progression data points with cumulative calculations
-  - `LinearSeriesPoint` interface: Defines the structure for linear series data points
-  - Private `assert` helper for fail-fast error handling
-- ✅ Created comprehensive tests in `src/data/linear-transformer.test.ts`:
-  - 10 tests covering all edge cases and functionality
-  - Tests for empty commit arrays
-  - Tests for single commit scenarios (start point + 1 commit)
-  - Tests for multi-commit cumulative calculation accuracy
-  - Tests for index progression validation (0, 1, 2, 3...)
-  - Tests for byte data handling (with/without byte data)
-  - Tests for net lines calculation
-  - Tests for multi-file commit aggregation
-  - Tests for commits with no file changes
-  - Tests for date and SHA preservation
-  - Tests for starting point properties
-- ✅ Updated `src/chart/data-transformer.ts` to re-export from new module
-- ✅ Removed all linear transformation code from data-transformer.ts
-
-**VERIFICATION**:
-- ✅ All 10 new tests pass
-- ✅ All 119 total tests pass
-- ✅ Integration test: Generated report successfully for test-repo
-- ✅ No breaking changes to existing functionality
-
-**FILES MODIFIED**: 
-- `src/data/linear-transformer.ts` (new)
-- `src/data/linear-transformer.test.ts` (new)
-- `src/chart/data-transformer.ts` (refactored to re-export from new module)
-
-**LAST UPDATED**: Code Churn chart extraction completed
-
----
-**READY FOR REVIEW**: ✅ **Commit 19: Extract Word Cloud Chart**
-
-**CHANGES MADE**:
-- ✅ Created simple WordCloudChart class in `src/charts/word-cloud-chart.ts`
-  - No base class abstraction (following fail-fast principles)
-  - Simple constructor and render method accepting wordCloudData
-  - Assert functions for validation
-  - Destroy method for cleanup
-  - Uses D3.js for word cloud visualization with theme awareness
-  - Supports empty data state with user-friendly message
-- ✅ Modified `src/report/generator.ts` to use WordCloudChart
-  - Added WordCloudChart class definition (JavaScript version) after RepositorySizeChart
-  - Replaced inline renderWordCloud function with class instantiation
-  - Added wordCloudChart variable to track instance
-  - Added cleanup in clearAllCharts function
-- ✅ All tests passing (155 tests)
-- ✅ TypeScript compilation successful
-- ✅ Integration test successful - word cloud renders correctly with D3.js layout
-
-**VERIFICATION**:
-- ✅ TypeScript compiles without errors
-- ✅ All tests pass
-- ✅ Generated report displays word cloud correctly
-- ✅ Chart handles empty data gracefully
-- ✅ Uses D3.js word cloud layout with theme-aware colors
-- ✅ Proper chart lifecycle management (create/destroy)
-- ✅ No breaking changes to existing functionality
-
-**FILES MODIFIED**: 
-- `src/charts/word-cloud-chart.ts` (new file)
-- `src/report/generator.ts` (modified to use WordCloudChart class)
-
----
-**PREVIOUS**: ✅ **Commit 18: Extract Repository Size Chart**
-
-**CHANGES MADE**:
-- ✅ Created simple RepositorySizeChart class in `src/charts/repository-size-chart.ts`
-  - No base class abstraction (following fail-fast principles)
-  - Simple constructor and render method accepting linearSeries, timeSeries, xAxis, and commits
-  - Assert functions for validation
-  - Destroy method for cleanup
-  - Shows repository size (cumulative bytes) over time with area chart visualization
-  - Custom tooltip showing bytes added/deleted/total with proper formatting
-  - Includes inline `formatBytes` utility function for byte formatting
-- ✅ Modified `src/report/generator.ts` to use RepositorySizeChart
-  - Added RepositorySizeChart class definition (JavaScript version) after CodeChurnChart
-  - Replaced inline renderRepositorySizeChart function with class instantiation
-  - Chart already tracked and cleaned up in clearAllCharts
-- ✅ All tests passing (155 tests)
-- ✅ TypeScript compilation successful
-- ✅ Integration test successful - repository size area chart renders correctly with both date and commit views
-
-**VERIFICATION**:
-- ✅ TypeScript compiles without errors
-- ✅ All tests pass
-- ✅ Generated report displays repository size chart correctly
-- ✅ Chart supports both date and commit x-axis views
-- ✅ Area chart shows cumulative bytes over time
-- ✅ Custom tooltip shows bytes added/deleted/total with proper formatting (KB/MB/GB)
-- ✅ No breaking changes to existing functionality
-
-**FILES MODIFIED**: 
-- `src/charts/repository-size-chart.ts` (new file)
-- `src/report/generator.ts` (modified to use RepositorySizeChart class)
-
----
-**PREVIOUS**: ✅ **Commit 17: Extract Code Churn Chart**
-
-**CHANGES MADE**:
-- ✅ Created simple CodeChurnChart class in `src/charts/code-churn-chart.ts`
-  - No base class abstraction (following fail-fast principles)
-  - Simple constructor and render method accepting linearSeries, timeSeries, xAxis, and commits
-  - Assert functions for validation
-  - Destroy method for cleanup
-  - Shows lines added, deleted, and net lines over time with multi-line chart visualization
-  - Custom tooltip with commit details
-- ✅ Modified `src/report/generator.ts` to use CodeChurnChart
-  - Added CodeChurnChart class definition (JavaScript version) after CommitActivityChart
-  - Replaced inline renderCodeChurnChart with class instantiation
-  - Chart already tracked and cleaned up in clearAllCharts
-  - Updated theme toggle to destroy chart before re-rendering
-- ✅ All tests passing (155 tests)
-- ✅ TypeScript compilation successful
-- ✅ Integration test successful - code churn line chart renders correctly with both date and commit views
-
-**VERIFICATION**:
-- ✅ TypeScript compiles without errors
-- ✅ All tests pass
-- ✅ Generated report displays code churn chart correctly
-- ✅ Chart supports both date and commit x-axis views
-- ✅ Multi-line chart shows lines added, deleted, and net lines
-- ✅ Custom tooltip shows commit details and line changes
-- ✅ No breaking changes to existing functionality
-
-**FILES MODIFIED**: 
-- `src/charts/code-churn-chart.ts` (new file)
-- `src/report/generator.ts` (modified to use CodeChurnChart class)
-
----
-**PREVIOUS**: ✅ **Commit 16: Extract Commit Activity Chart**
-
----
-**PREVIOUS**: ✅ **Commit 15: Extract Lines of Code Chart**
-
-**CHANGES MADE**:
-- ✅ Created simple LinesOfCodeChart class in `src/charts/lines-of-code-chart.ts`
-  - No base class abstraction (following fail-fast principles)
-  - Simple constructor and render method accepting linearSeries, timeSeries, xAxis, and commits
-  - Assert functions for validation
-  - Destroy method for cleanup
-  - Custom tooltip for commit view showing lines added/removed and total lines
-- ✅ Modified `src/report/generator.ts` to use LinesOfCodeChart
-  - Added LinesOfCodeChart class definition (JavaScript version) after FileTypesChart
-  - Replaced inline renderLinesOfCodeChart with class instantiation
-  - Passes filtered data and commits to render method
-  - Chart already tracked and cleaned up in clearAllCharts
-- ✅ All tests passing (155 tests)
-- ✅ TypeScript compilation successful
-- ✅ Integration test successful - lines of code area chart renders correctly with both date and commit views
-
-**VERIFICATION**:
-- ✅ TypeScript compiles without errors
-- ✅ All tests pass
-- ✅ Generated report displays lines of code chart correctly
-- ✅ Chart supports both date and commit x-axis views
-- ✅ Custom tooltip shows commit details when hovering in commit view
-- ✅ No breaking changes to existing functionality
-
-**FILES MODIFIED**: 
-- `src/charts/lines-of-code-chart.ts` (new file)
-- `src/report/generator.ts` (modified to use LinesOfCodeChart class)
+### Next Steps
+1. Create TypeScript page script structure
+2. Set up build process with esbuild
+3. Move chart logic to TypeScript modules
+4. Update generator.ts to use compiled bundle
+5. Add comprehensive tests

@@ -81,11 +81,21 @@ export class CommitActivityChart {
       fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.9 } },
       colors: [isDark ? '#58a6ff' : '#27aeef'],
       grid: { borderColor: isDark ? '#30363d' : '#e1e4e8' },
-      tooltip: { 
+      tooltip: xAxis === 'date' ? {
         theme: isDark ? 'dark' : 'light',
+        enabled: true,
+        shared: false,
+        intersect: false,
         x: {
-          format: xAxis === 'date' ? 'dd MMM yyyy' : undefined
+          format: 'dd MMM yyyy'
+        },
+        y: {
+          formatter: function(val: number) {
+            return val.toLocaleString() + ' commits'
+          }
         }
+      } : {
+        theme: isDark ? 'dark' : 'light'
       },
       dataLabels: {
         enabled: false

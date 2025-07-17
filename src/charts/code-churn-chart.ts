@@ -53,23 +53,26 @@ export class CodeChurnChart {
       }
     }
 
-    const createCommitTooltip = (linearSeries: LinearSeriesPoint[], commits: CommitData[], contentBuilder: (commit: CommitData, point: LinearSeriesPoint) => string) => {
+    const createCommitTooltip = (xAxis: 'date' | 'commit', linearSeries: LinearSeriesPoint[], commits: CommitData[], contentBuilder: (commit: CommitData, point: LinearSeriesPoint) => string) => {
       return function(opts: any) {
-        const { dataPointIndex } = opts
-        const point = linearSeries[dataPointIndex]
-        if (!point) return ''
-        
-        const commit = commits.find(c => c.sha === point.sha)
-        if (!commit) return ''
-        
-        const content = contentBuilder(commit, point)
-        return `<div class="custom-tooltip">
-          <div><strong>Commit:</strong> ${commit.sha.substring(0, 7)}</div>
-          <div><strong>Date:</strong> ${new Date(commit.date).toLocaleDateString()}</div>
-          <div><strong>Author:</strong> ${commit.authorName}</div>
-          <div><strong>Message:</strong> ${commit.message}</div>
-          ${content}
-        </div>`
+        if (xAxis === 'commit') {
+          const { dataPointIndex } = opts
+          const point = linearSeries[dataPointIndex]
+          if (!point || point.sha === 'start') return ''
+          
+          const commit = commits.find(c => c.sha === point.sha)
+          if (!commit) return ''
+          
+          const content = contentBuilder(commit, point)
+          return `<div class="custom-tooltip">
+            <div><strong>Commit:</strong> ${commit.sha.substring(0, 7)}</div>
+            <div><strong>Date:</strong> ${new Date(commit.date).toLocaleDateString()}</div>
+            <div><strong>Author:</strong> ${commit.authorName}</div>
+            <div><strong>Message:</strong> ${commit.message}</div>
+            ${content}
+          </div>`
+        }
+        return null
       }
     }
 
@@ -137,13 +140,23 @@ export class CodeChurnChart {
       legend: {
         labels: { colors: isDark ? '#f0f6fc' : '#24292f' }
       },
-      tooltip: { 
-        shared: true,
+      tooltip: xAxis === 'date' ? {
         theme: isDark ? 'dark' : 'light',
+        enabled: true,
+        shared: true,
+        intersect: false,
         x: {
-          format: xAxis === 'date' ? 'dd MMM yyyy' : undefined
+          format: 'dd MMM yyyy'
         },
-        custom: createCommitTooltip(linearSeries, commits, function(commit, _point) {
+        y: {
+          formatter: function(val: number) {
+            return val.toLocaleString()
+          }
+        }
+      } : {
+        theme: isDark ? 'dark' : 'light',
+        shared: true,
+        custom: createCommitTooltip(xAxis, linearSeries, commits, function(commit, _point) {
           return '<div><strong>Lines Added:</strong> ' + commit.linesAdded.toLocaleString() + '</div>' +
                  '<div><strong>Lines Deleted:</strong> ' + commit.linesDeleted.toLocaleString() + '</div>'
         })

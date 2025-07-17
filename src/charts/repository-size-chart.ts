@@ -65,27 +65,6 @@ export class RepositorySizeChart {
       }
     }
 
-    const createCommitTooltip = (xAxis: 'date' | 'commit', filteredLinearSeries: LinearSeriesPoint[], commits: CommitData[], customContent: (commit: CommitData, point: LinearSeriesPoint) => string) => {
-      return function({ dataPointIndex }: any) {
-        if (xAxis === 'commit') {
-          const point = filteredLinearSeries[dataPointIndex]
-          if (point && point.sha !== 'start') {
-            const commit = commits.find(c => c.sha === point.sha)
-            if (commit) {
-              const content = customContent(commit, point)
-              return `<div class="custom-tooltip">
-                <div><strong>Commit:</strong> ${commit.sha.substring(0, 7)}</div>
-                <div><strong>Date:</strong> ${new Date(commit.date).toLocaleDateString()}</div>
-                <div><strong>Author:</strong> ${commit.authorName}</div>
-                <div><strong>Message:</strong> ${commit.message}</div>
-                ${content}
-              </div>`
-            }
-          }
-        }
-        return null
-      }
-    }
 
     const options = {
       chart: { 
@@ -139,21 +118,28 @@ export class RepositorySizeChart {
       fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.9 } },
       colors: [isDark ? '#a5a5ff' : '#b33dc6'],
       grid: { borderColor: isDark ? '#30363d' : '#e1e4e8' },
-      tooltip: {
+      tooltip: xAxis === 'date' ? {
         theme: isDark ? 'dark' : 'light',
+        enabled: true,
+        shared: false,
+        intersect: false,
         x: {
-          format: xAxis === 'date' ? 'dd MMM yyyy' : undefined
+          format: 'dd MMM yyyy'
         },
         y: {
           formatter: formatBytes
-        },
-        custom: createCommitTooltip(xAxis, linearSeries, commits, function(commit, point) {
-          return '<div><strong>Bytes Added:</strong> ' + formatBytes(commit.bytesAdded || 0) + '</div>' +
-                 '<div><strong>Bytes Deleted:</strong> ' + formatBytes(commit.bytesDeleted || 0) + '</div>' +
-                 '<div><strong>Total Size:</strong> ' + formatBytes(point.cumulativeBytes) + '</div>'
-        })
+        }
+      } : {
+        theme: isDark ? 'dark' : 'light',
+        custom: this.createCommitTooltip(xAxis, linearSeries, commits)
       }
     }
+    
+    // Destroy existing chart if it exists
+    if (this.chart) {
+      this.chart.destroy()
+    }
+    
     
     // ApexCharts will be available globally in the browser
     this.chart = new (window as any).ApexCharts(container, options)
@@ -164,6 +150,33 @@ export class RepositorySizeChart {
     if (this.chart) {
       this.chart.destroy()
       this.chart = null
+    }
+  }
+
+  private createCommitTooltip(
+    xAxis: 'date' | 'commit', 
+    linearSeries: LinearSeriesPoint[], 
+    commits: CommitData[]
+  ) {
+    return ({ dataPointIndex }: any) => {
+      if (xAxis === 'commit') {
+        const point = linearSeries[dataPointIndex]
+        if (point && point.sha !== 'start') {
+          const commit = commits.find(c => c.sha === point.sha)
+          if (commit) {
+            return `<div class="custom-tooltip">
+              <div><strong>Commit:</strong> ${commit.sha.substring(0, 7)}</div>
+              <div><strong>Date:</strong> ${new Date(commit.date).toLocaleDateString()}</div>
+              <div><strong>Author:</strong> ${commit.authorName}</div>
+              <div><strong>Message:</strong> ${commit.message}</div>
+              <div><strong>Bytes Added:</strong> ${formatBytes(commit.bytesAdded || 0)}</div>
+              <div><strong>Bytes Deleted:</strong> ${formatBytes(commit.bytesDeleted || 0)}</div>
+              <div><strong>Total Size:</strong> ${formatBytes(point.cumulativeBytes)}</div>
+            </div>`
+          }
+        }
+      }
+      return null
     }
   }
 }

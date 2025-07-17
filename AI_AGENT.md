@@ -7,6 +7,8 @@
 - After any change, run the appropriate build and tests
   - Use `npm run test` for running tests
   - Use `npm run typecheck` for type checking
+  - ALWAYS rebuild the page with `npm run analyse test-repo -- --output test-repo.html` after any TypeScript changes
+  - ALWAYS use the test-repo directory for testing, never the main repo
 - Look at nearby/associated code for patterns and techniques - reuse them where appropriate
 - IMPORTANT! never commit code unless told do to so
 

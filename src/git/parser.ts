@@ -87,13 +87,6 @@ export async function parseCommitHistory(repoPath: string): Promise<CommitData[]
     })
     
     processedCommits++
-    if (processedCommits % 25 === 0) {
-      const commitInfo = commit.hash.substring(0, 7) + ' ' +
-                         new Date(commit.date).toLocaleString() + ' ' +
-                         commit.author_name + ': ' +
-                         commit.message.substring(0, 20) + (commit.message.length > 20 ? '...' : '')
-      console.log(`Processed ${processedCommits} commits: ${commitInfo}`)
-    }
   }
   
   return commits

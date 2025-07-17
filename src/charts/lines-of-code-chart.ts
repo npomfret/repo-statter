@@ -25,6 +25,7 @@ export class LinesOfCodeChart {
     xAxis: 'date' | 'commit',
     commits: CommitData[]
   ): void {
+    
     assert(linearSeries !== undefined, 'Linear series data is required')
     assert(timeSeries !== undefined, 'Time series data is required')
     assert(Array.isArray(linearSeries), 'Linear series must be an array')
@@ -115,17 +116,33 @@ export class LinesOfCodeChart {
       },
       fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.9 } },
       colors: [isDark ? '#f85149' : '#ea5545'],
-      tooltip: {
+      tooltip: xAxis === 'date' ? {
         theme: isDark ? 'dark' : 'light',
+        enabled: true,
+        shared: false,
+        intersect: false,
         x: {
-          format: xAxis === 'date' ? 'dd MMM yyyy' : undefined
+          format: 'dd MMM yyyy'
         },
+        y: {
+          formatter: function(val: number) {
+            return val.toLocaleString() + ' lines'
+          }
+        }
+      } : {
+        theme: isDark ? 'dark' : 'light',
         custom: this.createCommitTooltip(xAxis, linearSeries, commits)
       },
       grid: {
         borderColor: isDark ? '#30363d' : '#e1e4e8'
       }
     }
+    
+    // Destroy existing chart if it exists
+    if (this.chart) {
+      this.chart.destroy()
+    }
+    
     
     // ApexCharts will be available globally in the browser
     this.chart = new (window as any).ApexCharts(container, options)
