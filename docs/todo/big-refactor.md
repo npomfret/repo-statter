@@ -189,8 +189,8 @@ npm start test-repo      # Generate report
 - **Test**: Contributors chart still works exactly the same
 
 #### **Commit 14-19: Extract remaining charts one by one**
-- File Types Chart
-- Lines of Code Chart  
+- File Types Chart ✓
+- Lines of Code Chart ✓ 
 - Commit Activity Chart
 - Code Churn Chart
 - Repository Size Chart
@@ -567,4 +567,35 @@ Never proceed with a broken state. Every commit must leave the app in a working 
 - `src/data/linear-transformer.test.ts` (new)
 - `src/chart/data-transformer.ts` (refactored to re-export from new module)
 
-**LAST UPDATED**: Text processing tests completed
+**LAST UPDATED**: Lines of Code chart extraction completed
+
+---
+**READY FOR REVIEW**: ✅ **Commit 15: Extract Lines of Code Chart**
+
+**CHANGES MADE**:
+- ✅ Created simple LinesOfCodeChart class in `src/charts/lines-of-code-chart.ts`
+  - No base class abstraction (following fail-fast principles)
+  - Simple constructor and render method accepting linearSeries, timeSeries, xAxis, and commits
+  - Assert functions for validation
+  - Destroy method for cleanup
+  - Custom tooltip for commit view showing lines added/removed and total lines
+- ✅ Modified `src/report/generator.ts` to use LinesOfCodeChart
+  - Added LinesOfCodeChart class definition (JavaScript version) after FileTypesChart
+  - Replaced inline renderLinesOfCodeChart with class instantiation
+  - Passes filtered data and commits to render method
+  - Chart already tracked and cleaned up in clearAllCharts
+- ✅ All tests passing (155 tests)
+- ✅ TypeScript compilation successful
+- ✅ Integration test successful - lines of code area chart renders correctly with both date and commit views
+
+**VERIFICATION**:
+- ✅ TypeScript compiles without errors
+- ✅ All tests pass
+- ✅ Generated report displays lines of code chart correctly
+- ✅ Chart supports both date and commit x-axis views
+- ✅ Custom tooltip shows commit details when hovering in commit view
+- ✅ No breaking changes to existing functionality
+
+**FILES MODIFIED**: 
+- `src/charts/lines-of-code-chart.ts` (new file)
+- `src/report/generator.ts` (modified to use LinesOfCodeChart class)

@@ -263,10 +263,178 @@ function injectDataIntoTemplate(template: string, chartData: ChartData, commits:
     }
   `;
 
+  const linesOfCodeChartClass = `
+    function assert(condition, message) {
+      if (!condition) throw new Error(message);
+    }
+
+    class LinesOfCodeChart {
+      constructor(containerId) {
+        this.containerId = containerId;
+        this.chart = null;
+      }
+
+      render(linearSeries, timeSeries, xAxis, commits) {
+        assert(linearSeries !== undefined, 'Linear series data is required');
+        assert(timeSeries !== undefined, 'Time series data is required');
+        assert(Array.isArray(linearSeries), 'Linear series must be an array');
+        assert(Array.isArray(timeSeries), 'Time series must be an array');
+        assert(xAxis === 'date' || xAxis === 'commit', 'X-axis must be "date" or "commit"');
+        assert(commits !== undefined, 'Commits data is required');
+        assert(Array.isArray(commits), 'Commits must be an array');
+        
+        const container = document.querySelector('#' + this.containerId);
+        assert(container !== null, 'Container with id ' + this.containerId + ' not found');
+        
+        const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+        
+        // Build chart data based on x-axis selection
+        const data = xAxis === 'date' 
+          ? timeSeries.map(point => ({
+              x: new Date(point.date).getTime(),
+              y: point.cumulativeLines
+            }))
+          : linearSeries.map(point => ({
+              x: point.commitIndex,
+              y: point.cumulativeLines
+            }));
+        
+        const options = {
+          chart: { 
+            type: 'area', 
+            height: 350, 
+            toolbar: { show: false },
+            background: isDark ? '#161b22' : '#ffffff',
+            zoom: {
+              enabled: true,
+              allowMouseWheelZoom: false
+            }
+          },
+          series: [{
+            name: 'Lines of Code',
+            data: data
+          }],
+          dataLabels: {
+            enabled: false
+          },
+          stroke: {
+            curve: 'smooth'
+          },
+          xaxis: { 
+            type: xAxis === 'date' ? 'datetime' : 'numeric', 
+            title: { 
+              text: xAxis === 'date' ? 'Date' : 'Commit Number',
+              style: { color: isDark ? '#f0f6fc' : '#24292f' }
+            },
+            labels: {
+              datetimeFormatter: {
+                year: 'yyyy',
+                month: 'MMM yyyy',
+                day: 'dd MMM',
+                hour: 'HH:mm',
+                minute: 'HH:mm',
+                second: 'HH:mm:ss'
+              },
+              datetimeUTC: false,
+              style: { colors: isDark ? '#f0f6fc' : '#24292f' },
+              formatter: xAxis === 'commit' ? 
+                function(val) { return Math.floor(val); } : 
+                undefined
+            }
+          },
+          yaxis: { 
+            title: { 
+              text: 'Lines of Code',
+              style: { color: isDark ? '#f0f6fc' : '#24292f' }
+            },
+            min: 0,
+            labels: { style: { colors: isDark ? '#f0f6fc' : '#24292f' } }
+          },
+          fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.9 } },
+          colors: [isDark ? '#f85149' : '#ea5545'],
+          tooltip: {
+            theme: isDark ? 'dark' : 'light',
+            x: {
+              format: xAxis === 'date' ? 'dd MMM yyyy' : undefined
+            },
+            custom: this.createCommitTooltip(xAxis, linearSeries, commits)
+          },
+          grid: {
+            borderColor: isDark ? '#30363d' : '#e1e4e8'
+          }
+        };
+        
+        this.chart = new ApexCharts(container, options);
+        this.chart.render();
+      }
+
+      destroy() {
+        if (this.chart) {
+          this.chart.destroy();
+          this.chart = null;
+        }
+      }
+
+      createCommitTooltip(xAxis, linearSeries, commits) {
+        return function({ seriesIndex, dataPointIndex, w }) {
+          if (xAxis === 'commit') {
+            const point = linearSeries[dataPointIndex];
+            if (point && point.sha !== 'start') {
+              const commit = commits.find(c => c.sha === point.sha);
+              if (commit) {
+                const truncateMessage = function(msg, maxLength) {
+                  if (msg.length <= maxLength) return msg;
+                  return msg.substring(0, maxLength) + '...';
+                };
+                
+                let linesDisplay = '';
+                const added = commit.linesAdded;
+                const deleted = commit.linesDeleted;
+                const net = point.netLines;
+
+                if (added > 0) {
+                    linesDisplay += '+' + added;
+                }
+                if (deleted > 0) {
+                    if (linesDisplay !== '') {
+                        linesDisplay += ' / ';
+                    }
+                    linesDisplay += '-' + deleted;
+                }
+
+                let netDisplay = '';
+                if (added > 0 && deleted > 0) {
+                    netDisplay = ' (Net: ' + (net > 0 ? '+' : '') + net + ')';
+                } else if (added === 0 && deleted === 0) {
+                    linesDisplay = '0';
+                }
+                
+                let content = '<div class="custom-tooltip">' +
+                  '<div class="tooltip-title">Commit #' + point.commitIndex + '</div>' +
+                  '<div class="tooltip-content">' +
+                  '<div><strong>SHA:</strong> ' + commit.sha.substring(0, 7) + '</div>' +
+                  '<div><strong>Author:</strong> ' + commit.authorName + '</div>' +
+                  '<div><strong>Date:</strong> ' + new Date(commit.date).toLocaleString() + '</div>' +
+                  '<div class="tooltip-message"><strong>Message:</strong> ' + truncateMessage(commit.message, 200) + '</div>' +
+                  '<div><strong>Lines:</strong> ' + linesDisplay + netDisplay + '</div>' +
+                  '<div><strong>Total Lines:</strong> ' + point.cumulativeLines.toLocaleString() + '</div>' +
+                  '</div></div>';
+                
+                return content;
+              }
+            }
+          }
+          return null;
+        };
+      }
+    }
+  `;
+
   const chartScript = `
     <script>
       ${contributorsChartClass}
       ${fileTypesChartClass}
+      ${linesOfCodeChartClass}
 
       const commits = ${JSON.stringify(commits)};
       const contributors = ${JSON.stringify(contributors)};
@@ -823,104 +991,12 @@ function injectDataIntoTemplate(template: string, chartData: ChartData, commits:
       
       function renderLinesOfCodeChart() {
         const xAxis = document.querySelector('input[name="linesOfCodeXAxis"]:checked').value;
-        const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
         
         if (linesOfCodeChart) {
           linesOfCodeChart.destroy();
         }
-        document.querySelector('#linesOfCodeChart').innerHTML = '';
-
-        const options = {
-          chart: { 
-            type: 'area', 
-            height: 350, 
-            toolbar: { show: false },
-            background: isDark ? '#161b22' : '#ffffff',
-            zoom: {
-              enabled: true,
-              allowMouseWheelZoom: false
-            }
-          },
-          series: [{
-            name: 'Lines of Code',
-            data: buildTimeSeriesData(
-              filteredLinearSeries,
-              xAxis,
-              point => point.cumulativeLines
-            )
-          }],
-          dataLabels: {
-            enabled: false
-          },
-          stroke: {
-            curve: 'smooth'
-          },
-          xaxis: { 
-            type: xAxis === 'date' ? 'datetime' : 'numeric', 
-            title: { 
-              text: xAxis === 'date' ? 'Date' : 'Commit Number',
-              style: { color: isDark ? '#f0f6fc' : '#24292f' }
-            },
-            labels: {
-              datetimeFormatter: {
-                year: 'yyyy',
-                month: 'MMM yyyy',
-                day: 'dd MMM',
-                hour: 'HH:mm',
-                minute: 'HH:mm',
-                second: 'HH:mm:ss'
-              },
-              datetimeUTC: false,
-              style: { colors: isDark ? '#f0f6fc' : '#24292f' },
-              formatter: xAxis === 'commit' ? function(val) { return Math.floor(val); } : undefined
-            }
-          },
-          yaxis: { 
-            title: { 
-              text: 'Lines of Code',
-              style: { color: isDark ? '#f0f6fc' : '#24292f' }
-            },
-            min: 0,
-            labels: { style: { colors: isDark ? '#f0f6fc' : '#24292f' } }
-          },
-          fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.9 } },
-          colors: [isDark ? '#f85149' : '#ea5545'],
-          grid: { borderColor: isDark ? '#30363d' : '#e1e4e8' },
-          tooltip: {
-            theme: isDark ? 'dark' : 'light',
-            x: {
-              format: xAxis === 'date' ? 'dd MMM yyyy' : undefined
-            },
-            custom: createCommitTooltip(xAxis, filteredLinearSeries, commits, function(commit, point) {
-              let linesDisplay = '';
-              const added = commit.linesAdded;
-              const deleted = commit.linesDeleted;
-              const net = point.netLines;
-
-              if (added > 0) {
-                  linesDisplay += '+' + added;
-              }
-              if (deleted > 0) {
-                  if (linesDisplay !== '') {
-                      linesDisplay += ' / ';
-                  }
-                  linesDisplay += '-' + deleted;
-              }
-
-              let netDisplay = '';
-              if (added > 0 && deleted > 0) {
-                  netDisplay = ' (Net: ' + (net > 0 ? '+' : '') + net + ')';
-              } else if (added === 0 && deleted === 0) {
-                  linesDisplay = '0';
-              }
-
-              return '<div><strong>Lines:</strong> ' + linesDisplay + netDisplay + '</div>' +
-                     '<div><strong>Total Lines:</strong> ' + point.cumulativeLines.toLocaleString() + '</div>';
-            })
-          }
-        };
-        linesOfCodeChart = new ApexCharts(document.querySelector('#linesOfCodeChart'), options);
-        linesOfCodeChart.render();
+        linesOfCodeChart = new LinesOfCodeChart('linesOfCodeChart');
+        linesOfCodeChart.render(filteredLinearSeries, filteredTimeSeries, xAxis, commits);
       }
       
       
