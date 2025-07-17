@@ -521,12 +521,157 @@ function injectDataIntoTemplate(template: string, chartData: ChartData, commits:
     }
   `;
 
+  const codeChurnChartClass = `
+    class CodeChurnChart {
+      constructor(containerId) {
+        this.containerId = containerId;
+        this.chart = null;
+      }
+      render(linearSeries, timeSeries, xAxis, commits) {
+        assert(linearSeries !== undefined, 'Linear series data is required');
+        assert(timeSeries !== undefined, 'Time series data is required');
+        assert(Array.isArray(linearSeries), 'Linear series must be an array');
+        assert(Array.isArray(timeSeries), 'Time series must be an array');
+        assert(xAxis === 'date' || xAxis === 'commit', 'X-axis must be "date" or "commit"');
+        assert(commits !== undefined, 'Commits data is required');
+        assert(Array.isArray(commits), 'Commits must be an array');
+        
+        const container = document.querySelector('#' + this.containerId);
+        assert(container !== null, 'Container with id ' + this.containerId + ' not found');
+        
+        const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+        
+        // Build chart data based on x-axis selection
+        const buildTimeSeriesData = (data, xAxis, yValueExtractor) => {
+          if (xAxis === 'date') {
+            return timeSeries.map(point => ({
+              x: new Date(point.date).getTime(),
+              y: yValueExtractor(point)
+            }));
+          } else {
+            return data.map(point => ({
+              x: point.commitIndex,
+              y: yValueExtractor(point)
+            }));
+          }
+        };
+
+        const createCommitTooltip = (xAxis, linearSeries, commits, contentBuilder) => {
+          return function(opts) {
+            const { seriesIndex, dataPointIndex } = opts;
+            const point = linearSeries[dataPointIndex];
+            if (!point) return '';
+            
+            const commit = commits.find(c => c.sha === point.sha);
+            if (!commit) return '';
+            
+            const content = contentBuilder(commit, point);
+            return '<div class="custom-tooltip">' +
+              '<div><strong>Commit:</strong> ' + commit.sha.substring(0, 7) + '</div>' +
+              '<div><strong>Date:</strong> ' + new Date(commit.date).toLocaleDateString() + '</div>' +
+              '<div><strong>Author:</strong> ' + commit.authorName + '</div>' +
+              '<div><strong>Message:</strong> ' + commit.message + '</div>' +
+              content +
+              '</div>';
+          };
+        };
+
+        const options = {
+          chart: { 
+            type: 'line', 
+            height: 350, 
+            toolbar: { show: false }, 
+            background: isDark ? '#161b22' : '#ffffff',
+            zoom: {
+              enabled: true,
+              allowMouseWheelZoom: false
+            }
+          },
+          series: [
+            { 
+              name: 'Lines Added', 
+              data: buildTimeSeriesData(
+                linearSeries,
+                xAxis,
+                point => point.linesAdded
+              )
+            },
+            { 
+              name: 'Lines Deleted', 
+              data: buildTimeSeriesData(
+                linearSeries,
+                xAxis,
+                point => point.linesDeleted
+              )
+            },
+            { 
+              name: 'Net Lines', 
+              data: buildTimeSeriesData(
+                linearSeries,
+                xAxis,
+                point => point.linesAdded - point.linesDeleted
+              )
+            }
+          ],
+          xaxis: { 
+            type: xAxis === 'date' ? 'datetime' : 'numeric', 
+            title: { 
+              text: xAxis === 'date' ? 'Date' : 'Commit Number',
+              style: { color: isDark ? '#f0f6fc' : '#24292f' }
+            },
+            labels: { 
+              style: { colors: isDark ? '#f0f6fc' : '#24292f' },
+              formatter: xAxis === 'commit' ? function(val) { return Math.floor(val).toString(); } : undefined
+            }
+          },
+          yaxis: { 
+            title: { 
+              text: 'Lines Changed',
+              style: { color: isDark ? '#f0f6fc' : '#24292f' }
+            },
+            labels: { style: { colors: isDark ? '#f0f6fc' : '#24292f' } }
+          },
+          stroke: {
+            curve: 'smooth',
+            width: 2
+          },
+          colors: isDark ? ['#3fb950', '#f85149', '#58a6ff'] : ['#87bc45', '#ea5545', '#27aeef'],
+          grid: { borderColor: isDark ? '#30363d' : '#e1e4e8' },
+          legend: {
+            labels: { colors: isDark ? '#f0f6fc' : '#24292f' }
+          },
+          tooltip: { 
+            shared: true,
+            theme: isDark ? 'dark' : 'light',
+            x: {
+              format: xAxis === 'date' ? 'dd MMM yyyy' : undefined
+            },
+            custom: createCommitTooltip(xAxis, linearSeries, commits, function(commit, point) {
+              return '<div><strong>Lines Added:</strong> ' + commit.linesAdded.toLocaleString() + '</div>' +
+                     '<div><strong>Lines Deleted:</strong> ' + commit.linesDeleted.toLocaleString() + '</div>';
+            })
+          }
+        };
+        
+        this.chart = new ApexCharts(container, options);
+        this.chart.render();
+      }
+      destroy() {
+        if (this.chart) {
+          this.chart.destroy();
+          this.chart = null;
+        }
+      }
+    }
+  `;
+
   const chartScript = `
     <script>
       ${contributorsChartClass}
       ${fileTypesChartClass}
       ${linesOfCodeChartClass}
       ${commitActivityChartClass}
+      ${codeChurnChartClass}
 
       const commits = ${JSON.stringify(commits)};
       const contributors = ${JSON.stringify(contributors)};
@@ -1053,91 +1198,12 @@ function injectDataIntoTemplate(template: string, chartData: ChartData, commits:
       
       function renderCodeChurnChart() {
         const xAxis = document.querySelector('input[name="codeChurnXAxis"]:checked').value;
-        const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
-
+        
         if (codeChurnChart) {
           codeChurnChart.destroy();
         }
-        document.querySelector('#codeChurnChart').innerHTML = '';
-
-        const options = {
-          chart: { 
-            type: 'line', 
-            height: 350, 
-            toolbar: { show: false }, 
-            background: isDark ? '#161b22' : '#ffffff',
-            zoom: {
-              enabled: true,
-              allowMouseWheelZoom: false
-            }
-          },
-          series: [
-            { 
-              name: 'Lines Added', 
-              data: buildTimeSeriesData(
-                filteredLinearSeries,
-                xAxis,
-                point => point.linesAdded
-              )
-            },
-            { 
-              name: 'Lines Deleted', 
-              data: buildTimeSeriesData(
-                filteredLinearSeries,
-                xAxis,
-                point => point.linesDeleted
-              )
-            },
-            { 
-              name: 'Net Lines', 
-              data: buildTimeSeriesData(
-                filteredLinearSeries,
-                xAxis,
-                point => point.linesAdded - point.linesDeleted
-              )
-            }
-          ],
-          xaxis: { 
-            type: xAxis === 'date' ? 'datetime' : 'numeric', 
-            title: { 
-              text: xAxis === 'date' ? 'Date' : 'Commit Number',
-              style: { color: isDark ? '#f0f6fc' : '#24292f' }
-            },
-            labels: { 
-              style: { colors: isDark ? '#f0f6fc' : '#24292f' },
-              formatter: xAxis === 'commit' ? function(val) { return Math.floor(val); } : undefined
-            }
-          },
-          yaxis: { 
-            title: { 
-              text: 'Lines Changed',
-              style: { color: isDark ? '#f0f6fc' : '#24292f' }
-            },
-            labels: { style: { colors: isDark ? '#f0f6fc' : '#24292f' } }
-          },
-          stroke: {
-            curve: 'smooth',
-            width: 2
-          },
-          colors: isDark ? ['#3fb950', '#f85149', '#58a6ff'] : ['#87bc45', '#ea5545', '#27aeef'],
-          grid: { borderColor: isDark ? '#30363d' : '#e1e4e8' },
-          legend: {
-            labels: { colors: isDark ? '#f0f6fc' : '#24292f' }
-          },
-          tooltip: { 
-            shared: true,
-            theme: isDark ? 'dark' : 'light',
-            x: {
-              format: xAxis === 'date' ? 'dd MMM yyyy' : undefined
-            },
-            custom: createCommitTooltip(xAxis, filteredLinearSeries, commits, function(commit, point) {
-              return '<div><strong>Lines Added:</strong> ' + commit.linesAdded.toLocaleString() + '</div>' +
-                     '<div><strong>Lines Deleted:</strong> ' + commit.linesDeleted.toLocaleString() + '</div>';
-            })
-          }
-        };
-        codeChurnChart = new ApexCharts(document.querySelector('#codeChurnChart'), options);
-        codeChurnChart.render();
+        codeChurnChart = new CodeChurnChart('codeChurnChart');
+        codeChurnChart.render(filteredLinearSeries, filteredTimeSeries, xAxis, commits);
       }
       
       function renderRepositorySizeChart() {
@@ -1777,6 +1843,9 @@ function injectDataIntoTemplate(template: string, chartData: ChartData, commits:
             }
             if (linesOfCodeChart) {
               linesOfCodeChart.destroy();
+            }
+            if (codeChurnChart) {
+              codeChurnChart.destroy();
             }
 
             renderCommitActivityChart();
