@@ -139,18 +139,28 @@ function parseLsTreeOutput(lsTreeOutput: string): Record<string, number> {
 }
 ```
 
+## Analysis Summary
+
+After examining the codebase, I've confirmed:
+- The hardcoded 50-byte estimation is in `src/data/git-extractor.ts:147-148`
+- The `getByteChanges` function in `src/git/parser.ts:121-132` calls `parseByteChanges` 
+- This is a valid and worthwhile task that will significantly improve data accuracy
+
 ## Implementation Plan
 
-### Step 1: Add helper functions to src/git/parser.ts
-1. **Create parseLsTreeOutput helper function**
-   - Parse git ls-tree -l output format (format: `<mode> blob <hash> <size> <path>`)
+### Approach: Replace hardcoded estimation with actual file size calculation
+The most efficient approach is to modify the `getByteChanges` function in `src/git/parser.ts` to use `git ls-tree -l` which provides actual file sizes in a single command per commit.
+
+### Step 1: Create helper functions in src/git/parser.ts
+1. **parseLsTreeOutput function**
+   - Parse `git ls-tree -l` output format: `<mode> blob <hash> <size> <path>`
    - Build map of filename to size in bytes
    - Handle only blob entries (ignore trees, symlinks, submodules)
    - Return `Record<string, number>`
 
-2. **Create calculateByteChanges helper function**
+2. **calculateByteChanges function**
    - Takes current sizes map, parent sizes map, and changed files list
-   - Process each changed file based on status (A/D/M)
+   - Process each changed file based on git status (A/D/M/R)
    - Calculate actual byte differences:
      - Added (A): current size
      - Deleted (D): parent size  
@@ -160,7 +170,7 @@ function parseLsTreeOutput(lsTreeOutput: string): Record<string, number> {
 ### Step 2: Update getByteChanges function in src/git/parser.ts
 1. **Replace implementation (lines 121-132)**
    - Run `git ls-tree -r -l ${commitHash}` to get current file sizes
-   - Run `git ls-tree -r -l ${commitHash}^` to get parent sizes (catch error for first commit)
+   - Run `git ls-tree -r -l ${commitHash}^` to get parent sizes (handle first commit)
    - Run `git diff-tree --no-commit-id --name-status -r ${commitHash}` to get changed files
    - Call calculateByteChanges with the results
    - Keep try/catch with fallback to existing parseByteChanges for error cases
@@ -168,7 +178,7 @@ function parseLsTreeOutput(lsTreeOutput: string): Record<string, number> {
 ### Step 3: Testing
 1. **Manual testing with test-repo**
    - Run `npm run analyse test-repo -- --output test-repo.html`
-   - Verify byte counts in repository size chart
+   - Verify byte counts in repository size chart match actual file sizes
    - Check tooltips show accurate byte values
    - Test with commits that add/delete/modify files
 
