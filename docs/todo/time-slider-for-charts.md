@@ -1,0 +1,1 @@
+I want a time slider, that affects all the time series charts.  it allows the user to adjust the start and end time that we use.  remove the feature that allows the user to use the scroll wheel for adjusting the time which i guess is a feature of the library we are using.  go and research how to do all this
