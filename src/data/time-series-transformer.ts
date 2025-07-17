@@ -6,6 +6,23 @@ function assert(condition: boolean, message: string): asserts condition {
   }
 }
 
+function getDateKey(date: Date, useHourly: boolean): string {
+  if (useHourly) {
+    return date.toISOString().slice(0, 13) + ':00:00'
+  }
+  return date.toISOString().split('T')[0]!
+}
+
+function getStartDateKey(firstCommitDate: Date, useHourly: boolean): string {
+  const startDate = new Date(firstCommitDate)
+  if (useHourly) {
+    startDate.setHours(startDate.getHours() - 1)
+  } else {
+    startDate.setDate(startDate.getDate() - 1)
+  }
+  return getDateKey(startDate, useHourly)
+}
+
 export interface TimeSeriesPoint {
   date: string
   commits: number
@@ -26,18 +43,10 @@ export function getTimeSeriesData(commits: CommitData[]): TimeSeriesPoint[] {
   assert(commits.length > 0, 'Cannot create time series from empty commits array')
   const firstCommit = commits[0]!
   const firstCommitDate = new Date(firstCommit.date)
-  const startDate = new Date(firstCommitDate)
-  if (useHourlyData) {
-    startDate.setHours(startDate.getHours() - 1)
-  } else {
-    startDate.setDate(startDate.getDate() - 1)
-  }
   
   const timeSeriesMap = new Map<string, TimeSeriesPoint>()
   
-  const startDateKey = useHourlyData 
-    ? startDate.toISOString().slice(0, 13) + ':00:00'
-    : startDate.toISOString().split('T')[0]!
+  const startDateKey = getStartDateKey(firstCommitDate, useHourlyData)
   
   timeSeriesMap.set(startDateKey, {
     date: startDateKey,
@@ -54,9 +63,7 @@ export function getTimeSeriesData(commits: CommitData[]): TimeSeriesPoint[] {
   let cumulativeBytes = 0
   
   for (const commit of commits) {
-    const dateKey = useHourlyData 
-      ? new Date(commit.date).toISOString().slice(0, 13) + ':00:00'
-      : new Date(commit.date).toISOString().split('T')[0]!
+    const dateKey = getDateKey(new Date(commit.date), useHourlyData)
     
     if (!timeSeriesMap.has(dateKey)) {
       timeSeriesMap.set(dateKey, {
