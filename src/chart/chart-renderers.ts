@@ -4,27 +4,24 @@ import type { ContributorStats } from '../stats/calculator.js'
 import { buildUserTimeSeriesData } from '../utils/chart-data-builders.js'
 import { ContributorsChart } from '../charts/contributors-chart.js'
 import { FileTypesChart } from '../charts/file-types-chart.js'
-import { LinesOfCodeChart } from '../charts/lines-of-code-chart.js'
+import { GrowthChart } from '../charts/growth-chart.js'
 import { CommitActivityChart } from '../charts/commit-activity-chart.js'
-import { RepositorySizeChart } from '../charts/repository-size-chart.js'
 import { WordCloudChart } from '../charts/word-cloud-chart.js'
 import { FileHeatmapChart } from '../charts/file-heatmap-chart.js'
 
 export class ChartRenderers {
   private contributorsChart: ContributorsChart
   private fileTypesChart: FileTypesChart
-  private linesOfCodeChart: LinesOfCodeChart
+  private growthChart: GrowthChart
   private commitActivityChart: CommitActivityChart
-  private repositorySizeChart: RepositorySizeChart
   private wordCloudChart: WordCloudChart
   private fileHeatmapChart: FileHeatmapChart
 
   constructor(private data: PageScriptData) {
     this.contributorsChart = new ContributorsChart('contributorsChart')
     this.fileTypesChart = new FileTypesChart('fileTypesChart')
-    this.linesOfCodeChart = new LinesOfCodeChart('linesOfCodeChart')
+    this.growthChart = new GrowthChart('growthChart')
     this.commitActivityChart = new CommitActivityChart('commitActivityChart')
-    this.repositorySizeChart = new RepositorySizeChart('repositorySizeChart')
     this.wordCloudChart = new WordCloudChart('wordCloudChart')
     this.fileHeatmapChart = new FileHeatmapChart('fileHeatmapChart')
   }
@@ -32,9 +29,8 @@ export class ChartRenderers {
   public renderAllCharts(): void {
     this.contributorsChart.render(this.data.contributors)
     this.fileTypesChart.render(this.data.fileTypes)
-    this.linesOfCodeChart.render(this.data.linearSeries, this.data.timeSeries, 'date', this.data.commits)
+    this.growthChart.render(this.data.linearSeries, this.data.timeSeries, 'date', this.data.commits)
     this.commitActivityChart.render(this.data.timeSeries)
-    this.repositorySizeChart.render(this.data.linearSeries, this.data.timeSeries, 'date', this.data.commits)
     this.wordCloudChart.render(this.data.wordCloudData)
     this.fileHeatmapChart.render(this.data.fileHeatData)
   }
@@ -259,9 +255,8 @@ export class ChartRenderers {
     // Update all chart instances when theme changes
     this.contributorsChart.render(this.data.contributors)
     this.fileTypesChart.render(this.data.fileTypes)
-    this.linesOfCodeChart.render(this.data.linearSeries, this.data.timeSeries, 'date', this.data.commits)
+    this.growthChart.render(this.data.linearSeries, this.data.timeSeries, 'date', this.data.commits)
     this.commitActivityChart.render(this.data.timeSeries)
-    this.repositorySizeChart.render(this.data.linearSeries, this.data.timeSeries, 'date', this.data.commits)
     this.wordCloudChart.render(this.data.wordCloudData)
     this.fileHeatmapChart.render(this.data.fileHeatData)
     
@@ -274,9 +269,8 @@ export class ChartRenderers {
     return {
       contributors: this.contributorsChart,
       fileTypes: this.fileTypesChart,
-      linesOfCode: this.linesOfCodeChart,
+      growth: this.growthChart,
       commitActivity: this.commitActivityChart,
-      repositorySize: this.repositorySizeChart,
       wordCloud: this.wordCloudChart,
       fileHeatmap: this.fileHeatmapChart
     }

@@ -40,23 +40,13 @@ export class EventHandlers {
   private setupXAxisToggle(): void {
     const chartInstances = this.renderers.getChartInstances()
     
-    // Lines of Code chart
-    const linesOfCodeRadios = document.querySelectorAll('input[name="linesOfCodeXAxis"]')
-    linesOfCodeRadios.forEach((radio) => {
+    // Growth chart (merged Lines of Code and Repository Size)
+    const growthRadios = document.querySelectorAll('input[name="growthXAxis"]')
+    growthRadios.forEach((radio) => {
       radio.addEventListener('change', (e) => {
         const target = e.target as HTMLInputElement
         const xAxis = target.value as 'date' | 'commit'
-        chartInstances.linesOfCode.render(this.data.linearSeries, this.data.timeSeries, xAxis, this.data.commits)
-      })
-    })
-    
-    // Repository Size chart
-    const repoSizeRadios = document.querySelectorAll('input[name="repoSizeXAxis"]')
-    repoSizeRadios.forEach(radio => {
-      radio.addEventListener('change', (e) => {
-        const target = e.target as HTMLInputElement
-        const xAxis = target.value as 'date' | 'commit'
-        chartInstances.repositorySize.render(this.data.linearSeries, this.data.timeSeries, xAxis, this.data.commits)
+        chartInstances.growth.render(this.data.linearSeries, this.data.timeSeries, xAxis, this.data.commits)
       })
     })
     

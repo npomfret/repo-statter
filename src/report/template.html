@@ -360,35 +360,19 @@
         <div class="row">
             <!-- Time Series Charts Column -->
             <div class="col-lg-8">
-                <!-- Lines of Code Growth Chart -->
+                <!-- Growth Over Time Chart -->
                 <div class="card mb-4">
                     <div class="card-header">
-                        <h5 class="card-title mb-0">Lines of Code Growth</h5>
+                        <h5 class="card-title mb-0">Growth Over Time</h5>
                     </div>
                     <div class="card-body">
                         <div class="btn-group btn-group-sm mb-3" role="group">
-                            <input type="radio" class="btn-check" name="linesOfCodeXAxis" id="linesOfCodeXAxisDate" value="date" checked>
-                            <label class="btn btn-outline-primary" for="linesOfCodeXAxisDate">By Date</label>
-                            <input type="radio" class="btn-check" name="linesOfCodeXAxis" id="linesOfCodeXAxisCommit" value="commit">
-                            <label class="btn btn-outline-primary" for="linesOfCodeXAxisCommit">By Commit</label>
+                            <input type="radio" class="btn-check" name="growthXAxis" id="growthXAxisDate" value="date" checked>
+                            <label class="btn btn-outline-primary" for="growthXAxisDate">By Date</label>
+                            <input type="radio" class="btn-check" name="growthXAxis" id="growthXAxisCommit" value="commit">
+                            <label class="btn btn-outline-primary" for="growthXAxisCommit">By Commit</label>
                         </div>
-                        <div id="linesOfCodeChart"></div>
-                    </div>
-                </div>
-
-                <!-- Repository Size Chart -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">Repository Size Over Time</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="btn-group btn-group-sm mb-3" role="group">
-                            <input type="radio" class="btn-check" name="repoSizeXAxis" id="repoSizeXAxisDate" value="date" checked>
-                            <label class="btn btn-outline-primary" for="repoSizeXAxisDate">By Date</label>
-                            <input type="radio" class="btn-check" name="repoSizeXAxis" id="repoSizeXAxisCommit" value="commit">
-                            <label class="btn btn-outline-primary" for="repoSizeXAxisCommit">By Commit</label>
-                        </div>
-                        <div id="repositorySizeChart"></div>
+                        <div id="growthChart"></div>
                     </div>
                 </div>
 
