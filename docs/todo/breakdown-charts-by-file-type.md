@@ -1,0 +1,1 @@
+For each of the lines of code and repo size charts, as well as the total size, I want to break down the files by type, eg: application code, tests, build, ... other.

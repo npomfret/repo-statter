@@ -1,0 +1,1 @@
+I want the ability to be able to choose which of these lines i see on the chart via a series of checkbox controls.  the "total" should not be checked by default.

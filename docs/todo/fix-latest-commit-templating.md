@@ -1,0 +1,1 @@
+Fix this on the report "Latest Commit: {{latestCommitHash}} by {{latestCommitAuthor}} on {{latestCommitDate}}". The templating isn't working. Add a test.

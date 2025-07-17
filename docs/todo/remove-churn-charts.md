@@ -1,0 +1,1 @@
+Remove all the "churn" charts from the report and codebase.
