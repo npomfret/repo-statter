@@ -5,7 +5,14 @@ import { parseCommitHistory, getGitHubUrl } from '../git/parser.js'
 import { 
   getContributorStats, 
   getFileTypeStats, 
-  getFileHeatData
+  getFileHeatData,
+  getTopCommitsByFilesModified,
+  getTopCommitsByBytesAdded,
+  getTopCommitsByBytesRemoved,
+  getTopCommitsByLinesAdded,
+  getTopCommitsByLinesRemoved,
+  getLowestAverageLinesChanged,
+  getHighestAverageLinesChanged
 } from '../stats/calculator.js'
 import { getTimeSeriesData, getLinearSeriesData } from '../chart/data-transformer.js'
 import { processCommitMessages } from '../text/processor.js'
@@ -118,6 +125,17 @@ async function injectDataIntoTemplate(template: string, chartData: ChartData, co
   const wordCloudData = processCommitMessages(commits.map(c => c.message))
   const fileHeatData = getFileHeatData(commits)
   
+  // Calculate awards
+  const awards = {
+    filesModified: getTopCommitsByFilesModified(commits),
+    bytesAdded: getTopCommitsByBytesAdded(commits),
+    bytesRemoved: getTopCommitsByBytesRemoved(commits),
+    linesAdded: getTopCommitsByLinesAdded(commits),
+    linesRemoved: getTopCommitsByLinesRemoved(commits),
+    lowestAverage: getLowestAverageLinesChanged(commits),
+    highestAverage: getHighestAverageLinesChanged(commits)
+  }
+  
   // Bundle the TypeScript page script
   const bundledScript = await bundlePageScript()
   
@@ -133,7 +151,8 @@ async function injectDataIntoTemplate(template: string, chartData: ChartData, co
         timeSeries: ${JSON.stringify(timeSeries)},
         linearSeries: ${JSON.stringify(linearSeries)},
         wordCloudData: ${JSON.stringify(wordCloudData)},
-        fileHeatData: ${JSON.stringify(fileHeatData)}
+        fileHeatData: ${JSON.stringify(fileHeatData)},
+        awards: ${JSON.stringify(awards)}
       };
       
       // Initialize when DOM is ready

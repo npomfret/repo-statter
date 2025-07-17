@@ -36,7 +36,7 @@ export class ChartRenderers {
     this.contributorsChart.render(this.data.contributors)
     this.fileTypesChart.render(this.data.fileTypes)
     this.linesOfCodeChart.render(this.data.linearSeries, this.data.timeSeries, 'date', this.data.commits)
-    this.commitActivityChart.render(this.data.linearSeries, this.data.timeSeries, 'date')
+    this.commitActivityChart.render(this.data.timeSeries)
     this.codeChurnChart.render(this.data.linearSeries, this.data.timeSeries, 'date', this.data.commits)
     this.repositorySizeChart.render(this.data.linearSeries, this.data.timeSeries, 'date', this.data.commits)
     this.wordCloudChart.render(this.data.wordCloudData)
@@ -264,11 +264,15 @@ export class ChartRenderers {
     this.contributorsChart.render(this.data.contributors)
     this.fileTypesChart.render(this.data.fileTypes)
     this.linesOfCodeChart.render(this.data.linearSeries, this.data.timeSeries, 'date', this.data.commits)
-    this.commitActivityChart.render(this.data.linearSeries, this.data.timeSeries, 'date')
+    this.commitActivityChart.render(this.data.timeSeries)
     this.codeChurnChart.render(this.data.linearSeries, this.data.timeSeries, 'date', this.data.commits)
     this.repositorySizeChart.render(this.data.linearSeries, this.data.timeSeries, 'date', this.data.commits)
     this.wordCloudChart.render(this.data.wordCloudData)
     this.fileHeatmapChart.render(this.data.fileHeatData)
+    
+    // Update user charts as well
+    const filteredContributors = this.data.contributors.filter(c => c.commits > 0)
+    this.renderUserCharts(filteredContributors)
   }
 
   public getChartInstances() {

@@ -21,6 +21,12 @@ export class ContributorsChart {
     
     const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark'
     
+    // Destroy existing chart if it exists
+    if (this.chart) {
+      this.chart.destroy()
+      this.chart = null
+    }
+    
     const options = {
       chart: { 
         type: 'bar', 

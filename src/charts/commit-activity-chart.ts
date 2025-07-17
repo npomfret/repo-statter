@@ -1,4 +1,3 @@
-import type { LinearSeriesPoint } from '../data/linear-transformer.js'
 import type { TimeSeriesPoint } from '../data/time-series-transformer.js'
 
 function assert(condition: boolean, message: string): asserts condition {
@@ -19,31 +18,27 @@ export class CommitActivityChart {
   }
 
   render(
-    linearSeries: LinearSeriesPoint[], 
-    timeSeries: TimeSeriesPoint[], 
-    xAxis: 'date' | 'commit'
+    timeSeries: TimeSeriesPoint[]
   ): void {
-    assert(linearSeries !== undefined, 'Linear series data is required')
     assert(timeSeries !== undefined, 'Time series data is required')
-    assert(Array.isArray(linearSeries), 'Linear series must be an array')
     assert(Array.isArray(timeSeries), 'Time series must be an array')
-    assert(xAxis === 'date' || xAxis === 'commit', 'X-axis must be "date" or "commit"')
     
     const container = document.querySelector('#' + this.containerId)
     assert(container !== null, `Container with id ${this.containerId} not found`)
     
     const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark'
     
-    // Build chart data based on x-axis selection
-    const data: ChartDataPoint[] = xAxis === 'date' 
-      ? timeSeries.map(point => ({
-          x: new Date(point.date).getTime(),
-          y: point.commits
-        }))
-      : linearSeries.map(point => ({
-          x: point.commitIndex,
-          y: point.commits
-        }))
+    // Destroy existing chart if it exists
+    if (this.chart) {
+      this.chart.destroy()
+      this.chart = null
+    }
+    
+    // Always use date-based data for commit activity over time
+    const data: ChartDataPoint[] = timeSeries.map(point => ({
+      x: new Date(point.date).getTime(),
+      y: point.commits
+    }))
     
     const options = {
       chart: { 
@@ -61,14 +56,13 @@ export class CommitActivityChart {
         data: data
       }],
       xaxis: { 
-        type: xAxis === 'date' ? 'datetime' : 'numeric', 
+        type: 'datetime', 
         title: { 
-          text: xAxis === 'date' ? 'Date' : 'Commit Number',
+          text: 'Date',
           style: { color: isDark ? '#f0f6fc' : '#24292f' }
         },
         labels: { 
-          style: { colors: isDark ? '#f0f6fc' : '#24292f' },
-          formatter: xAxis === 'commit' ? function(val: any) { return Math.floor(val).toString() } : undefined
+          style: { colors: isDark ? '#f0f6fc' : '#24292f' }
         }
       },
       yaxis: { 
@@ -81,7 +75,7 @@ export class CommitActivityChart {
       fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.9 } },
       colors: [isDark ? '#58a6ff' : '#27aeef'],
       grid: { borderColor: isDark ? '#30363d' : '#e1e4e8' },
-      tooltip: xAxis === 'date' ? {
+      tooltip: {
         theme: isDark ? 'dark' : 'light',
         enabled: true,
         shared: false,
@@ -94,8 +88,6 @@ export class CommitActivityChart {
             return val.toLocaleString() + ' commits'
           }
         }
-      } : {
-        theme: isDark ? 'dark' : 'light'
       },
       dataLabels: {
         enabled: false

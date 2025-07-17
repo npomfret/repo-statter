@@ -2,7 +2,7 @@ import { ChartRenderers } from './chart-renderers.js'
 import { EventHandlers } from './event-handlers.js'
 import { ChartInitializer } from './chart-initializer.js'
 import type { CommitData } from '../git/parser.js'
-import type { ContributorStats } from '../stats/calculator.js'
+import type { ContributorStats, CommitAward, ContributorAward } from '../stats/calculator.js'
 import type { FileTypeStats, FileHeatData } from '../data/file-calculator.js'
 import type { TimeSeriesPoint, LinearSeriesPoint } from '../chart/data-transformer.js'
 import type { WordFrequency } from '../text/processor.js'
@@ -22,6 +22,15 @@ export interface PageScriptData {
   linearSeries: LinearSeriesPoint[]
   wordCloudData: WordFrequency[]
   fileHeatData: FileHeatData[]
+  awards?: {
+    filesModified: CommitAward[]
+    bytesAdded: CommitAward[]
+    bytesRemoved: CommitAward[]
+    linesAdded: CommitAward[]
+    linesRemoved: CommitAward[]
+    lowestAverage: ContributorAward[]
+    highestAverage: ContributorAward[]
+  }
 }
 
 export class PageScript {

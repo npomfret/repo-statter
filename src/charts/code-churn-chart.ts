@@ -38,6 +38,12 @@ export class CodeChurnChart {
     
     const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark'
     
+    // Destroy existing chart if it exists
+    if (this.chart) {
+      this.chart.destroy()
+      this.chart = null
+    }
+    
     // Build chart data based on x-axis selection
     const buildTimeSeriesData = (data: LinearSeriesPoint[], xAxis: 'date' | 'commit', yValueExtractor: (point: any) => number): ChartDataPoint[] => {
       if (xAxis === 'date') {

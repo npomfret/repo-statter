@@ -60,15 +60,6 @@ export class EventHandlers {
       })
     })
     
-    // Commit Activity chart
-    const commitActivityRadios = document.querySelectorAll('input[name="commitActivityXAxis"]')
-    commitActivityRadios.forEach(radio => {
-      radio.addEventListener('change', (e) => {
-        const target = e.target as HTMLInputElement
-        const xAxis = target.value as 'date' | 'commit'
-        chartInstances.commitActivity.render(this.data.linearSeries, this.data.timeSeries, xAxis)
-      })
-    })
     
     // Code Churn chart
     const codeChurnRadios = document.querySelectorAll('input[name="codeChurnXAxis"]')

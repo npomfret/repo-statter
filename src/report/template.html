@@ -230,6 +230,37 @@
             color: var(--text-secondary);
             margin-right: 4px;
         }
+
+        /* Fix button styling in dark mode */
+        [data-bs-theme="dark"] .btn-outline-primary {
+            color: var(--accent-primary);
+            border-color: var(--accent-primary);
+        }
+
+        [data-bs-theme="dark"] .btn-check:checked + .btn-outline-primary,
+        [data-bs-theme="dark"] .btn-outline-primary:hover,
+        [data-bs-theme="dark"] .btn-outline-primary:focus,
+        [data-bs-theme="dark"] .btn-outline-primary:active,
+        [data-bs-theme="dark"] .btn-outline-primary.active {
+            background-color: var(--accent-primary);
+            border-color: var(--accent-primary);
+            color: var(--bs-body-bg);
+        }
+
+        [data-bs-theme="dark"] .btn-outline-secondary {
+            color: var(--accent-secondary);
+            border-color: var(--accent-secondary);
+        }
+
+        [data-bs-theme="dark"] .btn-check:checked + .btn-outline-secondary,
+        [data-bs-theme="dark"] .btn-outline-secondary:hover,
+        [data-bs-theme="dark"] .btn-outline-secondary:focus,
+        [data-bs-theme="dark"] .btn-outline-secondary:active,
+        [data-bs-theme="dark"] .btn-outline-secondary.active {
+            background-color: var(--accent-secondary);
+            border-color: var(--accent-secondary);
+            color: var(--bs-body-bg);
+        }
     </style>
 </head>
 <body>
@@ -375,12 +406,6 @@
                         <h5 class="card-title mb-0">Commit Activity Over Time</h5>
                     </div>
                     <div class="card-body">
-                        <div class="btn-group btn-group-sm mb-3" role="group">
-                            <input type="radio" class="btn-check" name="commitActivityXAxis" id="commitActivityXAxisDate" value="date" checked>
-                            <label class="btn btn-outline-primary" for="commitActivityXAxisDate">By Date</label>
-                            <input type="radio" class="btn-check" name="commitActivityXAxis" id="commitActivityXAxisCommit" value="commit">
-                            <label class="btn btn-outline-primary" for="commitActivityXAxisCommit">By Commit</label>
-                        </div>
                         <div id="commitActivityChart"></div>
                     </div>
                 </div>

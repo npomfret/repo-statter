@@ -49,12 +49,12 @@ export function getFileHeatData(commits: CommitData[]): FileHeatData[] {
         fileMap.set(fileChange.fileName, {
           commitCount: 1,
           lastModified: commitDate,
-          totalLines: fileChange.linesAdded,
+          totalLines: fileChange.linesAdded - fileChange.linesDeleted,
           fileType: fileChange.fileType
         })
       } else {
         existing.commitCount += 1
-        existing.totalLines += fileChange.linesAdded
+        existing.totalLines += fileChange.linesAdded - fileChange.linesDeleted
         if (commitDate > existing.lastModified) {
           existing.lastModified = commitDate
         }
