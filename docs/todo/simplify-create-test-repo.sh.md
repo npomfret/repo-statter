@@ -21,13 +21,64 @@ To make the test repository generation script (`create-test-repo.sh`) simpler, f
         -   **File Deletions**: Commits that explicitly remove files from the repository using `git rm`.
         -   **Multiple Authors**: Introduce commits from different authors to test contributor-related statistics.
 
-## Implementation Sketch (without code)
+## Analysis of Current Script
 
-1.  **Refactor File Creation**: Replace all `cat << EOF` blocks with simple `echo` or other text-generation commands that create files with a few lines of random-looking text.
-2.  **Structure the Commit Loop**: Create a loop that runs for the desired number of commits.
-3.  **Control Commit Dates**: Inside the loop, programmatically set the `GIT_COMMITTER_DATE` and `GIT_AUTHOR_DATE` variables to create a realistic timeline. For example, decrement the date by a few hours or days for each iteration.
-4.  **Vary Commit Actions**: Inside the loop, use a mechanism (like the modulo operator on the loop counter) to decide which action to take for the current commit: add lines to a file, modify a file, delete a line, or delete a file entirely.
-5.  **Add Multiple Authors**: Similar to varying the commit action, alternate the `GIT_AUTHOR_NAME` and `GIT_AUTHOR_EMAIL` variables to simulate commits from different contributors.
+The current script is 736 lines long and contains:
+- 12 commits with good variety (create, edit, delete operations)
+- 3 contributors (Alice, Bob, Carol) - already implemented
+- Multiple file types (.js, .ts, .json, .md) - good for testing
+- Realistic commit timeline with `sleep 1` between commits
+
+**The main issue**: Large `cat << EOF` blocks containing real code make the script verbose and hard to maintain.
+
+## Implementation Plan
+
+### Phase 1: Simplify File Content Generation
+Replace verbose `cat << EOF` blocks with simple text generation:
+
+1. **Create helper function for file content**:
+   ```bash
+   generate_file_content() {
+       local lines=$1
+       local extension=$2
+       for i in $(seq 1 $lines); do
+           echo "Line $i content for $extension file with some random text $(date +%s)"
+       done
+   }
+   ```
+
+2. **Replace each large code block** with calls to the helper function:
+   - JavaScript files: 5-15 lines of simple text
+   - TypeScript files: 8-20 lines of simple text  
+   - JSON files: Simple structure with minimal content
+   - Markdown files: Basic headings and text
+
+### Phase 2: Maintain Testing Effectiveness
+Keep the existing good structure:
+- ✅ 12 commits (good number for testing)
+- ✅ 3 contributors with realistic names/emails
+- ✅ File operations: create, edit, delete
+- ✅ Various file types for extension testing
+- ✅ Realistic commit messages
+- ✅ Sleep between commits for timestamp variety
+
+### Phase 3: Minor Enhancements
+- Add a few more file extensions (.css, .html) for broader testing
+- Ensure deleted files are properly tested
+- Keep the same commit structure but with simplified content
+
+## Expected Outcome
+- **Script size**: Reduce from 736 lines to ~200-300 lines
+- **Execution time**: Faster due to less content generation
+- **Maintainability**: Much easier to read and modify
+- **Testing effectiveness**: Same quality for repo-statter testing
+
+## Implementation Steps
+1. Create the `generate_file_content` helper function
+2. Replace the first few large code blocks as proof of concept
+3. Continue replacing remaining blocks systematically
+4. Test the generated repository works with repo-statter
+5. Ensure all commit types (add, modify, delete) still work correctly
 
 ## Benefits
 -   **Simpler Script**: The `create-test-repo.sh` script will be significantly shorter and easier to read and maintain.
