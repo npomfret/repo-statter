@@ -1,0 +1,1 @@
+Investigate and fix the issue where charts are not appearing in the Safari browser. Use Google Search to find possible causes and document them in detail here before implementing a fix.
