@@ -295,7 +295,7 @@ Never proceed with a broken state. Every commit must leave the app in a working 
 - **Commit 10**: Extract and test text processing ✓
 
 ### 🔄 IN PROGRESS
-- **Commit 11**: Create integration tests for data pipeline
+- **Commit 12**: Fix generator.ts types (replace all any with proper types)
 
 ## Detailed Implementation Plan for Commit 9: Extract and test linear transformations
 
@@ -385,7 +385,35 @@ Never proceed with a broken state. Every commit must leave the app in a working 
 *This section will be updated after each change to show what's ready for review*
 
 ---
-**READY FOR REVIEW**: ✅ **Commit 10: Extract and test text processing**
+**READY FOR REVIEW**: ✅ **Commit 11: Create integration tests for data pipeline**
+
+**CHANGES MADE**:
+- ✅ Created comprehensive integration test suite in `src/data/data-pipeline.test.ts`
+  - 7 test scenarios covering the complete data flow
+  - Tests for empty commits handling with proper error expectations
+  - Tests for single contributor/commit scenarios  
+  - Tests for multiple contributors with diverse file types
+  - Tests for time-based data aggregation
+  - Tests for data consistency across transformations
+  - Tests for error handling and edge cases
+  - Tests for git extractor integration
+- ✅ Fixed imports to use correct exports (CommitDataBuilder not commitBuilder)
+- ✅ Fixed test expectations to match actual data structures
+- ✅ All 155 tests passing (added 7 new tests)
+- ✅ TypeScript compilation successful
+- ✅ Integration test successful - generated report for test-repo
+
+**VERIFICATION**:
+- ✅ All tests pass
+- ✅ TypeScript compilation successful
+- ✅ Integration verified with test repository
+- ✅ Data flows correctly through all transformation modules
+
+**FILES MODIFIED**: 
+- `src/data/data-pipeline.test.ts` (new - comprehensive integration tests)
+
+---
+**PREVIOUS**: ✅ **Commit 10: Extract and test text processing**
 
 **CHANGES MADE**:
 - ✅ Added comprehensive tests to `src/text/processor.test.ts`:
