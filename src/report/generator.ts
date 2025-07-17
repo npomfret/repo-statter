@@ -166,6 +166,8 @@ async function injectDataIntoTemplate(template: string, chartData: ChartData, co
     </script>
   `
   
+  const latestCommit = commits[commits.length - 1]
+
   const templateWithData = replaceTemplateVariables(template, {
     repositoryName: chartData.repositoryName,
     generationDate: chartData.generationDate,
@@ -173,7 +175,10 @@ async function injectDataIntoTemplate(template: string, chartData: ChartData, co
     totalLinesOfCode: chartData.totalLinesOfCode.toString(),
     totalCodeChurn: chartData.totalCodeChurn.toString(),
     githubLink: chartData.githubLink,
-    logoSvg: chartData.logoSvg
+    logoSvg: chartData.logoSvg,
+    latestCommitHash: latestCommit ? latestCommit.sha.substring(0, 7) : 'N/A',
+    latestCommitAuthor: latestCommit ? latestCommit.authorName : 'N/A',
+    latestCommitDate: latestCommit ? new Date(latestCommit.date).toLocaleString() : 'N/A'
   })
   
   return injectIntoBody(templateWithData, chartScript)
