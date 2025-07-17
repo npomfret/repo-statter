@@ -1,45 +1,63 @@
-import ApexCharts from 'apexcharts'
-import { BaseChart } from './base-chart.js'
 import type { ContributorStats } from '../stats/calculator.js'
 
-export class ContributorsChart extends BaseChart {
-  public render(contributors: ContributorStats[]): void {
-    try {
-      this.destroy()
-      
-      const options: ApexCharts.ApexOptions = {
-        ...this.getBaseOptions(),
-        chart: {
-          ...this.getBaseOptions().chart,
-          type: 'bar',
-          height: 350
+function assert(condition: boolean, message: string): asserts condition {
+  if (!condition) throw new Error(message)
+}
+
+export class ContributorsChart {
+  private containerId: string
+  private chart: any = null
+
+  constructor(containerId: string) {
+    this.containerId = containerId
+  }
+
+  render(contributors: ContributorStats[]): void {
+    assert(contributors !== undefined, 'Contributors data is required')
+    assert(Array.isArray(contributors), 'Contributors must be an array')
+    
+    const container = document.querySelector('#' + this.containerId)
+    assert(container !== null, `Container with id ${this.containerId} not found`)
+    
+    const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark'
+    
+    const options = {
+      chart: { 
+        type: 'bar', 
+        height: 350, 
+        toolbar: { show: false },
+        background: isDark ? '#161b22' : '#ffffff'
+      },
+      series: [{ name: 'Commits', data: contributors.slice(0, 10).map(c => c.commits) }],
+      xaxis: { 
+        categories: contributors.slice(0, 10).map(c => c.name), 
+        title: { 
+          text: 'Contributors',
+          style: { color: isDark ? '#f0f6fc' : '#24292f' }
         },
-        series: [{
-          name: 'Commits',
-          data: contributors.slice(0, 10).map(c => c.commits)
-        }],
-        xaxis: {
-          categories: contributors.slice(0, 10).map(c => c.name),
-          title: {
-            text: 'Contributors',
-            ...this.getTitleStyle()
-          },
-          labels: this.getAxisLabelStyle() as any
+        labels: { style: { colors: isDark ? '#f0f6fc' : '#24292f' } }
+      },
+      yaxis: { 
+        title: { 
+          text: 'Commits',
+          style: { color: isDark ? '#f0f6fc' : '#24292f' }
         },
-        yaxis: {
-          title: {
-            text: 'Commits',
-            ...this.getTitleStyle()
-          },
-          labels: this.getAxisLabelStyle() as any
-        },
-        colors: [this.isDark ? '#3fb950' : '#87bc45']
-      }
-      
-      this.chart = new ApexCharts(this.container, options)
-      this.chart.render()
-    } catch (error) {
-      this.handleError(error as Error)
+        labels: { style: { colors: isDark ? '#f0f6fc' : '#24292f' } }
+      },
+      colors: [isDark ? '#3fb950' : '#87bc45'],
+      grid: { borderColor: isDark ? '#30363d' : '#e1e4e8' },
+      tooltip: { theme: isDark ? 'dark' : 'light' }
+    }
+    
+    // ApexCharts will be available globally in the browser
+    this.chart = new (window as any).ApexCharts(container, options)
+    this.chart.render()
+  }
+
+  destroy(): void {
+    if (this.chart) {
+      this.chart.destroy()
+      this.chart = null
     }
   }
 }

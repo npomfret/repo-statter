@@ -150,8 +150,72 @@ function injectDataIntoTemplate(template: string, chartData: ChartData, commits:
     highestAverageLinesChanged: getHighestAverageLinesChanged(commits)
   }
   
+  // ContributorsChart class definition (converted from TypeScript)
+  const contributorsChartClass = `
+    function assert(condition, message) {
+      if (!condition) throw new Error(message);
+    }
+
+    class ContributorsChart {
+      constructor(containerId) {
+        this.containerId = containerId;
+        this.chart = null;
+      }
+
+      render(contributors) {
+        assert(contributors !== undefined, 'Contributors data is required');
+        assert(Array.isArray(contributors), 'Contributors must be an array');
+        
+        const container = document.querySelector('#' + this.containerId);
+        assert(container !== null, 'Container with id ' + this.containerId + ' not found');
+        
+        const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+        
+        const options = {
+          chart: { 
+            type: 'bar', 
+            height: 350, 
+            toolbar: { show: false },
+            background: isDark ? '#161b22' : '#ffffff'
+          },
+          series: [{ name: 'Commits', data: contributors.slice(0, 10).map(c => c.commits) }],
+          xaxis: { 
+            categories: contributors.slice(0, 10).map(c => c.name), 
+            title: { 
+              text: 'Contributors',
+              style: { color: isDark ? '#f0f6fc' : '#24292f' }
+            },
+            labels: { style: { colors: isDark ? '#f0f6fc' : '#24292f' } }
+          },
+          yaxis: { 
+            title: { 
+              text: 'Commits',
+              style: { color: isDark ? '#f0f6fc' : '#24292f' }
+            },
+            labels: { style: { colors: isDark ? '#f0f6fc' : '#24292f' } }
+          },
+          colors: [isDark ? '#3fb950' : '#87bc45'],
+          grid: { borderColor: isDark ? '#30363d' : '#e1e4e8' },
+          tooltip: { theme: isDark ? 'dark' : 'light' }
+        };
+        
+        this.chart = new ApexCharts(container, options);
+        this.chart.render();
+      }
+
+      destroy() {
+        if (this.chart) {
+          this.chart.destroy();
+          this.chart = null;
+        }
+      }
+    }
+  `;
+
   const chartScript = `
     <script>
+      ${contributorsChartClass}
+
       const commits = ${JSON.stringify(commits)};
       const contributors = ${JSON.stringify(contributors)};
       const fileTypes = ${JSON.stringify(fileTypes)};
@@ -173,6 +237,7 @@ function injectDataIntoTemplate(template: string, chartData: ChartData, commits:
       let filteredFileHeatData = fileHeatData;
       
       let commitActivityChart = null;
+      let contributorsChart = null;
       let linesOfCodeChart = null;
       let codeChurnChart = null;
       let repositorySizeChart = null;
@@ -357,6 +422,10 @@ function injectDataIntoTemplate(template: string, chartData: ChartData, commits:
         if (commitActivityChart) {
           commitActivityChart.destroy();
           commitActivityChart = null;
+        }
+        if (contributorsChart) {
+          contributorsChart.destroy();
+          contributorsChart = null;
         }
         if (linesOfCodeChart) {
           linesOfCodeChart.destroy();
@@ -684,35 +753,11 @@ function injectDataIntoTemplate(template: string, chartData: ChartData, commits:
       }
       
       function renderContributorsChart() {
-        const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
-        const options = {
-          chart: { 
-            type: 'bar', 
-            height: 350, 
-            toolbar: { show: false },
-            background: isDark ? '#161b22' : '#ffffff'
-          },
-          series: [{ name: 'Commits', data: filteredContributors.slice(0, 10).map(c => c.commits) }],
-          xaxis: { 
-            categories: filteredContributors.slice(0, 10).map(c => c.name), 
-            title: { 
-              text: 'Contributors',
-              style: { color: isDark ? '#f0f6fc' : '#24292f' }
-            },
-            labels: { style: { colors: isDark ? '#f0f6fc' : '#24292f' } }
-          },
-          yaxis: { 
-            title: { 
-              text: 'Commits',
-              style: { color: isDark ? '#f0f6fc' : '#24292f' }
-            },
-            labels: { style: { colors: isDark ? '#f0f6fc' : '#24292f' } }
-          },
-          colors: [isDark ? '#3fb950' : '#87bc45'],
-          grid: { borderColor: isDark ? '#30363d' : '#e1e4e8' },
-          tooltip: { theme: isDark ? 'dark' : 'light' }
-        };
-        new ApexCharts(document.querySelector('#contributorsChart'), options).render();
+        if (contributorsChart) {
+          contributorsChart.destroy();
+        }
+        contributorsChart = new ContributorsChart('contributorsChart');
+        contributorsChart.render(filteredContributors);
       }
       
       function renderLinesOfCodeChart() {

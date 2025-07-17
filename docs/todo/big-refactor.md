@@ -295,8 +295,11 @@ Never proceed with a broken state. Every commit must leave the app in a working 
 - **Commit 10**: Extract and test text processing ✓
 - **Commit 11**: Create integration tests for data pipeline ✓
 - **Commit 12**: Fix generator.ts types (replace all any with proper types) ✓
+- **Commit 13**: Extract Contributors chart ✓
 
 ### 🔄 IN PROGRESS
+
+### ⏳ PENDING
 
 ## Detailed Implementation Plan for Commit 9: Extract and test linear transformations
 
@@ -386,7 +389,55 @@ Never proceed with a broken state. Every commit must leave the app in a working 
 *This section will be updated after each change to show what's ready for review*
 
 ---
-**READY FOR REVIEW**: ✅ **Commit 12: Fix generator.ts types**
+**READY FOR REVIEW**: ✅ **Commit 13: Extract Contributors chart**
+
+**CHANGES MADE**:
+- ✅ Created simple ContributorsChart class in `src/charts/contributors-chart.ts`
+  - No base class abstraction (following fail-fast principles)
+  - Simple constructor and render method
+  - Assert functions for validation
+  - Destroy method for cleanup
+- ✅ Modified `src/report/generator.ts` to use ContributorsChart
+  - Injected ContributorsChart class definition into browser script
+  - Replaced inline renderContributorsChart with class instantiation
+  - Added contributorsChart variable to track instance
+  - Added cleanup in clearAllCharts function
+- ✅ Cleaned up unused files from previous failed refactor
+  - Removed base-chart.ts, chart-manager.ts, and other unused chart files
+  - Removed unused filter-manager.ts, template-engine.ts, script-builder.ts
+  - Removed unused utils files and empty directories
+- ✅ All tests passing (155 tests)
+- ✅ TypeScript compilation successful
+- ✅ Integration test successful - contributors chart renders correctly
+
+**VERIFICATION**:
+- ✅ TypeScript compiles without errors
+- ✅ All tests pass
+- ✅ Generated report displays contributors chart correctly
+- ✅ Chart still works exactly the same as before
+- ✅ No breaking changes to existing functionality
+
+**FILES MODIFIED**: 
+- `src/charts/contributors-chart.ts` (simplified from previous version)
+- `src/report/generator.ts` (modified to use ContributorsChart class)
+
+**FILES REMOVED** (cleanup from previous failed refactor):
+- `src/charts/base-chart.ts`
+- `src/charts/chart-manager.ts`
+- `src/charts/file-types-chart.ts`
+- `src/charts/lines-of-code-chart.ts`
+- `src/filters/filter-manager.ts`
+- `src/filters/data-recalculator.ts`
+- `src/report/template-engine.ts`
+- `src/report/script-builder.ts`
+- `src/utils/chart-builders.ts`
+- `src/utils/formatters.ts`
+- `src/utils/tooltip-builders.ts`
+- `src/types/index.ts`
+- Empty directories: `src/filters/`, `src/types/`
+
+---
+**PREVIOUS**: ✅ **Commit 12: Fix generator.ts types**
 
 **CHANGES MADE**:
 - ✅ Added `TrophySvgs` interface to define structure for trophy SVG strings
