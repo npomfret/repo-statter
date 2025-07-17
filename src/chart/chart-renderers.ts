@@ -6,7 +6,6 @@ import { ContributorsChart } from '../charts/contributors-chart.js'
 import { FileTypesChart } from '../charts/file-types-chart.js'
 import { LinesOfCodeChart } from '../charts/lines-of-code-chart.js'
 import { CommitActivityChart } from '../charts/commit-activity-chart.js'
-import { CodeChurnChart } from '../charts/code-churn-chart.js'
 import { RepositorySizeChart } from '../charts/repository-size-chart.js'
 import { WordCloudChart } from '../charts/word-cloud-chart.js'
 import { FileHeatmapChart } from '../charts/file-heatmap-chart.js'
@@ -16,7 +15,6 @@ export class ChartRenderers {
   private fileTypesChart: FileTypesChart
   private linesOfCodeChart: LinesOfCodeChart
   private commitActivityChart: CommitActivityChart
-  private codeChurnChart: CodeChurnChart
   private repositorySizeChart: RepositorySizeChart
   private wordCloudChart: WordCloudChart
   private fileHeatmapChart: FileHeatmapChart
@@ -26,7 +24,6 @@ export class ChartRenderers {
     this.fileTypesChart = new FileTypesChart('fileTypesChart')
     this.linesOfCodeChart = new LinesOfCodeChart('linesOfCodeChart')
     this.commitActivityChart = new CommitActivityChart('commitActivityChart')
-    this.codeChurnChart = new CodeChurnChart('codeChurnChart')
     this.repositorySizeChart = new RepositorySizeChart('repositorySizeChart')
     this.wordCloudChart = new WordCloudChart('wordCloudChart')
     this.fileHeatmapChart = new FileHeatmapChart('fileHeatmapChart')
@@ -37,7 +34,6 @@ export class ChartRenderers {
     this.fileTypesChart.render(this.data.fileTypes)
     this.linesOfCodeChart.render(this.data.linearSeries, this.data.timeSeries, 'date', this.data.commits)
     this.commitActivityChart.render(this.data.timeSeries)
-    this.codeChurnChart.render(this.data.linearSeries, this.data.timeSeries, 'date', this.data.commits)
     this.repositorySizeChart.render(this.data.linearSeries, this.data.timeSeries, 'date', this.data.commits)
     this.wordCloudChart.render(this.data.wordCloudData)
     this.fileHeatmapChart.render(this.data.fileHeatData)
@@ -265,7 +261,6 @@ export class ChartRenderers {
     this.fileTypesChart.render(this.data.fileTypes)
     this.linesOfCodeChart.render(this.data.linearSeries, this.data.timeSeries, 'date', this.data.commits)
     this.commitActivityChart.render(this.data.timeSeries)
-    this.codeChurnChart.render(this.data.linearSeries, this.data.timeSeries, 'date', this.data.commits)
     this.repositorySizeChart.render(this.data.linearSeries, this.data.timeSeries, 'date', this.data.commits)
     this.wordCloudChart.render(this.data.wordCloudData)
     this.fileHeatmapChart.render(this.data.fileHeatData)
@@ -281,7 +276,6 @@ export class ChartRenderers {
       fileTypes: this.fileTypesChart,
       linesOfCode: this.linesOfCodeChart,
       commitActivity: this.commitActivityChart,
-      codeChurn: this.codeChurnChart,
       repositorySize: this.repositorySizeChart,
       wordCloud: this.wordCloudChart,
       fileHeatmap: this.fileHeatmapChart

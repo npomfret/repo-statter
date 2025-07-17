@@ -262,7 +262,6 @@ describe('recalculateData', () => {
     expect(indexFile!.commitCount).toBe(2);
     expect(indexFile!.totalLines).toBe(10); // 60 + 50 - 100
     expect(indexFile!.fileType).toBe('JavaScript');
-    expect(indexFile!.averageChurn).toBe(5); // 10 / 2
     
     const styleFile = fileMap.get('style.css');
     expect(styleFile).toBeDefined();

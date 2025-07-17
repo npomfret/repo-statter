@@ -57,8 +57,6 @@ export interface FileHeatItem {
   lastModified: Date;
   totalLines: number;
   fileType: string;
-  averageChurn?: number;
-  churnScore?: number;
 }
 
 export interface FilterState {
@@ -223,10 +221,6 @@ export function recalculateData(filteredCommits: Commit[]): Omit<FilteredData, '
   }
   
   const fileHeatData = Array.from(fileMap.values()).filter(f => f.totalLines > 0);
-  fileHeatData.forEach(file => {
-    file.averageChurn = file.totalLines / file.commitCount;
-    file.churnScore = Math.log(file.commitCount + 1) * Math.log(file.totalLines + 1);
-  });
   
   return {
     contributors,

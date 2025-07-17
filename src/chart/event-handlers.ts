@@ -60,16 +60,6 @@ export class EventHandlers {
       })
     })
     
-    
-    // Code Churn chart
-    const codeChurnRadios = document.querySelectorAll('input[name="codeChurnXAxis"]')
-    codeChurnRadios.forEach(radio => {
-      radio.addEventListener('change', (e) => {
-        const target = e.target as HTMLInputElement
-        const xAxis = target.value as 'date' | 'commit'
-        chartInstances.codeChurn.render(this.data.linearSeries, this.data.timeSeries, xAxis, this.data.commits)
-      })
-    })
   }
 
   private setupFilterSystem(): void {

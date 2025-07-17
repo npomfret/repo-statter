@@ -355,14 +355,6 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Total Code Churn</h5>
-                        <h2 class="text-warning">{{totalCodeChurn}}</h2>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <div class="row">
@@ -410,21 +402,6 @@
                     </div>
                 </div>
 
-                <!-- Code Churn Chart -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">Code Churn Over Time</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="btn-group btn-group-sm mb-3" role="group">
-                            <input type="radio" class="btn-check" name="codeChurnXAxis" id="codeChurnXAxisDate" value="date" checked>
-                            <label class="btn btn-outline-primary" for="codeChurnXAxisDate">By Date</label>
-                            <input type="radio" class="btn-check" name="codeChurnXAxis" id="codeChurnXAxisCommit" value="commit">
-                            <label class="btn btn-outline-primary" for="codeChurnXAxisCommit">By Commit</label>
-                        </div>
-                        <div id="codeChurnChart"></div>
-                    </div>
-                </div>
             </div>
 
             <!-- Non-Time Series Charts Column -->
