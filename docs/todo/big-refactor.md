@@ -389,7 +389,36 @@ Never proceed with a broken state. Every commit must leave the app in a working 
 *This section will be updated after each change to show what's ready for review*
 
 ---
-**READY FOR REVIEW**: ✅ **Commit 13: Extract Contributors chart**
+**READY FOR REVIEW**: ✅ **Commit 14: Extract File Types Chart**
+
+**CHANGES MADE**:
+- ✅ Created simple FileTypesChart class in `src/charts/file-types-chart.ts`
+  - No base class abstraction (following fail-fast principles)
+  - Simple constructor and render method
+  - Assert functions for validation
+  - Destroy method for cleanup
+- ✅ Modified `src/report/generator.ts` to use FileTypesChart
+  - Added FileTypesChart class definition (JavaScript version) after ContributorsChart
+  - Replaced inline renderFileTypesChart with class instantiation
+  - Added fileTypesChart variable to track instance
+  - Added cleanup in clearAllCharts function
+- ✅ All tests passing (155 tests)
+- ✅ TypeScript compilation successful
+- ✅ Integration test successful - file types donut chart renders correctly
+
+**VERIFICATION**:
+- ✅ TypeScript compiles without errors
+- ✅ All tests pass
+- ✅ Generated report displays file types chart correctly
+- ✅ Chart still works exactly the same as before (donut chart with up to 8 file types)
+- ✅ No breaking changes to existing functionality
+
+**FILES MODIFIED**: 
+- `src/charts/file-types-chart.ts` (new file)
+- `src/report/generator.ts` (modified to use FileTypesChart class)
+
+---
+**PREVIOUS**: ✅ **Commit 13: Extract Contributors chart**
 
 **CHANGES MADE**:
 - ✅ Created simple ContributorsChart class in `src/charts/contributors-chart.ts`

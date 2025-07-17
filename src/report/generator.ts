@@ -212,9 +212,61 @@ function injectDataIntoTemplate(template: string, chartData: ChartData, commits:
     }
   `;
 
+  // FileTypesChart class definition (converted from TypeScript)
+  const fileTypesChartClass = `
+    function assert(condition, message) {
+      if (!condition) throw new Error(message);
+    }
+
+    class FileTypesChart {
+      constructor(containerId) {
+        this.containerId = containerId;
+        this.chart = null;
+      }
+
+      render(fileTypes) {
+        assert(fileTypes !== undefined, 'File types data is required');
+        assert(Array.isArray(fileTypes), 'File types must be an array');
+        
+        const container = document.querySelector('#' + this.containerId);
+        assert(container !== null, 'Container with id ' + this.containerId + ' not found');
+        
+        const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+        
+        const options = {
+          chart: { 
+            type: 'donut', 
+            height: 350,
+            background: isDark ? '#161b22' : '#ffffff'
+          },
+          series: fileTypes.slice(0, 8).map(ft => ft.lines),
+          labels: fileTypes.slice(0, 8).map(ft => ft.type),
+          colors: isDark ? 
+            ['#58a6ff', '#3fb950', '#f85149', '#d29922', '#a5a5ff', '#56d4dd', '#db6d28', '#8b949e'] :
+            ['#27aeef', '#87bc45', '#ea5545', '#ef9b20', '#b33dc6', '#f46a9b', '#ede15b', '#bdcf32'],
+          legend: {
+            labels: { colors: isDark ? '#f0f6fc' : '#24292f' }
+          },
+          tooltip: { theme: isDark ? 'dark' : 'light' }
+        };
+        
+        this.chart = new ApexCharts(container, options);
+        this.chart.render();
+      }
+
+      destroy() {
+        if (this.chart) {
+          this.chart.destroy();
+          this.chart = null;
+        }
+      }
+    }
+  `;
+
   const chartScript = `
     <script>
       ${contributorsChartClass}
+      ${fileTypesChartClass}
 
       const commits = ${JSON.stringify(commits)};
       const contributors = ${JSON.stringify(contributors)};
@@ -238,6 +290,7 @@ function injectDataIntoTemplate(template: string, chartData: ChartData, commits:
       
       let commitActivityChart = null;
       let contributorsChart = null;
+      let fileTypesChart = null;
       let linesOfCodeChart = null;
       let codeChurnChart = null;
       let repositorySizeChart = null;
@@ -280,7 +333,7 @@ function injectDataIntoTemplate(template: string, chartData: ChartData, commits:
         recalculateData();
         reRenderAllCharts();
       }
-      
+
       function updateFilterStatus() {
         const statusElement = document.getElementById('filterStatus');
         statusElement.textContent = \`Showing \${filteredCommits.length} of \${originalCommits.length} commits\`;
@@ -426,6 +479,10 @@ function injectDataIntoTemplate(template: string, chartData: ChartData, commits:
         if (contributorsChart) {
           contributorsChart.destroy();
           contributorsChart = null;
+        }
+        if (fileTypesChart) {
+          fileTypesChart.destroy();
+          fileTypesChart = null;
         }
         if (linesOfCodeChart) {
           linesOfCodeChart.destroy();
@@ -710,7 +767,11 @@ function injectDataIntoTemplate(template: string, chartData: ChartData, commits:
             type: 'area', 
             height: 350, 
             toolbar: { show: false },
-            background: isDark ? '#161b22' : '#ffffff'
+            background: isDark ? '#161b22' : '#ffffff',
+            zoom: {
+              enabled: true,
+              allowMouseWheelZoom: false
+            }
           },
           series: [{
             name: 'Commits',
@@ -774,7 +835,11 @@ function injectDataIntoTemplate(template: string, chartData: ChartData, commits:
             type: 'area', 
             height: 350, 
             toolbar: { show: false },
-            background: isDark ? '#161b22' : '#ffffff'
+            background: isDark ? '#161b22' : '#ffffff',
+            zoom: {
+              enabled: true,
+              allowMouseWheelZoom: false
+            }
           },
           series: [{
             name: 'Lines of Code',
@@ -861,24 +926,11 @@ function injectDataIntoTemplate(template: string, chartData: ChartData, commits:
       
       
       function renderFileTypesChart() {
-        const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
-        const options = {
-          chart: { 
-            type: 'donut', 
-            height: 350,
-            background: isDark ? '#161b22' : '#ffffff'
-          },
-          series: filteredFileTypes.slice(0, 8).map(ft => ft.lines),
-          labels: filteredFileTypes.slice(0, 8).map(ft => ft.type),
-          colors: isDark ? 
-            ['#58a6ff', '#3fb950', '#f85149', '#d29922', '#a5a5ff', '#56d4dd', '#db6d28', '#8b949e'] :
-            ['#27aeef', '#87bc45', '#ea5545', '#ef9b20', '#b33dc6', '#f46a9b', '#ede15b', '#bdcf32'],
-          legend: {
-            labels: { colors: isDark ? '#f0f6fc' : '#24292f' }
-          },
-          tooltip: { theme: isDark ? 'dark' : 'light' }
-        };
-        new ApexCharts(document.querySelector('#fileTypesChart'), options).render();
+        if (fileTypesChart) {
+          fileTypesChart.destroy();
+        }
+        fileTypesChart = new FileTypesChart('fileTypesChart');
+        fileTypesChart.render(filteredFileTypes);
       }
       
       function renderCodeChurnChart() {
@@ -895,7 +947,11 @@ function injectDataIntoTemplate(template: string, chartData: ChartData, commits:
             type: 'line', 
             height: 350, 
             toolbar: { show: false }, 
-            background: isDark ? '#161b22' : '#ffffff'
+            background: isDark ? '#161b22' : '#ffffff',
+            zoom: {
+              enabled: true,
+              allowMouseWheelZoom: false
+            }
           },
           series: [
             { 
@@ -980,7 +1036,11 @@ function injectDataIntoTemplate(template: string, chartData: ChartData, commits:
             type: 'area', 
             height: 350, 
             toolbar: { show: false },
-            background: isDark ? '#161b22' : '#ffffff'
+            background: isDark ? '#161b22' : '#ffffff',
+            zoom: {
+              enabled: true,
+              allowMouseWheelZoom: false
+            }
           },
           series: [{
             name: 'Repository Size',
@@ -1537,6 +1597,7 @@ function injectDataIntoTemplate(template: string, chartData: ChartData, commits:
         });
       }
       
+
       document.addEventListener('DOMContentLoaded', function() {
         // Initialize filters
         populateFilters();

@@ -1,0 +1,52 @@
+import type { FileTypeStats } from '../data/file-calculator.js'
+
+function assert(condition: boolean, message: string): asserts condition {
+  if (!condition) throw new Error(message)
+}
+
+export class FileTypesChart {
+  private containerId: string
+  private chart: any = null
+
+  constructor(containerId: string) {
+    this.containerId = containerId
+  }
+
+  render(fileTypes: FileTypeStats[]): void {
+    assert(fileTypes !== undefined, 'File types data is required')
+    assert(Array.isArray(fileTypes), 'File types must be an array')
+    
+    const container = document.querySelector('#' + this.containerId)
+    assert(container !== null, `Container with id ${this.containerId} not found`)
+    
+    const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark'
+    
+    const options = {
+      chart: { 
+        type: 'donut', 
+        height: 350,
+        background: isDark ? '#161b22' : '#ffffff'
+      },
+      series: fileTypes.slice(0, 8).map(ft => ft.lines),
+      labels: fileTypes.slice(0, 8).map(ft => ft.type),
+      colors: isDark ? 
+        ['#58a6ff', '#3fb950', '#f85149', '#d29922', '#a5a5ff', '#56d4dd', '#db6d28', '#8b949e'] :
+        ['#27aeef', '#87bc45', '#ea5545', '#ef9b20', '#b33dc6', '#f46a9b', '#ede15b', '#bdcf32'],
+      legend: {
+        labels: { colors: isDark ? '#f0f6fc' : '#24292f' }
+      },
+      tooltip: { theme: isDark ? 'dark' : 'light' }
+    }
+    
+    // ApexCharts will be available globally in the browser
+    this.chart = new (window as any).ApexCharts(container, options)
+    this.chart.render()
+  }
+
+  destroy(): void {
+    if (this.chart) {
+      this.chart.destroy()
+      this.chart = null
+    }
+  }
+}
