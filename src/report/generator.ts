@@ -1,4 +1,4 @@
-import { basename } from 'path'
+import { basename, resolve } from 'path'
 import { readFile, writeFile, mkdir } from 'fs/promises'
 import { existsSync } from 'fs'
 import { parseCommitHistory, getGitHubUrl, getCurrentFiles } from '../git/parser.js'
@@ -22,7 +22,7 @@ import { bundlePageScript } from '../build/bundle-page-script.js'
 import type { CommitData } from '../git/parser.js'
 import type { ProgressReporter } from '../utils/progress-reporter.js'
 
-export async function generateReport(repoPath: string, outputMode: 'dist' | 'analysis' = 'dist', progressReporter?: ProgressReporter): Promise<void> {
+export async function generateReport(repoPath: string, outputMode: 'dist' | 'analysis' = 'dist', progressReporter?: ProgressReporter): Promise<string> {
   const commits = await parseCommitHistory(repoPath, progressReporter)
   const repoName = repoPath === '.' ? basename(process.cwd()) : basename(repoPath) || 'repo'
   
@@ -74,6 +74,8 @@ export async function generateReport(repoPath: string, outputMode: 'dist' | 'ana
   }
   
   progressReporter?.report('Report generation complete')
+  
+  return resolve(reportPath)
 }
 
 interface TrophySvgs {

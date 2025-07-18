@@ -85,7 +85,7 @@ export async function parseCommitHistory(repoPath: string, progressReporter?: Pr
     // Then remove the space before the timezone
     const isoDate = commit.date.replace(' ', 'T').replace(' +', '+').replace(' -', '-')
     
-    commits.push({
+    const commitData = {
       sha: commit.hash,
       authorName: commit.author_name,
       authorEmail: commit.author_email,
@@ -96,13 +96,17 @@ export async function parseCommitHistory(repoPath: string, progressReporter?: Pr
       bytesAdded,
       bytesDeleted,
       filesChanged: diffStats.filesChanged
-    })
+    }
+    
+    commits.push(commitData)
     
     processedCommits++
     
     // Report progress every 100 commits or at the end
     if (processedCommits % 100 === 0 || processedCommits === totalCommits) {
-      progressReporter?.report('Processing commits', processedCommits, totalCommits)
+      const shortHash = commitData.sha.substring(0, 7)
+      const progressMessage = `Processing commit: ${shortHash} by ${commitData.authorName} at ${commitData.date}`
+      progressReporter?.report(progressMessage, processedCommits, totalCommits)
     }
   }
   

@@ -22,7 +22,8 @@ export async function handleCLI(args: string[]): Promise<void> {
         await validateGitRepository(finalRepoPath)
         const consoleReporter = new ConsoleProgressReporter()
         const progressReporter = new ThrottledProgressReporter(consoleReporter, 200)
-        await generateReport(finalRepoPath, outputDir, progressReporter)
+        const reportPath = await generateReport(finalRepoPath, outputDir, progressReporter)
+        console.log(`\nReport generated: ${reportPath}`)
       } catch (error: any) {
         console.error(`Error: ${error.message}`)
         process.exit(1)
