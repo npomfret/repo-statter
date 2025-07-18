@@ -28,7 +28,25 @@ export class ChartInitializer {
     
     // Render awards if available
     if (this.data.awards) {
-      this.renderAwards()
+      try {
+        this.renderAwards()
+      } catch (error) {
+        console.error('Failed to render awards:', error)
+        const container = document.getElementById('awardsContainer')
+        if (container) {
+          container.innerHTML = `
+            <div class="col-12">
+              <div class="alert alert-warning d-flex align-items-center" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <div>
+                  <h6 class="alert-heading mb-1">Awards Unavailable</h6>
+                  <small>Awards section could not be rendered. Please check the console for details.</small>
+                </div>
+              </div>
+            </div>
+          `
+        }
+      }
     }
     
     // Setup all event listeners

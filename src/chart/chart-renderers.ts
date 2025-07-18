@@ -2,6 +2,7 @@ import type { PageScriptData } from './page-script.js'
 import type { CommitData } from '../git/parser.js'
 import type { ContributorStats } from '../stats/calculator.js'
 import { buildUserTimeSeriesData } from '../utils/chart-data-builders.js'
+import { renderWithErrorBoundary } from '../utils/error-boundary.js'
 import { ContributorsChart } from '../charts/contributors-chart.js'
 import { FileTypesChart } from '../charts/file-types-chart.js'
 import { GrowthChart } from '../charts/growth-chart.js'
@@ -30,14 +31,34 @@ export class ChartRenderers {
   }
 
   public renderAllCharts(): void {
-    this.contributorsChart.render(this.data.contributors)
-    this.fileTypesChart.render(this.data.fileTypes)
-    this.growthChart.render(this.data.linearSeries, this.data.timeSeries, 'date', this.data.commits)
-    this.commitActivityChart.render(this.data.timeSeries)
-    this.wordCloudChart.render(this.data.wordCloudData)
-    this.fileHeatmapChart.render(this.data.fileHeatData)
+    renderWithErrorBoundary('contributorsChart', 'Contributors Chart', () => {
+      this.contributorsChart.render(this.data.contributors)
+    })
+    
+    renderWithErrorBoundary('fileTypesChart', 'File Types Chart', () => {
+      this.fileTypesChart.render(this.data.fileTypes)
+    })
+    
+    renderWithErrorBoundary('growthChart', 'Growth Chart', () => {
+      this.growthChart.render(this.data.linearSeries, this.data.timeSeries, 'date', this.data.commits)
+    })
+    
+    renderWithErrorBoundary('commitActivityChart', 'Commit Activity Chart', () => {
+      this.commitActivityChart.render(this.data.timeSeries)
+    })
+    
+    renderWithErrorBoundary('wordCloudChart', 'Word Cloud Chart', () => {
+      this.wordCloudChart.render(this.data.wordCloudData)
+    })
+    
+    renderWithErrorBoundary('fileHeatmapChart', 'File Heatmap Chart', () => {
+      this.fileHeatmapChart.render(this.data.fileHeatData)
+    })
+    
     if (this.data.topFilesData) {
-      this.topFilesChart.render(this.data.topFilesData, 'largest')
+      renderWithErrorBoundary('topFilesChart', 'Top Files Chart', () => {
+        this.topFilesChart.render(this.data.topFilesData!, 'largest')
+      })
     }
   }
 
@@ -49,7 +70,30 @@ export class ChartRenderers {
     container.innerHTML = ''
 
     filteredContributors.forEach((contributor, index) => {
-      this.renderUserChart(contributor, index, container)
+      try {
+        this.renderUserChart(contributor, index, container)
+      } catch (error) {
+        console.error(`Failed to render chart for ${contributor.name}:`, error)
+        const col = document.createElement('div')
+        col.className = 'col-12 col-xl-6 mb-4'
+        col.innerHTML = `
+          <div class="card">
+            <div class="card-header">
+              <h5 class="card-title mb-0">${contributor.name}</h5>
+            </div>
+            <div class="card-body">
+              <div class="alert alert-warning d-flex align-items-center" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <div>
+                  <h6 class="alert-heading mb-1">Chart Unavailable</h6>
+                  <small>User chart could not be rendered. Please check the console for details.</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        `
+        container.appendChild(col)
+      }
     })
   }
 
@@ -259,12 +303,29 @@ export class ChartRenderers {
 
   public updateChartsTheme(): void {
     // Update all chart instances when theme changes
-    this.contributorsChart.render(this.data.contributors)
-    this.fileTypesChart.render(this.data.fileTypes)
-    this.growthChart.render(this.data.linearSeries, this.data.timeSeries, 'date', this.data.commits)
-    this.commitActivityChart.render(this.data.timeSeries)
-    this.wordCloudChart.render(this.data.wordCloudData)
-    this.fileHeatmapChart.render(this.data.fileHeatData)
+    renderWithErrorBoundary('contributorsChart', 'Contributors Chart', () => {
+      this.contributorsChart.render(this.data.contributors)
+    })
+    
+    renderWithErrorBoundary('fileTypesChart', 'File Types Chart', () => {
+      this.fileTypesChart.render(this.data.fileTypes)
+    })
+    
+    renderWithErrorBoundary('growthChart', 'Growth Chart', () => {
+      this.growthChart.render(this.data.linearSeries, this.data.timeSeries, 'date', this.data.commits)
+    })
+    
+    renderWithErrorBoundary('commitActivityChart', 'Commit Activity Chart', () => {
+      this.commitActivityChart.render(this.data.timeSeries)
+    })
+    
+    renderWithErrorBoundary('wordCloudChart', 'Word Cloud Chart', () => {
+      this.wordCloudChart.render(this.data.wordCloudData)
+    })
+    
+    renderWithErrorBoundary('fileHeatmapChart', 'File Heatmap Chart', () => {
+      this.fileHeatmapChart.render(this.data.fileHeatData)
+    })
     
     // Update user charts as well
     const filteredContributors = this.data.contributors.filter(c => c.commits > 0)
