@@ -32,6 +32,4 @@ While this covers some common cases, it is not exhaustive. The list of patterns 
 
 ## Proposed Action
 
-DO NOT FIX. This is a task for future work.
-
 The `isRealCommit` function in `src/data/award-calculator.ts` should be updated to include more patterns to identify and filter out non-substantive commits. The goal is to make the filter more robust against various forms of automated or process-related commit messages.
