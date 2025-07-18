@@ -63,3 +63,50 @@ export function handleCLI(args: string[]): void {
 
 ## Implementation Notes
 Consider adding error logging and structured error reporting for better debugging.
+
+## Analysis Complete - Ready for Implementation
+
+### Current State Assessment
+After analyzing the codebase, I found these specific inconsistencies:
+
+1. **Error Type Handling**: Mix of `error instanceof Error ? error.message : String(error)` vs `error.message` directly
+2. **Error Wrapping**: Inconsistent between creating new Error with cause vs re-throwing original
+3. **Silent Failures**: Some try-catch blocks silently handle errors (first commit check) while others always throw
+4. **Process Exit**: Only CLI handlers call `process.exit(1)`, but some build scripts also do this
+5. **Error Logging**: Mix of console.error + throw vs console.error + process.exit(1) vs just throwing
+
+### Implementation Plan
+
+#### Phase 1: Create Error Infrastructure (1 commit)
+- Create `src/utils/errors.ts` with structured error classes
+- Export `RepoStatError`, `GitParseError`, `CLIError`, and `BuildError`
+- Add error type guards and utility functions
+
+#### Phase 2: Standardize Git Parser Errors (1 commit)
+- Update `src/git/parser.ts` to use `GitParseError` consistently
+- Maintain existing silent error handling for first commit checks
+- Improve error messages with better context
+
+#### Phase 3: Standardize CLI Error Handling (1 commit)  
+- Update `src/cli/handler.ts` to use structured error types
+- Maintain existing process.exit behavior for CLI errors
+- Add error code reporting for better debugging
+
+#### Phase 4: Update Build and Other Error Handlers (1 commit)
+- Update build scripts to use `BuildError`
+- Ensure consistent error logging across all modules
+- Maintain existing error boundaries for frontend
+
+### Testing Strategy
+- Write unit tests for new error classes
+- Test error propagation through the system
+- Verify existing behavior is preserved
+- Test error messages are descriptive and helpful
+
+### Risk Mitigation
+- Keep existing error handling behavior (no breaking changes)
+- Add error types gradually without changing control flow
+- Maintain silent error handling where it's intentional
+- Preserve process.exit behavior for CLI
+
+This task is now ready for implementation with clear, small commits that improve error handling without breaking existing functionality.

@@ -4,9 +4,9 @@ Repo Statter is a work-in-progress Git repository analysis tool designed to gene
 
 **Please Note:** This project is currently under active development. There is no official NPM package available yet. Please note that it is currently designed for small to medium-sized projects and may not scale efficiently for very large repositories (yet).
 
-## How to Use (Development Version)
+## How to Use (it's still in development)
 
-To use Repo Statter, you'll need to clone the repository and run it directly.
+To use Repo Statter, you'll need to clone the repository and run it directly. There is no npm artefact, yet.
 
 ### Prerequisites
 
@@ -29,23 +29,11 @@ To use Repo Statter, you'll need to clone the repository and run it directly.
 
 You can generate reports in two modes:
 
-#### Quick Build Mode
+#### To run analysis
 
-This mode generates a standalone HTML report in the `dist/` directory.
-
-```bash
-npm run build .                    # Analyze the current directory's Git repository
-npm run build /path/to/your/repo   # Analyze a specific Git repository
-```
-
-Output: `dist/report.html`
-
-#### Full Analysis Mode
-
-This mode generates both an interactive HTML report and a raw JSON data file with detailed statistics. The output will be placed in an `analysis/` directory, structured by repository name.
+Thisgenerates both an interactive HTML report and a raw JSON data file with detailed statistics. The output will be placed in an `analysis/` directory, structured by repository name.
 
 ```bash
-npm run analyse -- --repo .                    # Analyze the current directory's Git repository
 npm run analyse -- --repo /path/to/your/repo   # Analyze a specific Git repository
 ```
 
