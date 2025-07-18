@@ -49,7 +49,7 @@ const diffArgs = isFirstCommit
 
 **Result:** Added clear explanatory comments that document the empty tree hash and its purpose. The magic string is now properly documented for future maintainers.
 
-### 3. Overly Complex CLI Handling in `cli/handler.ts`
+### 3. Overly Complex CLI Handling in `cli/handler.ts` ✅ COMPLETED
 
 The `handleCLI` function in `src/cli/handler.ts` has some confusing logic for determining the output directory:
 
@@ -60,6 +60,8 @@ const outputDir = options.repo ? 'analysis' : options.output
 This is not intuitive. The output directory should be determined by the `--output` option, regardless of whether `--repo` is used.
 
 **Recommendation:** Simplify this logic to always use the `--output` option, and if it's not provided, use a sensible default.
+
+**Result:** Simplified the output directory logic to always use `options.output`. The default value 'dist' is already set in the option definition, ensuring consistent behavior regardless of how the repository path is specified.
 
 ### 4. Unnecessary `stats/calculator.ts` file
 

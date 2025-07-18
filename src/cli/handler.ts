@@ -17,7 +17,7 @@ export async function handleCLI(args: string[]): Promise<void> {
     .option('--max-commits <number>', 'Maximum number of recent commits to analyze', '1000')
     .action(async (repoPath, options) => {
       const finalRepoPath = options.repo || repoPath || process.cwd()
-      const outputDir = options.repo ? 'analysis' : options.output
+      const outputDir = options.output
       
       try {
         await validateGitRepository(finalRepoPath)
