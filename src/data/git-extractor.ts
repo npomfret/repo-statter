@@ -26,13 +26,63 @@ const FILE_TYPE_MAP = {
   '.php': 'PHP',
   '.rb': 'Ruby',
   '.swift': 'Swift',
-  '.kt': 'Kotlin'
+  '.kt': 'Kotlin',
+  '.yaml': 'YAML',
+  '.yml': 'YAML',
+  '.xml': 'XML',
+  '.sh': 'Shell',
+  '.bash': 'Shell',
+  '.zsh': 'Shell',
+  '.fish': 'Shell',
+  '.ps1': 'PowerShell',
+  '.psm1': 'PowerShell',
+  '.psd1': 'PowerShell',
+  '.bat': 'Batch',
+  '.cmd': 'Batch',
+  '.dockerfile': 'Dockerfile',
+  '.makefile': 'Makefile',
+  '.mk': 'Makefile',
+  '.gitignore': 'Git',
+  '.gitattributes': 'Git',
+  '.toml': 'TOML',
+  '.ini': 'INI',
+  '.cfg': 'Config',
+  '.conf': 'Config',
+  '.properties': 'Properties',
+  '.env': 'Environment',
+  '.sql': 'SQL',
+  '.r': 'R',
+  '.R': 'R',
+  '.scala': 'Scala',
+  '.gradle': 'Gradle',
+  '.lua': 'Lua',
+  '.vim': 'VimScript',
+  '.pl': 'Perl',
+  '.pm': 'Perl'
 } as const
+
+const BINARY_EXTENSIONS = new Set([
+  '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.ico', '.svg', '.webp',
+  '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
+  '.zip', '.tar', '.gz', '.bz2', '.7z', '.rar',
+  '.exe', '.dll', '.so', '.dylib', '.lib', '.a',
+  '.class', '.jar', '.war', '.ear', '.pyc', '.pyo',
+  '.ttf', '.otf', '.woff', '.woff2', '.eot',
+  '.mp3', '.mp4', '.avi', '.mov', '.wmv', '.flv',
+  '.db', '.sqlite', '.sqlite3',
+  '.bin', '.dat', '.img', '.iso'
+])
 
 export function getFileType(fileName: string): string {
   const ext = extname(fileName).toLowerCase()
   if (!ext) return 'Other'
-  return FILE_TYPE_MAP[ext as keyof typeof FILE_TYPE_MAP] ?? ext
+  if (BINARY_EXTENSIONS.has(ext)) return 'Binary'
+  return FILE_TYPE_MAP[ext as keyof typeof FILE_TYPE_MAP] ?? 'Other'
+}
+
+export function isBinaryFile(fileName: string): boolean {
+  const ext = extname(fileName).toLowerCase()
+  return BINARY_EXTENSIONS.has(ext)
 }
 
 export interface ParsedCommitDiff {

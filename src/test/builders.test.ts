@@ -102,12 +102,12 @@ describe('TimeSeriesPointBuilder', () => {
 
     expect(point.date).toBe('2024-03-01')
     expect(point.commits).toBe(5)
-    expect(point.linesAdded).toBe(100)
-    expect(point.linesDeleted).toBe(25)
-    expect(point.cumulativeLines).toBe(75)
-    expect(point.bytesAdded).toBe(5000)
-    expect(point.bytesDeleted).toBe(1250)
-    expect(point.cumulativeBytes).toBe(3750)
+    expect(point.linesAdded.total).toBe(100)
+    expect(point.linesDeleted.total).toBe(25)
+    expect(point.cumulativeLines.total).toBe(75)
+    expect(point.bytesAdded.total).toBe(5000)
+    expect(point.bytesDeleted.total).toBe(1250)
+    expect(point.cumulativeBytes.total).toBe(3750)
   })
 })
 

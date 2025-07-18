@@ -51,7 +51,7 @@ export class GrowthChart {
     const linesData: ChartDataPoint[] = xAxis === 'date' 
       ? timeSeries.map(point => ({
           x: new Date(point.date).getTime(),
-          y: point.cumulativeLines
+          y: typeof point.cumulativeLines === 'object' ? point.cumulativeLines.total : point.cumulativeLines
         }))
       : linearSeries.map(point => ({
           x: point.commitIndex + 1,
@@ -61,7 +61,7 @@ export class GrowthChart {
     const bytesData: ChartDataPoint[] = xAxis === 'date' 
       ? timeSeries.map(point => ({
           x: new Date(point.date).getTime(),
-          y: point.cumulativeBytes
+          y: typeof point.cumulativeBytes === 'object' ? point.cumulativeBytes.total : point.cumulativeBytes
         }))
       : linearSeries.map(point => ({
           x: point.commitIndex + 1,

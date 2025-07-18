@@ -71,7 +71,7 @@ describe('Data Pipeline Integration', () => {
     // Time series data
     const timeSeries = getTimeSeriesData(commits)
     expect(timeSeries.length).toBeGreaterThan(0)
-    expect(timeSeries[timeSeries.length - 1]?.cumulativeLines).toBe(40)
+    expect(timeSeries[timeSeries.length - 1]?.cumulativeLines.total).toBe(40)
 
     // Linear series data
     const linearSeries = getLinearSeriesData(commits)
@@ -224,7 +224,7 @@ describe('Data Pipeline Integration', () => {
     
     // Verify cumulative calculation
     const lastPoint = timeSeries[timeSeries.length - 1]
-    expect(lastPoint?.cumulativeLines).toBe(145) // 10 - 5 + 100 - 0 + 20 - 30 + 50 - 0 = 145
+    expect(lastPoint?.cumulativeLines.total).toBe(145) // 10 - 5 + 100 - 0 + 20 - 30 + 50 - 0 = 145
     // commits field in time series is per-period, not cumulative
     expect(timeSeries.reduce((sum, p) => sum + p.commits, 0)).toBe(4)
 
@@ -282,7 +282,7 @@ describe('Data Pipeline Integration', () => {
     // Verify time series ends with correct cumulative
     const timeSeries = getTimeSeriesData(commits)
     const lastTimePoint = timeSeries[timeSeries.length - 1]
-    expect(lastTimePoint?.cumulativeLines).toBe(netLines)
+    expect(lastTimePoint?.cumulativeLines.total).toBe(netLines)
 
     // Verify linear series ends with correct cumulative
     const linearSeries = getLinearSeriesData(commits)

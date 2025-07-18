@@ -7,6 +7,7 @@ import { formatError } from '../utils/errors.js'
 import { ContributorsChart } from '../charts/contributors-chart.js'
 import { FileTypesChart } from '../charts/file-types-chart.js'
 import { GrowthChart } from '../charts/growth-chart.js'
+import { CategoryLinesChart } from '../charts/category-lines-chart.js'
 import { CommitActivityChart } from '../charts/commit-activity-chart.js'
 import { WordCloudChart } from '../charts/word-cloud-chart.js'
 import { FileHeatmapChart } from '../charts/file-heatmap-chart.js'
@@ -17,6 +18,7 @@ export class ChartRenderers {
   private contributorsChart: ContributorsChart
   private fileTypesChart: FileTypesChart
   private growthChart: GrowthChart
+  private categoryLinesChart: CategoryLinesChart
   private commitActivityChart: CommitActivityChart
   private wordCloudChart: WordCloudChart
   private fileHeatmapChart: FileHeatmapChart
@@ -27,6 +29,7 @@ export class ChartRenderers {
     this.contributorsChart = new ContributorsChart('contributorsChart')
     this.fileTypesChart = new FileTypesChart('fileTypesChart')
     this.growthChart = new GrowthChart('growthChart')
+    this.categoryLinesChart = new CategoryLinesChart('categoryLinesChart')
     this.commitActivityChart = new CommitActivityChart('commitActivityChart')
     this.wordCloudChart = new WordCloudChart('wordCloudChart')
     this.fileHeatmapChart = new FileHeatmapChart('fileHeatmapChart')
@@ -45,6 +48,10 @@ export class ChartRenderers {
     
     renderWithErrorBoundary('growthChart', 'Growth Chart', () => {
       this.growthChart.render(this.data.linearSeries, this.data.timeSeries, 'commit', this.data.commits)
+    })
+    
+    renderWithErrorBoundary('categoryLinesChart', 'Category Lines Chart', () => {
+      this.categoryLinesChart.render(this.data.timeSeries)
     })
     
     renderWithErrorBoundary('commitActivityChart', 'Commit Activity Chart', () => {
@@ -327,6 +334,10 @@ export class ChartRenderers {
     
     renderWithErrorBoundary('growthChart', 'Growth Chart', () => {
       this.growthChart.render(this.data.linearSeries, this.data.timeSeries, 'commit', this.data.commits)
+    })
+    
+    renderWithErrorBoundary('categoryLinesChart', 'Category Lines Chart', () => {
+      this.categoryLinesChart.render(this.data.timeSeries)
     })
     
     renderWithErrorBoundary('commitActivityChart', 'Commit Activity Chart', () => {

@@ -1,6 +1,18 @@
 import type { CommitData, FileChange } from '../git/parser.js'
 import type { ContributorStats } from '../data/contributor-calculator.js'
-import type { TimeSeriesPoint, LinearSeriesPoint } from '../chart/data-transformer.js'
+import type { TimeSeriesPoint, CategoryBreakdown } from '../data/time-series-transformer.js'
+import type { LinearSeriesPoint } from '../data/linear-transformer.js'
+
+function createEmptyBreakdown(): CategoryBreakdown {
+  return {
+    total: 0,
+    application: 0,
+    test: 0,
+    build: 0,
+    documentation: 0,
+    other: 0
+  }
+}
 
 export class CommitDataBuilder {
   private commit: CommitData = {
@@ -88,9 +100,21 @@ export class FileChangeBuilder {
     return this
   }
 
+  withAdditionsNoByte(lines: number): this {
+    this.fileChange.linesAdded = lines
+    this.fileChange.bytesAdded = 0
+    return this
+  }
+
   withDeletions(lines: number, bytes?: number): this {
     this.fileChange.linesDeleted = lines
     this.fileChange.bytesDeleted = bytes ?? lines * 50 // Default ~50 bytes per line
+    return this
+  }
+
+  withDeletionsNoByte(lines: number): this {
+    this.fileChange.linesDeleted = lines
+    this.fileChange.bytesDeleted = 0
     return this
   }
 
@@ -202,12 +226,12 @@ export class TimeSeriesPointBuilder {
   private point: TimeSeriesPoint = {
     date: '2024-01-01',
     commits: 0,
-    linesAdded: 0,
-    linesDeleted: 0,
-    cumulativeLines: 0,
-    bytesAdded: 0,
-    bytesDeleted: 0,
-    cumulativeBytes: 0
+    linesAdded: createEmptyBreakdown(),
+    linesDeleted: createEmptyBreakdown(),
+    cumulativeLines: createEmptyBreakdown(),
+    bytesAdded: createEmptyBreakdown(),
+    bytesDeleted: createEmptyBreakdown(),
+    cumulativeBytes: createEmptyBreakdown()
   }
 
   withDate(date: Date | string): this {
@@ -221,16 +245,16 @@ export class TimeSeriesPointBuilder {
   }
 
   withLines(added: number, deleted: number): this {
-    this.point.linesAdded = added
-    this.point.linesDeleted = deleted
-    this.point.cumulativeLines = added - deleted
+    this.point.linesAdded.total = added
+    this.point.linesDeleted.total = deleted
+    this.point.cumulativeLines.total = added - deleted
     return this
   }
 
   withBytes(added: number, deleted: number): this {
-    this.point.bytesAdded = added
-    this.point.bytesDeleted = deleted
-    this.point.cumulativeBytes = added - deleted
+    this.point.bytesAdded.total = added
+    this.point.bytesDeleted.total = deleted
+    this.point.cumulativeBytes.total = added - deleted
     return this
   }
 
