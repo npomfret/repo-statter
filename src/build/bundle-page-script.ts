@@ -1,13 +1,14 @@
 import { build } from 'esbuild'
 import { writeFile } from 'fs/promises'
 import { existsSync } from 'fs'
+import { BuildError } from '../utils/errors.js'
 
 export async function bundlePageScript(): Promise<string> {
   const entryPoint = 'src/chart/page-script.ts'
   const outputFile = 'dist/page-script.js'
   
   if (!existsSync(entryPoint)) {
-    throw new Error(`Entry point not found: ${entryPoint}`)
+    throw new BuildError(`Entry point not found: ${entryPoint}`)
   }
   
   try {
@@ -29,7 +30,7 @@ export async function bundlePageScript(): Promise<string> {
     })
     
     if (result.errors.length > 0) {
-      throw new Error(`Build errors: ${result.errors.map(e => e.text).join(', ')}`)
+      throw new BuildError(`Build errors: ${result.errors.map(e => e.text).join(', ')}`)
     }
     
     const bundledCode = result.outputFiles[0]?.text || ''
@@ -52,8 +53,10 @@ export async function bundlePageScript(): Promise<string> {
     
     return wrappedCode
   } catch (error) {
-    console.error('Build failed:', error)
-    throw error
+    if (error instanceof BuildError) {
+      throw error
+    }
+    throw new BuildError('Build failed', error instanceof Error ? error : undefined)
   }
 }
 

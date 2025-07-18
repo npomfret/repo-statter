@@ -2,11 +2,12 @@ import { simpleGit } from 'simple-git'
 import { validateGitRepository } from '../utils/git-validation.js'
 import { parseCommitDiff as parseCommitDiffData, parseByteChanges } from '../data/git-extractor.js'
 import type { ProgressReporter } from '../utils/progress-reporter.js'
+import { GitParseError, formatError } from '../utils/errors.js'
 
 // Assert utilities for fail-fast error handling
 function assert(condition: boolean, message: string): asserts condition {
   if (!condition) {
-    throw new Error(message)
+    throw new GitParseError(message)
   }
 }
 
@@ -45,7 +46,7 @@ export async function parseCommitHistory(repoPath: string, progressReporter?: Pr
   try {
     await git.status()
   } catch (error) {
-    throw new Error(`Cannot access git repository: ${error instanceof Error ? error.message : String(error)}`)
+    throw new GitParseError(`Cannot access git repository: ${formatError(error)}`, error instanceof Error ? error : undefined)
   }
   
   progressReporter?.report('Fetching commit history')
@@ -124,7 +125,7 @@ export async function getCurrentFiles(repoPath: string): Promise<Set<string>> {
     const files = stdout.trim().split('\n').filter(line => line.trim())
     return new Set(files)
   } catch (error) {
-    throw new Error(`Failed to get current files: ${error instanceof Error ? error.message : String(error)}`)
+    throw new GitParseError(`Failed to get current files: ${formatError(error)}`, error instanceof Error ? error : undefined)
   }
 }
 
