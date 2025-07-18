@@ -1,11 +1,7 @@
 import { simpleGit } from 'simple-git'
-import { exec } from 'child_process'
-import { promisify } from 'util'
 import { validateGitRepository } from '../utils/git-validation.js'
 import { parseCommitDiff as parseCommitDiffData, parseByteChanges } from '../data/git-extractor.js'
 import type { ProgressReporter } from '../utils/progress-reporter.js'
-
-const execAsync = promisify(exec)
 
 // Assert utilities for fail-fast error handling
 function assert(condition: boolean, message: string): asserts condition {
@@ -122,10 +118,8 @@ export async function getCurrentFiles(repoPath: string): Promise<Set<string>> {
   assert(repoPath.length > 0, 'Repository path cannot be empty')
   
   try {
-    const { stdout } = await execAsync(
-      `cd "${repoPath}" && git ls-tree -r HEAD --name-only`,
-      { timeout: 10000 }
-    )
+    const git = simpleGit(repoPath)
+    const stdout = await git.raw(['ls-tree', '-r', 'HEAD', '--name-only'])
     
     const files = stdout.trim().split('\n').filter(line => line.trim())
     return new Set(files)
@@ -153,7 +147,7 @@ async function parseCommitDiff(repoPath: string, commitHash: string): Promise<{ 
   // Check if this is the first commit
   let isFirstCommit = false
   try {
-    await execAsync(`cd "${repoPath}" && git rev-parse ${commitHash}^`, { timeout: 5000 })
+    await git.revparse([`${commitHash}^`])
   } catch {
     isFirstCommit = true
   }
@@ -181,9 +175,7 @@ async function getByteChanges(repoPath: string, commitHash: string): Promise<{
   fileChanges: Record<string, { bytesAdded: number; bytesDeleted: number }> 
 }> {
   // Use numstat directly for efficient byte estimation
-  const { stdout } = await execAsync(
-    `cd "${repoPath}" && git show ${commitHash} --numstat --format=""`,
-    { timeout: 10000 }
-  )
+  const git = simpleGit(repoPath)
+  const stdout = await git.show([commitHash, '--numstat', '--format='])
   return parseByteChanges(stdout)
 }
