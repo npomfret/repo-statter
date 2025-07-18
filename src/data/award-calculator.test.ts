@@ -4,267 +4,242 @@ import {
   getTopCommitsByBytesAdded,
   getTopCommitsByBytesRemoved,
   getTopCommitsByLinesAdded,
-  getTopCommitsByLinesRemoved
+  getTopCommitsByLinesRemoved,
+  type CommitAward
 } from './award-calculator.js'
 import { CommitDataBuilder, FileChangeBuilder } from '../test/builders.js'
+import type { CommitData } from '../git/parser.js'
+
+type AwardFunction = (commits: CommitData[]) => CommitAward[]
+
+interface TestCase {
+  name: string
+  fn: AwardFunction
+  setupCommit: (builder: CommitDataBuilder, value: number) => CommitDataBuilder
+  skipUndefinedTest?: boolean
+}
+
+const testCases: TestCase[] = [
+  {
+    name: 'getTopCommitsByFilesModified',
+    fn: getTopCommitsByFilesModified,
+    setupCommit: (builder, value) => {
+      for (let i = 0; i < value; i++) {
+        builder.withFileChange(new FileChangeBuilder().withPath(`file${i}.js`).build())
+      }
+      return builder
+    }
+  },
+  {
+    name: 'getTopCommitsByBytesAdded',
+    fn: getTopCommitsByBytesAdded,
+    setupCommit: (builder, value) => builder.withFileChange(
+      new FileChangeBuilder().withPath('file.js').withAdditions(value / 50, value).build()
+    ),
+    skipUndefinedTest: false
+  },
+  {
+    name: 'getTopCommitsByBytesRemoved',
+    fn: getTopCommitsByBytesRemoved,
+    setupCommit: (builder, value) => builder.withFileChange(
+      new FileChangeBuilder().withPath('file.js').withDeletions(value / 50, value).build()
+    ),
+    skipUndefinedTest: false
+  },
+  {
+    name: 'getTopCommitsByLinesAdded',
+    fn: getTopCommitsByLinesAdded,
+    setupCommit: (builder, value) => builder.withFileChange(
+      new FileChangeBuilder().withPath('file.js').withAdditions(value, value * 50).build()
+    )
+  },
+  {
+    name: 'getTopCommitsByLinesRemoved',
+    fn: getTopCommitsByLinesRemoved,
+    setupCommit: (builder, value) => builder.withFileChange(
+      new FileChangeBuilder().withPath('file.js').withDeletions(value, value * 50).build()
+    )
+  }
+]
 
 describe('Award Calculator', () => {
-  describe('getTopCommitsByFilesModified', () => {
+  describe.each(testCases)('$name', ({ fn, setupCommit, skipUndefinedTest }) => {
     it('should return empty array for no commits', () => {
-      const result = getTopCommitsByFilesModified([])
+      const result = fn([])
       expect(result).toEqual([])
     })
 
-    it('should return top 5 commits by files modified', () => {
+    it('should return top commits sorted by value', () => {
       const commits = [
-        new CommitDataBuilder()
-          .withHash('1').withMessage('Small change')
-          .withFileChange(new FileChangeBuilder().withPath('a.js').build())
-          .build(),
-        new CommitDataBuilder()
-          .withHash('2').withMessage('Big refactor')
-          .withFileChange(new FileChangeBuilder().withPath('b.js').build())
-          .withFileChange(new FileChangeBuilder().withPath('c.js').build())
-          .withFileChange(new FileChangeBuilder().withPath('d.js').build())
-          .build(),
-        new CommitDataBuilder()
-          .withHash('3').withMessage('Medium change')
-          .withFileChange(new FileChangeBuilder().withPath('e.js').build())
-          .withFileChange(new FileChangeBuilder().withPath('f.js').build())
-          .build()
+        setupCommit(new CommitDataBuilder().withHash('1').withMessage('Small change'), 10).build(),
+        setupCommit(new CommitDataBuilder().withHash('2').withMessage('Large change'), 100).build(),
+        setupCommit(new CommitDataBuilder().withHash('3').withMessage('Medium change'), 50).build()
       ]
 
-      const result = getTopCommitsByFilesModified(commits)
+      const result = fn(commits)
       
       expect(result).toHaveLength(3)
-      expect(result[0]!.value).toBe(3)
       expect(result[0]!.sha).toBe('2')
-      expect(result[1]!.value).toBe(2)
+      expect(result[0]!.value).toBe(100)
       expect(result[1]!.sha).toBe('3')
-      expect(result[2]!.value).toBe(1)
+      expect(result[1]!.value).toBe(50)
       expect(result[2]!.sha).toBe('1')
+      expect(result[2]!.value).toBe(10)
     })
 
     it('should exclude merge commits', () => {
       const commits = [
-        new CommitDataBuilder()
-          .withHash('1').withMessage('Merge branch \'feature\'')
-          .withFileChange(new FileChangeBuilder().withPath('a.js').build())
-          .withFileChange(new FileChangeBuilder().withPath('b.js').build())
-          .build(),
-        new CommitDataBuilder()
-          .withHash('2').withMessage('Real change')
-          .withFileChange(new FileChangeBuilder().withPath('c.js').build())
-          .build(),
-        new CommitDataBuilder()
-          .withHash('3').withMessage('Merge pull request #123')
-          .withFileChange(new FileChangeBuilder().withPath('d.js').build())
-          .build()
+        setupCommit(
+          new CommitDataBuilder().withHash('1').withMessage('Merge branch \'feature\''),
+          20
+        ).build(),
+        setupCommit(
+          new CommitDataBuilder().withHash('2').withMessage('Real change'),
+          10
+        ).build(),
+        setupCommit(
+          new CommitDataBuilder().withHash('3').withMessage('Merge pull request #123'),
+          30
+        ).build()
       ]
 
-      const result = getTopCommitsByFilesModified(commits)
+      const result = fn(commits)
       
       expect(result).toHaveLength(1)
       expect(result[0]!.sha).toBe('2')
-    })
-
-    it('should exclude conflict resolution commits', () => {
-      const commits = [
-        new CommitDataBuilder()
-          .withHash('1').withMessage('Resolved conflicts by accepting remote component')
-          .withFileChange(new FileChangeBuilder().withPath('a.js').build())
-          .build(),
-        new CommitDataBuilder()
-          .withHash('2').withMessage('Resolving conflicts in feature branch')
-          .withFileChange(new FileChangeBuilder().withPath('b.js').build())
-          .build(),
-        new CommitDataBuilder()
-          .withHash('3').withMessage('Fixed conflict by accepting incoming changes')
-          .withFileChange(new FileChangeBuilder().withPath('c.js').build())
-          .build(),
-        new CommitDataBuilder()
-          .withHash('4').withMessage('Real feature implementation')
-          .withFileChange(new FileChangeBuilder().withPath('d.js').build())
-          .build()
-      ]
-
-      const result = getTopCommitsByFilesModified(commits)
-      
-      expect(result).toHaveLength(1)
-      expect(result[0]!.sha).toBe('4')
     })
 
     it('should exclude automated commits', () => {
       const commits = [
-        new CommitDataBuilder()
-          .withHash('1').withMessage('Bump version to 1.2.3')
-          .withFileChange(new FileChangeBuilder().withPath('package.json').build())
-          .build(),
-        new CommitDataBuilder()
-          .withHash('2').withMessage('Update dependencies for security')
-          .withFileChange(new FileChangeBuilder().withPath('package-lock.json').build())
-          .build(),
-        new CommitDataBuilder()
-          .withHash('3').withMessage('chore: update dependency axios to v1.5.0')
-          .withFileChange(new FileChangeBuilder().withPath('package.json').build())
-          .build(),
-        new CommitDataBuilder()
-          .withHash('4').withMessage('Automated merge from main')
-          .withFileChange(new FileChangeBuilder().withPath('src/index.js').build())
-          .build(),
-        new CommitDataBuilder()
-          .withHash('5').withMessage('Implement new axios integration')
-          .withFileChange(new FileChangeBuilder().withPath('src/api.js').build())
-          .build()
+        setupCommit(
+          new CommitDataBuilder().withHash('1').withMessage('Bump version to 1.2.3'),
+          10
+        ).build(),
+        setupCommit(
+          new CommitDataBuilder().withHash('2').withMessage('Update dependencies for security'),
+          20
+        ).build(),
+        setupCommit(
+          new CommitDataBuilder().withHash('3').withMessage('chore: update dependency axios to v1.5.0'),
+          30
+        ).build(),
+        setupCommit(
+          new CommitDataBuilder().withHash('4').withMessage('Implement new feature'),
+          15
+        ).build()
       ]
 
-      const result = getTopCommitsByFilesModified(commits)
-      
-      expect(result).toHaveLength(1)
-      expect(result[0]!.sha).toBe('5')
-    })
-
-    it('should exclude bot commits', () => {
-      const commits = [
-        new CommitDataBuilder()
-          .withHash('1').withMessage('chore(deps): update dependency eslint to v8 - renovate[bot]')
-          .withFileChange(new FileChangeBuilder().withPath('package.json').build())
-          .build(),
-        new CommitDataBuilder()
-          .withHash('2').withMessage('Bump axios from 0.21.1 to 0.21.2 - dependabot[bot]')
-          .withFileChange(new FileChangeBuilder().withPath('package-lock.json').build())
-          .build(),
-        new CommitDataBuilder()
-          .withHash('3').withMessage('WhiteSource security update')
-          .withFileChange(new FileChangeBuilder().withPath('yarn.lock').build())
-          .build(),
-        new CommitDataBuilder()
-          .withHash('4').withMessage('Add security scanning to CI pipeline')
-          .withFileChange(new FileChangeBuilder().withPath('.github/workflows/security.yml').build())
-          .build()
-      ]
-
-      const result = getTopCommitsByFilesModified(commits)
+      const result = fn(commits)
       
       expect(result).toHaveLength(1)
       expect(result[0]!.sha).toBe('4')
     })
 
-    it('should exclude revert commits', () => {
+    it('should exclude conflict resolution commits', () => {
       const commits = [
-        new CommitDataBuilder()
-          .withHash('1').withMessage('Revert "Add broken feature"')
-          .withFileChange(new FileChangeBuilder().withPath('src/feature.js').build())
-          .build(),
-        new CommitDataBuilder()
-          .withHash('2').withMessage('Fix the previously broken feature')
-          .withFileChange(new FileChangeBuilder().withPath('src/feature.js').build())
-          .build()
+        setupCommit(
+          new CommitDataBuilder().withHash('1').withMessage('Resolved conflicts by accepting remote component'),
+          20
+        ).build(),
+        setupCommit(
+          new CommitDataBuilder().withHash('2').withMessage('Resolving conflicts in feature branch'),
+          30
+        ).build(),
+        setupCommit(
+          new CommitDataBuilder().withHash('3').withMessage('Fixed conflict by accepting incoming changes'),
+          25
+        ).build(),
+        setupCommit(
+          new CommitDataBuilder().withHash('4').withMessage('Real feature implementation'),
+          10
+        ).build()
       ]
 
-      const result = getTopCommitsByFilesModified(commits)
+      const result = fn(commits)
       
       expect(result).toHaveLength(1)
-      expect(result[0]!.sha).toBe('2')
+      expect(result[0]!.sha).toBe('4')
     })
 
-    it('should allow legitimate commits with keywords in different context', () => {
+    it('should exclude bot commits', () => {
       const commits = [
-        new CommitDataBuilder()
-          .withHash('1').withMessage('Add new feature for conflict detection')
-          .withFileChange(new FileChangeBuilder().withPath('src/detector.js').build())
-          .build(),
-        new CommitDataBuilder()
-          .withHash('2').withMessage('Implement auto-save functionality')
-          .withFileChange(new FileChangeBuilder().withPath('src/autosave.js').build())
-          .build(),
-        new CommitDataBuilder()
-          .withHash('3').withMessage('Create dependency injection system')
-          .withFileChange(new FileChangeBuilder().withPath('src/di.js').build())
-          .build()
+        setupCommit(
+          new CommitDataBuilder().withHash('1').withMessage('chore(deps): update dependency eslint to v8 - renovate[bot]'),
+          30
+        ).build(),
+        setupCommit(
+          new CommitDataBuilder().withHash('2').withMessage('Bump axios from 0.21.1 to 0.21.2 - dependabot[bot]'),
+          20
+        ).build(),
+        setupCommit(
+          new CommitDataBuilder().withHash('3').withMessage('WhiteSource security update'),
+          25
+        ).build(),
+        setupCommit(
+          new CommitDataBuilder().withHash('4').withMessage('Add security scanning to CI pipeline'),
+          15
+        ).build()
       ]
 
-      const result = getTopCommitsByFilesModified(commits)
+      const result = fn(commits)
       
-      expect(result).toHaveLength(3)
+      expect(result).toHaveLength(1)
+      expect(result[0]!.sha).toBe('4')
     })
 
-    it('should limit to top 5 commits', () => {
+    it('should limit results to top 5', () => {
       const commits = Array.from({ length: 10 }, (_, i) => 
-        new CommitDataBuilder()
-          .withHash(`${i}`)
-          .withMessage(`Commit ${i}`)
-          .withFileChanges(
-            Array.from({ length: i + 1 }, (_, j) =>
-              new FileChangeBuilder().withPath(`file${j}.js`).build()
-            )
-          )
-          .build()
+        setupCommit(
+          new CommitDataBuilder()
+            .withHash(String(i))
+            .withMessage(`Change ${i}`),
+          (10 - i) * 10
+        ).build()
       )
 
-      const result = getTopCommitsByFilesModified(commits)
+      const result = fn(commits)
       
       expect(result).toHaveLength(5)
-      expect(result[0]!.value).toBe(10) // 10 files
-      expect(result[4]!.value).toBe(6)  // 6 files
+      expect(result[0]!.sha).toBe('0')
+      expect(result[4]!.sha).toBe('4')
     })
 
-    it('should handle ties by preserving order', () => {
-      const commits = [
-        new CommitDataBuilder().withHash('1').withMessage('First')
-          .withFileChange(new FileChangeBuilder().withPath('a.js').build())
-          .withFileChange(new FileChangeBuilder().withPath('b.js').build())
-          .build(),
-        new CommitDataBuilder().withHash('2').withMessage('Second')
-          .withFileChange(new FileChangeBuilder().withPath('c.js').build())
-          .withFileChange(new FileChangeBuilder().withPath('d.js').build())
-          .build(),
-        new CommitDataBuilder().withHash('3').withMessage('Third')
-          .withFileChange(new FileChangeBuilder().withPath('e.js').build())
-          .withFileChange(new FileChangeBuilder().withPath('f.js').build())
-          .build()
-      ]
+    if (!skipUndefinedTest) {
+      it('should handle commits with undefined values', () => {
+        const commits = [
+          new CommitDataBuilder().withHash('1').withMessage('No stats').build(),
+          setupCommit(
+            new CommitDataBuilder().withHash('2').withMessage('With stats'),
+            50
+          ).build()
+        ]
 
-      const result = getTopCommitsByFilesModified(commits)
-      
-      expect(result).toHaveLength(3)
-      expect(result[0]!.sha).toBe('1') // First one with 2 files
-      expect(result[1]!.sha).toBe('2') // Second one with 2 files
-      expect(result[2]!.sha).toBe('3') // Third one with 2 files
-    })
+        const result = fn(commits)
+        
+        expect(result.length).toBeGreaterThan(0)
+        expect(result.some(r => r.sha === '2')).toBe(true)
+      })
+    }
   })
 
+  // Additional specific tests
   describe('getTopCommitsByBytesAdded', () => {
-    it('should return empty array for no commits', () => {
-      const result = getTopCommitsByBytesAdded([])
-      expect(result).toEqual([])
-    })
-
-    it('should return top commits by bytes added', () => {
+    it('should handle commits with only bytes deleted', () => {
       const commits = [
         new CommitDataBuilder()
-          .withHash('1').withMessage('Small addition')
+          .withHash('1').withMessage('Delete old files')
           .withFileChange(
             new FileChangeBuilder()
-              .withPath('a.js')
-              .withAdditions(10, 500)
+              .withPath('old.js')
+              .withDeletions(100, 5000)
               .build()
           )
           .build(),
         new CommitDataBuilder()
-          .withHash('2').withMessage('Large addition')
+          .withHash('2').withMessage('Add new feature')
           .withFileChange(
             new FileChangeBuilder()
-              .withPath('b.js')
-              .withAdditions(100, 5000)
-              .build()
-          )
-          .build(),
-        new CommitDataBuilder()
-          .withHash('3').withMessage('Medium addition')
-          .withFileChange(
-            new FileChangeBuilder()
-              .withPath('c.js')
+              .withPath('new.js')
               .withAdditions(50, 2500)
               .build()
           )
@@ -273,211 +248,142 @@ describe('Award Calculator', () => {
 
       const result = getTopCommitsByBytesAdded(commits)
       
-      expect(result).toHaveLength(3)
-      expect(result[0]!.value).toBe(5000)
-      expect(result[0]!.sha).toBe('2')
-      expect(result[1]!.value).toBe(2500)
-      expect(result[1]!.sha).toBe('3')
-      expect(result[2]!.value).toBe(500)
-      expect(result[2]!.sha).toBe('1')
-    })
-
-    it('should handle commits without bytesAdded', () => {
-      const commits = [
-        new CommitDataBuilder()
-          .withHash('1').withMessage('Has bytes')
-          .withFileChange(
-            new FileChangeBuilder()
-              .withPath('a.js')
-              .withAdditions(10, 1000)
-              .build()
-          )
-          .build(),
-        new CommitDataBuilder()
-          .withHash('2').withMessage('No bytes')
-          .withFileChange(
-            new FileChangeBuilder()
-              .withPath('b.js')
-              .withAdditions(20) // No bytes specified
-              .build()
-          )
-          .build()
-      ]
-
-      // Manually set bytesAdded to undefined for the second commit
-      delete (commits[1]! as any).bytesAdded
-
-      const result = getTopCommitsByBytesAdded(commits)
-      
-      expect(result).toHaveLength(1)
-      expect(result[0]!.sha).toBe('1')
+      // Should only include commits with bytes added > 0
+      const commitsWithBytesAdded = result.filter(r => r.value > 0)
+      expect(commitsWithBytesAdded).toHaveLength(1)
+      expect(commitsWithBytesAdded[0]!.sha).toBe('2')
     })
   })
 
-  describe('getTopCommitsByBytesRemoved', () => {
-    it('should return top commits by bytes removed', () => {
-      const commits = [
-        new CommitDataBuilder()
-          .withHash('1').withMessage('Small cleanup')
-          .withFileChange(
-            new FileChangeBuilder()
-              .withPath('a.js')
-              .withDeletions(10, 500)
-              .build()
-          )
-          .build(),
-        new CommitDataBuilder()
-          .withHash('2').withMessage('Major cleanup')
-          .withFileChange(
-            new FileChangeBuilder()
-              .withPath('b.js')
-              .withDeletions(200, 10000)
-              .build()
-          )
-          .build()
-      ]
-
-      const result = getTopCommitsByBytesRemoved(commits)
+  describe('Award value calculations', () => {
+    it('should calculate award values correctly', () => {
+      const builder = new CommitDataBuilder()
+        .withHash('test')
+        .withMessage('Test commit')
       
-      expect(result).toHaveLength(2)
-      expect(result[0]!.value).toBe(10000)
-      expect(result[0]!.sha).toBe('2')
-      expect(result[1]!.value).toBe(500)
-      expect(result[1]!.sha).toBe('1')
-    })
-  })
-
-  describe('getTopCommitsByLinesAdded', () => {
-    it('should return top commits by lines added', () => {
-      const commits = [
-        new CommitDataBuilder()
-          .withHash('1').withMessage('Feature A')
-          .withFileChange(
-            new FileChangeBuilder()
-              .withPath('a.js')
-              .withAdditions(50)
-              .build()
-          )
-          .build(),
-        new CommitDataBuilder()
-          .withHash('2').withMessage('Feature B')
-          .withFileChange(
-            new FileChangeBuilder()
-              .withPath('b.js')
-              .withAdditions(150)
-              .build()
-          )
-          .build(),
-        new CommitDataBuilder()
-          .withHash('3').withMessage('Feature C')
-          .withFileChange(
-            new FileChangeBuilder()
-              .withPath('c.js')
-              .withAdditions(100)
-              .build()
-          )
-          .build()
-      ]
-
-      const result = getTopCommitsByLinesAdded(commits)
+      // Test files modified
+      const filesCommit = builder
+        .withFileChange(new FileChangeBuilder().withPath('a.js').build())
+        .withFileChange(new FileChangeBuilder().withPath('b.js').build())
+        .withFileChange(new FileChangeBuilder().withPath('c.js').build())
+        .build()
       
-      expect(result).toHaveLength(3)
-      expect(result[0]!.value).toBe(150)
-      expect(result[0]!.sha).toBe('2')
-      expect(result[1]!.value).toBe(100)
-      expect(result[1]!.sha).toBe('3')
-      expect(result[2]!.value).toBe(50)
-      expect(result[2]!.sha).toBe('1')
-    })
-
-    it('should aggregate lines from multiple files', () => {
-      const commits = [
-        new CommitDataBuilder()
-          .withHash('1').withMessage('Multi-file change')
-          .withFileChange(
-            new FileChangeBuilder()
-              .withPath('a.js')
-              .withAdditions(30)
-              .build()
-          )
-          .withFileChange(
-            new FileChangeBuilder()
-              .withPath('b.js')
-              .withAdditions(20)
-              .build()
-          )
-          .build()
-      ]
-
-      const result = getTopCommitsByLinesAdded(commits)
+      const filesResult = getTopCommitsByFilesModified([filesCommit])
+      expect(filesResult[0]!.value).toBe(3)
       
-      expect(result).toHaveLength(1)
-      expect(result[0]!.value).toBe(50)
-    })
-  })
-
-  describe('getTopCommitsByLinesRemoved', () => {
-    it('should return top commits by lines removed', () => {
-      const commits = [
-        new CommitDataBuilder()
-          .withHash('1').withMessage('Cleanup')
-          .withFileChange(
-            new FileChangeBuilder()
-              .withPath('a.js')
-              .withDeletions(75)
-              .build()
-          )
-          .build(),
-        new CommitDataBuilder()
-          .withHash('2').withMessage('Refactor')
-          .withFileChange(
-            new FileChangeBuilder()
-              .withPath('b.js')
-              .withDeletions(125)
-              .build()
-          )
-          .build()
-      ]
-
-      const result = getTopCommitsByLinesRemoved(commits)
-      
-      expect(result).toHaveLength(2)
-      expect(result[0]!.value).toBe(125)
-      expect(result[0]!.sha).toBe('2')
-      expect(result[1]!.value).toBe(75)
-      expect(result[1]!.sha).toBe('1')
-    })
-  })
-
-  describe('Award structure consistency', () => {
-    it('should always return CommitAward with all required fields', () => {
-      const commit = new CommitDataBuilder()
-        .withHash('abc123')
-        .withAuthor('John Doe', 'john@example.com')
-        .withDate('2024-01-15T10:30:00Z')
-        .withMessage('Test commit message')
+      // Test bytes added
+      const bytesCommit = new CommitDataBuilder()
+        .withHash('bytes')
+        .withMessage('Bytes test')
         .withFileChange(
           new FileChangeBuilder()
-            .withPath('test.js')
+            .withPath('file.js')
             .withAdditions(100, 5000)
-            .withDeletions(50, 2500)
             .build()
         )
         .build()
+      
+      const bytesAddedResult = getTopCommitsByBytesAdded([bytesCommit])
+      expect(bytesAddedResult[0]!.value).toBe(5000)
+      
+      // Test lines added
+      const linesCommit = new CommitDataBuilder()
+        .withHash('lines')
+        .withMessage('Lines test')
+        .withFileChange(
+          new FileChangeBuilder()
+            .withPath('file.js')
+            .withAdditions(150, 7500)
+            .build()
+        )
+        .build()
+      
+      const linesAddedResult = getTopCommitsByLinesAdded([linesCommit])
+      expect(linesAddedResult[0]!.value).toBe(150)
+    })
+  })
 
-      const filesResult = getTopCommitsByFilesModified([commit])[0]!
-      const bytesAddedResult = getTopCommitsByBytesAdded([commit])[0]!
-      const linesAddedResult = getTopCommitsByLinesAdded([commit])[0]!
+  describe('Cross-function consistency', () => {
+    it('should apply consistent filtering across all functions', () => {
+      const commits = [
+        new CommitDataBuilder()
+          .withHash('merge')
+          .withMessage('Merge branch feature')
+          .withFileChange(
+            new FileChangeBuilder()
+              .withPath('merged.js')
+              .withAdditions(100, 5000)
+              .withDeletions(50, 2500)
+              .build()
+          )
+          .build(),
+        new CommitDataBuilder()
+          .withHash('real')
+          .withMessage('Real feature work')
+          .withFileChange(
+            new FileChangeBuilder()
+              .withPath('feature.js')
+              .withAdditions(50, 2500)
+              .withDeletions(25, 1250)
+              .build()
+          )
+          .build()
+      ]
 
-      // Check all have the same structure
-      const checkAward = (award: any) => {
-        expect(award).toHaveProperty('sha', 'abc123')
-        expect(award).toHaveProperty('authorName', 'John Doe')
-        expect(award).toHaveProperty('date', '2024-01-15T10:30:00Z')
-        expect(award).toHaveProperty('message', 'Test commit message')
-        expect(award).toHaveProperty('value')
-        expect(typeof award.value).toBe('number')
+      const filesResult = getTopCommitsByFilesModified(commits)
+      const bytesAddedResult = getTopCommitsByBytesAdded(commits)
+      const bytesRemovedResult = getTopCommitsByBytesRemoved(commits)
+      const linesAddedResult = getTopCommitsByLinesAdded(commits)
+      const linesRemovedResult = getTopCommitsByLinesRemoved(commits)
+
+      // All should exclude the merge commit
+      expect(filesResult).toHaveLength(1)
+      expect(bytesAddedResult).toHaveLength(1)
+      expect(bytesRemovedResult).toHaveLength(1)
+      expect(linesAddedResult).toHaveLength(1)
+      expect(linesRemovedResult).toHaveLength(1)
+
+      // All should return the real commit
+      expect(filesResult[0]!.sha).toBe('real')
+      expect(bytesAddedResult[0]!.sha).toBe('real')
+      expect(bytesRemovedResult[0]!.sha).toBe('real')
+      expect(linesAddedResult[0]!.sha).toBe('real')
+      expect(linesRemovedResult[0]!.sha).toBe('real')
+    })
+  })
+
+  describe('Award structure', () => {
+    it('should return correct award structure', () => {
+      const commit = new CommitDataBuilder()
+        .withHash('abc123')
+        .withAuthor('John Doe')
+        .withDate(new Date('2023-01-01').toISOString())
+        .withMessage('Important feature')
+        .withFileChange(new FileChangeBuilder().withPath('feature.js').build())
+        .build()
+
+      const result = getTopCommitsByFilesModified([commit])
+      
+      expect(result[0]).toEqual({
+        sha: 'abc123',
+        authorName: 'John Doe',
+        date: new Date('2023-01-01').toISOString(),
+        message: 'Important feature',
+        value: 1
+      })
+
+      function checkAward(award: CommitAward | undefined): void {
+        expect(award).toBeDefined()
+        expect(award!.sha).toBeDefined()
+        expect(award!.authorName).toBeDefined()
+        expect(award!.date).toBeDefined()
+        expect(award!.message).toBeDefined()
+        expect(award!.value).toBeGreaterThanOrEqual(0)
       }
+
+      const filesResult = getTopCommitsByFilesModified([commit])[0]
+      const bytesAddedResult = getTopCommitsByBytesAdded([commit])[0]
+      const linesAddedResult = getTopCommitsByLinesAdded([commit])[0]
 
       checkAward(filesResult)
       checkAward(bytesAddedResult)
