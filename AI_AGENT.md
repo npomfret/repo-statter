@@ -13,7 +13,8 @@
     - Or use `./scripts/run-tests.sh` which handles creation, analysis, and cleanup automatically
   - Test repos are now created in the system temp directory, not in the project root
 - Look at nearby/associated code for patterns and techniques - reuse them where appropriate
-- IMPORTANT! never commit code unless told do to so
+
+IMPORTANT! **never `git commit` code** unless instructed to do so.
 
 # Your behaviour
 - Don't be sycophantic
