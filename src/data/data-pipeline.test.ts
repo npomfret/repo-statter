@@ -75,10 +75,10 @@ describe('Data Pipeline Integration', () => {
 
     // Linear series data
     const linearSeries = getLinearSeriesData(commits)
-    expect(linearSeries).toHaveLength(2) // start point + 1 commit
-    expect(linearSeries[1]).toBeDefined()
-    expect(linearSeries[1]).toMatchObject({
-      commitIndex: 1,
+    expect(linearSeries).toHaveLength(1) // 1 commit
+    expect(linearSeries[0]).toBeDefined()
+    expect(linearSeries[0]).toMatchObject({
+      commitIndex: 0,
       linesAdded: 50,
       linesDeleted: 10,
       cumulativeLines: 40
@@ -230,8 +230,8 @@ describe('Data Pipeline Integration', () => {
 
     // Linear series should show progression
     const linearSeries = getLinearSeriesData(commits)
-    expect(linearSeries).toHaveLength(5) // start + 4 commits
-    expect(linearSeries[4]?.cumulativeLines).toBe(145)
+    expect(linearSeries).toHaveLength(4) // 4 commits
+    expect(linearSeries[3]?.cumulativeLines).toBe(145)
 
     // Word cloud should extract meaningful words
     const messages = commits.map(c => c.message)
@@ -290,8 +290,8 @@ describe('Data Pipeline Integration', () => {
     expect(lastLinearPoint?.cumulativeLines).toBe(netLines)
 
     // Verify SHAs are preserved
-    expect(linearSeries[1]?.sha).toBe('abc123')
-    expect(linearSeries[2]?.sha).toBe('def456')
+    expect(linearSeries[0]?.sha).toBe('abc123')
+    expect(linearSeries[1]?.sha).toBe('def456')
   })
 
   test('error handling and edge cases', () => {

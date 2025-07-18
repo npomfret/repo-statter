@@ -40,7 +40,7 @@ export class ChartRenderers {
     })
     
     renderWithErrorBoundary('growthChart', 'Growth Chart', () => {
-      this.growthChart.render(this.data.linearSeries, this.data.timeSeries, 'date', this.data.commits)
+      this.growthChart.render(this.data.linearSeries, this.data.timeSeries, 'commit', this.data.commits)
     })
     
     renderWithErrorBoundary('commitActivityChart', 'Commit Activity Chart', () => {
@@ -132,7 +132,6 @@ export class ChartRenderers {
     dateRadio.name = 'userXAxis' + index
     dateRadio.id = 'userXAxisDate' + index
     dateRadio.value = 'date'
-    dateRadio.checked = true
     
     const dateLabel = document.createElement('label')
     dateLabel.className = 'btn btn-outline-primary'
@@ -145,6 +144,7 @@ export class ChartRenderers {
     commitRadio.name = 'userXAxis' + index
     commitRadio.id = 'userXAxisCommit' + index
     commitRadio.value = 'commit'
+    commitRadio.checked = true
     
     const commitLabel = document.createElement('label')
     commitLabel.className = 'btn btn-outline-primary'
@@ -222,7 +222,7 @@ export class ChartRenderers {
   }
 
   private renderUserChartInstance(userCommits: CommitData[], index: number): void {
-    const xAxis = (document.querySelector(`input[name="userXAxis${index}"]:checked`) as HTMLInputElement)?.value || 'date'
+    const xAxis = (document.querySelector(`input[name="userXAxis${index}"]:checked`) as HTMLInputElement)?.value || 'commit'
     const metric = (document.querySelector(`input[name="userMetric${index}"]:checked`) as HTMLInputElement)?.value as 'lines' | 'bytes' || 'lines'
     const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark'
     
@@ -312,7 +312,7 @@ export class ChartRenderers {
     })
     
     renderWithErrorBoundary('growthChart', 'Growth Chart', () => {
-      this.growthChart.render(this.data.linearSeries, this.data.timeSeries, 'date', this.data.commits)
+      this.growthChart.render(this.data.linearSeries, this.data.timeSeries, 'commit', this.data.commits)
     })
     
     renderWithErrorBoundary('commitActivityChart', 'Commit Activity Chart', () => {

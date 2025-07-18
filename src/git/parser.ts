@@ -145,7 +145,20 @@ export async function getGitHubUrl(repoPath: string): Promise<string | null> {
 async function parseCommitDiff(repoPath: string, commitHash: string): Promise<{ linesAdded: number; linesDeleted: number; bytesAdded: number; bytesDeleted: number; filesChanged: FileChange[] }> {
   const git = simpleGit(repoPath)
   
-  const diffSummary = await git.diffSummary([commitHash + '^!'])
+  // Check if this is the first commit
+  let isFirstCommit = false
+  try {
+    await execAsync(`cd "${repoPath}" && git rev-parse ${commitHash}^`, { timeout: 5000 })
+  } catch {
+    isFirstCommit = true
+  }
+  
+  // For first commit, use proper syntax
+  const diffArgs = isFirstCommit 
+    ? [`4b825dc642cb6eb9a060e54bf8d69288fbee4904..${commitHash}`]
+    : [commitHash + '^!']
+  
+  const diffSummary = await git.diffSummary(diffArgs)
   
   // Get byte changes using git diff --stat
   const byteChanges = await getByteChanges(repoPath, commitHash)

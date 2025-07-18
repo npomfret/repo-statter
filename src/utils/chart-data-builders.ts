@@ -151,17 +151,13 @@ export function buildUserTimeSeriesData(
     });
     
   } else {
-    addedData.push({ x: 0, y: 0 });
-    removedData.push({ x: 0, y: 0 });
-    netData.push({ x: 0, y: 0 });
-    
     let cumulativeAdded = 0;
     let cumulativeRemoved = 0;
     let cumulativeBytesAdded = 0;
     let cumulativeBytesRemoved = 0;
     
     userCommits.forEach((commit, i) => {
-      const x = i + 1;
+      const x = i;
       cumulativeAdded += commit.linesAdded;
       cumulativeRemoved += commit.linesDeleted;
       const bytesAdded = commit.bytesAdded ?? commit.linesAdded * 50;

@@ -9,17 +9,15 @@ import {
 
 describe('buildTimeSeriesData', () => {
   const mockLinearSeries: LinearSeriesPoint[] = [
-    { commitIndex: 0, sha: 'start', cumulativeLines: 0 },
-    { commitIndex: 1, sha: 'abc123', cumulativeLines: 100 },
-    { commitIndex: 2, sha: 'def456', cumulativeLines: 250 },
-    { commitIndex: 3, sha: 'ghi789', cumulativeLines: 400 }
+    { commitIndex: 0, sha: 'abc123', cumulativeLines: 100 },
+    { commitIndex: 1, sha: 'def456', cumulativeLines: 250 },
+    { commitIndex: 2, sha: 'ghi789', cumulativeLines: 400 }
   ];
 
   const mockTimeSeries: TimeSeriesPoint[] = [
-    { date: '2023-06-01T00:00:00Z', cumulativeLines: 0, commitIndex: 0 },
-    { date: '2023-06-02T00:00:00Z', cumulativeLines: 100, commitIndex: 1 },
-    { date: '2023-06-03T00:00:00Z', cumulativeLines: 250, commitIndex: 2 },
-    { date: '2023-06-04T00:00:00Z', cumulativeLines: 400, commitIndex: 3 }
+    { date: '2023-06-02T00:00:00Z', cumulativeLines: 100, commitIndex: 0 },
+    { date: '2023-06-03T00:00:00Z', cumulativeLines: 250, commitIndex: 1 },
+    { date: '2023-06-04T00:00:00Z', cumulativeLines: 400, commitIndex: 2 }
   ];
 
   const simpleExtractor = (point: any) => point.cumulativeLines;
@@ -27,41 +25,37 @@ describe('buildTimeSeriesData', () => {
   it('should build data for commit x-axis', () => {
     const result = buildTimeSeriesData(mockLinearSeries, 'commit', simpleExtractor);
     
-    expect(result).toHaveLength(4);
-    expect(result[0]).toEqual({ x: 0, y: 0 });
-    expect(result[1]).toEqual({ x: 1, y: 100 });
-    expect(result[2]).toEqual({ x: 2, y: 250 });
-    expect(result[3]).toEqual({ x: 3, y: 400 });
+    expect(result).toHaveLength(3);
+    expect(result[0]).toEqual({ x: 0, y: 100 });
+    expect(result[1]).toEqual({ x: 1, y: 250 });
+    expect(result[2]).toEqual({ x: 2, y: 400 });
   });
 
   it('should build data for date x-axis', () => {
     const result = buildTimeSeriesData(mockLinearSeries, 'date', simpleExtractor, mockTimeSeries);
     
-    expect(result).toHaveLength(4);
-    expect(result[0]).toEqual({ x: new Date('2023-06-01T00:00:00Z').getTime(), y: 0 });
-    expect(result[1]).toEqual({ x: new Date('2023-06-02T00:00:00Z').getTime(), y: 100 });
-    expect(result[2]).toEqual({ x: new Date('2023-06-03T00:00:00Z').getTime(), y: 250 });
-    expect(result[3]).toEqual({ x: new Date('2023-06-04T00:00:00Z').getTime(), y: 400 });
+    expect(result).toHaveLength(3);
+    expect(result[0]).toEqual({ x: new Date('2023-06-02T00:00:00Z').getTime(), y: 100 });
+    expect(result[1]).toEqual({ x: new Date('2023-06-03T00:00:00Z').getTime(), y: 250 });
+    expect(result[2]).toEqual({ x: new Date('2023-06-04T00:00:00Z').getTime(), y: 400 });
   });
 
   it('should handle custom y-value extractors', () => {
     const doubleExtractor = (point: any) => point.cumulativeLines * 2;
     const result = buildTimeSeriesData(mockLinearSeries, 'commit', doubleExtractor);
     
-    expect(result[0]).toEqual({ x: 0, y: 0 });
-    expect(result[1]).toEqual({ x: 1, y: 200 });
-    expect(result[2]).toEqual({ x: 2, y: 500 });
-    expect(result[3]).toEqual({ x: 3, y: 800 });
+    expect(result[0]).toEqual({ x: 0, y: 200 });
+    expect(result[1]).toEqual({ x: 1, y: 500 });
+    expect(result[2]).toEqual({ x: 2, y: 800 });
   });
 
   it('should handle negative values', () => {
     const negativeExtractor = (point: any) => -point.cumulativeLines;
     const result = buildTimeSeriesData(mockLinearSeries, 'commit', negativeExtractor);
     
-    expect(result[0]).toEqual({ x: 0, y: -0 });
-    expect(result[1]).toEqual({ x: 1, y: -100 });
-    expect(result[2]).toEqual({ x: 2, y: -250 });
-    expect(result[3]).toEqual({ x: 3, y: -400 });
+    expect(result[0]).toEqual({ x: 0, y: -100 });
+    expect(result[1]).toEqual({ x: 1, y: -250 });
+    expect(result[2]).toEqual({ x: 2, y: -400 });
   });
 });
 
@@ -111,42 +105,36 @@ describe('buildUserTimeSeriesData', () => {
     it('should build cumulative data for lines metric', () => {
       const result = buildUserTimeSeriesData(mockUserCommits, 'commit', 'lines');
       
-      expect(result.addedData).toHaveLength(4);
-      expect(result.removedData).toHaveLength(4);
-      expect(result.netData).toHaveLength(4);
-      
-      // Check initial zero point
-      expect(result.addedData[0]).toEqual({ x: 0, y: 0 });
-      expect(result.removedData[0]).toEqual({ x: 0, y: 0 });
-      expect(result.netData[0]).toEqual({ x: 0, y: 0 });
+      expect(result.addedData).toHaveLength(3);
+      expect(result.removedData).toHaveLength(3);
+      expect(result.netData).toHaveLength(3);
       
       // Check cumulative values
-      expect(result.addedData[1]).toEqual({ x: 1, y: 100 });
-      expect(result.removedData[1]).toEqual({ x: 1, y: -20 });
-      expect(result.netData[1]).toEqual({ x: 1, y: 80 });
+      expect(result.addedData[0]).toEqual({ x: 0, y: 100 });
+      expect(result.removedData[0]).toEqual({ x: 0, y: -20 });
+      expect(result.netData[0]).toEqual({ x: 0, y: 80 });
       
-      expect(result.addedData[2]).toEqual({ x: 2, y: 300 });
-      expect(result.removedData[2]).toEqual({ x: 2, y: -70 });
-      expect(result.netData[2]).toEqual({ x: 2, y: 230 });
+      expect(result.addedData[1]).toEqual({ x: 1, y: 300 });
+      expect(result.removedData[1]).toEqual({ x: 1, y: -70 });
+      expect(result.netData[1]).toEqual({ x: 1, y: 230 });
       
-      expect(result.addedData[3]).toEqual({ x: 3, y: 350 });
-      expect(result.removedData[3]).toEqual({ x: 3, y: -170 });
-      expect(result.netData[3]).toEqual({ x: 3, y: 180 });
+      expect(result.addedData[2]).toEqual({ x: 2, y: 350 });
+      expect(result.removedData[2]).toEqual({ x: 2, y: -170 });
+      expect(result.netData[2]).toEqual({ x: 2, y: 180 });
     });
 
     it('should build cumulative data for bytes metric', () => {
       const result = buildUserTimeSeriesData(mockUserCommits, 'commit', 'bytes');
       
-      expect(result.addedData).toHaveLength(4);
+      expect(result.addedData).toHaveLength(3);
       
-      expect(result.addedData[0]).toEqual({ x: 0, y: 0 });
-      expect(result.addedData[1]).toEqual({ x: 1, y: 5000 });
-      expect(result.addedData[2]).toEqual({ x: 2, y: 15000 });
-      expect(result.addedData[3]).toEqual({ x: 3, y: 17500 });
+      expect(result.addedData[0]).toEqual({ x: 0, y: 5000 });
+      expect(result.addedData[1]).toEqual({ x: 1, y: 15000 });
+      expect(result.addedData[2]).toEqual({ x: 2, y: 17500 });
       
-      expect(result.removedData[1]).toEqual({ x: 1, y: -1000 });
-      expect(result.removedData[2]).toEqual({ x: 2, y: -3500 });
-      expect(result.removedData[3]).toEqual({ x: 3, y: -8500 });
+      expect(result.removedData[0]).toEqual({ x: 0, y: -1000 });
+      expect(result.removedData[1]).toEqual({ x: 1, y: -3500 });
+      expect(result.removedData[2]).toEqual({ x: 2, y: -8500 });
     });
 
     it('should estimate bytes when not provided', () => {
@@ -161,8 +149,8 @@ describe('buildUserTimeSeriesData', () => {
       
       const result = buildUserTimeSeriesData(commitsWithoutBytes, 'commit', 'bytes');
       
-      expect(result.addedData[1]).toEqual({ x: 1, y: 5000 }); // 100 * 50
-      expect(result.removedData[1]).toEqual({ x: 1, y: -1000 }); // 20 * 50
+      expect(result.addedData[0]).toEqual({ x: 0, y: 5000 }); // 100 * 50
+      expect(result.removedData[0]).toEqual({ x: 0, y: -1000 }); // 20 * 50
     });
   });
 
@@ -267,12 +255,8 @@ describe('buildUserTimeSeriesData', () => {
   it('should handle empty commits array', () => {
     const result = buildUserTimeSeriesData([], 'commit', 'lines');
     
-    expect(result.addedData).toHaveLength(1);
-    expect(result.removedData).toHaveLength(1);
-    expect(result.netData).toHaveLength(1);
-    
-    expect(result.addedData[0]).toEqual({ x: 0, y: 0 });
-    expect(result.removedData[0]).toEqual({ x: 0, y: 0 });
-    expect(result.netData[0]).toEqual({ x: 0, y: 0 });
+    expect(result.addedData).toHaveLength(0);
+    expect(result.removedData).toHaveLength(0);
+    expect(result.netData).toHaveLength(0);
   });
 });
