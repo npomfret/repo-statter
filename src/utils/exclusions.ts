@@ -1,4 +1,4 @@
-import { minimatch } from 'minimatch'
+import { Minimatch } from 'minimatch'
 
 const DEFAULT_EXCLUSION_PATTERNS = [
   // Images
@@ -74,8 +74,30 @@ const DEFAULT_EXCLUSION_PATTERNS = [
   '**/*.ear'
 ]
 
+// Pre-compile all default patterns at module load time
+const DEFAULT_COMPILED_PATTERNS = DEFAULT_EXCLUSION_PATTERNS.map(pattern => new Minimatch(pattern))
+
+// Cache for custom patterns
+const compiledPatterns = new Map<string, Minimatch>()
+
+function getCompiledPattern(pattern: string): Minimatch {
+  if (!compiledPatterns.has(pattern)) {
+    compiledPatterns.set(pattern, new Minimatch(pattern))
+  }
+  return compiledPatterns.get(pattern)!
+}
+
 export function isFileExcluded(filePath: string, patterns: string[] = DEFAULT_EXCLUSION_PATTERNS): boolean {
-  return patterns.some(pattern => minimatch(filePath, pattern))
+  // Fast path for default patterns
+  if (patterns === DEFAULT_EXCLUSION_PATTERNS) {
+    return DEFAULT_COMPILED_PATTERNS.some(pattern => pattern.match(filePath))
+  }
+  
+  // Cached path for custom patterns
+  return patterns.some(pattern => {
+    const compiled = getCompiledPattern(pattern)
+    return compiled.match(filePath)
+  })
 }
 
 export function getDefaultExclusionPatterns(): string[] {
