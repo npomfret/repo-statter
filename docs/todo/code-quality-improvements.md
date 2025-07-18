@@ -8,6 +8,22 @@ The `isRealCommit` function is defined in both `src/data/award-calculator.ts` an
 
 **Recommendation:** Consolidate these into a single, shared function in `src/utils/` and use it in both places.
 
+**Implementation Plan:**
+1. Create a new file `src/utils/commit-filters.ts` to house commit filtering utilities
+2. Move the more comprehensive `isRealCommit` implementation from `award-calculator.ts` to this new file
+3. Export the function from the new module
+4. Update both `award-calculator.ts` and `contributor-calculator.ts` to import and use the shared function
+5. Run tests to ensure no regressions
+
+**Details:**
+- The `award-calculator.ts` version includes more comprehensive automated pattern checks including:
+  - Conflict resolution patterns
+  - Automated bot commits (renovate, dependabot)
+  - Version bumps and dependency updates
+  - Revert commits
+- The `contributor-calculator.ts` version only checks for basic merge commits
+- Using the more comprehensive version will ensure consistent filtering across the codebase
+
 ### 2. Hardcoded `magic string` in `git/parser.ts`
 
 In `src/git/parser.ts`, the `parseCommitDiff` function has this code:
