@@ -1,0 +1,1 @@
+The engine needs to emit progress updates as it goes.  add unit tests.  i want the th cli (`npm run analyse...`) to hook into those updates and peridoically log out a stutus update so the user can see it working.
