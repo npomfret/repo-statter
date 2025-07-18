@@ -77,7 +77,7 @@ export class ChartRenderers {
         // Client-side error logging - this is acceptable for debugging UI issues
         console.error(`Failed to render chart for ${contributor.name}:`, formatError(error))
         const col = document.createElement('div')
-        col.className = 'col-12 col-xl-6 mb-4'
+        col.className = 'col-12 mb-4'
         col.innerHTML = `
           <div class="card">
             <div class="card-header">
@@ -104,7 +104,7 @@ export class ChartRenderers {
     
     // Create card structure
     const col = document.createElement('div')
-    col.className = 'col-12 col-xl-6 mb-4'
+    col.className = 'col-12 mb-4'
     
     const card = document.createElement('div')
     card.className = 'card'
