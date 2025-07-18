@@ -4,6 +4,7 @@ import { promisify } from 'util'
 import { validateGitRepository } from '../utils/git-validation.js'
 import { parseCommitDiff as parseCommitDiffData, parseByteChanges } from '../data/git-extractor.js'
 import { isFileExcluded } from '../utils/exclusions.js'
+import type { ProgressReporter } from '../utils/progress-reporter.js'
 
 const execAsync = promisify(exec)
 
@@ -36,7 +37,7 @@ export interface CommitData {
   filesChanged: FileChange[]
 }
 
-export async function parseCommitHistory(repoPath: string): Promise<CommitData[]> {
+export async function parseCommitHistory(repoPath: string, progressReporter?: ProgressReporter): Promise<CommitData[]> {
   // Validate input
   assert(repoPath.length > 0, 'Repository path cannot be empty')
   
@@ -51,6 +52,8 @@ export async function parseCommitHistory(repoPath: string): Promise<CommitData[]
   } catch (error) {
     throw new Error(`Cannot access git repository: ${error instanceof Error ? error.message : String(error)}`)
   }
+  
+  progressReporter?.report('Fetching commit history')
   
   const log = await git.log({
     format: {
@@ -67,6 +70,9 @@ export async function parseCommitHistory(repoPath: string): Promise<CommitData[]
   const commits: CommitData[] = []
   let cumulativeBytes = 0
   let processedCommits = 0
+  const totalCommits = log.all.length
+  
+  progressReporter?.report(`Processing ${totalCommits} commits`)
   
   for (const commit of log.all) {
     const diffStats = await parseCommitDiff(repoPath, commit.hash)
@@ -93,6 +99,11 @@ export async function parseCommitHistory(repoPath: string): Promise<CommitData[]
     })
     
     processedCommits++
+    
+    // Report progress every 100 commits or at the end
+    if (processedCommits % 100 === 0 || processedCommits === totalCommits) {
+      progressReporter?.report('Processing commits', processedCommits, totalCommits)
+    }
   }
   
   return commits

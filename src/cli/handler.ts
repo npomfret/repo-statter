@@ -1,6 +1,8 @@
 import { program } from 'commander'
 import { generateReport } from '../report/generator.js'
 import { validateGitRepository } from '../utils/git-validation.js'
+import { ConsoleProgressReporter } from '../utils/progress-reporter.js'
+import { ThrottledProgressReporter } from '../utils/throttled-progress-reporter.js'
 
 export async function handleCLI(args: string[]): Promise<void> {
   program
@@ -18,7 +20,9 @@ export async function handleCLI(args: string[]): Promise<void> {
       
       try {
         await validateGitRepository(finalRepoPath)
-        await generateReport(finalRepoPath, outputDir)
+        const consoleReporter = new ConsoleProgressReporter()
+        const progressReporter = new ThrottledProgressReporter(consoleReporter, 200)
+        await generateReport(finalRepoPath, outputDir, progressReporter)
       } catch (error: any) {
         console.error(`Error: ${error.message}`)
         process.exit(1)

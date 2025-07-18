@@ -20,9 +20,10 @@ import { processCommitMessages } from '../text/processor.js'
 import { replaceTemplateVariables, injectIntoBody } from '../utils/template-engine.js'
 import { bundlePageScript } from '../build/bundle-page-script.js'
 import type { CommitData } from '../git/parser.js'
+import type { ProgressReporter } from '../utils/progress-reporter.js'
 
-export async function generateReport(repoPath: string, outputMode: 'dist' | 'analysis' = 'dist'): Promise<void> {
-  const commits = await parseCommitHistory(repoPath)
+export async function generateReport(repoPath: string, outputMode: 'dist' | 'analysis' = 'dist', progressReporter?: ProgressReporter): Promise<void> {
+  const commits = await parseCommitHistory(repoPath, progressReporter)
   const repoName = repoPath === '.' ? basename(process.cwd()) : basename(repoPath) || 'repo'
   
   let outputDir: string
@@ -42,13 +43,20 @@ export async function generateReport(repoPath: string, outputMode: 'dist' | 'ana
     await mkdir(outputDir, { recursive: true })
   }
   
+  progressReporter?.report('Loading report template')
   const template = await readFile('src/report/template.html', 'utf-8')
-  const chartData = await transformCommitData(commits, repoName, repoPath)
   
-  const html = await injectDataIntoTemplate(template, chartData, commits)
+  progressReporter?.report('Calculating statistics')
+  const chartData = await transformCommitData(commits, repoName, repoPath, progressReporter)
+  
+  progressReporter?.report('Generating HTML report')
+  const html = await injectDataIntoTemplate(template, chartData, commits, progressReporter)
+  
+  progressReporter?.report('Writing report file')
   await writeFile(reportPath, html)
   
   if (statsPath) {
+    progressReporter?.report('Writing statistics file')
     const stats = {
       repository: repoName,
       generatedAt: new Date().toISOString(),
@@ -62,6 +70,7 @@ export async function generateReport(repoPath: string, outputMode: 'dist' | 'ana
     await writeFile(statsPath, JSON.stringify(stats, null, 2))
   }
   
+  progressReporter?.report('Report generation complete')
 }
 
 interface TrophySvgs {
@@ -85,10 +94,11 @@ interface ChartData {
   trophySvgs: TrophySvgs
 }
 
-async function transformCommitData(commits: CommitData[], repoName: string, repoPath: string): Promise<ChartData> {
+async function transformCommitData(commits: CommitData[], repoName: string, repoPath: string, progressReporter?: ProgressReporter): Promise<ChartData> {
   const totalLinesAdded = commits.reduce((sum, c) => sum + c.linesAdded, 0)
   const totalLinesOfCode = totalLinesAdded
   
+  progressReporter?.report('Loading image assets')
   const logoSvg = await readFile('src/images/logo.svg', 'utf-8')
   const trophySvgs = {
     contributors: await readFile('src/images/trophy-contributors.svg', 'utf-8'),
@@ -114,15 +124,19 @@ async function transformCommitData(commits: CommitData[], repoName: string, repo
   }
 }
 
-async function injectDataIntoTemplate(template: string, chartData: ChartData, commits: CommitData[]): Promise<string> {
+async function injectDataIntoTemplate(template: string, chartData: ChartData, commits: CommitData[], progressReporter?: ProgressReporter): Promise<string> {
+  progressReporter?.report('Calculating contributor statistics')
   const contributors = getContributorStats(commits)
   const fileTypes = getFileTypeStats(commits)
+  
+  progressReporter?.report('Generating chart data')
   const timeSeries = getTimeSeriesData(commits)
   const linearSeries = getLinearSeriesData(commits)
   const wordCloudData = processCommitMessages(commits.map(c => c.message))
   const fileHeatData = getFileHeatData(commits)
   const topFilesData = getTopFilesStats(commits)
   
+  progressReporter?.report('Calculating awards')
   // Calculate awards
   const awards = {
     filesModified: getTopCommitsByFilesModified(commits),

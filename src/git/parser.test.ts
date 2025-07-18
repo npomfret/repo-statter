@@ -5,6 +5,7 @@ import { exec } from 'child_process'
 import { promisify } from 'util'
 import path from 'path'
 import { existsSync } from 'fs'
+import type { ProgressReporter } from '../utils/progress-reporter.js'
 
 const execAsync = promisify(exec)
 
@@ -276,4 +277,36 @@ describe('byte calculation integration test', () => {
     // The cumulative byte changes should match the actual repository size
     expect(cumulativeBytes).toBe(actualRepoSize)
   }, 10000) // 10 second timeout for git operations
+})
+
+describe('parseCommitHistory with progress reporting', () => {
+  it('should report progress when processing commits', async () => {
+    const testRepoPath = process.env['TEST_REPO_PATH'] || path.join(process.cwd(), 'test-repo')
+    
+    // Skip test if test repo doesn't exist
+    if (!existsSync(testRepoPath)) {
+      console.log('Skipping integration test: test repository not found at', testRepoPath)
+      return
+    }
+    
+    // Create a mock progress reporter
+    const progressUpdates: string[] = []
+    const mockProgressReporter: ProgressReporter = {
+      report(step: string, current?: number, total?: number) {
+        if (current !== undefined && total !== undefined) {
+          progressUpdates.push(`[${current}/${total}] ${step}`)
+        } else {
+          progressUpdates.push(step)
+        }
+      }
+    }
+    
+    // Parse commits with progress reporter
+    await parseCommitHistory(testRepoPath, mockProgressReporter)
+    
+    // Verify progress was reported
+    expect(progressUpdates).toContain('Fetching commit history')
+    expect(progressUpdates.some(update => update.startsWith('Processing') && update.includes('commits'))).toBe(true)
+    expect(progressUpdates.some(update => update.includes('[') && update.includes('/') && update.includes('] Processing commits'))).toBe(true)
+  }, 10000)
 })
