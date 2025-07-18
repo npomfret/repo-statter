@@ -9,6 +9,8 @@ export class TimeSliderChart {
   private totalCommits: number = 0
   private startSlider: HTMLInputElement | null = null
   private endSlider: HTMLInputElement | null = null
+  private startDatePicker: HTMLInputElement | null = null
+  private endDatePicker: HTMLInputElement | null = null
 
   constructor(containerId: string) {
     this.containerId = containerId
@@ -40,12 +42,20 @@ export class TimeSliderChart {
             <div class="text-start">
               <span class="text-muted me-2">Start:</span>
               <span class="fw-semibold text-primary" id="selectedStartLabel" style="font-size: 0.95rem;">${this.formatShortDateTime(new Date(this.minDate))}</span>
+              <button class="btn btn-sm btn-outline-secondary ms-2" id="startCalendarBtn" style="padding: 2px 6px; font-size: 0.75rem;" title="Pick start date">
+                📅
+              </button>
+              <input type="datetime-local" id="startDatePicker" class="form-control" style="display: none; position: absolute; z-index: 1000; width: 200px; margin-top: 5px;">
             </div>
           </div>
           <div class="col-6">
             <div class="text-end">
               <span class="text-muted me-2">End:</span>
               <span class="fw-semibold text-primary" id="selectedEndLabel" style="font-size: 0.95rem;">${this.formatShortDateTime(new Date(this.maxDate))}</span>
+              <button class="btn btn-sm btn-outline-secondary ms-2" id="endCalendarBtn" style="padding: 2px 6px; font-size: 0.75rem;" title="Pick end date">
+                📅
+              </button>
+              <input type="datetime-local" id="endDatePicker" class="form-control" style="display: none; position: absolute; z-index: 1000; width: 200px; margin-top: 5px; right: 0;">
             </div>
           </div>
         </div>
@@ -117,13 +127,41 @@ export class TimeSliderChart {
       </style>
     `
     
-    // Get references to the sliders
+    // Get references to the sliders and date pickers
     this.startSlider = container.querySelector('#startRange') as HTMLInputElement
     this.endSlider = container.querySelector('#endRange') as HTMLInputElement
+    this.startDatePicker = container.querySelector('#startDatePicker') as HTMLInputElement
+    this.endDatePicker = container.querySelector('#endDatePicker') as HTMLInputElement
+    
+    // Set min/max values for date pickers
+    const minDateString = this.toDateTimeLocalString(new Date(this.minDate))
+    const maxDateString = this.toDateTimeLocalString(new Date(this.maxDate))
+    this.startDatePicker.min = minDateString
+    this.startDatePicker.max = maxDateString
+    this.endDatePicker.min = minDateString
+    this.endDatePicker.max = maxDateString
+    
+    // Set initial values for date pickers
+    this.startDatePicker.value = minDateString
+    this.endDatePicker.value = maxDateString
     
     // Handle slider input
     this.startSlider.addEventListener('input', this.handleStartInput)
     this.endSlider.addEventListener('input', this.handleEndInput)
+    
+    // Handle calendar button clicks
+    const startCalendarBtn = container.querySelector('#startCalendarBtn') as HTMLButtonElement
+    const endCalendarBtn = container.querySelector('#endCalendarBtn') as HTMLButtonElement
+    
+    startCalendarBtn.addEventListener('click', this.handleStartCalendarClick)
+    endCalendarBtn.addEventListener('click', this.handleEndCalendarClick)
+    
+    // Handle date picker changes
+    this.startDatePicker.addEventListener('change', this.handleStartDateChange)
+    this.endDatePicker.addEventListener('change', this.handleEndDateChange)
+    
+    // Hide pickers when clicking outside
+    document.addEventListener('click', this.handleDocumentClick)
     
     // Initialize the visual
     this.updateSliderRange()
@@ -184,6 +222,14 @@ export class TimeSliderChart {
     if (this.endSlider) {
       this.endSlider.removeEventListener('input', this.handleEndInput)
     }
+    if (this.startDatePicker) {
+      this.startDatePicker.removeEventListener('change', this.handleStartDateChange)
+    }
+    if (this.endDatePicker) {
+      this.endDatePicker.removeEventListener('change', this.handleEndDateChange)
+    }
+    
+    document.removeEventListener('click', this.handleDocumentClick)
     
     const container = document.querySelector('#' + this.containerId)
     if (container) {
@@ -231,6 +277,12 @@ export class TimeSliderChart {
       selectedStartLabel.textContent = this.formatShortDateTime(new Date(startDate))
       selectedEndLabel.textContent = this.formatShortDateTime(new Date(endDate))
       
+      // Update date picker values to stay in sync
+      if (this.startDatePicker && this.endDatePicker) {
+        this.startDatePicker.value = this.toDateTimeLocalString(new Date(startDate))
+        this.endDatePicker.value = this.toDateTimeLocalString(new Date(endDate))
+      }
+      
       this.updateTargetCharts(startDate, endDate)
     }
   }
@@ -244,5 +296,92 @@ export class TimeSliderChart {
       minute: '2-digit'
     }
     return date.toLocaleString(undefined, dateOptions)
+  }
+  
+  private toDateTimeLocalString(date: Date): string {
+    // Convert to datetime-local format (YYYY-MM-DDTHH:mm)
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    return `${year}-${month}-${day}T${hours}:${minutes}`
+  }
+  
+  private handleStartCalendarClick = (event: Event) => {
+    event.stopPropagation()
+    this.hideDatePicker(this.endDatePicker!)
+    this.toggleDatePicker(this.startDatePicker!)
+  }
+  
+  private handleEndCalendarClick = (event: Event) => {
+    event.stopPropagation()
+    this.hideDatePicker(this.startDatePicker!)
+    this.toggleDatePicker(this.endDatePicker!)
+  }
+  
+  private handleStartDateChange = () => {
+    const selectedDate = new Date(this.startDatePicker!.value)
+    const dateTime = selectedDate.getTime()
+    
+    // Ensure start date is not after end date
+    const endDate = new Date(this.endDatePicker!.value)
+    if (dateTime > endDate.getTime()) {
+      this.endDatePicker!.value = this.startDatePicker!.value
+    }
+    
+    // Update slider position
+    this.updateSliderFromDate(dateTime, 'start')
+    this.hideDatePicker(this.startDatePicker!)
+  }
+  
+  private handleEndDateChange = () => {
+    const selectedDate = new Date(this.endDatePicker!.value)
+    const dateTime = selectedDate.getTime()
+    
+    // Ensure end date is not before start date
+    const startDate = new Date(this.startDatePicker!.value)
+    if (dateTime < startDate.getTime()) {
+      this.startDatePicker!.value = this.endDatePicker!.value
+    }
+    
+    // Update slider position
+    this.updateSliderFromDate(dateTime, 'end')
+    this.hideDatePicker(this.endDatePicker!)
+  }
+  
+  private handleDocumentClick = (event: Event) => {
+    const target = event.target as HTMLElement
+    if (!target.closest('.time-range-slider')) {
+      this.hideDatePicker(this.startDatePicker!)
+      this.hideDatePicker(this.endDatePicker!)
+    }
+  }
+  
+  private toggleDatePicker(picker: HTMLInputElement): void {
+    if (picker.style.display === 'none') {
+      picker.style.display = 'block'
+      picker.focus()
+    } else {
+      picker.style.display = 'none'
+    }
+  }
+  
+  private hideDatePicker(picker: HTMLInputElement): void {
+    picker.style.display = 'none'
+  }
+  
+  private updateSliderFromDate(dateTime: number, type: 'start' | 'end'): void {
+    const percentage = ((dateTime - this.minDate) / (this.maxDate - this.minDate)) * 100
+    const clampedPercentage = Math.max(0, Math.min(100, percentage))
+    
+    if (type === 'start') {
+      this.startSlider!.value = clampedPercentage.toString()
+    } else {
+      this.endSlider!.value = clampedPercentage.toString()
+    }
+    
+    this.updateSliderRange()
+    this.updateDateRange()
   }
 }
