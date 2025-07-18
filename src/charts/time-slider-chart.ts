@@ -145,6 +145,9 @@ export class TimeSliderChart {
     this.startDatePicker.value = minDateString
     this.endDatePicker.value = maxDateString
     
+    // Set initial constraints to prevent invalid selections
+    this.updateDatePickerConstraints()
+    
     // Handle slider input
     this.startSlider.addEventListener('input', this.handleStartInput)
     this.endSlider.addEventListener('input', this.handleEndInput)
@@ -279,8 +282,14 @@ export class TimeSliderChart {
       
       // Update date picker values to stay in sync
       if (this.startDatePicker && this.endDatePicker) {
-        this.startDatePicker.value = this.toDateTimeLocalString(new Date(startDate))
-        this.endDatePicker.value = this.toDateTimeLocalString(new Date(endDate))
+        const startDateString = this.toDateTimeLocalString(new Date(startDate))
+        const endDateString = this.toDateTimeLocalString(new Date(endDate))
+        
+        this.startDatePicker.value = startDateString
+        this.endDatePicker.value = endDateString
+        
+        // Update constraints based on current selection
+        this.updateDatePickerConstraints()
       }
       
       this.updateTargetCharts(startDate, endDate)
@@ -330,6 +339,9 @@ export class TimeSliderChart {
       this.endDatePicker!.value = this.startDatePicker!.value
     }
     
+    // Update end date picker's min constraint to selected start date
+    this.endDatePicker!.min = this.startDatePicker!.value
+    
     // Update slider position
     this.updateSliderFromDate(dateTime, 'start')
     this.hideDatePicker(this.startDatePicker!)
@@ -344,6 +356,9 @@ export class TimeSliderChart {
     if (dateTime < startDate.getTime()) {
       this.startDatePicker!.value = this.endDatePicker!.value
     }
+    
+    // Update start date picker's max constraint to selected end date
+    this.startDatePicker!.max = this.endDatePicker!.value
     
     // Update slider position
     this.updateSliderFromDate(dateTime, 'end')
@@ -383,5 +398,20 @@ export class TimeSliderChart {
     
     this.updateSliderRange()
     this.updateDateRange()
+  }
+  
+  private updateDatePickerConstraints(): void {
+    if (!this.startDatePicker || !this.endDatePicker) return
+    
+    const minDateString = this.toDateTimeLocalString(new Date(this.minDate))
+    const maxDateString = this.toDateTimeLocalString(new Date(this.maxDate))
+    
+    // Start picker: min is global min, max is current end selection
+    this.startDatePicker.min = minDateString
+    this.startDatePicker.max = this.endDatePicker.value || maxDateString
+    
+    // End picker: min is current start selection, max is global max
+    this.endDatePicker.min = this.startDatePicker.value || minDateString
+    this.endDatePicker.max = maxDateString
   }
 }
