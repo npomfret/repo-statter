@@ -1,11 +1,5 @@
 import type { CommitData } from '../git/parser.js'
 
-function assert(condition: boolean, message: string): asserts condition {
-  if (!condition) {
-    throw new Error(message)
-  }
-}
-
 export interface LinearSeriesPoint {
   commitIndex: number
   sha: string
