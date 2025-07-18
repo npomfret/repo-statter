@@ -38,14 +38,14 @@ export class TimeSliderChart {
         <div class="row mb-3">
           <div class="col-6">
             <div class="text-start">
-              <small class="text-muted d-block">Start:</small>
-              <div class="fw-semibold text-primary" id="selectedStartLabel" style="font-size: 0.95rem;">${this.formatShortDateTime(new Date(this.minDate))}</div>
+              <span class="text-muted me-2">Start:</span>
+              <span class="fw-semibold text-primary" id="selectedStartLabel" style="font-size: 0.95rem;">${this.formatShortDateTime(new Date(this.minDate))}</span>
             </div>
           </div>
           <div class="col-6">
             <div class="text-end">
-              <small class="text-muted d-block">End:</small>
-              <div class="fw-semibold text-primary" id="selectedEndLabel" style="font-size: 0.95rem;">${this.formatShortDateTime(new Date(this.maxDate))}</div>
+              <span class="text-muted me-2">End:</span>
+              <span class="fw-semibold text-primary" id="selectedEndLabel" style="font-size: 0.95rem;">${this.formatShortDateTime(new Date(this.maxDate))}</span>
             </div>
           </div>
         </div>
