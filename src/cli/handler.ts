@@ -15,17 +15,19 @@ export async function handleCLI(args: string[]): Promise<void> {
     .argument('[repo-path]', 'Repository path (defaults to current directory)')
     .option('-r, --repo <path>', 'Repository path (alternative to positional argument)')
     .option('-o, --output <dir>', 'Output directory', 'dist')
+    .option('--output-file <filename>', 'Custom output filename (overrides default naming)')
     .option('--max-commits <number>', 'Maximum number of recent commits to analyze', '1000')
     .action(async (repoPath, options) => {
       const finalRepoPath = options.repo || repoPath || process.cwd()
       const outputDir = options.output
+      const outputFile = options.outputFile
       
       try {
         await validateGitRepository(finalRepoPath)
         const consoleReporter = new ConsoleProgressReporter()
         const progressReporter = new ThrottledProgressReporter(consoleReporter, 200)
         const maxCommits = parseInt(options.maxCommits, 10)
-        const reportPath = await generateReport(finalRepoPath, outputDir, progressReporter, maxCommits)
+        const reportPath = await generateReport(finalRepoPath, outputDir, progressReporter, maxCommits, outputFile)
         console.log(`\nReport generated: ${reportPath}`)
       } catch (error) {
         if (isRepoStatError(error)) {

@@ -19,7 +19,7 @@ import { bundlePageScript } from '../build/bundle-page-script.js'
 import type { CommitData } from '../git/parser.js'
 import type { ProgressReporter } from '../utils/progress-reporter.js'
 
-export async function generateReport(repoPath: string, outputMode: 'dist' | 'analysis' = 'dist', progressReporter?: ProgressReporter, maxCommits?: number): Promise<string> {
+export async function generateReport(repoPath: string, outputMode: 'dist' | 'analysis' = 'dist', progressReporter?: ProgressReporter, maxCommits?: number, customFilename?: string): Promise<string> {
   const commits = await parseCommitHistory(repoPath, progressReporter, maxCommits)
   const repoName = repoPath === '.' ? basename(process.cwd()) : basename(repoPath) || 'repo'
   
@@ -27,13 +27,17 @@ export async function generateReport(repoPath: string, outputMode: 'dist' | 'ana
   let reportPath: string
   let statsPath: string | null = null
   
+  const getFilename = (filename: string) => {
+    return filename.endsWith('.html') ? filename : `${filename}.html`
+  }
+  
   if (outputMode === 'analysis') {
     outputDir = `analysis/${repoName}`
-    reportPath = `${outputDir}/${repoName}.html`
+    reportPath = customFilename ? `${outputDir}/${getFilename(customFilename)}` : `${outputDir}/${repoName}.html`
     statsPath = `${outputDir}/repo-stats.json`
   } else {
-    outputDir = 'dist'
-    reportPath = `${outputDir}/${repoName}.html`
+    outputDir = outputMode
+    reportPath = customFilename ? `${outputDir}/${getFilename(customFilename)}` : `${outputDir}/${repoName}.html`
   }
   
   if (!existsSync(outputDir)) {
@@ -76,6 +80,7 @@ export async function generateReport(repoPath: string, outputMode: 'dist' | 'ana
   }
   
   progressReporter?.report('Report generation complete')
+  progressReporter?.report(`Report saved to: ${reportPath}`)
   
   return resolve(reportPath)
 }

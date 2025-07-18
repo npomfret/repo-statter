@@ -5,11 +5,44 @@
 
 set -e
 
-REPO_DIR=$(mktemp -d "${TMPDIR:-/tmp}/repo-statter-test-repo.XXXXXX")
+# Parse command line arguments
+REUSE_FLAG=false
+PERSISTENT_REPO_PATH="${TMPDIR:-/tmp}/repo-statter-test-repo-persistent"
 
-# No need to clean up - mktemp creates a fresh directory
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --reuse)
+            REUSE_FLAG=true
+            shift
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Usage: $0 [--reuse]"
+            exit 1
+            ;;
+    esac
+done
 
-# Initialize the repo (mktemp already created the directory)
+# Check if we should reuse existing repo
+if [ "$REUSE_FLAG" = true ] && [ -d "$PERSISTENT_REPO_PATH/.git" ]; then
+    REPO_DIR="$PERSISTENT_REPO_PATH"
+    echo "ℹ️  Using existing test repository at: $REPO_DIR"
+    echo "TEST_REPO_PATH=$REPO_DIR"
+    exit 0
+fi
+
+# Create new repo (either first time or when not reusing)
+if [ "$REUSE_FLAG" = true ]; then
+    # Create at persistent location
+    REPO_DIR="$PERSISTENT_REPO_PATH"
+    rm -rf "$REPO_DIR"
+    mkdir -p "$REPO_DIR"
+else
+    # Create at temporary location
+    REPO_DIR=$(mktemp -d "${TMPDIR:-/tmp}/repo-statter-test-repo.XXXXXX")
+fi
+
+# Initialize the repo
 cd "$REPO_DIR"
 git init
 

@@ -57,6 +57,7 @@ repo-statter [repo-path] [options]
 
 - `-r, --repo <path>` - Repository path (alternative to positional argument)
 - `-o, --output <dir>` - Output directory for the report (default: `"dist"`)
+- `--output-file <filename>` - Custom output filename (overrides default naming)
 - `--max-commits <number>` - Maximum number of recent commits to analyze (default: `"1000"`)
 - `-h, --help` - Display help information
 - `-V, --version` - Display version number
@@ -73,6 +74,9 @@ npm run analyse /path/to/repo
 # Analyze with custom output directory
 npm run analyse . -- --output reports
 
+# Analyze with custom filename
+npm run analyse . -- --output-file my-project-report
+
 # Analyze only the last 500 commits
 npm run analyse . -- --max-commits 500
 
@@ -83,6 +87,7 @@ npm run analyse -- --repo /path/to/repo --output custom-dir --max-commits 2000
 #### Notes
 
 - The `--max-commits` option analyzes the most recent N commits, which can significantly improve performance for large repositories
+- The `--output-file` option allows you to specify a custom filename, automatically adding `.html` extension if not provided
 - When using npm scripts, remember to use `--` before passing options to separate npm arguments from script arguments
 - Output paths are relative to the current working directory
 
@@ -143,9 +148,10 @@ repo-statter/
 ### Running Tests
 
 ```bash
-npm test                  # Run tests in watch mode
-npm run test:run         # Run tests once
+npm test                  # Run tests once
 npm run test:coverage    # Run tests with coverage
+npm run test:report      # Generate report from test repo (reuses existing or creates new)
+npm run test:clean       # Clean up persistent test repository
 ```
 
 ### Type Checking
@@ -153,6 +159,24 @@ npm run test:coverage    # Run tests with coverage
 ```bash
 npm run typecheck        # Run TypeScript type checking
 ```
+
+### Development Workflow
+
+For rapid development and testing:
+
+```bash
+# First time or after cleanup
+npm run test:report      # Creates test repo and generates report
+
+# Subsequent runs (much faster - reuses existing test repo)
+npm run test:report      # Analyzes existing test repo
+
+# When you need a fresh test repo
+npm run test:clean       # Remove persistent test repo
+npm run test:report      # Creates new test repo and generates report
+```
+
+The test report is always generated at `dist/test-repo-analysis.html` for consistent access.
 
 ## Requirements
 
