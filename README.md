@@ -53,6 +53,51 @@ Output:
 - `analysis/<repository-name>/report.html` - Interactive HTML report
 - `analysis/<repository-name>/repo-stats.json` - Raw statistics data
 
+### CLI Reference
+
+The `repo-statter` command line interface supports the following options:
+
+```bash
+repo-statter [repo-path] [options]
+```
+
+#### Arguments
+
+- `[repo-path]` - Repository path to analyze (defaults to current directory)
+
+#### Options
+
+- `-r, --repo <path>` - Repository path (alternative to positional argument)
+- `-o, --output <dir>` - Output directory for the report (default: `"dist"`)
+- `--max-commits <number>` - Maximum number of recent commits to analyze (default: `"1000"`)
+- `-h, --help` - Display help information
+- `-V, --version` - Display version number
+
+#### Examples
+
+```bash
+# Analyze current directory with default settings
+npm run analyse
+
+# Analyze specific repository
+npm run analyse /path/to/repo
+
+# Analyze with custom output directory
+npm run analyse . -- --output reports
+
+# Analyze only the last 500 commits
+npm run analyse . -- --max-commits 500
+
+# Combine options
+npm run analyse -- --repo /path/to/repo --output custom-dir --max-commits 2000
+```
+
+#### Notes
+
+- The `--max-commits` option analyzes the most recent N commits, which can significantly improve performance for large repositories
+- When using npm scripts, remember to use `--` before passing options to separate npm arguments from script arguments
+- Output paths are relative to the current working directory
+
 ## Features
 
 -   **Comprehensive Git Analysis**: Analyzes complete commit history with line-by-line statistics.

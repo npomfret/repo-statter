@@ -37,7 +37,7 @@ export interface CommitData {
   filesChanged: FileChange[]
 }
 
-export async function parseCommitHistory(repoPath: string, progressReporter?: ProgressReporter): Promise<CommitData[]> {
+export async function parseCommitHistory(repoPath: string, progressReporter?: ProgressReporter, maxCommits?: number): Promise<CommitData[]> {
   // Validate input
   assert(repoPath.length > 0, 'Repository path cannot be empty')
   
@@ -55,7 +55,7 @@ export async function parseCommitHistory(repoPath: string, progressReporter?: Pr
   
   progressReporter?.report('Fetching commit history')
   
-  const log = await git.log({
+  const logOptions: any = {
     format: {
       hash: '%H',
       author_name: '%an',
@@ -65,7 +65,13 @@ export async function parseCommitHistory(repoPath: string, progressReporter?: Pr
     },
     strictDate: true,
     '--reverse': null
-  })
+  }
+  
+  if (maxCommits) {
+    logOptions.maxCount = maxCommits
+  }
+  
+  const log = await git.log(logOptions)
   
   const commits: CommitData[] = []
   let cumulativeBytes = 0

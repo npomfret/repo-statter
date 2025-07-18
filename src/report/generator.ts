@@ -22,8 +22,8 @@ import { bundlePageScript } from '../build/bundle-page-script.js'
 import type { CommitData } from '../git/parser.js'
 import type { ProgressReporter } from '../utils/progress-reporter.js'
 
-export async function generateReport(repoPath: string, outputMode: 'dist' | 'analysis' = 'dist', progressReporter?: ProgressReporter): Promise<string> {
-  const commits = await parseCommitHistory(repoPath, progressReporter)
+export async function generateReport(repoPath: string, outputMode: 'dist' | 'analysis' = 'dist', progressReporter?: ProgressReporter, maxCommits?: number): Promise<string> {
+  const commits = await parseCommitHistory(repoPath, progressReporter, maxCommits)
   const repoName = repoPath === '.' ? basename(process.cwd()) : basename(repoPath) || 'repo'
   
   let outputDir: string
