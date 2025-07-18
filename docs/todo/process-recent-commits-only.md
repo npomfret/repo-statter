@@ -1,0 +1,1 @@
+The application should be configured to only process the past n commits. By default, it should only consider the most recent 500 commits. This must be configurable from the command line.
