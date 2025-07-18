@@ -40,14 +40,16 @@ Each function performs the same sequence of operations:
 4. Update tests to ensure all functionality remains the same
 
 **Steps to implement:**
-- [ ] Create the generic `getTopCommitsByMetric` function
-- [ ] Refactor `getTopCommitsByFilesModified` to use generic function
-- [ ] Refactor `getTopCommitsByBytesAdded` with additional filter
-- [ ] Refactor `getTopCommitsByBytesRemoved` with additional filter  
-- [ ] Refactor `getTopCommitsByLinesAdded` to use generic function
-- [ ] Refactor `getTopCommitsByLinesRemoved` to use generic function
-- [ ] Run tests to ensure no regressions
-- [ ] Remove any unused imports
+- [x] Create the generic `getTopCommitsByMetric` function
+- [x] Refactor `getTopCommitsByFilesModified` to use generic function
+- [x] Refactor `getTopCommitsByBytesAdded` with additional filter
+- [x] Refactor `getTopCommitsByBytesRemoved` with additional filter  
+- [x] Refactor `getTopCommitsByLinesAdded` to use generic function
+- [x] Refactor `getTopCommitsByLinesRemoved` to use generic function
+- [x] Run tests to ensure no regressions
+- [x] Remove any unused imports
+
+**STATUS: COMPLETED** - Reduced from 80 lines to 56 lines (30% reduction)
 
 ### 2. `isRealCommit` Function Duplication
 
