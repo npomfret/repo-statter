@@ -205,7 +205,7 @@ generate_file_content 18 md README > README.md
 
 commit_as 1 "Add README documentation"
 
-# Commit 13: Carol makes final cleanup
+# Final commit: Carol updates package.json and adds .gitignore
 set_user "${USERS[2]}"
 # Update package.json with more realistic content
 generate_file_content 18 json package > package.json
@@ -218,8 +218,11 @@ commit_as 2 "Update package.json and add .gitignore"
 cd ..
 
 echo "✅ Test repository created successfully!"
+
+# Count the actual commits
+COMMIT_COUNT=$(git -C "$REPO_DIR" log --oneline | wc -l | tr -d ' ')
 echo "📊 Repository stats:"
-echo "   - 12 commits"
+echo "   - $COMMIT_COUNT commits"
 echo "   - 3 contributors (Alice, Bob, Carol)"
 echo "   - Mixed JavaScript and TypeScript files"
 echo "   - File operations: create, edit, delete"

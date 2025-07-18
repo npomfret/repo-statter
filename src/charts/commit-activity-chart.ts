@@ -39,6 +39,7 @@ export class CommitActivityChart {
     
     const options = {
       chart: { 
+        id: 'commit-activity-chart',
         type: 'area', 
         height: 350, 
         toolbar: { show: false },

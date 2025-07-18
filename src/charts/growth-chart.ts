@@ -54,7 +54,7 @@ export class GrowthChart {
           y: point.cumulativeLines
         }))
       : linearSeries.map(point => ({
-          x: point.commitIndex,
+          x: point.commitIndex + 1,
           y: point.cumulativeLines
         }))
     
@@ -64,19 +64,21 @@ export class GrowthChart {
           y: point.cumulativeBytes
         }))
       : linearSeries.map(point => ({
-          x: point.commitIndex,
+          x: point.commitIndex + 1,
           y: point.cumulativeBytes
         }))
     
     const options = {
       chart: { 
+        id: 'growth-chart',
         type: 'area', 
         height: 350, 
         toolbar: { show: false },
         background: isDark ? '#161b22' : '#ffffff',
         zoom: {
           enabled: true,
-          allowMouseWheelZoom: false
+          allowMouseWheelZoom: false,
+          type: 'x'  // Restrict zoom to x-axis only
         }
       },
       series: [
@@ -196,6 +198,7 @@ export class GrowthChart {
     // Destroy existing chart if it exists
     if (this.chart) {
       this.chart.destroy()
+      this.chart = null
     }
     
     // ApexCharts will be available globally in the browser

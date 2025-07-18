@@ -11,6 +11,7 @@ import { CommitActivityChart } from '../charts/commit-activity-chart.js'
 import { WordCloudChart } from '../charts/word-cloud-chart.js'
 import { FileHeatmapChart } from '../charts/file-heatmap-chart.js'
 import { TopFilesChart } from '../charts/top-files-chart.js'
+import { TimeSliderChart } from '../charts/time-slider-chart.js'
 
 export class ChartRenderers {
   private contributorsChart: ContributorsChart
@@ -20,6 +21,7 @@ export class ChartRenderers {
   private wordCloudChart: WordCloudChart
   private fileHeatmapChart: FileHeatmapChart
   private topFilesChart: TopFilesChart
+  private timeSliderChart: TimeSliderChart
 
   constructor(private data: PageScriptData) {
     this.contributorsChart = new ContributorsChart('contributorsChart')
@@ -29,6 +31,7 @@ export class ChartRenderers {
     this.wordCloudChart = new WordCloudChart('wordCloudChart')
     this.fileHeatmapChart = new FileHeatmapChart('fileHeatmapChart')
     this.topFilesChart = new TopFilesChart('topFilesChart')
+    this.timeSliderChart = new TimeSliderChart('timeSliderChart')
   }
 
   public renderAllCharts(): void {
@@ -61,6 +64,11 @@ export class ChartRenderers {
         this.topFilesChart.render(this.data.topFilesData!, 'largest')
       })
     }
+    
+    // Render time slider last so target charts exist
+    renderWithErrorBoundary('timeSliderChart', 'Time Slider Chart', () => {
+      this.timeSliderChart.render(this.data.timeSeries, this.data.linearSeries)
+    })
   }
 
   public renderUserCharts(filteredContributors: ContributorStats[]): void {
@@ -305,6 +313,10 @@ export class ChartRenderers {
 
   public updateChartsTheme(): void {
     // Update all chart instances when theme changes
+    renderWithErrorBoundary('timeSliderChart', 'Time Slider Chart', () => {
+      this.timeSliderChart.render(this.data.timeSeries)
+    })
+    
     renderWithErrorBoundary('contributorsChart', 'Contributors Chart', () => {
       this.contributorsChart.render(this.data.contributors)
     })
