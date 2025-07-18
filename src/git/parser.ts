@@ -74,11 +74,16 @@ export async function parseCommitHistory(repoPath: string): Promise<CommitData[]
     const bytesDeleted = diffStats.bytesDeleted ?? 0
     cumulativeBytes += (bytesAdded - bytesDeleted)
     
+    // Convert git date format "YYYY-MM-DD HH:MM:SS +TZTZ" to ISO 8601
+    // First replace the space between date and time with 'T'
+    // Then remove the space before the timezone
+    const isoDate = commit.date.replace(' ', 'T').replace(' +', '+').replace(' -', '-')
+    
     commits.push({
       sha: commit.hash,
       authorName: commit.author_name,
       authorEmail: commit.author_email,
-      date: commit.date,
+      date: isoDate,
       message: commit.message,
       linesAdded: diffStats.linesAdded,
       linesDeleted: diffStats.linesDeleted,

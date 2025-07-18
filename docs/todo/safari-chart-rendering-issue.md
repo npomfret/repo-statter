@@ -1,4 +1,4 @@
-# Safari Chart Rendering Issue Investigation
+# Safari Chart Rendering Issue Investigation [COMPLETED]
 
 ## Problem
 Charts are not appearing in the Safari browser, while they render correctly in other browsers like Chrome. This needs to be investigated and fixed.
@@ -86,3 +86,18 @@ Based on code analysis, the following locations need verification/updates:
 - Most likely issue is missing timezone indicators in generated date strings
 - Focus on `getDateKey` function in `src/data/time-series-transformer.ts`
 - Consider adding explicit timezone handling with `toISOString()` instead of string manipulation
+
+## Resolution
+The issue was confirmed to be Safari's strict date parsing. Git's `%ai` format outputs dates as `YYYY-MM-DD HH:MM:SS +TZTZ` with spaces, but Safari's Date constructor requires ISO 8601 format without spaces before the timezone offset.
+
+### Fix Applied
+In `src/git/parser.ts`, converted git date format to proper ISO 8601:
+```typescript
+const isoDate = commit.date.replace(' ', 'T').replace(' +', '+').replace(' -', '-')
+```
+
+This transforms:
+- `2025-07-17 22:05:05 +0100` (git format)
+- to `2025-07-17T22:05:05+0100` (ISO 8601 format)
+
+The fix ensures all browsers can parse the dates correctly, resolving the Safari rendering issue.
