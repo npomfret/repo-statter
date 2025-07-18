@@ -55,7 +55,7 @@ export async function generateReport(repoPath: string, outputMode: 'dist' | 'ana
   const fileTypes = getFileTypeStats(commits, currentFiles)
   
   progressReporter?.report('Generating HTML report')
-  const html = await injectDataIntoTemplate(template, chartData, commits, currentFiles, contributors, fileTypes, progressReporter)
+  const html = await injectDataIntoTemplate(template, chartData, commits, currentFiles, contributors, fileTypes, repoPath, progressReporter)
   
   progressReporter?.report('Writing report file')
   await writeFile(reportPath, html)
@@ -143,7 +143,7 @@ async function transformCommitData(commits: CommitData[], repoName: string, repo
   }
 }
 
-async function injectDataIntoTemplate(template: string, chartData: ChartData, commits: CommitData[], currentFiles: Set<string>, contributors: ContributorStats[], fileTypes: FileTypeStats[], progressReporter?: ProgressReporter): Promise<string> {
+async function injectDataIntoTemplate(template: string, chartData: ChartData, commits: CommitData[], currentFiles: Set<string>, contributors: ContributorStats[], fileTypes: FileTypeStats[], repoPath: string, progressReporter?: ProgressReporter): Promise<string> {
   
   progressReporter?.report('Generating chart data')
   const timeSeries = getTimeSeriesData(commits)
@@ -182,7 +182,8 @@ async function injectDataIntoTemplate(template: string, chartData: ChartData, co
         fileHeatData: ${JSON.stringify(fileHeatData)},
         topFilesData: ${JSON.stringify(topFilesData)},
         awards: ${JSON.stringify(awards)},
-        trophySvgs: ${JSON.stringify(chartData.trophySvgs)}
+        trophySvgs: ${JSON.stringify(chartData.trophySvgs)},
+        githubUrl: ${JSON.stringify(await getGitHubUrl(repoPath))}
       };
       
       // Initialize when DOM is ready

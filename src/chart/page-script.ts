@@ -46,6 +46,7 @@ export interface PageScriptData {
     highestAverage: ContributorAward[]
   }
   trophySvgs: TrophySvgs
+  githubUrl?: string
 }
 
 export class PageScript {

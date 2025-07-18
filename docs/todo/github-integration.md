@@ -14,18 +14,21 @@
 - Implemented in `src/report/generator.ts:140`
 - Shows "• GitHub" link only when repository is GitHub-hosted
 
-### Phase 3: Link Commits to GitHub in Awards Section ❌ REMAINING WORK
-**Current Issue:** Commit SHA links in awards section are placeholder `href="#"` links that don't go anywhere.
+### Phase 3: Link Commits to GitHub in Awards Section ✅ COMPLETE
+**Implementation completed successfully!**
 
-**Implementation Plan:**
-1. Pass GitHub URL to client-side code in `src/report/generator.ts`
-2. Update awards rendering in `src/chart/chart-initializer.ts:158-160` to create actual GitHub commit links
-3. Construct URLs as: `https://github.com/{owner}/{repo}/commit/{sha}`
-4. Add `target="_blank"` for new tab opening
+**Changes made:**
+1. ✅ Added `githubUrl?: string` to `PageScriptData` interface in `src/chart/page-script.ts`
+2. ✅ Updated `src/report/generator.ts` to pass GitHub URL to client-side code via `githubUrl: ${JSON.stringify(await getGitHubUrl(repoPath))}`
+3. ✅ Modified awards rendering in `src/chart/chart-initializer.ts` to create actual GitHub commit links:
+   - When GitHub URL is available: `<a href="${this.data.githubUrl}/commit/${award.sha}" target="_blank">`
+   - When GitHub URL is not available: `<span>` (fallback for non-GitHub repos)
+4. ✅ Added `target="_blank"` for new tab opening
 
-**Files to modify:**
-- `src/report/generator.ts`: Add `githubUrl` to page data (line 185)
-- `src/chart/chart-initializer.ts`: Update awards rendering to use GitHub URLs (lines 158-160)  
-- `src/chart/page-script.ts`: Add githubUrl to PageScriptData interface
+**Testing verified:**
+- ✅ GitHub repositories now have functional commit links in awards section
+- ✅ Non-GitHub repositories gracefully fall back to plain text SHA display
+- ✅ TypeScript compilation passes
+- ✅ All existing tests continue to pass
 
-**Small commit scope:** Focus only on making commit SHA links functional GitHub links when GitHub URL is available.
+**Result:** All commit SHA links in the awards section now properly link to GitHub when the repository is GitHub-hosted.

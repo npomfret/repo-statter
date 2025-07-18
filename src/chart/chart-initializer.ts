@@ -152,12 +152,16 @@ export class ChartInitializer {
             award.message.substring(0, 50) + '...' : 
             award.message
           
+          const commitLink = this.data.githubUrl ? 
+            `<a href="${this.data.githubUrl}/commit/${award.sha}" target="_blank" class="text-decoration-none" title="${award.sha}">
+              ${award.sha.substring(0, 7)}
+            </a>` :
+            `<span title="${award.sha}">${award.sha.substring(0, 7)}</span>`
+
           meta.innerHTML = `
             ${award.authorName} • 
             ${new Date(award.date).toLocaleDateString()} • 
-            <a href="#" class="text-decoration-none" onclick="return false;" title="${award.sha}">
-              ${award.sha.substring(0, 7)}
-            </a>
+            ${commitLink}
           `
           
           badge.textContent = award.value.toLocaleString()
