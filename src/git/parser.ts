@@ -153,6 +153,8 @@ async function parseCommitDiff(repoPath: string, commitHash: string): Promise<{ 
   }
   
   // For first commit, use proper syntax
+  // 4b825dc642cb6eb9a060e54bf8d69288fbee4904 is Git's empty tree hash - represents an empty repository
+  // This allows us to diff the first commit against "nothing" to see all changes introduced
   const diffArgs = isFirstCommit 
     ? [`4b825dc642cb6eb9a060e54bf8d69288fbee4904..${commitHash}`]
     : [commitHash + '^!']

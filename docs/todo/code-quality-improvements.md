@@ -26,7 +26,7 @@ The `isRealCommit` function is defined in both `src/data/award-calculator.ts` an
 
 **Result:** Successfully consolidated the `isRealCommit` function into `src/utils/commit-filters.ts`. Both files now use the same comprehensive implementation. All tests pass.
 
-### 2. Hardcoded `magic string` in `git/parser.ts`
+### 2. Hardcoded `magic string` in `git/parser.ts` ✅ COMPLETED
 
 In `src/git/parser.ts`, the `parseCommitDiff` function has this code:
 
@@ -46,6 +46,8 @@ const diffArgs = isFirstCommit
   ? [`4b825dc642cb6eb9a060e54bf8d69288fbee4904..${commitHash}`]
   : [commitHash + '^!']
 ```
+
+**Result:** Added clear explanatory comments that document the empty tree hash and its purpose. The magic string is now properly documented for future maintainers.
 
 ### 3. Overly Complex CLI Handling in `cli/handler.ts`
 
