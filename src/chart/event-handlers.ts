@@ -21,6 +21,7 @@ export class EventHandlers {
     this.setupXAxisToggle()
     this.setupFilterSystem()
     this.setupClearFiltersButton()
+    this.setupTopFilesTabs()
   }
 
   private setupThemeToggle(): void {
@@ -166,5 +167,30 @@ export class EventHandlers {
         <strong>Filters Active:</strong> ${status}
       </div>
     `
+  }
+
+  private setupTopFilesTabs(): void {
+    const tabElement = document.querySelector('#largest-tab')
+    
+    if (tabElement && this.data.topFilesData) {
+      const topFilesChart = this.renderers.getTopFilesChart()
+      
+      // Listen for Bootstrap tab events
+      const tabTriggers = document.querySelectorAll('button[data-bs-toggle="tab"]')
+      tabTriggers.forEach(trigger => {
+        trigger.addEventListener('shown.bs.tab', (event) => {
+          const target = event.target as HTMLElement
+          const tabId = target.id
+          
+          if (tabId === 'largest-tab') {
+            topFilesChart.render(this.data.topFilesData!, 'largest')
+          } else if (tabId === 'churn-tab') {
+            topFilesChart.render(this.data.topFilesData!, 'churn')
+          } else if (tabId === 'complex-tab') {
+            topFilesChart.render(this.data.topFilesData!, 'complex')
+          }
+        })
+      })
+    }
   }
 }

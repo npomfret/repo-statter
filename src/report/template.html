@@ -410,6 +410,43 @@
                     </div>
                 </div>
 
+                <!-- Top 5 Files Chart -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                            <li class="nav-item">
+                                <button class="nav-link active" id="largest-tab" data-bs-toggle="tab" data-bs-target="#largest-pane" type="button" role="tab" aria-controls="largest-pane" aria-selected="true">Largest</button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" id="churn-tab" data-bs-toggle="tab" data-bs-target="#churn-pane" type="button" role="tab" aria-controls="churn-pane" aria-selected="false">Most Churn</button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" id="complex-tab" data-bs-toggle="tab" data-bs-target="#complex-pane" type="button" role="tab" aria-controls="complex-pane" aria-selected="false">Most Complex</button>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-body">
+                        <div class="tab-content">
+                            <div class="tab-pane fade show active" id="largest-pane" role="tabpanel" aria-labelledby="largest-tab" tabindex="0">
+                                <p class="card-text small text-muted mb-3">
+                                    Files with the most lines of code in the repository
+                                </p>
+                            </div>
+                            <div class="tab-pane fade" id="churn-pane" role="tabpanel" aria-labelledby="churn-tab" tabindex="0">
+                                <p class="card-text small text-muted mb-3">
+                                    Files with the most changes (lines added + deleted)
+                                </p>
+                            </div>
+                            <div class="tab-pane fade" id="complex-pane" role="tabpanel" aria-labelledby="complex-tab" tabindex="0">
+                                <p class="card-text small text-muted mb-3">
+                                    Files with the highest complexity scores
+                                </p>
+                            </div>
+                        </div>
+                        <div id="topFilesChart"></div>
+                    </div>
+                </div>
+
                 <!-- Word Cloud -->
                 <div class="card mb-4">
                     <div class="card-header">

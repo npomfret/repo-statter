@@ -6,6 +6,7 @@ import type { ContributorStats, CommitAward, ContributorAward } from '../stats/c
 import type { FileTypeStats, FileHeatData } from '../data/file-calculator.js'
 import type { TimeSeriesPoint, LinearSeriesPoint } from '../chart/data-transformer.js'
 import type { WordFrequency } from '../text/processor.js'
+import type { TopFilesData } from '../stats/calculator.js'
 
 interface TrophySvgs {
   contributors: string
@@ -33,6 +34,7 @@ export interface PageScriptData {
   linearSeries: LinearSeriesPoint[]
   wordCloudData: WordFrequency[]
   fileHeatData: FileHeatData[]
+  topFilesData?: TopFilesData
   awards?: {
     filesModified: CommitAward[]
     bytesAdded: CommitAward[]

@@ -10,3 +10,5 @@ export {
   getTopCommitsByLinesAdded, 
   getTopCommitsByLinesRemoved 
 } from '../data/award-calculator.js'
+export type { TopFileStats, TopFilesData } from '../data/top-files-calculator.js'
+export { getTopFilesBySize, getTopFilesByChurn, getTopFilesStats } from '../data/top-files-calculator.js'

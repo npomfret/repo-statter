@@ -8,6 +8,7 @@ import { GrowthChart } from '../charts/growth-chart.js'
 import { CommitActivityChart } from '../charts/commit-activity-chart.js'
 import { WordCloudChart } from '../charts/word-cloud-chart.js'
 import { FileHeatmapChart } from '../charts/file-heatmap-chart.js'
+import { TopFilesChart } from '../charts/top-files-chart.js'
 
 export class ChartRenderers {
   private contributorsChart: ContributorsChart
@@ -16,6 +17,7 @@ export class ChartRenderers {
   private commitActivityChart: CommitActivityChart
   private wordCloudChart: WordCloudChart
   private fileHeatmapChart: FileHeatmapChart
+  private topFilesChart: TopFilesChart
 
   constructor(private data: PageScriptData) {
     this.contributorsChart = new ContributorsChart('contributorsChart')
@@ -24,6 +26,7 @@ export class ChartRenderers {
     this.commitActivityChart = new CommitActivityChart('commitActivityChart')
     this.wordCloudChart = new WordCloudChart('wordCloudChart')
     this.fileHeatmapChart = new FileHeatmapChart('fileHeatmapChart')
+    this.topFilesChart = new TopFilesChart('topFilesChart')
   }
 
   public renderAllCharts(): void {
@@ -33,6 +36,9 @@ export class ChartRenderers {
     this.commitActivityChart.render(this.data.timeSeries)
     this.wordCloudChart.render(this.data.wordCloudData)
     this.fileHeatmapChart.render(this.data.fileHeatData)
+    if (this.data.topFilesData) {
+      this.topFilesChart.render(this.data.topFilesData, 'largest')
+    }
   }
 
   public renderUserCharts(filteredContributors: ContributorStats[]): void {
@@ -272,7 +278,12 @@ export class ChartRenderers {
       growth: this.growthChart,
       commitActivity: this.commitActivityChart,
       wordCloud: this.wordCloudChart,
-      fileHeatmap: this.fileHeatmapChart
+      fileHeatmap: this.fileHeatmapChart,
+      topFiles: this.topFilesChart
     }
+  }
+
+  public getTopFilesChart() {
+    return this.topFilesChart
   }
 }

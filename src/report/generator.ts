@@ -12,7 +12,8 @@ import {
   getTopCommitsByLinesAdded,
   getTopCommitsByLinesRemoved,
   getLowestAverageLinesChanged,
-  getHighestAverageLinesChanged
+  getHighestAverageLinesChanged,
+  getTopFilesStats
 } from '../stats/calculator.js'
 import { getTimeSeriesData, getLinearSeriesData } from '../chart/data-transformer.js'
 import { processCommitMessages } from '../text/processor.js'
@@ -120,6 +121,7 @@ async function injectDataIntoTemplate(template: string, chartData: ChartData, co
   const linearSeries = getLinearSeriesData(commits)
   const wordCloudData = processCommitMessages(commits.map(c => c.message))
   const fileHeatData = getFileHeatData(commits)
+  const topFilesData = getTopFilesStats(commits)
   
   // Calculate awards
   const awards = {
@@ -148,6 +150,7 @@ async function injectDataIntoTemplate(template: string, chartData: ChartData, co
         linearSeries: ${JSON.stringify(linearSeries)},
         wordCloudData: ${JSON.stringify(wordCloudData)},
         fileHeatData: ${JSON.stringify(fileHeatData)},
+        topFilesData: ${JSON.stringify(topFilesData)},
         awards: ${JSON.stringify(awards)},
         trophySvgs: ${JSON.stringify(chartData.trophySvgs)}
       };
