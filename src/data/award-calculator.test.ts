@@ -68,6 +68,127 @@ describe('Award Calculator', () => {
       expect(result[0]!.sha).toBe('2')
     })
 
+    it('should exclude conflict resolution commits', () => {
+      const commits = [
+        new CommitDataBuilder()
+          .withHash('1').withMessage('Resolved conflicts by accepting remote component')
+          .withFileChange(new FileChangeBuilder().withPath('a.js').build())
+          .build(),
+        new CommitDataBuilder()
+          .withHash('2').withMessage('Resolving conflicts in feature branch')
+          .withFileChange(new FileChangeBuilder().withPath('b.js').build())
+          .build(),
+        new CommitDataBuilder()
+          .withHash('3').withMessage('Fixed conflict by accepting incoming changes')
+          .withFileChange(new FileChangeBuilder().withPath('c.js').build())
+          .build(),
+        new CommitDataBuilder()
+          .withHash('4').withMessage('Real feature implementation')
+          .withFileChange(new FileChangeBuilder().withPath('d.js').build())
+          .build()
+      ]
+
+      const result = getTopCommitsByFilesModified(commits)
+      
+      expect(result).toHaveLength(1)
+      expect(result[0]!.sha).toBe('4')
+    })
+
+    it('should exclude automated commits', () => {
+      const commits = [
+        new CommitDataBuilder()
+          .withHash('1').withMessage('Bump version to 1.2.3')
+          .withFileChange(new FileChangeBuilder().withPath('package.json').build())
+          .build(),
+        new CommitDataBuilder()
+          .withHash('2').withMessage('Update dependencies for security')
+          .withFileChange(new FileChangeBuilder().withPath('package-lock.json').build())
+          .build(),
+        new CommitDataBuilder()
+          .withHash('3').withMessage('chore: update dependency axios to v1.5.0')
+          .withFileChange(new FileChangeBuilder().withPath('package.json').build())
+          .build(),
+        new CommitDataBuilder()
+          .withHash('4').withMessage('Automated merge from main')
+          .withFileChange(new FileChangeBuilder().withPath('src/index.js').build())
+          .build(),
+        new CommitDataBuilder()
+          .withHash('5').withMessage('Implement new axios integration')
+          .withFileChange(new FileChangeBuilder().withPath('src/api.js').build())
+          .build()
+      ]
+
+      const result = getTopCommitsByFilesModified(commits)
+      
+      expect(result).toHaveLength(1)
+      expect(result[0]!.sha).toBe('5')
+    })
+
+    it('should exclude bot commits', () => {
+      const commits = [
+        new CommitDataBuilder()
+          .withHash('1').withMessage('chore(deps): update dependency eslint to v8 - renovate[bot]')
+          .withFileChange(new FileChangeBuilder().withPath('package.json').build())
+          .build(),
+        new CommitDataBuilder()
+          .withHash('2').withMessage('Bump axios from 0.21.1 to 0.21.2 - dependabot[bot]')
+          .withFileChange(new FileChangeBuilder().withPath('package-lock.json').build())
+          .build(),
+        new CommitDataBuilder()
+          .withHash('3').withMessage('WhiteSource security update')
+          .withFileChange(new FileChangeBuilder().withPath('yarn.lock').build())
+          .build(),
+        new CommitDataBuilder()
+          .withHash('4').withMessage('Add security scanning to CI pipeline')
+          .withFileChange(new FileChangeBuilder().withPath('.github/workflows/security.yml').build())
+          .build()
+      ]
+
+      const result = getTopCommitsByFilesModified(commits)
+      
+      expect(result).toHaveLength(1)
+      expect(result[0]!.sha).toBe('4')
+    })
+
+    it('should exclude revert commits', () => {
+      const commits = [
+        new CommitDataBuilder()
+          .withHash('1').withMessage('Revert "Add broken feature"')
+          .withFileChange(new FileChangeBuilder().withPath('src/feature.js').build())
+          .build(),
+        new CommitDataBuilder()
+          .withHash('2').withMessage('Fix the previously broken feature')
+          .withFileChange(new FileChangeBuilder().withPath('src/feature.js').build())
+          .build()
+      ]
+
+      const result = getTopCommitsByFilesModified(commits)
+      
+      expect(result).toHaveLength(1)
+      expect(result[0]!.sha).toBe('2')
+    })
+
+    it('should allow legitimate commits with keywords in different context', () => {
+      const commits = [
+        new CommitDataBuilder()
+          .withHash('1').withMessage('Add new feature for conflict detection')
+          .withFileChange(new FileChangeBuilder().withPath('src/detector.js').build())
+          .build(),
+        new CommitDataBuilder()
+          .withHash('2').withMessage('Implement auto-save functionality')
+          .withFileChange(new FileChangeBuilder().withPath('src/autosave.js').build())
+          .build(),
+        new CommitDataBuilder()
+          .withHash('3').withMessage('Create dependency injection system')
+          .withFileChange(new FileChangeBuilder().withPath('src/di.js').build())
+          .build()
+      ]
+
+      const result = getTopCommitsByFilesModified(commits)
+      
+      expect(result).toHaveLength(3)
+    })
+
     it('should limit to top 5 commits', () => {
       const commits = Array.from({ length: 10 }, (_, i) => 
         new CommitDataBuilder()
