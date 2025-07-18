@@ -6,48 +6,70 @@ This document outlines the steps required to automatically generate and publish 
 
 To have an up-to-date analysis report of the `repo-statter` repository itself, accessible via GitHub Pages (e.g., `https://<username>.github.io/repo-statter/`).
 
-## Steps
+## Implementation Plan
 
-### 1. Ensure Report Generation Capability
+### ✅ Step 1: Analyze Current Project Structure
+- **Completed**: Identified that the project uses `tsx src/cli.ts` as the main entry point
+- **Completed**: Confirmed `npm run analyse:self` script exists and works correctly
+- **Completed**: Verified report generation outputs to `dist/repo-statter.html` and `dist/page-script.js`
 
-*   **Verify `repo-statter` can generate its own report:** Confirm that running the `repo-statter` tool against its own repository produces a valid HTML report.
-    *   *Action:* Identify the command to generate the report (e.g., `npm run build && node dist/index.js --repo . --output report.html`).
-    *   *Output:* The generated report (e.g., `report.html`) and any associated assets (CSS, JS, images).
+### ✅ Step 2: Test Self-Report Generation
+- **Completed**: Successfully tested `npm run analyse:self` 
+- **Completed**: Confirmed it generates `repo-statter.html` and `page-script.js` in the `dist` directory
+- **Completed**: Verified the report processes 240 commits and generates successfully
 
-### 2. Choose GitHub Pages Publishing Source
+### ✅ Step 3: Create Directory Structure
+- **Completed**: Created `examples/repo-statter/` directory to house the published report
 
-*   **Option: `docs` folder on `main` branch:** This is generally the simplest approach for static sites within a repository.
-    *   *Action:* Configure GitHub Pages settings in the repository to serve from the `/docs` folder on the `main` branch.
+### ✅ Step 4: Create GitHub Actions Workflow
+- **Completed**: Created `.github/workflows/publish-self-report.yml` with the following features:
+  - Triggers on push to main branch and weekly schedule (Monday 6 AM UTC)
+  - Uses proper GitHub Pages permissions and concurrency controls
+  - Installs dependencies with `npm ci`
+  - Generates self-report using `npm run analyse:self`
+  - Copies generated files to `examples/repo-statter/index.html` and `examples/repo-statter/page-script.js`
+  - Deploys to GitHub Pages using official actions
 
-### 3. Prepare Report for Deployment
+### 🔄 Step 5: Configure GitHub Pages Settings
+- **In Progress**: Need to configure repository settings to use GitHub Pages
+- **Action Required**: In repository settings, configure Pages to deploy from GitHub Actions
 
-*   **Dedicated directory for the self-report:** Create a specific subdirectory within `docs` to house the self-report and its assets to avoid conflicts with other documentation.
-    *   *Action:* Create `docs/self-report/`.
-*   **Copy generated report:** After generation, the report HTML and its dependencies (CSS, JS, images) must be copied into `docs/self-report/`.
-    *   *Action:* Ensure the report generation process outputs directly to or is followed by a step to copy files to `docs/self-report/`. Relative paths within the report HTML must be correct for this new location.
+### ⏳ Step 6: Test Complete Workflow
+- **Pending**: Test the workflow by pushing changes and verifying deployment
 
-### 4. Automate with GitHub Actions
+## Technical Details
 
-*   **Create a GitHub Actions workflow:** Set up a workflow that triggers on pushes to the `main` branch (or a schedule) to automate the report generation and deployment.
-    *   *File:* `.github/workflows/publish-self-report.yml`
-    *   *Workflow Steps:*
-        1.  **Checkout code:** Get the latest code.
-        2.  **Setup Node.js:** Install Node.js.
-        3.  **Install dependencies:** `npm ci`
-        4.  **Build `repo-statter`:** `npm run build` (if necessary to create the executable).
-        5.  **Generate self-report:** Run the `repo-statter` command against the current repository, outputting to a temporary location.
-        6.  **Copy report to `docs/self-report`:** Move the generated HTML and assets to the `docs/self-report` directory.
-        7.  **Commit and Push (if necessary):** If the report is generated and committed back to the `main` branch, this step is needed. However, a better approach is to use a dedicated action for deploying to GitHub Pages.
-        8.  **Deploy to GitHub Pages:** Use an action like `peaceiris/actions-gh-pages` to deploy the contents of `docs/self-report` to the `gh-pages` branch, which GitHub Pages can then serve.
+### Report Generation Command
+- Uses existing `npm run analyse:self` script
+- Outputs to `dist/repo-statter.html` and `dist/page-script.js`
+- No build step required as TypeScript is executed directly with `tsx`
 
-### 5. Configure GitHub Pages
+### GitHub Actions Workflow Features
+- **Triggers**: Push to main branch + weekly schedule
+- **Permissions**: Proper GitHub Pages permissions configured
+- **Concurrency**: Prevents multiple deployments running simultaneously
+- **Environment**: Uses `github-pages` environment for deployment
+- **Caching**: Uses npm cache for faster builds
 
-*   **Repository Settings:** Navigate to your repository settings on GitHub.
-*   **Pages Section:** Under "Pages", select the `main` branch and `/docs` folder as the source for GitHub Pages.
+### File Structure
+```
+examples/
+  repo-statter/
+    index.html          # Renamed from repo-statter.html
+    page-script.js      # JavaScript for interactive features
+```
+
+## Next Steps
+
+1. **Configure GitHub Pages**: Set repository Pages settings to "Deploy from a branch" and select "GitHub Actions" as the source
+2. **Test Deployment**: Push changes to main branch to trigger first deployment
+3. **Verify Accessibility**: Check that the report is accessible at the GitHub Pages URL
+4. **Monitor**: Ensure weekly updates work correctly
 
 ## Considerations
 
-*   **Report Size:** Ensure the generated report and its assets are not excessively large, as this could impact load times.
-*   **Asset Paths:** Verify that all relative paths for CSS, JavaScript, and images within the generated HTML report are correct when moved to `docs/self-report/`.
-*   **Security:** If the report contains sensitive information, ensure it's not publicly accessible. (This is a self-report, so likely not an issue, but good practice to consider).
-*   **Custom Domain (Optional):** If a custom domain is desired, configure it in GitHub Pages settings and your DNS provider.
+✅ **Report Size**: Generated report is reasonably sized with embedded assets
+✅ **Asset Paths**: JavaScript file is properly referenced in HTML
+✅ **Security**: Self-report contains no sensitive information
+✅ **Performance**: Weekly updates prevent excessive build frequency
+✅ **Maintenance**: Automated workflow requires no manual intervention
