@@ -53,18 +53,31 @@ To have an up-to-date analysis report of the `repo-statter` repository itself, a
 
 ### File Structure
 ```
-examples/
+docs/
+  index.html            # Landing page
   repo-statter/
-    index.html          # Renamed from repo-statter.html
+    index.html          # Self-report (renamed from repo-statter.html)
     page-script.js      # JavaScript for interactive features
 ```
 
-## Next Steps
+## ✅ COMPLETED
 
-1. **Configure GitHub Pages**: Set repository Pages settings to "Deploy from a branch" and select "GitHub Actions" as the source
-2. **Test Deployment**: Push changes to main branch to trigger first deployment
-3. **Verify Accessibility**: Check that the report is accessible at the GitHub Pages URL
-4. **Monitor**: Ensure weekly updates work correctly
+### Final Implementation
+- **Approach**: Static HTML files committed to repository
+- **Location**: `docs/` directory for GitHub Pages compatibility
+- **Updates**: Manual regeneration using `scripts/update-self-report.sh`
+- **Access**: https://npomfret.github.io/repo-statter/repo-statter/
+
+### Regeneration Process
+```bash
+# Run the update script
+./scripts/update-self-report.sh
+
+# Commit and push the updated files
+git add docs/repo-statter/
+git commit -m "update: regenerate self-report"
+git push origin main
+```
 
 ## Considerations
 
