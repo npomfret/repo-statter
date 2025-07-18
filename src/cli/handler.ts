@@ -3,6 +3,7 @@ import { generateReport } from '../report/generator.js'
 import { validateGitRepository } from '../utils/git-validation.js'
 import { ConsoleProgressReporter } from '../utils/progress-reporter.js'
 import { ThrottledProgressReporter } from '../utils/throttled-progress-reporter.js'
+import { isRepoStatError, formatError } from '../utils/errors.js'
 
 export async function handleCLI(args: string[]): Promise<void> {
   program
@@ -26,8 +27,15 @@ export async function handleCLI(args: string[]): Promise<void> {
         const maxCommits = parseInt(options.maxCommits, 10)
         const reportPath = await generateReport(finalRepoPath, outputDir, progressReporter, maxCommits)
         console.log(`\nReport generated: ${reportPath}`)
-      } catch (error: any) {
-        console.error(`Error: ${error.message}`)
+      } catch (error) {
+        if (isRepoStatError(error)) {
+          console.error(`Error: ${error.message}`)
+          if (error.code) {
+            console.error(`Error code: ${error.code}`)
+          }
+        } else {
+          console.error(`Unexpected error: ${formatError(error)}`)
+        }
         process.exit(1)
       }
     })

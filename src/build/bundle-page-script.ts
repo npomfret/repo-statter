@@ -1,7 +1,7 @@
 import { build } from 'esbuild'
 import { writeFile } from 'fs/promises'
 import { existsSync } from 'fs'
-import { BuildError } from '../utils/errors.js'
+import { BuildError, formatError } from '../utils/errors.js'
 
 export async function bundlePageScript(): Promise<string> {
   const entryPoint = 'src/chart/page-script.ts'
@@ -65,7 +65,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   bundlePageScript()
     .then(() => {})
     .catch(error => {
-      console.error('Bundle failed:', error)
+      // Build script error logging - this is acceptable for build-time debugging
+      console.error('Bundle failed:', formatError(error))
       process.exit(1)
     })
 }

@@ -3,6 +3,7 @@ import type { CommitData } from '../git/parser.js'
 import type { ContributorStats } from '../data/contributor-calculator.js'
 import { buildUserTimeSeriesData } from '../utils/chart-data-builders.js'
 import { renderWithErrorBoundary } from '../utils/error-boundary.js'
+import { formatError } from '../utils/errors.js'
 import { ContributorsChart } from '../charts/contributors-chart.js'
 import { FileTypesChart } from '../charts/file-types-chart.js'
 import { GrowthChart } from '../charts/growth-chart.js'
@@ -73,7 +74,8 @@ export class ChartRenderers {
       try {
         this.renderUserChart(contributor, index, container)
       } catch (error) {
-        console.error(`Failed to render chart for ${contributor.name}:`, error)
+        // Client-side error logging - this is acceptable for debugging UI issues
+        console.error(`Failed to render chart for ${contributor.name}:`, formatError(error))
         const col = document.createElement('div')
         col.className = 'col-12 col-xl-6 mb-4'
         col.innerHTML = `

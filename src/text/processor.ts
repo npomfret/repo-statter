@@ -1,9 +1,4 @@
-// Assert utilities for fail-fast error handling
-function assert(condition: boolean, message: string): asserts condition {
-  if (!condition) {
-    throw new Error(message)
-  }
-}
+import { assert } from '../utils/errors.js'
 
 export interface WordFrequency {
   text: string

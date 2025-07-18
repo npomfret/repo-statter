@@ -1,19 +1,7 @@
 import { extname } from 'path'
 import type { FileChange } from '../git/parser.js'
 import { isFileExcluded } from '../utils/exclusions.js'
-
-// Assert utilities for fail-fast error handling
-function assert(condition: boolean, message: string): asserts condition {
-  if (!condition) {
-    throw new Error(message)
-  }
-}
-
-function assertDefined<T>(value: T | undefined | null, name: string): asserts value is T {
-  if (value === undefined || value === null) {
-    throw new Error(`${name} is required but was ${value}`)
-  }
-}
+import { assert, assertDefined } from '../utils/errors.js'
 
 
 const FILE_TYPE_MAP = {

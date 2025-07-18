@@ -1,10 +1,7 @@
 import type { LinearSeriesPoint } from '../data/linear-transformer.js'
 import type { TimeSeriesPoint } from '../data/time-series-transformer.js'
 import type { CommitData } from '../git/parser.js'
-
-function assert(condition: boolean, message: string): asserts condition {
-  if (!condition) throw new Error(message)
-}
+import { assert } from '../utils/errors.js'
 
 type ChartDataPoint = {
   x: number

@@ -1,3 +1,5 @@
+import { formatError } from './errors.js'
+
 export function renderWithErrorBoundary(
   containerId: string,
   chartName: string,
@@ -7,7 +9,8 @@ export function renderWithErrorBoundary(
     renderFunction()
     return true
   } catch (error) {
-    console.error(`Failed to render ${chartName}:`, error)
+    // Client-side error logging - this is acceptable for debugging UI issues
+    console.error(`Failed to render ${chartName}:`, formatError(error))
     
     const container = document.querySelector(`#${containerId}`)
     if (container) {

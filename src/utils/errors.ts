@@ -33,3 +33,15 @@ export function formatError(error: unknown): string {
 export function isRepoStatError(error: unknown): error is RepoStatError {
   return error instanceof RepoStatError
 }
+
+export function assert(condition: boolean, message: string): asserts condition {
+  if (!condition) {
+    throw new RepoStatError(message, 'ASSERTION_ERROR')
+  }
+}
+
+export function assertDefined<T>(value: T | undefined | null, name: string): asserts value is T {
+  if (value === undefined || value === null) {
+    throw new RepoStatError(`${name} is required but was ${value}`, 'ASSERTION_ERROR')
+  }
+}

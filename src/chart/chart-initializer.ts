@@ -1,6 +1,7 @@
 import type { PageScriptData } from './page-script.js'
 import type { ChartRenderers } from './chart-renderers.js'
 import type { EventHandlers } from './event-handlers.js'
+import { formatError } from '../utils/errors.js'
 
 export class ChartInitializer {
   constructor(
@@ -31,7 +32,8 @@ export class ChartInitializer {
       try {
         this.renderAwards()
       } catch (error) {
-        console.error('Failed to render awards:', error)
+        // Client-side error logging - this is acceptable for debugging UI issues
+        console.error('Failed to render awards:', formatError(error))
         const container = document.getElementById('awardsContainer')
         if (container) {
           container.innerHTML = `

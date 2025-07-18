@@ -1,8 +1,5 @@
 import type { ContributorStats } from '../data/contributor-calculator.js'
-
-function assert(condition: boolean, message: string): asserts condition {
-  if (!condition) throw new Error(message)
-}
+import { assert } from '../utils/errors.js'
 
 export class ContributorsChart {
   private containerId: string

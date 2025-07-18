@@ -1,8 +1,5 @@
 import type { TopFilesData, TopFileStats } from '../data/top-files-calculator.js'
-
-function assert(condition: boolean, message: string): asserts condition {
-  if (!condition) throw new Error(message)
-}
+import { assert } from '../utils/errors.js'
 
 export class TopFilesChart {
   private containerId: string

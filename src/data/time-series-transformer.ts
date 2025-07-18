@@ -1,10 +1,5 @@
 import type { CommitData } from '../git/parser.js'
-
-function assert(condition: boolean, message: string): asserts condition {
-  if (!condition) {
-    throw new Error(message)
-  }
-}
+import { assert } from '../utils/errors.js'
 
 function getDateKey(date: Date, useHourly: boolean): string {
   if (useHourly) {
