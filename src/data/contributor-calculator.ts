@@ -1,4 +1,5 @@
 import type { CommitData } from '../git/parser.js'
+import { isRealCommit } from '../utils/commit-filters.js'
 
 // Assert utilities for fail-fast error handling
 function assert(condition: boolean, message: string): asserts condition {
@@ -44,13 +45,6 @@ export function getContributorStats(commits: CommitData[]): ContributorStats[] {
     .sort((a, b) => b.commits - a.commits)
 }
 
-function isRealCommit(commit: CommitData): boolean {
-  const message = commit.message.toLowerCase()
-  return !message.startsWith('merge remote-tracking branch') && 
-         !message.startsWith('merge branch') &&
-         !message.startsWith('resolved conflicts') &&
-         !message.includes('merge pull request')
-}
 
 export function getContributorsByAverageLinesChanged(commits: CommitData[]): ContributorAward[] {
   const contributorMap = new Map<string, { commits: number; totalLinesChanged: number }>()
