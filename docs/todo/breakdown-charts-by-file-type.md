@@ -3,102 +3,148 @@
 ## Objective
 Enhance the "Lines of Code" and "Repository Size" charts to display a breakdown of file types by category (e.g., Application Code, Tests, Build, Documentation, Other). This will provide a more insightful view of the repository's composition over time, rather than just showing a total.
 
-## Implementation Plan
+## Analysis of Current Implementation
 
-### 1. Define File Type Categories
--   **Action**: Create a mapping of file extensions to categories. This logic should be centralized, likely in a new utility file or within `src/utils/exclusions.ts`.
--   **Location**: A new function, e.g., `getFileCategory(filePath: string)`, will be created.
+After examining the codebase, I found:
+
+- **Time Series Data**: Uses `TimeSeriesPoint` interface with simple number fields for metrics
+- **File Type Stats**: Already exists in `src/data/file-calculator.ts` with `FileTypeStats` interface
+- **Chart Rendering**: Uses ApexCharts with TypeScript classes in `src/charts/` directory  
+- **Data Flow**: Git parsing → data transformation → report generation with self-contained HTML
+
+## Detailed Implementation Plan
+
+### Step 1: Create File Category Mapping
+**File**: `src/utils/file-categories.ts` (new file)
+**Action**: Create categorization logic that leverages existing `FILE_TYPE_MAP` from file-calculator.ts
 
 ```typescript
-// Example implementation in a new file, e.g., src/utils/file-categories.ts
-
 export type FileCategory = 'Application' | 'Test' | 'Build' | 'Documentation' | 'Other';
 
-const categoryMapping: Record<string, FileCategory> = {
-  // Application Code
-  '.ts': 'Application',
-  '.js': 'Application',
-  '.tsx': 'Application',
-  '.jsx': 'Application',
-  // Test Code
-  '.test.ts': 'Test',
-  '.spec.ts': 'Test',
-  '.test.js': 'Test',
-  '.spec.js': 'Test',
-  // Build & Config
-  '.json': 'Build',
-  '.sh': 'Build',
-  '.yml': 'Build',
-  '.yaml': 'Build',
-  // Documentation
-  '.md': 'Documentation',
-  '.txt': 'Documentation',
-};
-
 export function getFileCategory(filePath: string): FileCategory {
-  for (const extension in categoryMapping) {
-    if (filePath.endsWith(extension)) {
-      return categoryMapping[extension];
-    }
+  // Use existing file type detection logic
+  const fileType = getFileType(filePath);
+  
+  // Map file types to categories
+  const categoryMap: Record<string, FileCategory> = {
+    'TypeScript': 'Application',
+    'JavaScript': 'Application', 
+    'Python': 'Application',
+    'Java': 'Application',
+    'C++': 'Application',
+    'C': 'Application',
+    'Go': 'Application',
+    'Rust': 'Application',
+    'PHP': 'Application',
+    'Ruby': 'Application',
+    'Swift': 'Application',
+    'Kotlin': 'Application',
+    'Scala': 'Application',
+    'C#': 'Application',
+    'Dart': 'Application',
+    'JSON': 'Build',
+    'YAML': 'Build', 
+    'XML': 'Build',
+    'Shell': 'Build',
+    'Dockerfile': 'Build',
+    'Makefile': 'Build',
+    'Markdown': 'Documentation',
+    'Text': 'Documentation',
+  };
+  
+  // Special handling for test files
+  if (filePath.includes('.test.') || filePath.includes('.spec.') || 
+      filePath.includes('test/') || filePath.includes('tests/') ||
+      filePath.includes('__tests__/')) {
+    return 'Test';
   }
-  return 'Other';
+  
+  return categoryMap[fileType] || 'Other';
 }
 ```
 
-### 2. Update Data Calculation
--   **File**: `src/data/time-series-transformer.ts` (or equivalent)
--   **Action**: Modify the `getTimeSeriesData` function to aggregate stats per category.
-    -   The function currently creates a `TimeSeriesPoint` for each time interval with total lines/bytes.
-    -   This will be changed to create a `TimeSeriesPoint` that contains nested objects for each category, plus a total.
+### Step 2: Update Data Structures
+**File**: `src/data/time-series-transformer.ts`
+**Action**: Extend `TimeSeriesPoint` interface to include category breakdown
 
 ```typescript
-// Example of updated TimeSeriesPoint interface
+interface CategoryBreakdown {
+  total: number;
+  application: number;
+  test: number;
+  build: number;
+  documentation: number;
+  other: number;
+}
+
 interface TimeSeriesPoint {
-    date: string;
-    commits: number;
-    linesAdded: { total: number; application: number; test: number; /* ...etc */ };
-    linesDeleted: { total: number; application: number; test: number; /* ...etc */ };
-    cumulativeLines: { total: number; application: number; test: number; /* ...etc */ };
-    // ... same structure for bytes ...
+  date: string;
+  commits: number;
+  linesAdded: CategoryBreakdown;
+  linesDeleted: CategoryBreakdown;
+  cumulativeLines: CategoryBreakdown;
+  bytesAdded: CategoryBreakdown;
+  bytesDeleted: CategoryBreakdown;
+  cumulativeBytes: CategoryBreakdown;
 }
 ```
 
--   **File**: `src/stats/calculator.ts`
--   **Action**: The `getFileTypeStats` function may need to be updated or supplemented to use the new categorization logic when calculating totals.
+### Step 3: Update Time Series Calculation
+**File**: `src/data/time-series-transformer.ts`
+**Action**: Modify `getTimeSeriesData` to aggregate by category
 
-### 3. Update Chart Rendering
--   **File**: `src/report/generator.ts` (embedded JavaScript)
--   **Action**: Modify the chart rendering functions (`renderLinesOfCodeChart`, `renderRepositorySizeChart`) to create a stacked area chart.
-    -   The `series` option for ApexCharts will be an array of objects, where each object represents a file category.
+Logic:
+1. For each commit in time bucket, categorize file changes
+2. Aggregate lines/bytes by category
+3. Calculate cumulative totals per category
+4. Maintain backwards compatibility with existing charts
 
-```javascript
-// Example of new series structure for ApexCharts
-const linesOfCodeSeries = [
-    { name: 'Application', data: [/* ... */] },
-    { name: 'Test', data: [/* ... */] },
-    { name: 'Build', data: [/* ... */] },
-    { name: 'Documentation', data: [/* ... */] },
-    { name: 'Other', data: [/* ... */] },
-];
+### Step 4: Update Chart Classes
+**File**: `src/charts/growth-over-time.ts`
+**Action**: Modify to support stacked area charts with category breakdown
 
-// In the chart options:
-const options = {
-    // ...
-    series: linesOfCodeSeries,
-    chart: {
-        type: 'area',
-        stacked: true, // This is the key to creating a stacked chart
-    },
-    // ...
-};
+```typescript
+// Add toggle for total vs breakdown view
+// Create series array with one series per category
+// Use ApexCharts stacked area configuration
 ```
 
-### 4. Update Total Size Display
--   **File**: `src/report/template.html`
--   **Action**: The display for total repository size will need to be updated to show the breakdown by category. This could be a small table or a list next to the total.
+### Step 5: Update Report Generation
+**File**: `src/report/generator.ts`
+**Action**: Pass category breakdown data to charts
 
-## Impact
--   **Type**: Feature enhancement.
--   **Risk**: Medium. This change affects core data processing and chart rendering. Careful testing is required to ensure the data is aggregated and displayed correctly.
--   **Complexity**: High. It involves changes to data structures, calculations, and chart configurations.
--   **Benefit**: High. Provides much deeper insight into the nature of the repository's evolution, allowing users to see how different parts of the codebase (app vs. tests) grow over time.
+### Step 6: Add UI Controls
+**File**: `src/report/template.html`
+**Action**: Add toggle switch to choose between total and breakdown view
+
+## Minimal Implementation Steps
+
+### Phase 1: Core Infrastructure (1 commit)
+- Create `src/utils/file-categories.ts` 
+- Update `TimeSeriesPoint` interface
+- Update time series calculation logic
+
+### Phase 2: Chart Integration (1 commit)
+- Modify growth-over-time chart to support breakdown
+- Add UI toggle for total vs breakdown view
+
+### Phase 3: Testing & Polish (1 commit)
+- Test with various repositories
+- Ensure charts render correctly
+- Add any missing category mappings
+
+## Risk Assessment
+- **Low Risk**: Builds on existing file type detection
+- **Backwards Compatible**: Maintains existing chart functionality
+- **Performance**: Minimal overhead as categorization happens during existing file processing
+- **Testing**: Can use existing test repositories to validate
+
+## Next Steps
+1. Create file categorization utility
+2. Update time series data structure
+3. Implement breakdown calculation
+4. Update chart rendering
+5. Add UI controls
+6. Test and validate
+
+This approach leverages the existing robust file type detection and chart infrastructure while adding the requested category breakdown functionality.
