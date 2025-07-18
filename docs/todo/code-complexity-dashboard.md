@@ -1,60 +1,84 @@
 # Plan: Add Top 10 Most Complex Code Files to Dashboard
 
+## Task Status
+**Status**: Ready for implementation  
+**Estimated Size**: Small - Single feature addition with existing UI support
+
 ## Objective
-Integrate code complexity analysis into `repo-statter` and display the top 10 most complex files on the generated dashboard.
+Integrate code complexity analysis into `repo-statter` and display the top 10 most complex files on the generated dashboard. The UI already has a "Most Complex" tab in place that currently shows "TODO: Complexity analysis coming soon".
+
+## Current State Analysis
+- The project has existing infrastructure for displaying top files (by size and churn)
+- `src/data/top-files-calculator.ts` has `getTopFilesStats()` that returns `mostComplex: []` (empty array)
+- The UI chart component (`src/charts/top-files-chart.ts`) already handles complexity display
+- File exclusion patterns are already implemented in `src/utils/exclusions.ts`
+- No complexity analysis library is currently installed
 
 ## Proposed Complexity Metric
-*   **Cyclomatic Complexity**: This is a widely recognized metric that measures the number of linearly independent paths through a program's source code. It's a good indicator of testability and maintainability. We can also consider the Maintainability Index (MI) as a composite metric if `escomplex` provides it.
+*   **Cyclomatic Complexity**: This is a widely recognized metric that measures the number of linearly independent paths through a program's source code. It's a good indicator of testability and maintainability.
 
 ## Chosen Library
 
-After reviewing several options, **`escomplex`** remains the recommended library for this task due to the following reasons:
+**`escomplex`** is the recommended library for this task due to:
 
-*   **Comprehensive Metrics**: It provides robust complexity analysis for JavaScript/TypeScript code, including both Cyclomatic Complexity (our primary focus) and Halstead metrics. This allows for potential future expansion of complexity reporting.
-*   **Foundational**: `escomplex` is a foundational library that many other complexity analysis tools are built upon, indicating its reliability and accuracy.
-*   **Programmatic Integration**: It's designed for programmatic use, which is essential for integrating it directly into our existing file processing and report generation workflow.
+*   **Comprehensive Metrics**: Provides cyclomatic complexity and other metrics for JavaScript/TypeScript
+*   **Programmatic Integration**: Designed for embedding into tools like ours
+*   **Reliability**: Well-established library used by many complexity analysis tools
 
-While other libraries like `cognitive-complexity-ts` (for Cognitive Complexity) or `tsmetrics-core` (for configurable complexity) offer valuable insights, `escomplex` provides the core Cyclomatic Complexity metric efficiently and is well-suited for our current objective of identifying the most complex files based on control flow.
+Note: `escomplex` requires parsing JavaScript/TypeScript files, so we'll focus on `.js`, `.ts`, `.jsx`, and `.tsx` files only.
 
 ## Implementation Steps
 
-### 1. Install `escomplex`
-Add `escomplex` as a development dependency to the project.
+### Phase 1: Core Implementation
+
+#### 1. Install `escomplex`
 ```bash
 npm install escomplex --save-dev
 ```
 
-### 2. Integrate Complexity Calculation
-*   **Focus on Current State**: The complexity analysis will be performed on the current, latest state of the repository's files, not historical data.
-*   **Identify Integration Point**: The `src/git/parser.ts` or `src/stats/calculator.ts` seem like logical places to integrate the complexity analysis, as they already process file content and generate statistics. We'll need to read the content of each relevant file.
-*   **File Filtering**: Ensure that only relevant code files (e.g., `.ts`, `.js`, `.tsx`, `.jsx`) are analyzed. Exclude generated files, test files, and node_modules. The existing `src/utils/exclusions.ts` might be useful here.
-*   **Analysis Logic**:
-    *   For each relevant file, read its content.
-    *   Pass the content to `escomplex` to get the complexity metrics.
-    *   Store the cyclomatic complexity score (or chosen metric) along with the file path.
+#### 2. Create Complexity Calculator
+- Create new file: `src/data/complexity-calculator.ts`
+- Implement `analyzeFileComplexity(filePath: string): Promise<number>` function
+  - Read file content using Node.js fs
+  - Pass content to `escomplex.analyse()`
+  - Return the aggregate cyclomatic complexity
+  - Handle errors gracefully (return 0 for non-parseable files)
 
-### 3. Store Complexity Data
-*   **Extend Data Structure**: Modify the existing data structures (likely within `src/stats/calculator.ts` or the report generation data) to include the complexity score for each file. This might involve adding a `complexity` property to file objects.
+#### 3. Implement `getTopFilesByComplexity()`
+- Add to `src/data/top-files-calculator.ts`
+- Pattern to follow: Similar to `getTopFilesBySize()` and `getTopFilesByChurn()`
+- Steps:
+  1. Get list of current files in repository (using simple-git)
+  2. Filter for JS/TS files (`.js`, `.ts`, `.jsx`, `.tsx`)
+  3. Apply exclusion patterns from `src/utils/exclusions.ts`
+  4. Calculate complexity for each file
+  5. Sort by complexity descending
+  6. Return top 5 (matching existing pattern, not 10 as originally planned)
+  7. Calculate percentages for consistency
 
-### 4. Identify Top 10 Files
-*   **Sorting and Selection**: After calculating complexity for all files, sort them in descending order based on their complexity score.
-*   **Limit Results**: Select the top 10 files from the sorted list.
+#### 4. Update Report Generator
+- Modify `src/report/generator.ts`:
+  - Import the complexity calculator
+  - Call `getTopFilesByComplexity()` when generating top files stats
+  - No template changes needed - UI already supports complexity display
 
-### 5. Update Dashboard Generation
-*   **Modify `src/report/generator.ts`**:
-    *   Pass the list of top 10 complex files to the report generation logic.
-    *   Ensure the data is formatted correctly for display in the HTML template.
-*   **Modify `src/report/template.html`**:
-    *   Add a new section (e.g., a new card or table) to display the "Top 10 Most Complex Code Files".
-    *   For each file, display its name, path, and complexity score. Consider adding a link to the file if feasible (though this might be out of scope for the initial implementation).
+### Phase 2: Testing & Optimization
 
-### 6. Performance Considerations
-*   **Caching**: For very large repositories, consider caching complexity results to avoid re-analyzing unchanged files on subsequent runs. This might require a mechanism to detect file changes.
-*   **Parallel Processing**: If analysis is slow, explore running `escomplex` in parallel for multiple files.
+#### 5. Add Tests
+- Create `src/data/complexity-calculator.test.ts`
+  - Test with sample JS/TS code snippets
+  - Test error handling for non-JS files
+- Update `src/data/top-files-calculator.test.ts` if it exists
 
-### 7. Testing
-*   **Unit Tests**: Add unit tests for the complexity calculation logic (e.g., in `src/stats/calculator.test.ts` or a new test file).
-*   **Integration Tests**: Verify that the top 10 files are correctly identified and displayed in the generated report. This might involve generating a report for a small, controlled repository.
+#### 6. Performance Optimization (if needed)
+- Implement concurrent file analysis using `Promise.all()`
+- Add progress logging for large repositories
+
+### Implementation Notes
+- Focus on current repository state only (no historical tracking)
+- Reuse existing patterns and infrastructure
+- Keep it simple - no caching in initial implementation
+- The UI will automatically display results once data is provided
 
 ## Next Steps
 Once this plan is approved, I will proceed with the implementation, starting with installing `escomplex` and integrating the complexity calculation.
