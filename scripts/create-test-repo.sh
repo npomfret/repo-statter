@@ -5,15 +5,11 @@
 
 set -e
 
-REPO_DIR="test-repo"
+REPO_DIR=$(mktemp -d "${TMPDIR:-/tmp}/repo-statter-test-repo.XXXXXX")
 
-# Clean up any existing test repo
-if [ -d "$REPO_DIR" ]; then
-    rm -rf "$REPO_DIR"
-fi
+# No need to clean up - mktemp creates a fresh directory
 
-# Create and initialize the repo
-mkdir "$REPO_DIR"
+# Initialize the repo (mktemp already created the directory)
 cd "$REPO_DIR"
 git init
 
@@ -196,4 +192,5 @@ echo "   - Mixed JavaScript and TypeScript files"
 echo "   - File operations: create, edit, delete"
 echo "   - Various file types: .js, .ts, .json, .md"
 echo ""
-echo "🚀 You can now run: npm start test-repo"
+echo "🚀 You can now run: npm start \"$REPO_DIR\""
+echo "TEST_REPO_PATH=$REPO_DIR"
