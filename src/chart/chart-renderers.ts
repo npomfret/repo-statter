@@ -1,6 +1,6 @@
 import type { PageScriptData } from './page-script.js'
 import type { CommitData } from '../git/parser.js'
-import type { ContributorStats } from '../stats/calculator.js'
+import type { ContributorStats } from '../data/contributor-calculator.js'
 import { buildUserTimeSeriesData } from '../utils/chart-data-builders.js'
 import { renderWithErrorBoundary } from '../utils/error-boundary.js'
 import { ContributorsChart } from '../charts/contributors-chart.js'

@@ -1,4 +1,4 @@
-import type { ContributorStats } from '../stats/calculator.js'
+import type { ContributorStats } from '../data/contributor-calculator.js'
 
 function assert(condition: boolean, message: string): asserts condition {
   if (!condition) throw new Error(message)

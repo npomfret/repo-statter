@@ -63,11 +63,13 @@ This is not intuitive. The output directory should be determined by the `--outpu
 
 **Result:** Simplified the output directory logic to always use `options.output`. The default value 'dist' is already set in the option definition, ensuring consistent behavior regardless of how the repository path is specified.
 
-### 4. Unnecessary `stats/calculator.ts` file
+### 4. Unnecessary `stats/calculator.ts` file ✅ COMPLETED
 
 The file `src/stats/calculator.ts` seems to be a remnant of a previous refactoring. It re-exports functions from other calculator files. This adds an unnecessary layer of indirection.
 
 **Recommendation:** Remove this file and have the report generator import directly from the specific calculator files (`award-calculator.ts`, `contributor-calculator.ts`, etc.).
+
+**Result:** Successfully removed the unnecessary indirection layer. Updated all 8 files that imported from `stats/calculator.ts` to import directly from the specific calculator modules. This improves code clarity and reduces the module dependency chain.
 
 ### 5. Inefficient Data Handling in `report/generator.ts`
 

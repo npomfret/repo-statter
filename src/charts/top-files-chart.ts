@@ -1,4 +1,4 @@
-import type { TopFilesData, TopFileStats } from '../stats/calculator.js'
+import type { TopFilesData, TopFileStats } from '../data/top-files-calculator.js'
 
 function assert(condition: boolean, message: string): asserts condition {
   if (!condition) throw new Error(message)

@@ -2,11 +2,12 @@ import { ChartRenderers } from './chart-renderers.js'
 import { EventHandlers } from './event-handlers.js'
 import { ChartInitializer } from './chart-initializer.js'
 import type { CommitData } from '../git/parser.js'
-import type { ContributorStats, CommitAward, ContributorAward } from '../stats/calculator.js'
+import type { ContributorStats, ContributorAward } from '../data/contributor-calculator.js'
+import type { CommitAward } from '../data/award-calculator.js'
 import type { FileTypeStats, FileHeatData } from '../data/file-calculator.js'
 import type { TimeSeriesPoint, LinearSeriesPoint } from '../chart/data-transformer.js'
 import type { WordFrequency } from '../text/processor.js'
-import type { TopFilesData } from '../stats/calculator.js'
+import type { TopFilesData } from '../data/top-files-calculator.js'
 
 interface TrophySvgs {
   contributors: string

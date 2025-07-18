@@ -2,19 +2,16 @@ import { basename, resolve } from 'path'
 import { readFile, writeFile, mkdir } from 'fs/promises'
 import { existsSync } from 'fs'
 import { parseCommitHistory, getGitHubUrl, getCurrentFiles } from '../git/parser.js'
+import { getContributorStats, getLowestAverageLinesChanged, getHighestAverageLinesChanged } from '../data/contributor-calculator.js'
+import { getFileTypeStats, getFileHeatData } from '../data/file-calculator.js'
 import { 
-  getContributorStats, 
-  getFileTypeStats, 
-  getFileHeatData,
   getTopCommitsByFilesModified,
   getTopCommitsByBytesAdded,
   getTopCommitsByBytesRemoved,
   getTopCommitsByLinesAdded,
-  getTopCommitsByLinesRemoved,
-  getLowestAverageLinesChanged,
-  getHighestAverageLinesChanged,
-  getTopFilesStats
-} from '../stats/calculator.js'
+  getTopCommitsByLinesRemoved
+} from '../data/award-calculator.js'
+import { getTopFilesStats } from '../data/top-files-calculator.js'
 import { getTimeSeriesData, getLinearSeriesData } from '../chart/data-transformer.js'
 import { processCommitMessages } from '../text/processor.js'
 import { replaceTemplateVariables, injectIntoBody } from '../utils/template-engine.js'

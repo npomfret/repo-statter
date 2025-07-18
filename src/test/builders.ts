@@ -1,5 +1,5 @@
 import type { CommitData, FileChange } from '../git/parser.js'
-import type { ContributorStats } from '../stats/calculator.js'
+import type { ContributorStats } from '../data/contributor-calculator.js'
 import type { TimeSeriesPoint, LinearSeriesPoint } from '../chart/data-transformer.js'
 
 export class CommitDataBuilder {
