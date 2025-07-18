@@ -57,6 +57,8 @@ Each function performs the same sequence of operations:
 
 **Recommendation:** Create a single, shared `isRealCommit` utility function in a common location (e.g., `src/utils/`). Both calculators should then use this single source of truth for commit filtering. This will improve consistency and make it easier to update the filtering logic in the future.
 
+**STATUS: ALREADY COMPLETED** - This was fixed in commit 0561f58. Both files now import `isRealCommit` from `src/utils/commit-filters.js`.
+
 ## Medium-Priority Refactoring Candidates
 
 ### 3. Structurally Similar Test Files
