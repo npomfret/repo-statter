@@ -56,3 +56,33 @@ This is a common error with responsive charting libraries when a component's res
 
 ## Next Steps
 Based on this investigation, the highest-priority action is to **verify and standardize all date formats** used in the charts to the ISO 8601 standard. This is the most common and likely culprit for Safari-specific rendering failures.
+
+## Implementation Plan
+
+### Phase 1: Diagnosis (First Commit)
+1. Create a minimal test HTML file that reproduces the Safari issue with a simple ApexChart
+2. Test with both current date format and ISO 8601 format to confirm the issue
+3. Add console logging to capture any Safari-specific errors
+
+### Phase 2: Date Format Standardization (Second Commit)
+Based on code analysis, the following locations need verification/updates:
+1. **No immediate issues found**: Git already provides dates in ISO format (`%ai`)
+2. **Potential issue in `getDateKey` function**: The function creates date strings like `YYYY-MM-DDTHH:00:00` but without timezone indicator
+3. **Review tooltip formatting**: Uses `toLocaleString()` which could have Safari-specific issues
+
+### Phase 3: Chart Initialization Timing (Third Commit if needed)
+1. The template.html already has scripts loaded in the `<head>` with proper CDN loading
+2. Chart initialization happens inline after the HTML, which should be safe
+3. If timing is still an issue, wrap chart initialization in `DOMContentLoaded` event
+
+### Phase 4: Testing and Validation
+1. Test the generated report in Safari after each fix
+2. Verify all charts render correctly
+3. Check Safari console for any remaining errors
+4. Test in multiple Safari versions if possible
+
+### Implementation Notes
+- The codebase appears to handle dates correctly overall (ISO format from git)
+- Most likely issue is missing timezone indicators in generated date strings
+- Focus on `getDateKey` function in `src/data/time-series-transformer.ts`
+- Consider adding explicit timezone handling with `toISOString()` instead of string manipulation
