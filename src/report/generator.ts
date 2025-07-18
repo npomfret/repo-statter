@@ -2,8 +2,8 @@ import { basename, resolve } from 'path'
 import { readFile, writeFile, mkdir } from 'fs/promises'
 import { existsSync } from 'fs'
 import { parseCommitHistory, getGitHubUrl, getCurrentFiles } from '../git/parser.js'
-import { getContributorStats, getLowestAverageLinesChanged, getHighestAverageLinesChanged } from '../data/contributor-calculator.js'
-import { getFileTypeStats, getFileHeatData } from '../data/file-calculator.js'
+import { getContributorStats, getLowestAverageLinesChanged, getHighestAverageLinesChanged, type ContributorStats } from '../data/contributor-calculator.js'
+import { getFileTypeStats, getFileHeatData, type FileTypeStats } from '../data/file-calculator.js'
 import { 
   getTopCommitsByFilesModified,
   getTopCommitsByBytesAdded,
@@ -49,8 +49,13 @@ export async function generateReport(repoPath: string, outputMode: 'dist' | 'ana
   progressReporter?.report('Calculating statistics')
   const chartData = await transformCommitData(commits, repoName, repoPath, progressReporter)
   
+  // Calculate all statistics once
+  progressReporter?.report('Calculating contributor and file statistics')
+  const contributors = getContributorStats(commits)
+  const fileTypes = getFileTypeStats(commits, currentFiles)
+  
   progressReporter?.report('Generating HTML report')
-  const html = await injectDataIntoTemplate(template, chartData, commits, currentFiles, progressReporter)
+  const html = await injectDataIntoTemplate(template, chartData, commits, currentFiles, contributors, fileTypes, progressReporter)
   
   progressReporter?.report('Writing report file')
   await writeFile(reportPath, html)
@@ -63,8 +68,8 @@ export async function generateReport(repoPath: string, outputMode: 'dist' | 'ana
       totalCommits: commits.length,
       totalLinesAdded: commits.reduce((sum, c) => sum + c.linesAdded, 0),
       totalLinesDeleted: commits.reduce((sum, c) => sum + c.linesDeleted, 0),
-      contributors: getContributorStats(commits),
-      fileTypes: getFileTypeStats(commits, currentFiles),
+      contributors: contributors,
+      fileTypes: fileTypes,
       commits: commits
     }
     await writeFile(statsPath, JSON.stringify(stats, null, 2))
@@ -138,10 +143,7 @@ async function transformCommitData(commits: CommitData[], repoName: string, repo
   }
 }
 
-async function injectDataIntoTemplate(template: string, chartData: ChartData, commits: CommitData[], currentFiles: Set<string>, progressReporter?: ProgressReporter): Promise<string> {
-  progressReporter?.report('Calculating contributor statistics')
-  const contributors = getContributorStats(commits)
-  const fileTypes = getFileTypeStats(commits, currentFiles)
+async function injectDataIntoTemplate(template: string, chartData: ChartData, commits: CommitData[], currentFiles: Set<string>, contributors: ContributorStats[], fileTypes: FileTypeStats[], progressReporter?: ProgressReporter): Promise<string> {
   
   progressReporter?.report('Generating chart data')
   const timeSeries = getTimeSeriesData(commits)
