@@ -1,7 +1,7 @@
 import { basename } from 'path'
 import { readFile, writeFile, mkdir } from 'fs/promises'
 import { existsSync } from 'fs'
-import { parseCommitHistory, getGitHubUrl } from '../git/parser.js'
+import { parseCommitHistory, getGitHubUrl, getCurrentFiles } from '../git/parser.js'
 import { 
   getContributorStats, 
   getFileTypeStats, 
@@ -46,11 +46,14 @@ export async function generateReport(repoPath: string, outputMode: 'dist' | 'ana
   progressReporter?.report('Loading report template')
   const template = await readFile('src/report/template.html', 'utf-8')
   
+  progressReporter?.report('Getting current files')
+  const currentFiles = await getCurrentFiles(repoPath)
+
   progressReporter?.report('Calculating statistics')
   const chartData = await transformCommitData(commits, repoName, repoPath, progressReporter)
   
   progressReporter?.report('Generating HTML report')
-  const html = await injectDataIntoTemplate(template, chartData, commits, progressReporter)
+  const html = await injectDataIntoTemplate(template, chartData, commits, currentFiles, progressReporter)
   
   progressReporter?.report('Writing report file')
   await writeFile(reportPath, html)
@@ -64,7 +67,7 @@ export async function generateReport(repoPath: string, outputMode: 'dist' | 'ana
       totalLinesAdded: commits.reduce((sum, c) => sum + c.linesAdded, 0),
       totalLinesDeleted: commits.reduce((sum, c) => sum + c.linesDeleted, 0),
       contributors: getContributorStats(commits),
-      fileTypes: getFileTypeStats(commits),
+      fileTypes: getFileTypeStats(commits, currentFiles),
       commits: commits
     }
     await writeFile(statsPath, JSON.stringify(stats, null, 2))
@@ -94,6 +97,18 @@ interface ChartData {
   trophySvgs: TrophySvgs
 }
 
+function formatFullDate(date: Date): string {
+  return date.toLocaleString(undefined, {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    second: 'numeric'
+  });
+}
+
 async function transformCommitData(commits: CommitData[], repoName: string, repoPath: string, progressReporter?: ProgressReporter): Promise<ChartData> {
   const totalLinesAdded = commits.reduce((sum, c) => sum + c.linesAdded, 0)
   const totalLinesOfCode = totalLinesAdded
@@ -117,24 +132,24 @@ async function transformCommitData(commits: CommitData[], repoName: string, repo
     repositoryName: repoName,
     totalCommits: commits.length,
     totalLinesOfCode,
-    generationDate: new Date().toLocaleString(),
+    generationDate: formatFullDate(new Date()),
     githubLink: githubUrl ? ` • <a href="${githubUrl}" target="_blank" class="text-decoration-none">GitHub</a>` : '',
     logoSvg,
     trophySvgs
   }
 }
 
-async function injectDataIntoTemplate(template: string, chartData: ChartData, commits: CommitData[], progressReporter?: ProgressReporter): Promise<string> {
+async function injectDataIntoTemplate(template: string, chartData: ChartData, commits: CommitData[], currentFiles: Set<string>, progressReporter?: ProgressReporter): Promise<string> {
   progressReporter?.report('Calculating contributor statistics')
   const contributors = getContributorStats(commits)
-  const fileTypes = getFileTypeStats(commits)
+  const fileTypes = getFileTypeStats(commits, currentFiles)
   
   progressReporter?.report('Generating chart data')
   const timeSeries = getTimeSeriesData(commits)
   const linearSeries = getLinearSeriesData(commits)
   const wordCloudData = processCommitMessages(commits.map(c => c.message))
-  const fileHeatData = getFileHeatData(commits)
-  const topFilesData = getTopFilesStats(commits)
+  const fileHeatData = getFileHeatData(commits, currentFiles)
+  const topFilesData = getTopFilesStats(commits, currentFiles)
   
   progressReporter?.report('Calculating awards')
   // Calculate awards
@@ -191,7 +206,7 @@ async function injectDataIntoTemplate(template: string, chartData: ChartData, co
     logoSvg: chartData.logoSvg,
     latestCommitHash: latestCommit ? latestCommit.sha.substring(0, 7) : 'N/A',
     latestCommitAuthor: latestCommit ? latestCommit.authorName : 'N/A',
-    latestCommitDate: latestCommit ? new Date(latestCommit.date).toLocaleString() : 'N/A'
+    latestCommitDate: latestCommit ? formatFullDate(new Date(latestCommit.date)) : 'N/A'
   })
   
   return injectIntoBody(templateWithData, chartScript)

@@ -109,6 +109,22 @@ export async function parseCommitHistory(repoPath: string, progressReporter?: Pr
   return commits
 }
 
+export async function getCurrentFiles(repoPath: string): Promise<Set<string>> {
+  assert(repoPath.length > 0, 'Repository path cannot be empty')
+  
+  try {
+    const { stdout } = await execAsync(
+      `cd "${repoPath}" && git ls-tree -r HEAD --name-only`,
+      { timeout: 10000 }
+    )
+    
+    const files = stdout.trim().split('\n').filter(line => line.trim())
+    return new Set(files)
+  } catch (error) {
+    throw new Error(`Failed to get current files: ${error instanceof Error ? error.message : String(error)}`)
+  }
+}
+
 export async function getGitHubUrl(repoPath: string): Promise<string | null> {
   const git = simpleGit(repoPath)
   const remotes = await git.getRemotes(true)

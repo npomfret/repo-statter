@@ -12,11 +12,16 @@ export interface TopFilesData {
   mostComplex: TopFileStats[]
 }
 
-export function getTopFilesBySize(commits: CommitData[]): TopFileStats[] {
+export function getTopFilesBySize(commits: CommitData[], currentFiles?: Set<string>): TopFileStats[] {
   const fileSizeMap = new Map<string, number>()
   
   for (const commit of commits) {
     for (const fileChange of commit.filesChanged) {
+      // If currentFiles is provided, only include files that still exist
+      if (currentFiles && !currentFiles.has(fileChange.fileName)) {
+        continue
+      }
+      
       const currentSize = fileSizeMap.get(fileChange.fileName) ?? 0
       const sizeChange = fileChange.linesAdded - fileChange.linesDeleted
       fileSizeMap.set(fileChange.fileName, currentSize + sizeChange)
@@ -42,11 +47,16 @@ export function getTopFilesBySize(commits: CommitData[]): TopFileStats[] {
   }))
 }
 
-export function getTopFilesByChurn(commits: CommitData[]): TopFileStats[] {
+export function getTopFilesByChurn(commits: CommitData[], currentFiles?: Set<string>): TopFileStats[] {
   const fileChurnMap = new Map<string, number>()
   
   for (const commit of commits) {
     for (const fileChange of commit.filesChanged) {
+      // If currentFiles is provided, only include files that still exist
+      if (currentFiles && !currentFiles.has(fileChange.fileName)) {
+        continue
+      }
+      
       const currentChurn = fileChurnMap.get(fileChange.fileName) ?? 0
       const churn = fileChange.linesAdded + fileChange.linesDeleted
       fileChurnMap.set(fileChange.fileName, currentChurn + churn)
@@ -68,10 +78,10 @@ export function getTopFilesByChurn(commits: CommitData[]): TopFileStats[] {
   }))
 }
 
-export function getTopFilesStats(commits: CommitData[]): TopFilesData {
+export function getTopFilesStats(commits: CommitData[], currentFiles?: Set<string>): TopFilesData {
   return {
-    largest: getTopFilesBySize(commits),
-    mostChurn: getTopFilesByChurn(commits),
+    largest: getTopFilesBySize(commits, currentFiles),
+    mostChurn: getTopFilesByChurn(commits, currentFiles),
     mostComplex: [] // Empty for now, to be implemented later
   }
 }

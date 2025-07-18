@@ -15,11 +15,16 @@ export interface FileHeatData {
   fileType: string
 }
 
-export function getFileTypeStats(commits: CommitData[]): FileTypeStats[] {
+export function getFileTypeStats(commits: CommitData[], currentFiles?: Set<string>): FileTypeStats[] {
   const fileTypeMap = new Map<string, number>()
   
   for (const commit of commits) {
     for (const fileChange of commit.filesChanged) {
+      // If currentFiles is provided, only include files that still exist
+      if (currentFiles && !currentFiles.has(fileChange.fileName)) {
+        continue
+      }
+      
       const existing = fileTypeMap.get(fileChange.fileType) ?? 0
       fileTypeMap.set(fileChange.fileType, existing + fileChange.linesAdded)
     }
@@ -36,13 +41,18 @@ export function getFileTypeStats(commits: CommitData[]): FileTypeStats[] {
     .sort((a, b) => b.lines - a.lines)
 }
 
-export function getFileHeatData(commits: CommitData[]): FileHeatData[] {
+export function getFileHeatData(commits: CommitData[], currentFiles?: Set<string>): FileHeatData[] {
   const fileMap = new Map<string, { commitCount: number; lastModified: Date; totalLines: number; fileType: string }>()
   
   for (const commit of commits) {
     const commitDate = new Date(commit.date)
     
     for (const fileChange of commit.filesChanged) {
+      // If currentFiles is provided, only include files that still exist
+      if (currentFiles && !currentFiles.has(fileChange.fileName)) {
+        continue
+      }
+      
       const existing = fileMap.get(fileChange.fileName)
       
       if (!existing) {
