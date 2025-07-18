@@ -21,6 +21,34 @@ Each function performs the same sequence of operations:
 
 **Recommendation:** Consolidate these five functions into a single, more generic function. This new function could accept a value extractor function as an argument to determine which metric to use for sorting, significantly reducing code duplication.
 
+**Implementation Plan:**
+
+1. Create a generic function `getTopCommitsByMetric` that accepts:
+   - `commits: CommitData[]`
+   - `getValue: (commit: CommitData) => number` - function to extract the metric value
+   - `additionalFilter?: (commit: CommitData) => boolean` - optional extra filter (for bytes functions)
+
+2. Refactor each existing function to use the new generic function:
+   ```typescript
+   export function getTopCommitsByFilesModified(commits: CommitData[]): CommitAward[] {
+     return getTopCommitsByMetric(commits, commit => commit.filesChanged.length)
+   }
+   ```
+
+3. Keep the existing public API intact by wrapping the generic function
+
+4. Update tests to ensure all functionality remains the same
+
+**Steps to implement:**
+- [ ] Create the generic `getTopCommitsByMetric` function
+- [ ] Refactor `getTopCommitsByFilesModified` to use generic function
+- [ ] Refactor `getTopCommitsByBytesAdded` with additional filter
+- [ ] Refactor `getTopCommitsByBytesRemoved` with additional filter  
+- [ ] Refactor `getTopCommitsByLinesAdded` to use generic function
+- [ ] Refactor `getTopCommitsByLinesRemoved` to use generic function
+- [ ] Run tests to ensure no regressions
+- [ ] Remove any unused imports
+
 ### 2. `isRealCommit` Function Duplication
 
 **Observation:** The `isRealCommit` function is implemented in both `src/data/award-calculator.ts` and `src/data/contributor-calculator.ts`. The implementations are similar but not identical, with the one in `award-calculator.ts` being more comprehensive.
