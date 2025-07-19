@@ -36,7 +36,7 @@ export async function handleCLI(args: string[]): Promise<void> {
             console.error(`Error code: ${error.code}`)
           }
         } else {
-          console.error(`Unexpected error: ${formatError(error)}`)
+          console.error(`Unexpected error: ${formatError(error)}`, error)
         }
         process.exit(1)
       }
