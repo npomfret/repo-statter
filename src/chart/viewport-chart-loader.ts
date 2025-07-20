@@ -1,4 +1,5 @@
 import type { ChartRenderers } from './chart-renderers.js'
+import { performanceMonitor } from '../utils/performance-monitor.js'
 
 interface ChartSection {
   id: string
@@ -14,20 +15,20 @@ interface ChartSection {
 export class ViewportChartLoader {
   private observer?: IntersectionObserver
   private chartSections: ChartSection[] = [
-    // High priority - load when near viewport
-    { id: 'contributors-section', container: 'contributorsChart', loaded: false, priority: 'high' },
-    { id: 'file-types-section', container: 'fileTypesChart', loaded: false, priority: 'high' },
-    { id: 'growth-section', container: 'growthChart', loaded: false, priority: 'high' },
+    // High priority - time slider should load immediately as it controls other charts
+    { id: 'time-slider-section', container: 'timeSliderChart', loaded: false, priority: 'high' },
     
-    // Medium priority - load when partially in viewport
-    { id: 'commit-activity-section', container: 'commitActivityChart', loaded: false, priority: 'medium' },
+    // Medium priority - load when near viewport
+    { id: 'growth-section', container: 'growthChart', loaded: false, priority: 'medium' },
     { id: 'category-lines-section', container: 'categoryLinesChart', loaded: false, priority: 'medium' },
-    { id: 'time-slider-section', container: 'timeSliderChart', loaded: false, priority: 'medium' },
+    { id: 'commit-activity-section', container: 'commitActivityChart', loaded: false, priority: 'medium' },
+    { id: 'contributors-section', container: 'contributorsChart', loaded: false, priority: 'medium' },
+    { id: 'file-types-section', container: 'fileTypesChart', loaded: false, priority: 'medium' },
     
-    // Low priority - load when fully in viewport
-    { id: 'word-cloud-section', container: 'wordCloudChart', loaded: false, priority: 'low' },
+    // Low priority - load when in viewport
+    { id: 'top-files-section', container: 'topFilesChart', loaded: false, priority: 'low' },
     { id: 'file-heatmap-section', container: 'fileHeatmapChart', loaded: false, priority: 'low' },
-    { id: 'top-files-section', container: 'topFilesChart', loaded: false, priority: 'low' }
+    { id: 'word-cloud-section', container: 'wordCloudChart', loaded: false, priority: 'low' }
   ]
 
   constructor(
@@ -71,6 +72,9 @@ export class ViewportChartLoader {
 
     // Always load high-priority charts immediately
     this.loadHighPriorityCharts()
+    
+    // Set up accordion event listeners
+    this.setupAccordionListeners()
   }
 
   /**
@@ -109,16 +113,20 @@ export class ViewportChartLoader {
     }
 
     section.loaded = true
+    performanceMonitor.mark(`chart_${section.container}_start`)
 
     // Remove placeholder and render chart
     const container = document.getElementById(section.container)
     if (container) {
       // Remove placeholder styling
-      container.classList.remove('chart-placeholder')
+      container.classList.remove('chart-placeholder', 'skeleton-loader')
       container.classList.add('chart-rendered')
       
-      // Clear placeholder content
-      container.innerHTML = ''
+      // Clear placeholder content including loading text
+      const loadingText = container.querySelector('.chart-loading-text')
+      if (loadingText) {
+        loadingText.remove()
+      }
 
       // Render the appropriate chart
       switch (section.container) {
@@ -150,6 +158,13 @@ export class ViewportChartLoader {
           this.renderers.renderTopFilesChart()
           break
       }
+      
+      performanceMonitor.mark(`chart_${section.container}_end`)
+      performanceMonitor.measure(
+        `chart_${section.container}_load`,
+        `chart_${section.container}_start`,
+        `chart_${section.container}_end`
+      )
     }
   }
 
@@ -167,6 +182,39 @@ export class ViewportChartLoader {
    */
   private loadAllCharts(): void {
     this.renderers.renderAllCharts()
+  }
+
+  /**
+   * Set up listeners for accordion expand events
+   */
+  private setupAccordionListeners(): void {
+    const accordions = document.querySelectorAll('.accordion-collapse')
+    
+    accordions.forEach(accordion => {
+      accordion.addEventListener('shown.bs.collapse', () => {
+        // Check for unloaded charts in the expanded accordion
+        const charts = accordion.querySelectorAll('.chart-placeholder')
+        
+        charts.forEach(chartElement => {
+          const section = this.chartSections.find(s => s.container === chartElement.id)
+          
+          if (section && !section.loaded) {
+            // Check if the chart is now visible
+            const rect = chartElement.getBoundingClientRect()
+            const isVisible = rect.top < window.innerHeight && rect.bottom > 0
+            
+            if (isVisible) {
+              // Load immediately if visible
+              this.loadChart(section)
+            } else if (this.observer) {
+              // Otherwise, observe it for when it scrolls into view
+              const element = chartElement.closest('.card') || chartElement
+              this.observer.observe(element)
+            }
+          }
+        })
+      })
+    })
   }
 
   /**
