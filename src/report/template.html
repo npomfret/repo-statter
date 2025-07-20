@@ -644,7 +644,16 @@
                     <div id="timeRangeCollapse" class="accordion-collapse collapse show" aria-labelledby="timeRangeHeading" data-bs-parent="#overviewAccordion">
                         <div class="accordion-body">
                             <p class="text-muted mb-3">Adjust the time range for all time series charts using the slider below:</p>
-                            <div id="timeSliderChart" style="width: 100%;"></div>
+                            <div id="timeSliderChart" class="chart-placeholder" style="width: 100%; min-height: 150px;">
+                                <div class="d-flex align-items-center justify-content-center h-100">
+                                    <div class="text-center text-muted">
+                                        <div class="spinner-border spinner-border-sm mb-2" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <p class="mb-0 small">Loading time slider...</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -678,7 +687,16 @@
                             <input type="radio" class="btn-check" name="growthXAxis" id="growthXAxisCommit" value="commit" checked>
                             <label class="btn btn-outline-primary" for="growthXAxisCommit">By Commit</label>
                         </div>
-                        <div id="growthChart"></div>
+                        <div id="growthChart" class="chart-placeholder" style="min-height: 350px;">
+                            <div class="d-flex align-items-center justify-content-center h-100">
+                                <div class="text-center text-muted">
+                                    <div class="spinner-border spinner-border-sm mb-2" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p class="mb-0 small">Loading chart...</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -688,7 +706,16 @@
                         <h5 class="card-title mb-0">Lines of Code by Category</h5>
                     </div>
                     <div class="card-body">
-                        <div id="categoryLinesChart"></div>
+                        <div id="categoryLinesChart" class="chart-placeholder" style="min-height: 350px;">
+                            <div class="d-flex align-items-center justify-content-center h-100">
+                                <div class="text-center text-muted">
+                                    <div class="spinner-border spinner-border-sm mb-2" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p class="mb-0 small">Loading chart...</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -698,7 +725,16 @@
                         <h5 class="card-title mb-0">Commit Activity Over Time</h5>
                     </div>
                     <div class="card-body">
-                        <div id="commitActivityChart"></div>
+                        <div id="commitActivityChart" class="chart-placeholder" style="min-height: 350px;">
+                            <div class="d-flex align-items-center justify-content-center h-100">
+                                <div class="text-center text-muted">
+                                    <div class="spinner-border spinner-border-sm mb-2" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p class="mb-0 small">Loading chart...</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -781,7 +817,16 @@
                                                     </p>
                                                 </div>
                                             </div>
-                                            <div id="topFilesChart"></div>
+                                            <div id="topFilesChart" class="chart-placeholder" style="min-height: 350px;">
+                                                <div class="d-flex align-items-center justify-content-center h-100">
+                                                    <div class="text-center text-muted">
+                                                        <div class="spinner-border spinner-border-sm mb-2" role="status">
+                                                            <span class="visually-hidden">Loading...</span>
+                                                        </div>
+                                                        <p class="mb-0 small">Loading chart...</p>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -794,7 +839,14 @@
                                         </div>
                                         <div class="card-body" style="min-height: 400px;">
                                             <p class="card-text">Interactive treemap showing file activity based on commit frequency and recency. Larger rectangles represent files with more lines of code, while color intensity indicates higher activity.</p>
-                                            <div id="fileHeatmapChart" style="width: 100%; height: 400px; display: flex; align-items: center; justify-content: center;"></div>
+                                            <div id="fileHeatmapChart" class="chart-placeholder" style="width: 100%; height: 400px; display: flex; align-items: center; justify-content: center;">
+                                                <div class="text-center text-muted">
+                                                    <div class="spinner-border spinner-border-sm mb-2" role="status">
+                                                        <span class="visually-hidden">Loading...</span>
+                                                    </div>
+                                                    <p class="mb-0 small">Loading chart...</p>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -865,7 +917,16 @@
                             <h5 class="card-title mb-0">Top Contributors</h5>
                         </div>
                         <div class="card-body">
-                            <div id="contributorsChart"></div>
+                            <div id="contributorsChart" class="chart-placeholder" style="min-height: 350px;">
+                                <div class="d-flex align-items-center justify-content-center h-100">
+                                    <div class="text-center text-muted">
+                                        <div class="spinner-border spinner-border-sm mb-2" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <p class="mb-0 small">Loading chart...</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -877,7 +938,14 @@
                             <h5 class="card-title mb-0">Commit Message Word Cloud</h5>
                         </div>
                         <div class="card-body" style="min-height: 400px;">
-                            <div id="wordCloudChart" style="width: 100%; height: 400px; display: flex; align-items: center; justify-content: center;"></div>
+                            <div id="wordCloudChart" class="chart-placeholder" style="width: 100%; height: 400px; display: flex; align-items: center; justify-content: center;">
+                                <div class="text-center text-muted">
+                                    <div class="spinner-border spinner-border-sm mb-2" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p class="mb-0 small">Loading chart...</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

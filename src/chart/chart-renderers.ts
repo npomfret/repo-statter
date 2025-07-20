@@ -38,41 +38,69 @@ export class ChartRenderers {
   }
 
   public renderAllCharts(): void {
+    this.renderContributorsChart()
+    this.renderFileTypesChart()
+    this.renderGrowthChart()
+    this.renderCategoryLinesChart()
+    this.renderCommitActivityChart()
+    this.renderWordCloud()
+    this.renderFileHeatmap()
+    this.renderTopFilesChart()
+    // Render time slider last so target charts exist
+    this.renderTimeSliderChart()
+  }
+
+  public renderContributorsChart(): void {
     renderWithErrorBoundary('contributorsChart', 'Contributors Chart', () => {
       this.contributorsChart.render(this.data.contributors)
     })
-    
+  }
+
+  public renderFileTypesChart(): void {
     renderWithErrorBoundary('fileTypesChart', 'File Types Chart', () => {
       this.fileTypesChart.render(this.data.fileTypes)
     })
-    
+  }
+
+  public renderGrowthChart(): void {
     renderWithErrorBoundary('growthChart', 'Growth Chart', () => {
       this.growthChart.render(this.data.linearSeries, this.data.timeSeries, 'commit', this.data.commits)
     })
-    
+  }
+
+  public renderCategoryLinesChart(): void {
     renderWithErrorBoundary('categoryLinesChart', 'Category Lines Chart', () => {
       this.categoryLinesChart.render(this.data.timeSeries)
     })
-    
+  }
+
+  public renderCommitActivityChart(): void {
     renderWithErrorBoundary('commitActivityChart', 'Commit Activity Chart', () => {
       this.commitActivityChart.render(this.data.timeSeries)
     })
-    
+  }
+
+  public renderWordCloud(): void {
     renderWithErrorBoundary('wordCloudChart', 'Word Cloud Chart', () => {
       this.wordCloudChart.render(this.data.wordCloudData)
     })
-    
+  }
+
+  public renderFileHeatmap(): void {
     renderWithErrorBoundary('fileHeatmapChart', 'File Heatmap Chart', () => {
       this.fileHeatmapChart.render(this.data.fileHeatData)
     })
-    
+  }
+
+  public renderTopFilesChart(): void {
     if (this.data.topFilesData) {
       renderWithErrorBoundary('topFilesChart', 'Top Files Chart', () => {
         this.topFilesChart.render(this.data.topFilesData!, 'largest', this.data.isLizardInstalled ?? true)
       })
     }
-    
-    // Render time slider last so target charts exist
+  }
+
+  public renderTimeSliderChart(): void {
     renderWithErrorBoundary('timeSliderChart', 'Time Slider Chart', () => {
       this.timeSliderChart.render(this.data.timeSeries, this.data.linearSeries)
     })
