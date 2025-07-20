@@ -21,6 +21,9 @@ export interface FileHeatConfig {
 export interface ChartsConfig {
   wordCloudHeight: number;
   topContributorsLimit: number;
+  fileHeatmapHeight: number;
+  fileHeatmapMaxFiles: number;
+  topFilesChartHeight: number;
 }
 
 export interface PerformanceConfig {

@@ -9,7 +9,7 @@ export class FileHeatmapChart {
     this.containerId = containerId
   }
 
-  render(fileHeatData: FileHeatData[]): void {
+  render(fileHeatData: FileHeatData[], height: number = 400, maxFiles: number = 100): void {
     assert(fileHeatData !== undefined, 'File heat data is required')
     assert(Array.isArray(fileHeatData), 'File heat data must be an array')
     
@@ -19,14 +19,14 @@ export class FileHeatmapChart {
     const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark'
     
     // Transform data for ApexCharts treemap
-    const data = fileHeatData.slice(0, 100).map(file => ({
+    const data = fileHeatData.slice(0, maxFiles).map(file => ({
       x: file.fileName.split('/').pop() || file.fileName,
       y: file.totalLines
     }))
     
     // Color scale based on heat score
-    const maxHeatScore = Math.max(...fileHeatData.slice(0, 100).map(f => f.heatScore))
-    const colors = fileHeatData.slice(0, 100).map(file => {
+    const maxHeatScore = Math.max(...fileHeatData.slice(0, maxFiles).map(f => f.heatScore))
+    const colors = fileHeatData.slice(0, maxFiles).map(file => {
       const intensity = file.heatScore / maxHeatScore
       if (isDark) {
         // Dark theme - from dark blue to bright red
@@ -49,7 +49,7 @@ export class FileHeatmapChart {
       }],
       chart: {
         type: 'treemap',
-        height: 400,
+        height: height,
         toolbar: { show: false },
         background: isDark ? '#161b22' : '#ffffff'
       },

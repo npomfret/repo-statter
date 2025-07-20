@@ -25,7 +25,10 @@ export const DEFAULT_CONFIG: RepoStatterConfig = {
   
   charts: {
     wordCloudHeight: 400,
-    topContributorsLimit: 10
+    topContributorsLimit: 10,
+    fileHeatmapHeight: 400,
+    fileHeatmapMaxFiles: 100,
+    topFilesChartHeight: 400
   },
   
   performance: {

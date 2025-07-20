@@ -7,6 +7,7 @@ import type { FileTypeStats, FileHeatData } from '../data/file-calculator.js'
 import type { TimeSeriesPoint, LinearSeriesPoint } from '../chart/data-transformer.js'
 import type { WordFrequency } from '../text/processor.js'
 import type { TopFilesData } from '../data/top-files-calculator.js'
+import type { ChartsConfig } from '../config/schema.js'
 
 interface TrophySvgs {
   contributors: string
@@ -47,6 +48,7 @@ export interface PageScriptData {
   trophySvgs: TrophySvgs
   githubUrl?: string
   isLizardInstalled?: boolean
+  chartsConfig?: ChartsConfig
 }
 
 export class PageScript {

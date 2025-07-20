@@ -242,7 +242,8 @@ async function injectDataIntoTemplate(template: string, chartData: ChartData, co
         "awards": ${JSON.stringify(awards)},
         "trophySvgs": ${JSON.stringify(chartData.trophySvgs)},
         "githubUrl": ${JSON.stringify(await getGitHubUrl(repoPath))},
-        "isLizardInstalled": ${JSON.stringify(chartData.isLizardInstalled)}
+        "isLizardInstalled": ${JSON.stringify(chartData.isLizardInstalled)},
+        "chartsConfig": ${JSON.stringify(finalConfig.charts)}
       }
     </script>
   `

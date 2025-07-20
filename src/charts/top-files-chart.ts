@@ -53,7 +53,7 @@ export class TopFilesChart {
     this.containerId = containerId
   }
 
-  render(topFilesData: TopFilesData, activeTab: 'largest' | 'churn' | 'complex' = 'largest', isLizardInstalled: boolean = true, fileTypeFilter: string | null = null): void {
+  render(topFilesData: TopFilesData, activeTab: 'largest' | 'churn' | 'complex' = 'largest', isLizardInstalled: boolean = true, fileTypeFilter: string | null = null, height: number = 400): void {
     this.isLizardInstalled = isLizardInstalled
     assert(topFilesData !== undefined, 'Top files data is required')
     
@@ -161,7 +161,7 @@ export class TopFilesChart {
     const options = {
       chart: { 
         type: 'bar', 
-        height: 400,
+        height: height,
         toolbar: { show: false },
         background: isDark ? '#161b22' : '#ffffff'
       },

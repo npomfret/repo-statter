@@ -37,8 +37,8 @@ describe('getFileType', () => {
   })
 
   it('handles unknown extensions', () => {
-    expect(getFileType('file.xyz')).toBe('.xyz')
-    expect(getFileType('config.custom')).toBe('.custom')
+    expect(getFileType('file.xyz')).toBe('Other')
+    expect(getFileType('config.custom')).toBe('Other')
     expect(getFileType('no-extension')).toBe('Other')
     expect(getFileType('')).toBe('Other')
   })

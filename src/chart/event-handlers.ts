@@ -172,12 +172,13 @@ export class EventHandlers {
           const target = event.target as HTMLElement
           const tabId = target.id
           
+          const height = this.data.chartsConfig?.topFilesChartHeight ?? 400
           if (tabId === 'largest-tab') {
-            topFilesChart.render(this.data.topFilesData!, 'largest', this.data.isLizardInstalled ?? true, this.selectedFileType)
+            topFilesChart.render(this.data.topFilesData!, 'largest', this.data.isLizardInstalled ?? true, this.selectedFileType, height)
           } else if (tabId === 'churn-tab') {
-            topFilesChart.render(this.data.topFilesData!, 'churn', this.data.isLizardInstalled ?? true, this.selectedFileType)
+            topFilesChart.render(this.data.topFilesData!, 'churn', this.data.isLizardInstalled ?? true, this.selectedFileType, height)
           } else if (tabId === 'complex-tab') {
-            topFilesChart.render(this.data.topFilesData!, 'complex', this.data.isLizardInstalled ?? true, this.selectedFileType)
+            topFilesChart.render(this.data.topFilesData!, 'complex', this.data.isLizardInstalled ?? true, this.selectedFileType, height)
           }
         })
       })
@@ -230,7 +231,9 @@ export class EventHandlers {
       })
       
       if (filteredData.length > 0) {
-        fileHeatmapChart.render(filteredData)
+        const height = this.data.chartsConfig?.fileHeatmapHeight ?? 400
+        const maxFiles = this.data.chartsConfig?.fileHeatmapMaxFiles ?? 100
+        fileHeatmapChart.render(filteredData, height, maxFiles)
       } else {
         // Show empty state
         const container = document.querySelector('#fileHeatmapChart')
@@ -245,7 +248,9 @@ export class EventHandlers {
       }
     } else if (fileHeatmapChart) {
       // No filter, show all files
-      fileHeatmapChart.render(this.data.fileHeatData)
+      const height = this.data.chartsConfig?.fileHeatmapHeight ?? 400
+      const maxFiles = this.data.chartsConfig?.fileHeatmapMaxFiles ?? 100
+      fileHeatmapChart.render(this.data.fileHeatData, height, maxFiles)
     }
   }
   
@@ -339,11 +344,13 @@ export class EventHandlers {
     
     // Re-render with file type filter
     if (this.data.topFilesData) {
+      const height = this.data.chartsConfig?.topFilesChartHeight ?? 400
       topFilesChart.render(
         this.data.topFilesData, 
         mode, 
         this.data.isLizardInstalled ?? true,
-        this.selectedFileType
+        this.selectedFileType,
+        height
       )
     }
   }

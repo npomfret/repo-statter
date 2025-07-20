@@ -10,7 +10,7 @@ export class ContributorsChart {
     this.containerId = containerId
   }
 
-  render(contributors: ContributorStats[]): void {
+  render(contributors: ContributorStats[], topContributorsLimit: number = 10): void {
     assert(contributors !== undefined, 'Contributors data is required')
     assert(Array.isArray(contributors), 'Contributors must be an array')
     
@@ -32,9 +32,9 @@ export class ContributorsChart {
         toolbar: { show: false },
         background: isDark ? '#161b22' : '#ffffff'
       },
-      series: [{ name: 'Commits', data: contributors.slice(0, 10).map(c => c.commits) }],
+      series: [{ name: 'Commits', data: contributors.slice(0, topContributorsLimit).map(c => c.commits) }],
       xaxis: { 
-        categories: contributors.slice(0, 10).map(c => c.name), 
+        categories: contributors.slice(0, topContributorsLimit).map(c => c.name), 
         title: { 
           text: 'Contributors',
           style: { color: isDark ? '#f0f6fc' : '#24292f' }

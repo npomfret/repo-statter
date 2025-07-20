@@ -30,7 +30,8 @@ export class ChartInitializer {
       this.viewportLoader.initialize()
       
       // Render user charts for top contributors (always render these)
-      const topContributors = this.data.contributors.slice(0, 10)
+      const limit = this.data.chartsConfig?.topContributorsLimit ?? 10
+      const topContributors = this.data.contributors.slice(0, limit)
       this.renderers.renderUserCharts(topContributors)
       
       // Render awards if available (always render these)

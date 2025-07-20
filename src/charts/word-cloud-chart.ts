@@ -8,7 +8,7 @@ export class WordCloudChart {
     this.containerId = containerId
   }
 
-  render(wordCloudData: WordFrequency[]): void {
+  render(wordCloudData: WordFrequency[], height: number = 400): void {
     assert(wordCloudData !== undefined, 'Word cloud data is required')
     assert(Array.isArray(wordCloudData), 'Word cloud data must be an array')
     
@@ -21,7 +21,6 @@ export class WordCloudChart {
     }
     
     const width = (container as HTMLElement).offsetWidth
-    const height = 400
     
     // Theme-aware colors
     const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark'

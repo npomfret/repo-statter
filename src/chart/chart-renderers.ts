@@ -52,7 +52,8 @@ export class ChartRenderers {
 
   public renderContributorsChart(): void {
     renderWithErrorBoundary('contributorsChart', 'Contributors Chart', () => {
-      this.contributorsChart.render(this.data.contributors)
+      const limit = this.data.chartsConfig?.topContributorsLimit ?? 10
+      this.contributorsChart.render(this.data.contributors, limit)
     })
   }
 
@@ -82,20 +83,24 @@ export class ChartRenderers {
 
   public renderWordCloud(): void {
     renderWithErrorBoundary('wordCloudChart', 'Word Cloud Chart', () => {
-      this.wordCloudChart.render(this.data.wordCloudData)
+      const height = this.data.chartsConfig?.wordCloudHeight ?? 400
+      this.wordCloudChart.render(this.data.wordCloudData, height)
     })
   }
 
   public renderFileHeatmap(): void {
     renderWithErrorBoundary('fileHeatmapChart', 'File Heatmap Chart', () => {
-      this.fileHeatmapChart.render(this.data.fileHeatData)
+      const height = this.data.chartsConfig?.fileHeatmapHeight ?? 400
+      const maxFiles = this.data.chartsConfig?.fileHeatmapMaxFiles ?? 100
+      this.fileHeatmapChart.render(this.data.fileHeatData, height, maxFiles)
     })
   }
 
   public renderTopFilesChart(): void {
     if (this.data.topFilesData) {
       renderWithErrorBoundary('topFilesChart', 'Top Files Chart', () => {
-        this.topFilesChart.render(this.data.topFilesData!, 'largest', this.data.isLizardInstalled ?? true)
+        const height = this.data.chartsConfig?.topFilesChartHeight ?? 400
+        this.topFilesChart.render(this.data.topFilesData!, 'largest', this.data.isLizardInstalled ?? true, null, height)
       })
     }
   }
@@ -353,7 +358,8 @@ export class ChartRenderers {
     })
     
     renderWithErrorBoundary('contributorsChart', 'Contributors Chart', () => {
-      this.contributorsChart.render(this.data.contributors)
+      const limit = this.data.chartsConfig?.topContributorsLimit ?? 10
+      this.contributorsChart.render(this.data.contributors, limit)
     })
     
     renderWithErrorBoundary('fileTypesChart', 'File Types Chart', () => {
@@ -373,11 +379,14 @@ export class ChartRenderers {
     })
     
     renderWithErrorBoundary('wordCloudChart', 'Word Cloud Chart', () => {
-      this.wordCloudChart.render(this.data.wordCloudData)
+      const height = this.data.chartsConfig?.wordCloudHeight ?? 400
+      this.wordCloudChart.render(this.data.wordCloudData, height)
     })
     
     renderWithErrorBoundary('fileHeatmapChart', 'File Heatmap Chart', () => {
-      this.fileHeatmapChart.render(this.data.fileHeatData)
+      const height = this.data.chartsConfig?.fileHeatmapHeight ?? 400
+      const maxFiles = this.data.chartsConfig?.fileHeatmapMaxFiles ?? 100
+      this.fileHeatmapChart.render(this.data.fileHeatData, height, maxFiles)
     })
     
     // Update user charts as well
