@@ -270,10 +270,178 @@
         #fileTypesChart .apexcharts-pie-slice:hover {
             filter: brightness(1.1);
         }
+        
+        /* Hero Strip Styles */
+        .hero-strip {
+            background: linear-gradient(135deg, var(--bs-secondary-bg) 0%, var(--bs-body-bg) 100%);
+            border-bottom: 1px solid var(--bs-border-color);
+            padding: 1.5rem 0;
+        }
+        
+        .metric-card {
+            background: var(--bs-card-bg);
+            border: 1px solid var(--bs-card-border-color);
+            border-radius: 0.5rem;
+            padding: 1.25rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        [data-bs-theme="dark"] .metric-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .metric-label {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+        
+        @media (max-width: 768px) {
+            .metric-value {
+                font-size: 1.5rem;
+            }
+        }
+        
+        /* Sticky Navigation Styles */
+        .sticky-nav {
+            position: fixed;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--bs-card-bg);
+            border: 1px solid var(--bs-card-border-color);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        [data-bs-theme="dark"] .sticky-nav {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .sticky-nav nav {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .sticky-nav a {
+            display: block;
+            padding: 0.5rem 0.75rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 0.25rem;
+            transition: all 0.2s ease;
+            font-size: 0.875rem;
+            position: relative;
+        }
+        
+        .sticky-nav a:hover {
+            color: var(--text-primary);
+            background: var(--bs-secondary-bg);
+        }
+        
+        .sticky-nav a.active {
+            color: var(--accent-primary);
+            font-weight: 600;
+        }
+        
+        .sticky-nav a.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 60%;
+            background: var(--accent-primary);
+            border-radius: 2px;
+        }
+        
+        /* Main content adjustment */
+        .main-content {
+            margin-left: 220px;
+            transition: margin-left 0.3s ease;
+        }
+        
+        /* Mobile navigation */
+        @media (max-width: 991px) {
+            .sticky-nav {
+                position: fixed;
+                left: 0;
+                right: 0;
+                top: auto;
+                bottom: 0;
+                transform: none;
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
+                border-bottom: none;
+                padding: 0.5rem;
+                max-height: none;
+                overflow-x: auto;
+                overflow-y: hidden;
+            }
+            
+            .sticky-nav nav {
+                flex-direction: row;
+                gap: 0.25rem;
+                white-space: nowrap;
+            }
+            
+            .sticky-nav a {
+                padding: 0.5rem 1rem;
+                flex-shrink: 0;
+            }
+            
+            .sticky-nav a.active::before {
+                top: auto;
+                bottom: 0;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 60%;
+                height: 3px;
+            }
+            
+            .main-content {
+                margin-left: 0;
+                margin-bottom: 60px;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="container-fluid">
+    <!-- Sticky Navigation -->
+    <aside class="sticky-nav" aria-label="Page sections">
+        <nav>
+            <a href="#overview" class="active">Overview</a>
+            <a href="#activity">Activity</a>
+            <a href="#code-analysis">Code Analysis</a>
+            <a href="#files">Files</a>
+            <a href="#contributors">Contributors</a>
+        </nav>
+    </aside>
+    
+    <div class="container-fluid main-content">
         <header class="py-3 mb-4 border-bottom">
             <div class="row align-items-center">
                 <div class="col">
@@ -305,8 +473,41 @@
             </div>
         </header>
 
+        <!-- Hero Strip with Key Metrics -->
+        <div class="hero-strip mb-4">
+            <div class="container-fluid">
+                <div class="row g-3">
+                    <div class="col-md-3 col-6">
+                        <div class="metric-card">
+                            <div class="metric-label">Total Commits</div>
+                            <div class="metric-value text-primary">{{totalCommits}}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="metric-card">
+                            <div class="metric-label">Lines of Code</div>
+                            <div class="metric-value text-success">{{totalLinesOfCode}}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="metric-card">
+                            <div class="metric-label">Contributors</div>
+                            <div class="metric-value text-info">{{totalContributors}}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="metric-card">
+                            <div class="metric-label">Active Days</div>
+                            <div class="metric-value text-warning">{{activeDays}}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Filter Controls -->
-        <div class="row mb-4">
+        <section id="overview">
+            <div class="row mb-4">
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
@@ -346,25 +547,7 @@
                 </div>
             </div>
         </div>
-
-        <div class="row mb-4">
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Total Commits</h5>
-                        <h2 class="text-primary">{{totalCommits}}</h2>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Total Lines of Code</h5>
-                        <h2 class="text-success">{{totalLinesOfCode}}</h2>
-                    </div>
-                </div>
-            </div>
-        </div>
+        </section>
 
         <!-- Time Range Selector and Contributors -->
         <div class="row mb-4">
@@ -391,10 +574,12 @@
             </div>
         </div>
 
-        <div class="row">
-            <!-- Time Series Charts Column -->
-            <div class="col-lg-8">
-                <!-- Growth Over Time Chart -->
+        <!-- Activity Section -->
+        <section id="activity">
+            <div class="row">
+                <!-- Time Series Charts Column -->
+                <div class="col-lg-8">
+                    <!-- Growth Over Time Chart -->
                 <div class="card mb-4">
                     <div class="card-header">
                         <h5 class="card-title mb-0">Growth Over Time</h5>
@@ -434,8 +619,9 @@
 
             <!-- Non-Time Series Charts Column -->
             <div class="col-lg-4">
-
-                <!-- File Types Chart -->
+                <!-- Code Analysis Section -->
+                <section id="code-analysis">
+                    <!-- File Types Chart -->
                 <div class="card mb-4">
                     <div class="card-header">
                         <h5 class="card-title mb-0">File Types</h5>
@@ -495,10 +681,14 @@
                         <div id="wordCloudChart" style="width: 100%; height: 400px; display: flex; align-items: center; justify-content: center;"></div>
                     </div>
                 </div>
+                </section>
             </div>
         </div>
+        </section>
         
-        <!-- File Activity Heatmap Row -->
+        <!-- Files Section -->
+        <section id="files">
+            <!-- File Activity Heatmap Row -->
         <div class="row">
             <div class="col-12">
                 <div class="card mb-4">
@@ -512,8 +702,11 @@
                 </div>
             </div>
         </div>
+        </section>
         
-        <!-- Awards Section -->
+        <!-- Contributors Section -->
+        <section id="contributors">
+            <!-- Awards Section -->
         <div class="row">
             <div class="col-12">
                 <div class="card mb-4">
@@ -544,6 +737,7 @@
                 </div>
             </div>
         </div>
+        </section>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>

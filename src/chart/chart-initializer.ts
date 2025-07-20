@@ -20,6 +20,9 @@ export class ChartInitializer {
   }
 
   private initializeCharts(): void {
+    // Initialize navigation
+    this.initializeNavigation()
+    
     // Render all main charts
     this.renderers.renderAllCharts()
     
@@ -190,6 +193,52 @@ export class ChartInitializer {
       card.appendChild(cardBody)
       col.appendChild(card)
       container.appendChild(col)
+    })
+  }
+
+  private initializeNavigation(): void {
+    const navLinks = document.querySelectorAll('.sticky-nav a')
+    const sections = document.querySelectorAll('section[id]')
+    
+    // Smooth scroll behavior for navigation links
+    navLinks.forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault()
+        const targetId = link.getAttribute('href')?.substring(1)
+        if (targetId) {
+          const targetSection = document.getElementById(targetId)
+          if (targetSection) {
+            targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }
+        }
+      })
+    })
+    
+    // Intersection Observer for active section highlighting
+    const observerOptions = {
+      root: null,
+      rootMargin: '-20% 0px -70% 0px',
+      threshold: 0
+    }
+    
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          // Remove active class from all links
+          navLinks.forEach(link => link.classList.remove('active'))
+          
+          // Add active class to corresponding link
+          const activeLink = document.querySelector(`.sticky-nav a[href="#${entry.target.id}"]`)
+          if (activeLink) {
+            activeLink.classList.add('active')
+          }
+        }
+      })
+    }, observerOptions)
+    
+    // Observe all sections
+    sections.forEach(section => {
+      observer.observe(section)
     })
   }
 }

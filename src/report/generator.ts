@@ -107,6 +107,8 @@ interface ChartData {
   repositoryName: string
   totalCommits: number
   totalLinesOfCode: number
+  totalContributors: number
+  activeDays: number
   generationDate: string
   githubLink: string
   logoSvg: string
@@ -130,6 +132,13 @@ async function transformCommitData(commits: CommitData[], repoName: string, repo
   const totalLinesAdded = commits.reduce((sum, c) => sum + c.linesAdded, 0)
   const totalLinesOfCode = totalLinesAdded
   
+  // Calculate unique contributors
+  const uniqueContributors = new Set(commits.map(c => c.authorEmail)).size
+  
+  // Calculate active days (unique dates with commits)
+  const uniqueDates = new Set(commits.map(c => c.date.split('T')[0]))
+  const activeDays = uniqueDates.size
+  
   progressReporter?.report('Loading image assets')
   const logoSvg = await readFile('src/images/logo.svg', 'utf-8')
   const trophySvgs = {
@@ -149,6 +158,8 @@ async function transformCommitData(commits: CommitData[], repoName: string, repo
     repositoryName: repoName,
     totalCommits: commits.length,
     totalLinesOfCode,
+    totalContributors: uniqueContributors,
+    activeDays,
     generationDate: formatFullDate(new Date()),
     githubLink: githubUrl ? ` • <a href="${githubUrl}" target="_blank" class="text-decoration-none">GitHub</a>` : '',
     logoSvg,
@@ -219,6 +230,8 @@ async function injectDataIntoTemplate(template: string, chartData: ChartData, co
     generationDate: chartData.generationDate,
     totalCommits: chartData.totalCommits.toString(),
     totalLinesOfCode: chartData.totalLinesOfCode.toString(),
+    totalContributors: chartData.totalContributors.toString(),
+    activeDays: chartData.activeDays.toString(),
     githubLink: chartData.githubLink,
     logoSvg: chartData.logoSvg,
     latestCommitHash: latestCommit ? latestCommit.sha.substring(0, 7) : 'N/A',
