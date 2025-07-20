@@ -68,7 +68,7 @@ export class ChartRenderers {
     
     if (this.data.topFilesData) {
       renderWithErrorBoundary('topFilesChart', 'Top Files Chart', () => {
-        this.topFilesChart.render(this.data.topFilesData!, 'largest')
+        this.topFilesChart.render(this.data.topFilesData!, 'largest', this.data.isLizardInstalled ?? true)
       })
     }
     

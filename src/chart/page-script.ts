@@ -47,6 +47,7 @@ export interface PageScriptData {
   }
   trophySvgs: TrophySvgs
   githubUrl?: string
+  isLizardInstalled?: boolean
 }
 
 export class PageScript {

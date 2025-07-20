@@ -12,6 +12,7 @@ import {
   getTopCommitsByLinesRemoved
 } from '../data/award-calculator.js'
 import { getTopFilesStats } from '../data/top-files-calculator.js'
+import { checkLizardInstalled } from '../data/lizard-complexity-analyzer.js'
 import { getTimeSeriesData, getLinearSeriesData } from '../chart/data-transformer.js'
 import { processCommitMessages } from '../text/processor.js'
 import { replaceTemplateVariables, injectIntoBody } from '../utils/template-engine.js'
@@ -22,6 +23,12 @@ import type { ProgressReporter } from '../utils/progress-reporter.js'
 export async function generateReport(repoPath: string, outputMode: 'dist' | 'analysis' = 'dist', progressReporter?: ProgressReporter, maxCommits?: number, customFilename?: string): Promise<string> {
   const commits = await parseCommitHistory(repoPath, progressReporter, maxCommits)
   const repoName = repoPath === '.' ? basename(process.cwd()) : basename(repoPath) || 'repo'
+  
+  // Check if Lizard is installed early
+  const isLizardInstalled = await checkLizardInstalled()
+  if (!isLizardInstalled) {
+    console.warn('⚠️  Lizard not found. Code complexity analysis will be skipped. Install with: pip install lizard')
+  }
   
   let outputDir: string
   let reportPath: string
@@ -51,7 +58,7 @@ export async function generateReport(repoPath: string, outputMode: 'dist' | 'ana
   const currentFiles = await getCurrentFiles(repoPath)
 
   progressReporter?.report('Calculating statistics')
-  const chartData = await transformCommitData(commits, repoName, repoPath, progressReporter)
+  const chartData = await transformCommitData(commits, repoName, repoPath, progressReporter, isLizardInstalled)
   
   // Calculate all statistics once
   progressReporter?.report('Calculating contributor and file statistics')
@@ -104,6 +111,7 @@ interface ChartData {
   githubLink: string
   logoSvg: string
   trophySvgs: TrophySvgs
+  isLizardInstalled: boolean
 }
 
 function formatFullDate(date: Date): string {
@@ -118,7 +126,7 @@ function formatFullDate(date: Date): string {
   });
 }
 
-async function transformCommitData(commits: CommitData[], repoName: string, repoPath: string, progressReporter?: ProgressReporter): Promise<ChartData> {
+async function transformCommitData(commits: CommitData[], repoName: string, repoPath: string, progressReporter?: ProgressReporter, isLizardInstalled: boolean = true): Promise<ChartData> {
   const totalLinesAdded = commits.reduce((sum, c) => sum + c.linesAdded, 0)
   const totalLinesOfCode = totalLinesAdded
   
@@ -144,7 +152,8 @@ async function transformCommitData(commits: CommitData[], repoName: string, repo
     generationDate: formatFullDate(new Date()),
     githubLink: githubUrl ? ` • <a href="${githubUrl}" target="_blank" class="text-decoration-none">GitHub</a>` : '',
     logoSvg,
-    trophySvgs
+    trophySvgs,
+    isLizardInstalled
   }
 }
 
@@ -188,7 +197,8 @@ async function injectDataIntoTemplate(template: string, chartData: ChartData, co
         topFilesData: ${JSON.stringify(topFilesData)},
         awards: ${JSON.stringify(awards)},
         trophySvgs: ${JSON.stringify(chartData.trophySvgs)},
-        githubUrl: ${JSON.stringify(await getGitHubUrl(repoPath))}
+        githubUrl: ${JSON.stringify(await getGitHubUrl(repoPath))},
+        isLizardInstalled: ${JSON.stringify(chartData.isLizardInstalled)}
       };
       
       // Initialize when DOM is ready

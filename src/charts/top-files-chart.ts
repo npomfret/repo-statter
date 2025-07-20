@@ -5,12 +5,14 @@ export class TopFilesChart {
   private containerId: string
   private chart: any = null
   private currentData: TopFilesData | null = null
+  private isLizardInstalled: boolean = true
 
   constructor(containerId: string) {
     this.containerId = containerId
   }
 
-  render(topFilesData: TopFilesData, activeTab: 'largest' | 'churn' | 'complex' = 'largest'): void {
+  render(topFilesData: TopFilesData, activeTab: 'largest' | 'churn' | 'complex' = 'largest', isLizardInstalled: boolean = true): void {
+    this.isLizardInstalled = isLizardInstalled
     assert(topFilesData !== undefined, 'Top files data is required')
     
     const container = document.querySelector('#' + this.containerId)
@@ -48,10 +50,25 @@ export class TopFilesChart {
         break
     }
     
-    // If no data, show empty state or TODO message
+    // If no data, show empty state or installation message
     if (data.length === 0) {
-      if (activeTab === 'complex') {
-        container.innerHTML = '<div class="text-muted text-center p-4">TODO: Complexity analysis coming soon</div>'
+      if (activeTab === 'complex' && !this.isLizardInstalled) {
+        container.innerHTML = `
+          <div class="alert alert-info m-4" role="alert">
+            <h5 class="alert-heading">Code Complexity Analysis Not Available</h5>
+            <p>To enable code complexity analysis, please install Lizard:</p>
+            <pre class="mb-3"><code>pip install lizard</code></pre>
+            <hr>
+            <p class="mb-0">
+              <small>
+                Lizard is a code complexity analyzer that supports multiple programming languages.
+                Once installed, re-run the analysis to see complexity metrics for your codebase.
+              </small>
+            </p>
+          </div>
+        `
+      } else if (activeTab === 'complex') {
+        container.innerHTML = '<div class="text-muted text-center p-4">No complex files found</div>'
       } else {
         container.innerHTML = '<div class="text-muted text-center p-4">No data available</div>'
       }
@@ -201,7 +218,7 @@ export class TopFilesChart {
 
   updateTab(activeTab: 'largest' | 'churn' | 'complex'): void {
     if (this.currentData) {
-      this.render(this.currentData, activeTab)
+      this.render(this.currentData, activeTab, this.isLizardInstalled)
     }
   }
 

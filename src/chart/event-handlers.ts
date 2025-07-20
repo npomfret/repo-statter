@@ -183,11 +183,11 @@ export class EventHandlers {
           const tabId = target.id
           
           if (tabId === 'largest-tab') {
-            topFilesChart.render(this.data.topFilesData!, 'largest')
+            topFilesChart.render(this.data.topFilesData!, 'largest', this.data.isLizardInstalled ?? true)
           } else if (tabId === 'churn-tab') {
-            topFilesChart.render(this.data.topFilesData!, 'churn')
+            topFilesChart.render(this.data.topFilesData!, 'churn', this.data.isLizardInstalled ?? true)
           } else if (tabId === 'complex-tab') {
-            topFilesChart.render(this.data.topFilesData!, 'complex')
+            topFilesChart.render(this.data.topFilesData!, 'complex', this.data.isLizardInstalled ?? true)
           }
         })
       })
