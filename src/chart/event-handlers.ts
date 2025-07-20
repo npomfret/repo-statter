@@ -204,6 +204,7 @@ export class EventHandlers {
     fileTypesChart.setClickHandler((fileType: string | null) => {
       this.selectedFileType = fileType
       this.updateTopFilesWithFilter()
+      this.updateFileHeatmapWithFilter()
       this.updateFileTypeIndicator()
     })
     
@@ -213,6 +214,7 @@ export class EventHandlers {
       clearButton.addEventListener('click', () => {
         this.selectedFileType = null
         this.updateTopFilesWithFilter()
+        this.updateFileHeatmapWithFilter()
         this.updateFileTypeIndicator()
       })
     }
@@ -232,6 +234,111 @@ export class EventHandlers {
     }
   }
 
+  private updateFileHeatmapWithFilter(): void {
+    const fileHeatmapChart = this.renderers.getChartInstances().fileHeatmap
+    
+    if (this.selectedFileType && fileHeatmapChart) {
+      // Filter file heat data by file type
+      const filteredData = this.data.fileHeatData.filter(file => {
+        const fileType = this.getFileTypeBrowser(file.fileName)
+        return fileType === this.selectedFileType
+      })
+      
+      if (filteredData.length > 0) {
+        fileHeatmapChart.render(filteredData)
+      } else {
+        // Show empty state
+        const container = document.querySelector('#fileHeatmapChart')
+        if (container) {
+          container.innerHTML = `
+            <div class="text-center text-muted">
+              <i class="fas fa-filter fa-3x mb-3"></i>
+              <p>No files with type "${this.selectedFileType}" found</p>
+            </div>
+          `
+        }
+      }
+    } else if (fileHeatmapChart) {
+      // No filter, show all files
+      fileHeatmapChart.render(this.data.fileHeatData)
+    }
+  }
+  
+  private getFileTypeBrowser(fileName: string): string {
+    const lastDotIndex = fileName.lastIndexOf('.')
+    if (lastDotIndex === -1 || lastDotIndex === fileName.length - 1) return 'Other'
+    
+    const ext = fileName.slice(lastDotIndex).toLowerCase()
+    
+    const FILE_TYPE_MAP: Record<string, string> = {
+      '.ts': 'TypeScript',
+      '.tsx': 'TypeScript',
+      '.js': 'JavaScript',
+      '.jsx': 'JavaScript',
+      '.py': 'Python',
+      '.java': 'Java',
+      '.cpp': 'C++',
+      '.cc': 'C++',
+      '.cxx': 'C++',
+      '.c': 'C',
+      '.h': 'C',
+      '.hpp': 'C++',
+      '.go': 'Go',
+      '.rs': 'Rust',
+      '.php': 'PHP',
+      '.rb': 'Ruby',
+      '.swift': 'Swift',
+      '.kt': 'Kotlin',
+      '.scala': 'Scala',
+      '.r': 'R',
+      '.lua': 'Lua',
+      '.pl': 'Perl',
+      '.sh': 'Shell',
+      '.bash': 'Shell',
+      '.zsh': 'Shell',
+      '.fish': 'Shell',
+      '.ps1': 'PowerShell',
+      '.psm1': 'PowerShell',
+      '.psd1': 'PowerShell',
+      '.bat': 'Batch',
+      '.cmd': 'Batch',
+      '.json': 'JSON',
+      '.xml': 'XML',
+      '.yaml': 'YAML',
+      '.yml': 'YAML',
+      '.toml': 'TOML',
+      '.ini': 'INI',
+      '.cfg': 'Config',
+      '.conf': 'Config',
+      '.properties': 'Properties',
+      '.env': 'Environment',
+      '.gitignore': 'Git',
+      '.gitattributes': 'Git',
+      '.gitmodules': 'Git',
+      '.css': 'CSS',
+      '.scss': 'SCSS',
+      '.sass': 'SCSS',
+      '.less': 'CSS',
+      '.html': 'HTML',
+      '.htm': 'HTML',
+      '.xhtml': 'HTML',
+      '.vue': 'Vue',
+      '.md': 'Markdown',
+      '.markdown': 'Markdown',
+      '.rst': 'reStructuredText',
+      '.tex': 'LaTeX',
+      '.sql': 'SQL',
+      '.dockerfile': 'Dockerfile',
+      '.makefile': 'Makefile',
+      '.cmake': 'CMake',
+      '.gradle': 'Gradle',
+      '.vim': 'VimScript',
+      '.vimrc': 'VimScript'
+    }
+    
+    return FILE_TYPE_MAP[ext] || 'Other'
+  }
+  
   private updateTopFilesWithFilter(): void {
     const topFilesChart = this.renderers.getTopFilesChart()
     

@@ -58,7 +58,7 @@ export async function generateReport(repoPath: string, outputMode: 'dist' | 'ana
   const currentFiles = await getCurrentFiles(repoPath)
 
   progressReporter?.report('Calculating statistics')
-  const chartData = await transformCommitData(commits, repoName, repoPath, progressReporter, isLizardInstalled)
+  const chartData = await transformCommitData(commits, repoName, repoPath, progressReporter, isLizardInstalled, currentFiles)
   
   // Calculate all statistics once
   progressReporter?.report('Calculating contributor and file statistics')
@@ -128,9 +128,29 @@ function formatFullDate(date: Date): string {
   });
 }
 
-async function transformCommitData(commits: CommitData[], repoName: string, repoPath: string, progressReporter?: ProgressReporter, isLizardInstalled: boolean = true): Promise<ChartData> {
-  const totalLinesAdded = commits.reduce((sum, c) => sum + c.linesAdded, 0)
-  const totalLinesOfCode = totalLinesAdded
+async function transformCommitData(commits: CommitData[], repoName: string, repoPath: string, progressReporter?: ProgressReporter, isLizardInstalled: boolean = true, currentFiles?: Set<string>): Promise<ChartData> {
+  // Calculate current lines of code from file size history
+  let totalLinesOfCode = 0
+  if (currentFiles && currentFiles.size > 0) {
+    const fileSizeMap = new Map<string, number>()
+    
+    // Build up file sizes from commit history
+    for (const commit of commits) {
+      for (const fileChange of commit.filesChanged) {
+        if (currentFiles.has(fileChange.fileName)) {
+          const currentSize = fileSizeMap.get(fileChange.fileName) ?? 0
+          const sizeChange = fileChange.linesAdded - fileChange.linesDeleted
+          fileSizeMap.set(fileChange.fileName, Math.max(0, currentSize + sizeChange))
+        }
+      }
+    }
+    
+    // Sum up all current file sizes
+    totalLinesOfCode = Array.from(fileSizeMap.values()).reduce((sum, size) => sum + size, 0)
+  } else {
+    // Fallback to total lines added if we can't determine current files
+    totalLinesOfCode = commits.reduce((sum, c) => sum + c.linesAdded, 0)
+  }
   
   // Calculate unique contributors
   const uniqueContributors = new Set(commits.map(c => c.authorEmail)).size
