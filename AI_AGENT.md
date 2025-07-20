@@ -1,13 +1,31 @@
-# Important
+# 🛑 MANDATORY: READ THIS FIRST - DO NOT SKIP
 
-Before making **any** code changes, carefully read and analyse the guidance in:
+STOP! DO NOT WRITE ANY CODE until you have completed ALL items in this document.
 
-- [engineering.md](directives/engineering.md)
-- [code-style.md](directives/code-style.md)
-- [logging.md](directives/logging.md)
-- [testing.md](directives/testing.md)
+## Required Pre-Work Checklist
 
-Do no deviate in any way from these instructions unless you have permission or have been instructed to do otherwise.
+Before making **ANY** code changes, you MUST:
+
+- [ ] Read [engineering.md](directives/engineering.md) completely
+- [ ] Read [code-style.md](directives/code-style.md) completely
+- [ ] Read [logging.md](directives/logging.md) completely
+- [ ] Read [testing.md](directives/testing.md) completely
+- [ ] State: "I have read all directive files and understand I cannot make code changes until instructed."
+
+## WARNING: Code changes made without reading these files will be rejected
+
+Violations include:
+- Making any code changes before reading ALL directives
+- Starting implementation before receiving explicit permission
+- Skipping any items in the checklist above
+- Deviating from these instructions without explicit permission
+
+## Required Confirmation
+
+After reading all directives, you MUST explicitly state: 
+"I have read all directive files and understand I cannot make code changes until instructed."
+
+Do NOT proceed with any code changes until you receive explicit permission to do so.
 
 # Development Workflow
 - After any change, run the appropriate build and tests
@@ -28,3 +46,6 @@ Do no deviate in any way from these instructions unless you have permission or h
 - async/await over promises
 - ES modules: `import { foo } from 'bar'`
 
+
+# ⚠️ FINAL REMINDER
+NO CODE CHANGES until explicitly instructed to proceed. You MUST wait for permission after creating your plan.
