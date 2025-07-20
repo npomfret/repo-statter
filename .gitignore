@@ -36,9 +36,11 @@ Thumbs.db
 .claude/commands/analyse.md
 .claude/commands/changes.md
 .claude/commands/next-task.md
+directives
 
 # Generated Output
 analysis/
 dist/
 tmp/
 test-*.html/
+
