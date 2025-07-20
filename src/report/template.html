@@ -603,6 +603,115 @@
             }
         }
         
+        /* Enhanced mobile breakpoint (≤ 600px) for better UX */
+        @media (max-width: 600px) {
+            /* Stack metric cards in 2-column grid */
+            .dashboard-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.5rem;
+                margin-bottom: 1rem;
+            }
+            
+            .metric-card-grid { grid-column: span 1; }
+            .chart-full,
+            .chart-half,
+            .chart-third { 
+                grid-column: span 2; 
+            }
+            
+            /* Mobile-first accordion behavior - single expanded section */
+            .accordion {
+                margin-bottom: 1rem;
+            }
+            
+            .accordion-item {
+                margin-bottom: 0.25rem;
+            }
+            
+            .accordion-button {
+                font-size: 1rem;
+                padding: 0.875rem 1rem;
+                min-height: 44px; /* Touch-friendly minimum */
+            }
+            
+            /* Chart containers become full-width and swipeable */
+            .chart-container {
+                min-height: 300px;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            /* Reduce spacing for mobile */
+            .main-content {
+                padding-right: 0.75rem;
+                padding-left: 0.75rem;
+            }
+            
+            .hero-strip {
+                padding: 1rem 0;
+            }
+            
+            .metric-card {
+                padding: 0.75rem;
+                font-size: 0.875rem;
+            }
+            
+            .metric-value {
+                font-size: 1.25rem;
+            }
+            
+            /* Improve tab navigation for touch */
+            .nav-tabs .nav-link {
+                padding: 0.75rem 1rem;
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            /* Remove hover effects on touch devices */
+            .metric-card:hover {
+                transform: none;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            }
+            
+            [data-bs-theme="dark"] .metric-card:hover {
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            }
+            
+            /* Enhance touch targets for all interactive elements */
+            .btn,
+            .nav-link,
+            .accordion-button,
+            .form-control,
+            .form-select {
+                min-height: 44px;
+                min-width: 44px;
+            }
+            
+            /* Improve filter controls for touch */
+            .input-group .form-control {
+                padding: 0.75rem;
+            }
+            
+            .btn-group .btn {
+                padding: 0.5rem 0.875rem;
+            }
+            
+            /* Better spacing for filter section */
+            .accordion-body .dashboard-grid {
+                gap: 0.75rem;
+            }
+            
+            /* Enhanced sticky nav for mobile */
+            .sticky-nav a {
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+        
         /* CSS Custom Properties for consistent spacing */
         :root {
             --space-xs: 0.25rem;
@@ -1105,5 +1214,129 @@
     <script src="https://cdn.jsdelivr.net/npm/apexcharts" integrity="sha384-unxUBkb3z/RpcMq0hNQRqod/tnpd6a4g2/VYXCA4ZmgVTWc2a/QUl1CiHt5MN7Q2" crossorigin="anonymous" defer></script>
     <script src="https://d3js.org/d3.v7.min.js" crossorigin="anonymous" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/d3-cloud@1.2.7/build/d3.layout.cloud.js" crossorigin="anonymous" defer></script>
+
+    <!-- Mobile optimizations -->
+    <script>
+        // Mobile-specific optimizations for accordion behavior
+        function isMobileDevice() {
+            return window.innerWidth <= 600;
+        }
+
+        // Handle mobile accordion behavior - only one section open at a time
+        function initMobileAccordions() {
+            if (!isMobileDevice()) return;
+            
+            const accordions = document.querySelectorAll('.accordion');
+            
+            accordions.forEach(accordion => {
+                const accordionButtons = accordion.querySelectorAll('.accordion-button');
+                
+                accordionButtons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        if (!isMobileDevice()) return;
+                        
+                        const targetId = this.getAttribute('data-bs-target');
+                        const targetCollapse = document.querySelector(targetId);
+                        
+                        // On mobile, close other accordions in the same accordion group
+                        setTimeout(() => {
+                            const otherCollapses = accordion.querySelectorAll('.accordion-collapse.show');
+                            otherCollapses.forEach(collapse => {
+                                if (collapse !== targetCollapse) {
+                                    const collapseInstance = bootstrap.Collapse.getInstance(collapse);
+                                    if (collapseInstance) {
+                                        collapseInstance.hide();
+                                    }
+                                }
+                            });
+                        }, 50);
+                    });
+                });
+            });
+        }
+
+        // Add touch feedback to interactive elements
+        function initTouchFeedback() {
+            if (!isMobileDevice()) return;
+            
+            const touchElements = document.querySelectorAll('.btn, .nav-link, .accordion-button, .metric-card');
+            
+            touchElements.forEach(element => {
+                element.addEventListener('touchstart', function() {
+                    this.style.transform = 'scale(0.98)';
+                    this.style.transition = 'transform 0.1s ease';
+                });
+                
+                element.addEventListener('touchend', function() {
+                    this.style.transform = 'scale(1)';
+                    setTimeout(() => {
+                        this.style.transition = '';
+                    }, 100);
+                });
+            });
+        }
+
+        // Swipe gestures for section navigation (basic implementation)
+        function initSwipeNavigation() {
+            if (!isMobileDevice()) return;
+            
+            let startX = 0;
+            let startY = 0;
+            
+            document.addEventListener('touchstart', function(e) {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+            });
+            
+            document.addEventListener('touchend', function(e) {
+                if (!startX || !startY) return;
+                
+                const endX = e.changedTouches[0].clientX;
+                const endY = e.changedTouches[0].clientY;
+                
+                const deltaX = endX - startX;
+                const deltaY = endY - startY;
+                
+                // Only process horizontal swipes
+                if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 100) {
+                    const navLinks = document.querySelectorAll('.sticky-nav a');
+                    const activeLink = document.querySelector('.sticky-nav a.active');
+                    const currentIndex = Array.from(navLinks).indexOf(activeLink);
+                    
+                    let targetIndex;
+                    if (deltaX > 0 && currentIndex > 0) {
+                        // Swipe right - go to previous section
+                        targetIndex = currentIndex - 1;
+                    } else if (deltaX < 0 && currentIndex < navLinks.length - 1) {
+                        // Swipe left - go to next section
+                        targetIndex = currentIndex + 1;
+                    }
+                    
+                    if (targetIndex !== undefined) {
+                        navLinks[targetIndex].click();
+                    }
+                }
+                
+                startX = 0;
+                startY = 0;
+            });
+        }
+
+        // Initialize mobile optimizations when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            initMobileAccordions();
+            initTouchFeedback();
+            initSwipeNavigation();
+            
+            // Reinitialize on window resize
+            window.addEventListener('resize', function() {
+                setTimeout(() => {
+                    initMobileAccordions();
+                    initTouchFeedback();
+                    initSwipeNavigation();
+                }, 100);
+            });
+        });
+    </script>
 </body>
 </html>
