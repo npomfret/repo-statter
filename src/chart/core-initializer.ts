@@ -1,10 +1,13 @@
+import { performanceMonitor } from '../utils/performance-monitor.js'
+
 /**
  * Core initializer for non-chart functionality
  * This module handles theme, navigation, and other UI features that don't depend on chart libraries
  */
 export class CoreInitializer {
   constructor() {
-    // Core initializer doesn't need data for now
+    // Mark core initialization start
+    performanceMonitor.mark('coreInitStart')
   }
 
   public initialize(): void {
@@ -15,6 +18,13 @@ export class CoreInitializer {
     
     // Setup theme toggle listener
     this.setupThemeToggle()
+    
+    // Mark core initialization complete
+    performanceMonitor.mark('coreInitEnd')
+    performanceMonitor.measure('coreInitialization', 'coreInitStart', 'coreInitEnd')
+    
+    // Setup performance reporting when page fully loads
+    this.setupPerformanceReporting()
   }
 
   private initializeTheme(): void {
@@ -161,5 +171,21 @@ export class CoreInitializer {
     
     accordionStates[itemId] = isOpen
     localStorage.setItem('accordionStates', JSON.stringify(accordionStates))
+  }
+  
+  private setupPerformanceReporting(): void {
+    // Report performance metrics when page fully loads
+    window.addEventListener('load', () => {
+      // Wait a bit to ensure all metrics are collected
+      setTimeout(() => {
+        performanceMonitor.logReport()
+        performanceMonitor.sendAnalytics()
+      }, 100)
+    })
+    
+    // Also log performance in dev mode when requested
+    if (typeof window !== 'undefined') {
+      (window as any).logPerformance = () => performanceMonitor.logReport()
+    }
   }
 }

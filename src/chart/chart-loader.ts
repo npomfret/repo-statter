@@ -1,4 +1,5 @@
 import type { PageScriptData } from './page-script.js'
+import { performanceMonitor } from '../utils/performance-monitor.js'
 
 /**
  * Lazy loader for chart functionality
@@ -30,6 +31,8 @@ export class ChartLoader {
 
   private async loadChartModules(): Promise<void> {
     try {
+      performanceMonitor.mark('chartLoadStart')
+      
       // Dynamic imports for code splitting
       const [
         { ChartRenderers },
@@ -41,6 +44,9 @@ export class ChartLoader {
         import('./chart-initializer.js')
       ])
 
+      performanceMonitor.mark('chartModulesLoaded')
+      performanceMonitor.measure('chartModuleLoading', 'chartLoadStart', 'chartModulesLoaded')
+
       // Initialize chart components
       const renderers = new ChartRenderers(this.data)
       const eventHandlers = new EventHandlers(this.data, renderers)
@@ -48,6 +54,10 @@ export class ChartLoader {
 
       // Initialize charts
       chartInitializer.initialize()
+      
+      performanceMonitor.mark('chartsInitialized')
+      performanceMonitor.measure('chartInitialization', 'chartModulesLoaded', 'chartsInitialized')
+      performanceMonitor.measure('totalChartLoadTime', 'chartLoadStart', 'chartsInitialized')
     } catch (error) {
       console.error('Failed to load chart modules:', error)
       this.showChartLoadError()

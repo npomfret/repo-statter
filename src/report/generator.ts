@@ -222,36 +222,63 @@ async function injectDataIntoTemplate(template: string, chartData: ChartData, co
   // Bundle the TypeScript page script
   const bundledScript = await bundlePageScript()
   
-  const chartScript = `
-    <script>
-      ${bundledScript}
-      
-      // Initialize the page script with data
-      const pageData = {
-        commits: ${JSON.stringify(commits)},
-        contributors: ${JSON.stringify(contributors)},
-        fileTypes: ${JSON.stringify(fileTypes)},
-        timeSeries: ${JSON.stringify(timeSeries)},
-        linearSeries: ${JSON.stringify(linearSeries)},
-        wordCloudData: ${JSON.stringify(wordCloudData)},
-        fileHeatData: ${JSON.stringify(fileHeatData)},
-        topFilesData: ${JSON.stringify(topFilesData)},
-        awards: ${JSON.stringify(awards)},
-        trophySvgs: ${JSON.stringify(chartData.trophySvgs)},
-        githubUrl: ${JSON.stringify(await getGitHubUrl(repoPath))},
-        isLizardInstalled: ${JSON.stringify(chartData.isLizardInstalled)}
-      };
-      
-      // Initialize when DOM is ready
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-          window.initializePageScript(pageData);
-        });
-      } else {
-        window.initializePageScript(pageData);
+  // Separate data script for better parsing performance
+  const dataScript = `
+    <script type="application/json" id="repo-data">
+      {
+        "commits": ${JSON.stringify(commits)},
+        "contributors": ${JSON.stringify(contributors)},
+        "fileTypes": ${JSON.stringify(fileTypes)},
+        "timeSeries": ${JSON.stringify(timeSeries)},
+        "linearSeries": ${JSON.stringify(linearSeries)},
+        "wordCloudData": ${JSON.stringify(wordCloudData)},
+        "fileHeatData": ${JSON.stringify(fileHeatData)},
+        "topFilesData": ${JSON.stringify(topFilesData)},
+        "awards": ${JSON.stringify(awards)},
+        "trophySvgs": ${JSON.stringify(chartData.trophySvgs)},
+        "githubUrl": ${JSON.stringify(await getGitHubUrl(repoPath))},
+        "isLizardInstalled": ${JSON.stringify(chartData.isLizardInstalled)}
       }
     </script>
   `
+  
+  // Main script that loads the bundled code and initializes with data
+  const mainScript = `
+    <script>
+      ${bundledScript}
+      
+      // Load data from separate script tag
+      function loadPageData() {
+        const dataElement = document.getElementById('repo-data');
+        if (!dataElement) {
+          console.error('Failed to find repo data');
+          return null;
+        }
+        try {
+          return JSON.parse(dataElement.textContent || '{}');
+        } catch (error) {
+          console.error('Failed to parse repo data:', error);
+          return null;
+        }
+      }
+      
+      // Initialize when DOM is ready
+      function initializePage() {
+        const pageData = loadPageData();
+        if (pageData) {
+          window.initializePageScript(pageData);
+        }
+      }
+      
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializePage);
+      } else {
+        initializePage();
+      }
+    </script>
+  `
+  
+  const chartScript = dataScript + mainScript
   
   const latestCommit = commits[commits.length - 1]
 
