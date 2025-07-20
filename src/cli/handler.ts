@@ -16,7 +16,9 @@ export async function handleCLI(args: string[]): Promise<void> {
     .option('-r, --repo <path>', 'Repository path (alternative to positional argument)')
     .option('-o, --output <dir>', 'Output directory', 'dist')
     .option('--output-file <filename>', 'Custom output filename (overrides default naming)')
-    .option('--max-commits <number>', 'Maximum number of recent commits to analyze', '1000')
+    .option('--max-commits <number>', 'Maximum number of recent commits to analyze')
+    .option('--no-cache', 'Disable caching (always do full scan)')
+    .option('--clear-cache', 'Clear existing cache before running')
     .action(async (repoPath, options) => {
       const finalRepoPath = options.repo || repoPath || process.cwd()
       const outputDir = options.output
@@ -26,8 +28,12 @@ export async function handleCLI(args: string[]): Promise<void> {
         await validateGitRepository(finalRepoPath)
         const consoleReporter = new ConsoleProgressReporter()
         const progressReporter = new ThrottledProgressReporter(consoleReporter, 200)
-        const maxCommits = parseInt(options.maxCommits, 10)
-        const reportPath = await generateReport(finalRepoPath, outputDir, progressReporter, maxCommits, outputFile)
+        const maxCommits = options.maxCommits ? parseInt(options.maxCommits, 10) : undefined
+        const cacheOptions = {
+          useCache: !options.noCache,
+          clearCache: options.clearCache
+        }
+        const reportPath = await generateReport(finalRepoPath, outputDir, progressReporter, maxCommits, outputFile, cacheOptions)
         console.log(`\nReport generated: ${reportPath}`)
       } catch (error) {
         if (isRepoStatError(error)) {

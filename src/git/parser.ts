@@ -3,6 +3,7 @@ import { validateGitRepository } from '../utils/git-validation.js'
 import { parseCommitDiff as parseCommitDiffData, parseByteChanges } from '../data/git-extractor.js'
 import type { ProgressReporter } from '../utils/progress-reporter.js'
 import { GitParseError, formatError } from '../utils/errors.js'
+import { generateRepositoryHash, loadCache, saveCache, clearCache } from '../cache/git-cache.js'
 
 // Assert utilities for fail-fast error handling
 function assert(condition: boolean, message: string): asserts condition {
@@ -33,7 +34,12 @@ export interface CommitData {
   filesChanged: FileChange[]
 }
 
-export async function parseCommitHistory(repoPath: string, progressReporter?: ProgressReporter, maxCommits?: number): Promise<CommitData[]> {
+export interface CacheOptions {
+  useCache?: boolean
+  clearCache?: boolean
+}
+
+export async function parseCommitHistory(repoPath: string, progressReporter?: ProgressReporter, maxCommits?: number, cacheOptions: CacheOptions = {}): Promise<CommitData[]> {
   // Validate input
   assert(repoPath.length > 0, 'Repository path cannot be empty')
   
@@ -47,6 +53,29 @@ export async function parseCommitHistory(repoPath: string, progressReporter?: Pr
     await git.status()
   } catch (error) {
     throw new GitParseError(`Cannot access git repository: ${formatError(error)}`, error instanceof Error ? error : undefined)
+  }
+  
+  // Generate repository hash for caching
+  const repoHash = await generateRepositoryHash(repoPath)
+  
+  // Clear cache if requested
+  if (cacheOptions.clearCache) {
+    await clearCache(repoHash)
+    progressReporter?.report('Cleared existing cache')
+  }
+  
+  // Check for existing cache if caching is enabled
+  let cachedCommits: CommitData[] = []
+  let lastCachedSha: string | null = null
+  
+  if (cacheOptions.useCache !== false && !cacheOptions.clearCache && !maxCommits) {
+    progressReporter?.report('Checking for cached data')
+    const cache = await loadCache(repoHash)
+    if (cache && cache.commits.length > 0) {
+      cachedCommits = cache.commits
+      lastCachedSha = cache.lastCommitSha
+      progressReporter?.report(`Found cached data with ${cachedCommits.length} commits`)
+    }
   }
   
   progressReporter?.report('Fetching commit history')
@@ -63,20 +92,37 @@ export async function parseCommitHistory(repoPath: string, progressReporter?: Pr
     '--reverse': null
   }
   
+  // If we have cached data, only fetch commits after the last cached commit
+  if (lastCachedSha) {
+    logOptions.from = lastCachedSha
+    progressReporter?.report('Fetching new commits since last cache')
+  }
+  
   if (maxCommits) {
     logOptions.maxCount = maxCommits
   }
   
   const log = await git.log(logOptions)
   
-  const commits: CommitData[] = []
+  // Filter out the lastCachedSha commit if it's included (git log includes the 'from' commit)
+  const newCommits = lastCachedSha 
+    ? log.all.filter(commit => commit.hash !== lastCachedSha)
+    : log.all
+  
+  // Start with cached commits
+  const commits: CommitData[] = [...cachedCommits]
   let cumulativeBytes = 0
   let processedCommits = 0
-  const totalCommits = log.all.length
+  const totalNewCommits = newCommits.length
   
-  progressReporter?.report(`Processing ${totalCommits} commits`)
+  if (totalNewCommits === 0 && cachedCommits.length > 0) {
+    progressReporter?.report(`Using cached data: ${cachedCommits.length} commits`)
+    return cachedCommits
+  }
   
-  for (const commit of log.all) {
+  progressReporter?.report(`Processing ${totalNewCommits} new commits${cachedCommits.length > 0 ? ` (${cachedCommits.length} cached)` : ''}`)
+  
+  for (const commit of newCommits) {
     const diffStats = await parseCommitDiff(repoPath, commit.hash)
     const bytesAdded = diffStats.bytesAdded ?? 0
     const bytesDeleted = diffStats.bytesDeleted ?? 0
@@ -105,10 +151,21 @@ export async function parseCommitHistory(repoPath: string, progressReporter?: Pr
     processedCommits++
     
     // Report progress every 100 commits or at the end
-    if (processedCommits % 100 === 0 || processedCommits === totalCommits) {
+    if (processedCommits % 100 === 0 || processedCommits === totalNewCommits) {
       const shortHash = commitData.sha.substring(0, 7)
       const progressMessage = `Processing commit: ${shortHash} by ${commitData.authorName} at ${commitData.date}`
-      progressReporter?.report(progressMessage, processedCommits, totalCommits)
+      progressReporter?.report(progressMessage, processedCommits, totalNewCommits)
+    }
+  }
+  
+  // Save to cache if caching is enabled and we processed new commits
+  if (cacheOptions.useCache !== false && !maxCommits && (totalNewCommits > 0 || cachedCommits.length === 0)) {
+    try {
+      await saveCache(repoHash, commits)
+      progressReporter?.report(`Cached ${commits.length} commits for future runs`)
+    } catch (error) {
+      // Don't fail the entire operation if caching fails
+      progressReporter?.report('Warning: Failed to save cache data')
     }
   }
   

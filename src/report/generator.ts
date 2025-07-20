@@ -1,7 +1,7 @@
 import { basename, resolve } from 'path'
 import { readFile, writeFile, mkdir } from 'fs/promises'
 import { existsSync } from 'fs'
-import { parseCommitHistory, getGitHubUrl, getCurrentFiles } from '../git/parser.js'
+import { parseCommitHistory, getGitHubUrl, getCurrentFiles, type CacheOptions } from '../git/parser.js'
 import { getContributorStats, getLowestAverageLinesChanged, getHighestAverageLinesChanged, type ContributorStats } from '../data/contributor-calculator.js'
 import { getFileTypeStats, getFileHeatData, type FileTypeStats } from '../data/file-calculator.js'
 import { 
@@ -20,8 +20,8 @@ import { bundlePageScript } from '../build/bundle-page-script.js'
 import type { CommitData } from '../git/parser.js'
 import type { ProgressReporter } from '../utils/progress-reporter.js'
 
-export async function generateReport(repoPath: string, outputMode: 'dist' | 'analysis' = 'dist', progressReporter?: ProgressReporter, maxCommits?: number, customFilename?: string): Promise<string> {
-  const commits = await parseCommitHistory(repoPath, progressReporter, maxCommits)
+export async function generateReport(repoPath: string, outputMode: 'dist' | 'analysis' = 'dist', progressReporter?: ProgressReporter, maxCommits?: number, customFilename?: string, cacheOptions?: CacheOptions): Promise<string> {
+  const commits = await parseCommitHistory(repoPath, progressReporter, maxCommits, cacheOptions)
   const repoName = repoPath === '.' ? basename(process.cwd()) : basename(repoPath) || 'repo'
   
   // Check if Lizard is installed early
