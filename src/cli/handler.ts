@@ -4,6 +4,8 @@ import { validateGitRepository } from '../utils/git-validation.js'
 import { ConsoleProgressReporter } from '../utils/progress-reporter.js'
 import { ThrottledProgressReporter } from '../utils/throttled-progress-reporter.js'
 import { isRepoStatError, formatError } from '../utils/errors.js'
+import { loadConfiguration, validateConfiguration } from '../config/loader.js'
+import type { ConfigOverrides } from '../config/loader.js'
 
 export async function handleCLI(args: string[]): Promise<void> {
   program
@@ -19,6 +21,7 @@ export async function handleCLI(args: string[]): Promise<void> {
     .option('--max-commits <number>', 'Maximum number of recent commits to analyze')
     .option('--no-cache', 'Disable caching (always do full scan)')
     .option('--clear-cache', 'Clear existing cache before running')
+    .option('--config <path>', 'Path to configuration file')
     .action(async (repoPath, options) => {
       const finalRepoPath = options.repo || repoPath || process.cwd()
       const outputDir = options.output
@@ -26,14 +29,27 @@ export async function handleCLI(args: string[]): Promise<void> {
       
       try {
         await validateGitRepository(finalRepoPath)
-        const consoleReporter = new ConsoleProgressReporter()
-        const progressReporter = new ThrottledProgressReporter(consoleReporter, 200)
-        const maxCommits = options.maxCommits ? parseInt(options.maxCommits, 10) : undefined
-        const cacheOptions = {
-          useCache: !options.noCache,
-          clearCache: options.clearCache
+        
+        // Load configuration with CLI overrides
+        const configOverrides: ConfigOverrides = {
+          maxCommits: options.maxCommits ? parseInt(options.maxCommits, 10) : null,
+          output: outputDir,
+          outputFile: outputFile,
+          noCache: options.noCache,
+          clearCache: options.clearCache,
+          configPath: options.config
         }
-        const reportPath = await generateReport(finalRepoPath, outputDir, progressReporter, maxCommits, outputFile, cacheOptions)
+        
+        const config = loadConfiguration(finalRepoPath, configOverrides)
+        validateConfiguration(config)
+        
+        const consoleReporter = new ConsoleProgressReporter()
+        const progressReporter = new ThrottledProgressReporter(consoleReporter, config.performance.progressThrottleMs)
+        const cacheOptions = {
+          useCache: config.performance.cacheEnabled,
+          clearCache: options.clearCache || false
+        }
+        const reportPath = await generateReport(finalRepoPath, outputDir, progressReporter, config.analysis.maxCommits || undefined, outputFile, cacheOptions, config)
         console.log(`\nReport generated: ${reportPath}`)
       } catch (error) {
         if (isRepoStatError(error)) {
