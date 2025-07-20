@@ -1,4 +1,5 @@
 import type { CommitData } from '../git/parser.js'
+import type { FileHeatConfig } from '../config/schema.js'
 
 export interface FileTypeStats {
   type: string
@@ -41,7 +42,13 @@ export function getFileTypeStats(commits: CommitData[], currentFiles?: Set<strin
     .sort((a, b) => b.lines - a.lines)
 }
 
-export function getFileHeatData(commits: CommitData[], currentFiles?: Set<string>): FileHeatData[] {
+export function getFileHeatData(commits: CommitData[], currentFiles?: Set<string>, config?: FileHeatConfig): FileHeatData[] {
+  // Use default values if config not provided
+  const recencyDecayDays = config?.recencyDecayDays ?? 30
+  const frequencyWeight = config?.frequencyWeight ?? 0.4
+  const recencyWeight = config?.recencyWeight ?? 0.6
+  const maxFilesDisplayed = config?.maxFilesDisplayed ?? 100
+
   const fileMap = new Map<string, { commitCount: number; lastModified: Date; totalLines: number; fileType: string }>()
   
   for (const commit of commits) {
@@ -78,8 +85,8 @@ export function getFileHeatData(commits: CommitData[], currentFiles?: Set<string
   for (const [fileName, data] of fileMap.entries()) {
     const daysSinceLastModification = (now.getTime() - data.lastModified.getTime()) / (1000 * 60 * 60 * 24)
     const frequency = data.commitCount
-    const recency = Math.exp(-daysSinceLastModification / 30)
-    const heatScore = (frequency * 0.4) + (recency * 0.6)
+    const recency = Math.exp(-daysSinceLastModification / recencyDecayDays)
+    const heatScore = (frequency * frequencyWeight) + (recency * recencyWeight)
     
     results.push({
       fileName,
@@ -91,5 +98,7 @@ export function getFileHeatData(commits: CommitData[], currentFiles?: Set<string
     })
   }
   
-  return results.sort((a, b) => b.heatScore - a.heatScore)
+  return results
+    .sort((a, b) => b.heatScore - a.heatScore)
+    .slice(0, maxFilesDisplayed)
 }

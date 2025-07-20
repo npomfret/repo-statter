@@ -4,6 +4,7 @@ import { parseCommitDiff as parseCommitDiffData, parseByteChanges } from '../dat
 import type { ProgressReporter } from '../utils/progress-reporter.js'
 import { GitParseError, formatError } from '../utils/errors.js'
 import { generateRepositoryHash, loadCache, saveCache, clearCache } from '../cache/git-cache.js'
+import type { AnalysisConfig } from '../config/schema.js'
 
 // Assert utilities for fail-fast error handling
 function assert(condition: boolean, message: string): asserts condition {
@@ -39,7 +40,7 @@ export interface CacheOptions {
   clearCache?: boolean
 }
 
-export async function parseCommitHistory(repoPath: string, progressReporter?: ProgressReporter, maxCommits?: number, cacheOptions: CacheOptions = {}): Promise<CommitData[]> {
+export async function parseCommitHistory(repoPath: string, progressReporter?: ProgressReporter, maxCommits?: number, cacheOptions: CacheOptions = {}, analysisConfig?: AnalysisConfig): Promise<CommitData[]> {
   // Validate input
   assert(repoPath.length > 0, 'Repository path cannot be empty')
   
@@ -123,7 +124,7 @@ export async function parseCommitHistory(repoPath: string, progressReporter?: Pr
   progressReporter?.report(`Processing ${totalNewCommits} new commits${cachedCommits.length > 0 ? ` (${cachedCommits.length} cached)` : ''}`)
   
   for (const commit of newCommits) {
-    const diffStats = await parseCommitDiff(repoPath, commit.hash)
+    const diffStats = await parseCommitDiff(repoPath, commit.hash, analysisConfig)
     const bytesAdded = diffStats.bytesAdded ?? 0
     const bytesDeleted = diffStats.bytesDeleted ?? 0
     cumulativeBytes += (bytesAdded - bytesDeleted)
@@ -199,7 +200,7 @@ export async function getGitHubUrl(repoPath: string): Promise<string | null> {
   return null
 }
 
-async function parseCommitDiff(repoPath: string, commitHash: string): Promise<{ linesAdded: number; linesDeleted: number; bytesAdded: number; bytesDeleted: number; filesChanged: FileChange[] }> {
+async function parseCommitDiff(repoPath: string, commitHash: string, config?: AnalysisConfig): Promise<{ linesAdded: number; linesDeleted: number; bytesAdded: number; bytesDeleted: number; filesChanged: FileChange[] }> {
   const git = simpleGit(repoPath)
   
   // Check if this is the first commit
@@ -220,7 +221,7 @@ async function parseCommitDiff(repoPath: string, commitHash: string): Promise<{ 
   const diffSummary = await git.diffSummary(diffArgs)
   
   // Get byte changes using git diff --stat
-  const byteChanges = await getByteChanges(repoPath, commitHash)
+  const byteChanges = await getByteChanges(repoPath, commitHash, config)
   
   // Use the extracted pure function
   return parseCommitDiffData(diffSummary, byteChanges)
@@ -229,7 +230,7 @@ async function parseCommitDiff(repoPath: string, commitHash: string): Promise<{ 
 
 
 
-async function getByteChanges(repoPath: string, commitHash: string): Promise<{ 
+async function getByteChanges(repoPath: string, commitHash: string, config?: AnalysisConfig): Promise<{ 
   totalBytesAdded: number; 
   totalBytesDeleted: number; 
   fileChanges: Record<string, { bytesAdded: number; bytesDeleted: number }> 
@@ -237,5 +238,5 @@ async function getByteChanges(repoPath: string, commitHash: string): Promise<{
   // Use numstat directly for efficient byte estimation
   const git = simpleGit(repoPath)
   const stdout = await git.show([commitHash, '--numstat', '--format='])
-  return parseByteChanges(stdout)
+  return parseByteChanges(stdout, config)
 }

@@ -2,6 +2,7 @@ import { extname } from 'path'
 import type { FileChange } from '../git/parser.js'
 import { isFileExcluded } from '../utils/exclusions.js'
 import { assert, assertDefined } from '../utils/errors.js'
+import type { AnalysisConfig } from '../config/schema.js'
 
 
 const FILE_TYPE_MAP = {
@@ -148,8 +149,10 @@ export function parseCommitDiff(
   }
 }
 
-export function parseByteChanges(gitNumstatOutput: string): ByteChanges {
+export function parseByteChanges(gitNumstatOutput: string, config?: AnalysisConfig): ByteChanges {
   assert(typeof gitNumstatOutput === 'string', 'gitNumstatOutput must be a string')
+  
+  const bytesPerLineEstimate = config?.bytesPerLineEstimate ?? 50
   
   const fileChanges: Record<string, { bytesAdded: number; bytesDeleted: number }> = {}
   let totalBytesAdded = 0
@@ -181,9 +184,9 @@ export function parseByteChanges(gitNumstatOutput: string): ByteChanges {
       assertDefined(fileName, 'file name in numstat output')
       
       if (!isFileExcluded(fileName)) {
-        // Rough estimate: 1 line ≈ 50 bytes (average line length)
-        const bytesAdded = added * 50
-        const bytesDeleted = deleted * 50
+        // Rough estimate: 1 line ≈ configured bytes (average line length)
+        const bytesAdded = added * bytesPerLineEstimate
+        const bytesDeleted = deleted * bytesPerLineEstimate
         
         fileChanges[fileName] = { bytesAdded, bytesDeleted }
         totalBytesAdded += bytesAdded

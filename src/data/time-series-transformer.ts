@@ -1,6 +1,7 @@
 import type { CommitData } from '../git/parser.js'
 import { assert } from '../utils/errors.js'
 import { getFileCategory, type FileCategory } from '../utils/file-categories.js'
+import type { AnalysisConfig } from '../config/schema.js'
 
 function createEmptyBreakdown(): CategoryBreakdown {
   return {
@@ -56,11 +57,12 @@ export interface TimeSeriesPoint {
   cumulativeBytes: CategoryBreakdown
 }
 
-export function getTimeSeriesData(commits: CommitData[]): TimeSeriesPoint[] {
+export function getTimeSeriesData(commits: CommitData[], config?: AnalysisConfig): TimeSeriesPoint[] {
   if (commits.length === 0) return []
   
+  const hourlyThreshold = config?.timeSeriesHourlyThresholdHours ?? 48
   const repoAgeHours = getRepoAgeInHours(commits)
-  const useHourlyData = repoAgeHours < 48
+  const useHourlyData = repoAgeHours < hourlyThreshold
   
   assert(commits.length > 0, 'Cannot create time series from empty commits array')
   const firstCommit = commits[0]!

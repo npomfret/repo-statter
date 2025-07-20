@@ -91,9 +91,10 @@ export function getWordFrequencies(words: string[], config = DEFAULT_CONFIG): Wo
   }))
 }
 
-export function processCommitMessages(messages: string[]): WordFrequency[] {
+export function processCommitMessages(messages: string[], config?: WordCloudConfig): WordFrequency[] {
   assert(messages.length > 0, 'Cannot process empty messages array')
+  const finalConfig = config || DEFAULT_CONFIG
   const words = extractWords(messages)
-  const filteredWords = filterStopWords(words)
-  return getWordFrequencies(filteredWords)
+  const filteredWords = filterStopWords(words, finalConfig)
+  return getWordFrequencies(filteredWords, finalConfig)
 }

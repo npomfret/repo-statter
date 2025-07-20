@@ -20,9 +20,13 @@ import { replaceTemplateVariables, injectIntoBody } from '../utils/template-engi
 import { bundlePageScript } from '../build/bundle-page-script.js'
 import type { CommitData } from '../git/parser.js'
 import type { ProgressReporter } from '../utils/progress-reporter.js'
+import type { RepoStatterConfig } from '../config/schema.js'
+import { DEFAULT_CONFIG } from '../config/defaults.js'
 
-export async function generateReport(repoPath: string, outputMode: 'dist' | 'analysis' = 'dist', progressReporter?: ProgressReporter, maxCommits?: number, customFilename?: string, cacheOptions?: CacheOptions): Promise<string> {
-  const commits = await parseCommitHistory(repoPath, progressReporter, maxCommits, cacheOptions)
+export async function generateReport(repoPath: string, outputMode: 'dist' | 'analysis' = 'dist', progressReporter?: ProgressReporter, maxCommits?: number, customFilename?: string, cacheOptions?: CacheOptions, config?: RepoStatterConfig): Promise<string> {
+  // Use provided config or fall back to defaults
+  const finalConfig = config || DEFAULT_CONFIG
+  const commits = await parseCommitHistory(repoPath, progressReporter, maxCommits, cacheOptions, finalConfig.analysis)
   const repoName = repoPath === '.' ? basename(process.cwd()) : basename(repoPath) || 'repo'
   
   // Check if Lizard is installed early
@@ -59,7 +63,7 @@ export async function generateReport(repoPath: string, outputMode: 'dist' | 'ana
   const currentFiles = await getCurrentFiles(repoPath)
 
   progressReporter?.report('Calculating statistics')
-  const chartData = await transformCommitData(commits, repoName, repoPath, progressReporter, isLizardInstalled, currentFiles)
+  const chartData = await transformCommitData(commits, repoName, repoPath, progressReporter, isLizardInstalled, currentFiles, finalConfig)
   
   // Calculate all statistics once
   progressReporter?.report('Calculating contributor and file statistics')
@@ -67,7 +71,7 @@ export async function generateReport(repoPath: string, outputMode: 'dist' | 'ana
   const fileTypes = getFileTypeStats(commits, currentFiles)
   
   progressReporter?.report('Generating HTML report')
-  const html = await injectDataIntoTemplate(template, chartData, commits, currentFiles, contributors, fileTypes, repoPath, progressReporter)
+  const html = await injectDataIntoTemplate(template, chartData, commits, currentFiles, contributors, fileTypes, repoPath, progressReporter, finalConfig)
   
   progressReporter?.report('Writing report file')
   await writeFile(reportPath, html)
@@ -129,14 +133,14 @@ function formatFullDate(date: Date): string {
   });
 }
 
-async function transformCommitData(commits: CommitData[], repoName: string, repoPath: string, progressReporter?: ProgressReporter, isLizardInstalled: boolean = true, currentFiles?: Set<string>): Promise<ChartData> {
+async function transformCommitData(commits: CommitData[], repoName: string, repoPath: string, progressReporter?: ProgressReporter, isLizardInstalled: boolean = true, currentFiles?: Set<string>, config?: RepoStatterConfig): Promise<ChartData> {
   // Calculate cumulative lines of code using the same method as the time series chart
   // This ensures consistency between the hero metric and the growth chart
   let totalLinesOfCode = 0
   
   if (commits.length > 0) {
     // Use the time series data to get the final cumulative total
-    const timeSeries = getTimeSeriesDataDirect(commits)
+    const timeSeries = getTimeSeriesDataDirect(commits, config?.analysis)
     if (timeSeries.length > 0) {
       const lastPoint = timeSeries[timeSeries.length - 1]
       totalLinesOfCode = lastPoint?.cumulativeLines.total ?? 0
@@ -198,13 +202,14 @@ async function transformCommitData(commits: CommitData[], repoName: string, repo
   }
 }
 
-async function injectDataIntoTemplate(template: string, chartData: ChartData, commits: CommitData[], currentFiles: Set<string>, contributors: ContributorStats[], fileTypes: FileTypeStats[], repoPath: string, progressReporter?: ProgressReporter): Promise<string> {
+async function injectDataIntoTemplate(template: string, chartData: ChartData, commits: CommitData[], currentFiles: Set<string>, contributors: ContributorStats[], fileTypes: FileTypeStats[], repoPath: string, progressReporter?: ProgressReporter, config?: RepoStatterConfig): Promise<string> {
+  const finalConfig = config || DEFAULT_CONFIG
   
   progressReporter?.report('Generating chart data')
-  const timeSeries = getTimeSeriesData(commits)
+  const timeSeries = getTimeSeriesData(commits, finalConfig.analysis)
   const linearSeries = getLinearSeriesData(commits)
-  const wordCloudData = processCommitMessages(commits.map(c => c.message))
-  const fileHeatData = getFileHeatData(commits, currentFiles)
+  const wordCloudData = processCommitMessages(commits.map(c => c.message), finalConfig.wordCloud)
+  const fileHeatData = getFileHeatData(commits, currentFiles, finalConfig.fileHeat)
   const topFilesData = await getTopFilesStats(commits, repoPath, currentFiles)
   
   progressReporter?.report('Calculating awards')
