@@ -14,7 +14,7 @@
     "test:clean": "./scripts/clean-test-repo.sh",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
-    "docs:build": "./scripts/update-self-report.sh"
+    "docs:build": "scripts/update-gh-pages.sh"
   },
   "dependencies": {
     "commander": "^14.0.0",
