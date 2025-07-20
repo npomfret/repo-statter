@@ -20,12 +20,6 @@ export class ChartInitializer {
   }
 
   private initializeCharts(): void {
-    // Initialize navigation
-    this.initializeNavigation()
-    
-    // Initialize accordion states
-    this.initializeAccordions()
-    
     // Wait for chart libraries to load before rendering
     this.waitForChartLibraries().then(() => {
       // Render all main charts
@@ -63,40 +57,12 @@ export class ChartInitializer {
       this.showChartLoadError()
     })
     
-    // Setup all event listeners
+    // Setup all event listeners (filters, chart interactions)
     this.eventHandlers.setupEventListeners()
     
-    // Initialize theme based on user preference or system preference
-    this.initializeTheme()
-  }
-
-  private initializeTheme(): void {
-    const savedTheme = localStorage.getItem('theme')
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    
-    let theme = savedTheme || (systemPrefersDark ? 'dark' : 'light')
-    
-    document.documentElement.setAttribute('data-bs-theme', theme)
-    
-    // Update theme toggle button state
-    const themeToggle = document.getElementById('theme-toggle')
-    if (themeToggle) {
-      const icon = themeToggle.querySelector('i')
-      if (icon) {
-        icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon'
-      }
-    }
-    
-    // Save theme preference
-    localStorage.setItem('theme', theme)
-    
-    // Listen for system theme changes
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-      if (!localStorage.getItem('theme')) {
-        const newTheme = e.matches ? 'dark' : 'light'
-        document.documentElement.setAttribute('data-bs-theme', newTheme)
-        this.renderers.updateChartsTheme()
-      }
+    // Listen for theme changes from core
+    window.addEventListener('themeChanged', () => {
+      this.renderers.updateChartsTheme()
     })
   }
   
@@ -205,100 +171,7 @@ export class ChartInitializer {
     })
   }
 
-  private initializeNavigation(): void {
-    const navLinks = document.querySelectorAll('.sticky-nav a')
-    const sections = document.querySelectorAll('section[id]')
-    
-    // Smooth scroll behavior for navigation links
-    navLinks.forEach(link => {
-      link.addEventListener('click', (e) => {
-        e.preventDefault()
-        const targetId = link.getAttribute('href')?.substring(1)
-        if (targetId) {
-          const targetSection = document.getElementById(targetId)
-          if (targetSection) {
-            targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          }
-        }
-      })
-    })
-    
-    // Intersection Observer for active section highlighting
-    const observerOptions = {
-      root: null,
-      rootMargin: '-20% 0px -70% 0px',
-      threshold: 0
-    }
-    
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          // Remove active class from all links
-          navLinks.forEach(link => link.classList.remove('active'))
-          
-          // Add active class to corresponding link
-          const activeLink = document.querySelector(`.sticky-nav a[href="#${entry.target.id}"]`)
-          if (activeLink) {
-            activeLink.classList.add('active')
-          }
-        }
-      })
-    }, observerOptions)
-    
-    // Observe all sections
-    sections.forEach(section => {
-      observer.observe(section)
-    })
-  }
 
-  private initializeAccordions(): void {
-    // Get saved accordion states from localStorage
-    const savedStates = localStorage.getItem('accordionStates')
-    const accordionStates = savedStates ? JSON.parse(savedStates) : {}
-    
-    // Get all accordion items
-    const accordionItems = document.querySelectorAll('.accordion-collapse')
-    
-    accordionItems.forEach(item => {
-      const itemId = item.id
-      
-      // Apply saved state if it exists
-      if (accordionStates[itemId] !== undefined) {
-        if (accordionStates[itemId]) {
-          item.classList.add('show')
-          const button = item.previousElementSibling?.querySelector('.accordion-button')
-          if (button) {
-            button.classList.remove('collapsed')
-            button.setAttribute('aria-expanded', 'true')
-          }
-        } else {
-          item.classList.remove('show')
-          const button = item.previousElementSibling?.querySelector('.accordion-button')
-          if (button) {
-            button.classList.add('collapsed')
-            button.setAttribute('aria-expanded', 'false')
-          }
-        }
-      }
-      
-      // Listen for accordion state changes
-      item.addEventListener('shown.bs.collapse', () => {
-        this.saveAccordionState(itemId, true)
-      })
-      
-      item.addEventListener('hidden.bs.collapse', () => {
-        this.saveAccordionState(itemId, false)
-      })
-    })
-  }
-  
-  private saveAccordionState(itemId: string, isOpen: boolean): void {
-    const savedStates = localStorage.getItem('accordionStates')
-    const accordionStates = savedStates ? JSON.parse(savedStates) : {}
-    
-    accordionStates[itemId] = isOpen
-    localStorage.setItem('accordionStates', JSON.stringify(accordionStates))
-  }
   
   private waitForChartLibraries(): Promise<void> {
     return new Promise((resolve, reject) => {

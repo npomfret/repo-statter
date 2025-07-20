@@ -19,26 +19,11 @@ export class EventHandlers {
   ) {}
 
   public setupEventListeners(): void {
-    this.setupThemeToggle()
     this.setupXAxisToggle()
     this.setupFilterSystem()
     this.setupClearFiltersButton()
     this.setupTopFilesTabs()
     this.setupFileTypeChartClick()
-  }
-
-  private setupThemeToggle(): void {
-    const themeToggle = document.getElementById('themeToggle')
-    if (themeToggle) {
-      themeToggle.addEventListener('click', () => {
-        const currentTheme = document.documentElement.getAttribute('data-bs-theme')
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark'
-        document.documentElement.setAttribute('data-bs-theme', newTheme)
-        
-        // Update all charts with new theme
-        this.renderers.updateChartsTheme()
-      })
-    }
   }
 
   private setupXAxisToggle(): void {

@@ -1,6 +1,5 @@
-import { ChartRenderers } from './chart-renderers.js'
-import { EventHandlers } from './event-handlers.js'
-import { ChartInitializer } from './chart-initializer.js'
+import { CoreInitializer } from './core-initializer.js'
+import { ChartLoader } from './chart-loader.js'
 import type { CommitData } from '../git/parser.js'
 import type { ContributorStats, ContributorAward } from '../data/contributor-calculator.js'
 import type { CommitAward } from '../data/award-calculator.js'
@@ -51,18 +50,26 @@ export interface PageScriptData {
 }
 
 export class PageScript {
-  private renderers: ChartRenderers
-  private eventHandlers: EventHandlers
-  private initializer: ChartInitializer
+  private coreInitializer: CoreInitializer
+  private chartLoader: ChartLoader
 
   constructor(data: PageScriptData) {
-    this.renderers = new ChartRenderers(data)
-    this.eventHandlers = new EventHandlers(data, this.renderers)
-    this.initializer = new ChartInitializer(data, this.renderers, this.eventHandlers)
+    this.coreInitializer = new CoreInitializer()
+    this.chartLoader = new ChartLoader(data)
   }
 
   public initialize(): void {
-    this.initializer.initialize()
+    // Initialize core functionality immediately (theme, navigation, etc.)
+    this.coreInitializer.initialize()
+    
+    // Load and initialize charts after DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        this.chartLoader.loadAndInitializeCharts()
+      })
+    } else {
+      this.chartLoader.loadAndInitializeCharts()
+    }
   }
 }
 
