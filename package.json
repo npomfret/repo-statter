@@ -13,7 +13,8 @@
     "test:report": "TEST_REPO_PATH=$(./scripts/create-test-repo.sh --reuse | grep TEST_REPO_PATH | cut -d'=' -f2) && npm run analyse \"$TEST_REPO_PATH\" -- --output-file test-repo-analysis",
     "test:clean": "./scripts/clean-test-repo.sh",
     "typecheck": "tsc --noEmit",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "docs:build": "./scripts/update-self-report.sh"
   },
   "dependencies": {
     "commander": "^14.0.0",
