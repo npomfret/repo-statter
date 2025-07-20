@@ -333,6 +333,7 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             max-height: 80vh;
             overflow-y: auto;
+            width: 180px;
         }
         
         [data-bs-theme="dark"] .sticky-nav {
@@ -354,6 +355,9 @@
             transition: all 0.2s ease;
             font-size: 0.875rem;
             position: relative;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         
         .sticky-nav a:hover {
@@ -380,8 +384,10 @@
         
         /* Main content adjustment */
         .main-content {
-            margin-left: 220px;
+            margin-left: 200px;
+            padding-right: 20px;
             transition: margin-left 0.3s ease;
+            overflow-x: hidden;
         }
         
         /* Mobile navigation */
@@ -425,6 +431,8 @@
             
             .main-content {
                 margin-left: 0;
+                padding-right: 15px;
+                padding-left: 15px;
                 margin-bottom: 60px;
             }
         }
@@ -491,12 +499,11 @@
             <a href="#overview" class="active">Overview</a>
             <a href="#activity">Activity</a>
             <a href="#code-analysis">Code Analysis</a>
-            <a href="#files">Files</a>
             <a href="#contributors">Contributors</a>
         </nav>
     </aside>
     
-    <div class="container-fluid main-content">
+    <div class="main-content">
         <header class="py-3 mb-4 border-bottom">
             <div class="row align-items-center">
                 <div class="col">
@@ -530,7 +537,7 @@
 
         <!-- Hero Strip with Key Metrics -->
         <div class="hero-strip mb-4">
-            <div class="container-fluid">
+            <div>
                 <div class="row g-3">
                     <div class="col-md-3 col-6">
                         <div class="metric-card">
@@ -610,21 +617,13 @@
                 <div class="accordion-item">
                     <h3 class="accordion-header" id="timeRangeHeading">
                         <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#timeRangeCollapse" aria-expanded="true" aria-controls="timeRangeCollapse">
-                            <i class="bi bi-clock-history me-2"></i> Time Range & Contributors
+                            <i class="bi bi-clock-history me-2"></i> Time Range Selector
                         </button>
                     </h3>
                     <div id="timeRangeCollapse" class="accordion-collapse collapse show" aria-labelledby="timeRangeHeading" data-bs-parent="#overviewAccordion">
                         <div class="accordion-body">
-                            <div class="row">
-                                <div class="col-lg-8 mb-3 mb-lg-0">
-                                    <h6 class="mb-3">Time Range Selector</h6>
-                                    <div id="timeSliderChart" style="width: 100%;"></div>
-                                </div>
-                                <div class="col-lg-4">
-                                    <h6 class="mb-3">Contributors</h6>
-                                    <div id="contributorsChart"></div>
-                                </div>
-                            </div>
+                            <p class="text-muted mb-3">Adjust the time range for all time series charts using the slider below:</p>
+                            <div id="timeSliderChart" style="width: 100%;"></div>
                         </div>
                     </div>
                 </div>
@@ -633,9 +632,19 @@
 
         <!-- Activity Section -->
         <section id="activity">
+            <h2 class="visually-hidden">Activity</h2>
+            <div class="accordion mb-4" id="activityAccordion">
+                <div class="accordion-item">
+                    <h3 class="accordion-header" id="activityHeading">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#activityCollapse" aria-expanded="true" aria-controls="activityCollapse">
+                            <i class="bi bi-graph-up me-2"></i> Activity & Growth Charts
+                        </button>
+                    </h3>
+                    <div id="activityCollapse" class="accordion-collapse collapse show" aria-labelledby="activityHeading" data-bs-parent="#activityAccordion">
+                        <div class="accordion-body">
             <div class="row">
                 <!-- Time Series Charts Column -->
-                <div class="col-lg-8">
+                <div class="col-12">
                     <!-- Growth Over Time Chart -->
                 <div class="card mb-4">
                     <div class="card-header">
@@ -673,96 +682,112 @@
                 </div>
 
             </div>
-
-            <!-- Non-Time Series Charts Column -->
-            <div class="col-lg-4">
-                <!-- Code Analysis Section -->
-                <section id="code-analysis">
-                    <!-- File Types Chart -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">File Types</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="fileTypesChart"></div>
-                    </div>
-                </div>
-
-                <!-- Top 5 Files Chart -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <ul class="nav nav-tabs card-header-tabs" role="tablist">
-                            <li class="nav-item">
-                                <button class="nav-link active" id="largest-tab" data-bs-toggle="tab" data-bs-target="#largest-pane" type="button" role="tab" aria-controls="largest-pane" aria-selected="true">Largest</button>
-                            </li>
-                            <li class="nav-item">
-                                <button class="nav-link" id="churn-tab" data-bs-toggle="tab" data-bs-target="#churn-pane" type="button" role="tab" aria-controls="churn-pane" aria-selected="false">Most Churn</button>
-                            </li>
-                            <li class="nav-item">
-                                <button class="nav-link" id="complex-tab" data-bs-toggle="tab" data-bs-target="#complex-pane" type="button" role="tab" aria-controls="complex-pane" aria-selected="false">Most Complex</button>
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="card-body">
-                        <div id="fileTypeFilterIndicator" class="alert alert-info mb-3 d-none" role="alert">
-                            <i class="bi bi-funnel"></i> Showing only <strong id="selectedFileType"></strong> files
-                            <button type="button" class="btn-close btn-sm float-end" aria-label="Clear filter" id="clearFileTypeFilter"></button>
-                        </div>
-                        <div class="tab-content">
-                            <div class="tab-pane fade show active" id="largest-pane" role="tabpanel" aria-labelledby="largest-tab" tabindex="0">
-                                <p class="card-text small text-muted mb-3">
-                                    Files with the most lines of code in the repository
-                                </p>
-                            </div>
-                            <div class="tab-pane fade" id="churn-pane" role="tabpanel" aria-labelledby="churn-tab" tabindex="0">
-                                <p class="card-text small text-muted mb-3">
-                                    Files with the most changes (lines added + deleted)
-                                </p>
-                            </div>
-                            <div class="tab-pane fade" id="complex-pane" role="tabpanel" aria-labelledby="complex-tab" tabindex="0">
-                                <p class="card-text small text-muted mb-3">
-                                    Files with the highest complexity scores
-                                </p>
-                            </div>
-                        </div>
-                        <div id="topFilesChart"></div>
-                    </div>
-                </div>
-
-                <!-- Word Cloud -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">Commit Message Word Cloud</h5>
-                    </div>
-                    <div class="card-body" style="min-height: 400px;">
-                        <div id="wordCloudChart" style="width: 100%; height: 400px; display: flex; align-items: center; justify-content: center;"></div>
-                    </div>
-                </div>
-                </section>
-            </div>
         </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </section>
         
-        <!-- Files Section -->
-        <section id="files">
-            <!-- File Activity Heatmap Row -->
-        <div class="row">
-            <div class="col-12">
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">File Activity Heatmap</h5>
-                    </div>
-                    <div class="card-body" style="min-height: 400px;">
-                        <p class="card-text">Interactive treemap showing file activity based on commit frequency and recency. Larger rectangles represent files with more lines of code, while color intensity indicates higher activity.</p>
-                        <div id="fileHeatmapChart" style="width: 100%; height: 400px; display: flex; align-items: center; justify-content: center;"></div>
+        <!-- Code Analysis Section -->
+        <section id="code-analysis">
+            <h2 class="visually-hidden">Code Analysis</h2>
+            <div class="accordion mb-4" id="codeAccordion">
+                <div class="accordion-item">
+                    <h3 class="accordion-header" id="codeHeading">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#codeCollapse" aria-expanded="true" aria-controls="codeCollapse">
+                            <i class="bi bi-code-slash me-2"></i> Code Analysis & File Metrics
+                        </button>
+                    </h3>
+                    <div id="codeCollapse" class="accordion-collapse collapse show" aria-labelledby="codeHeading" data-bs-parent="#codeAccordion">
+                        <div class="accordion-body">
+                            <div class="row">
+                                <!-- File Analysis Column -->
+                                <div class="col-lg-6">
+                                    <!-- File Types Chart -->
+                                    <div class="card mb-4">
+                                        <div class="card-header">
+                                            <h5 class="card-title mb-0">File Types</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="fileTypesChart"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Top 5 Files Chart -->
+                                    <div class="card mb-4">
+                                        <div class="card-header">
+                                            <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                                                <li class="nav-item">
+                                                    <button class="nav-link active" id="largest-tab" data-bs-toggle="tab" data-bs-target="#largest-pane" type="button" role="tab" aria-controls="largest-pane" aria-selected="true">Largest</button>
+                                                </li>
+                                                <li class="nav-item">
+                                                    <button class="nav-link" id="churn-tab" data-bs-toggle="tab" data-bs-target="#churn-pane" type="button" role="tab" aria-controls="churn-pane" aria-selected="false">Most Churn</button>
+                                                </li>
+                                                <li class="nav-item">
+                                                    <button class="nav-link" id="complex-tab" data-bs-toggle="tab" data-bs-target="#complex-pane" type="button" role="tab" aria-controls="complex-pane" aria-selected="false">Most Complex</button>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="fileTypeFilterIndicator" class="alert alert-info mb-3 d-none" role="alert">
+                                                <i class="bi bi-funnel"></i> Showing only <strong id="selectedFileType"></strong> files
+                                                <button type="button" class="btn-close btn-sm float-end" aria-label="Clear filter" id="clearFileTypeFilter"></button>
+                                            </div>
+                                            <div class="tab-content">
+                                                <div class="tab-pane fade show active" id="largest-pane" role="tabpanel" aria-labelledby="largest-tab" tabindex="0">
+                                                    <p class="card-text small text-muted mb-3">
+                                                        Files with the most lines of code in the repository
+                                                    </p>
+                                                </div>
+                                                <div class="tab-pane fade" id="churn-pane" role="tabpanel" aria-labelledby="churn-tab" tabindex="0">
+                                                    <p class="card-text small text-muted mb-3">
+                                                        Files with the most changes (lines added + deleted)
+                                                    </p>
+                                                </div>
+                                                <div class="tab-pane fade" id="complex-pane" role="tabpanel" aria-labelledby="complex-tab" tabindex="0">
+                                                    <p class="card-text small text-muted mb-3">
+                                                        Files with the highest complexity scores
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div id="topFilesChart"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- File Heatmap Column -->
+                                <div class="col-lg-6">
+                                    <div class="card mb-4">
+                                        <div class="card-header">
+                                            <h5 class="card-title mb-0">File Activity Heatmap</h5>
+                                        </div>
+                                        <div class="card-body" style="min-height: 400px;">
+                                            <p class="card-text">Interactive treemap showing file activity based on commit frequency and recency. Larger rectangles represent files with more lines of code, while color intensity indicates higher activity.</p>
+                                            <div id="fileHeatmapChart" style="width: 100%; height: 400px; display: flex; align-items: center; justify-content: center;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
         </section>
+        
         
         <!-- Contributors Section -->
         <section id="contributors">
+            <h2 class="visually-hidden">Contributors</h2>
+            <div class="accordion mb-4" id="contributorsAccordion">
+                <div class="accordion-item">
+                    <h3 class="accordion-header" id="contributorsHeading">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#contributorsCollapse" aria-expanded="true" aria-controls="contributorsCollapse">
+                            <i class="bi bi-people me-2"></i> Contributors & Awards
+                        </button>
+                    </h3>
+                    <div id="contributorsCollapse" class="accordion-collapse collapse show" aria-labelledby="contributorsHeading" data-bs-parent="#contributorsAccordion">
+                        <div class="accordion-body">
             <!-- Awards Section -->
         <div class="row">
             <div class="col-12">
@@ -794,6 +819,39 @@
                 </div>
             </div>
         </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Bottom Section: Contributors and Word Cloud -->
+        <section id="bottom-section">
+            <div class="row">
+                <div class="col-lg-6">
+                    <!-- Contributors Chart -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Top Contributors</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="contributorsChart"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-6">
+                    <!-- Word Cloud -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Commit Message Word Cloud</h5>
+                        </div>
+                        <div class="card-body" style="min-height: 400px;">
+                            <div id="wordCloudChart" style="width: 100%; height: 400px; display: flex; align-items: center; justify-content: center;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </section>
     </div>
 
