@@ -23,6 +23,9 @@ export class ChartInitializer {
     // Initialize navigation
     this.initializeNavigation()
     
+    // Initialize accordion states
+    this.initializeAccordions()
+    
     // Render all main charts
     this.renderers.renderAllCharts()
     
@@ -240,5 +243,54 @@ export class ChartInitializer {
     sections.forEach(section => {
       observer.observe(section)
     })
+  }
+
+  private initializeAccordions(): void {
+    // Get saved accordion states from localStorage
+    const savedStates = localStorage.getItem('accordionStates')
+    const accordionStates = savedStates ? JSON.parse(savedStates) : {}
+    
+    // Get all accordion items
+    const accordionItems = document.querySelectorAll('.accordion-collapse')
+    
+    accordionItems.forEach(item => {
+      const itemId = item.id
+      
+      // Apply saved state if it exists
+      if (accordionStates[itemId] !== undefined) {
+        if (accordionStates[itemId]) {
+          item.classList.add('show')
+          const button = item.previousElementSibling?.querySelector('.accordion-button')
+          if (button) {
+            button.classList.remove('collapsed')
+            button.setAttribute('aria-expanded', 'true')
+          }
+        } else {
+          item.classList.remove('show')
+          const button = item.previousElementSibling?.querySelector('.accordion-button')
+          if (button) {
+            button.classList.add('collapsed')
+            button.setAttribute('aria-expanded', 'false')
+          }
+        }
+      }
+      
+      // Listen for accordion state changes
+      item.addEventListener('shown.bs.collapse', () => {
+        this.saveAccordionState(itemId, true)
+      })
+      
+      item.addEventListener('hidden.bs.collapse', () => {
+        this.saveAccordionState(itemId, false)
+      })
+    })
+  }
+  
+  private saveAccordionState(itemId: string, isOpen: boolean): void {
+    const savedStates = localStorage.getItem('accordionStates')
+    const accordionStates = savedStates ? JSON.parse(savedStates) : {}
+    
+    accordionStates[itemId] = isOpen
+    localStorage.setItem('accordionStates', JSON.stringify(accordionStates))
   }
 }
