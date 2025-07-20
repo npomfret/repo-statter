@@ -649,11 +649,60 @@
         .accordion-body .dashboard-grid {
             margin-bottom: 0;
         }
+        
+        /* Skip link accessibility */
+        .visually-hidden-focusable {
+            position: absolute !important;
+            left: -9999px !important;
+            width: 1px !important;
+            height: 1px !important;
+            overflow: hidden !important;
+        }
+        
+        .visually-hidden-focusable:focus {
+            position: fixed !important;
+            top: 10px !important;
+            left: 10px !important;
+            width: auto !important;
+            height: auto !important;
+            padding: 0.5rem 1rem !important;
+            background: var(--accent-primary) !important;
+            color: white !important;
+            text-decoration: none !important;
+            border-radius: 0.25rem !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+            z-index: 9999 !important;
+            font-weight: 600 !important;
+            overflow: visible !important;
+        }
+        
+        /* Enhanced focus indicators for better accessibility */
+        :focus {
+            outline: 2px solid var(--accent-primary) !important;
+            outline-offset: 2px !important;
+        }
+        
+        /* Focus styles for interactive elements */
+        .nav-link:focus,
+        .btn:focus,
+        .form-control:focus,
+        .form-select:focus,
+        .accordion-button:focus {
+            box-shadow: 0 0 0 0.25rem rgba(39, 174, 239, 0.25) !important;
+        }
+        
+        /* Dark mode focus adjustments */
+        [data-bs-theme="dark"] :focus {
+            outline-color: var(--accent-primary) !important;
+        }
     </style>
 </head>
 <body>
     <!-- Sticky Navigation -->
-    <aside class="sticky-nav" aria-label="Page sections">
+    <!-- Skip to main content link -->
+    <a href="#main-content" class="visually-hidden-focusable">Skip to main content</a>
+    
+    <aside class="sticky-nav" role="navigation" aria-label="Page sections navigation">
         <nav>
             <a href="#overview" class="active">Overview</a>
             <a href="#activity">Activity</a>
@@ -663,7 +712,7 @@
     </aside>
     
     <div class="main-content">
-        <header class="py-3 mb-4 border-bottom">
+        <header class="py-3 mb-4 border-bottom" role="banner">
             <div class="row align-items-center">
                 <div class="col">
                     <div class="d-flex align-items-center">
@@ -682,10 +731,11 @@
                     <div class="d-flex flex-column align-items-end">
                         <div class="theme-controls mb-2">
                             <span class="theme-toggle-label">Dark Mode</span>
-                            <label class="theme-toggle">
-                                <input type="checkbox" id="themeToggle">
+                            <label class="theme-toggle" for="themeToggle">
+                                <input type="checkbox" id="themeToggle" aria-describedby="theme-description">
                                 <span class="theme-slider"></span>
                             </label>
+                            <div class="visually-hidden" id="theme-description">Toggle between light and dark mode for better visibility</div>
                         </div>
                         <div class="text-muted small">Report Generated: <span class="badge bg-dark">{{generationDate}}</span></div>
                         <div class="text-muted small">Latest Commit: <span class="fw-semibold">{{latestCommitHash}}</span> by <span class="fw-semibold">{{latestCommitAuthor}}</span> on <span class="fw-semibold">{{latestCommitDate}}</span></div>
@@ -694,39 +744,50 @@
             </div>
         </header>
 
+        <!-- Live region for dynamic announcements -->
+        <div id="live-region" aria-live="polite" aria-atomic="true" class="visually-hidden"></div>
+        
+        <!-- Main content area -->
+        <main id="main-content" role="main" aria-label="Repository statistics dashboard">
+        
         <!-- Hero Strip with Key Metrics -->
-        <div class="hero-strip mb-4">
+        <div class="hero-strip mb-4" role="region" aria-labelledby="metrics-heading">
+            <h2 id="metrics-heading" class="visually-hidden">Key Repository Metrics</h2>
             <div class="dashboard-grid">
                 <div class="metric-card-grid">
-                    <div class="metric-card">
-                        <div class="metric-label">Total Commits</div>
+                    <div class="metric-card" role="img" aria-labelledby="commits-label" aria-describedby="commits-desc">
+                        <div class="metric-label" id="commits-label">Total Commits</div>
                         <div class="metric-value text-primary">{{totalCommits}}</div>
+                        <div class="visually-hidden" id="commits-desc">Total number of commits in the repository</div>
                     </div>
                 </div>
                 <div class="metric-card-grid">
-                    <div class="metric-card">
-                        <div class="metric-label">Lines of Code</div>
+                    <div class="metric-card" role="img" aria-labelledby="loc-label" aria-describedby="loc-desc">
+                        <div class="metric-label" id="loc-label">Lines of Code</div>
                         <div class="metric-value text-success">{{totalLinesOfCode}}</div>
+                        <div class="visually-hidden" id="loc-desc">Total lines of code in the repository</div>
                     </div>
                 </div>
                 <div class="metric-card-grid">
-                    <div class="metric-card">
-                        <div class="metric-label">Contributors</div>
+                    <div class="metric-card" role="img" aria-labelledby="contributors-label" aria-describedby="contributors-desc">
+                        <div class="metric-label" id="contributors-label">Contributors</div>
                         <div class="metric-value text-info">{{totalContributors}}</div>
+                        <div class="visually-hidden" id="contributors-desc">Number of unique contributors to the repository</div>
                     </div>
                 </div>
                 <div class="metric-card-grid">
-                    <div class="metric-card">
-                        <div class="metric-label">Active Days</div>
+                    <div class="metric-card" role="img" aria-labelledby="active-days-label" aria-describedby="active-days-desc">
+                        <div class="metric-label" id="active-days-label">Active Days</div>
                         <div class="metric-value text-warning">{{activeDays}}</div>
+                        <div class="visually-hidden" id="active-days-desc">Number of days with commit activity</div>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Overview Section with Accordions -->
-        <section id="overview">
-            <h2 class="visually-hidden">Overview</h2>
+        <section id="overview" role="region" aria-labelledby="overview-heading">
+            <h2 id="overview-heading" class="visually-hidden">Overview and Data Filters</h2>
             <div class="accordion" id="overviewAccordion">
                 <!-- Filter Controls Accordion -->
                 <div class="accordion-item">
@@ -760,9 +821,10 @@
                                 </div>
                             </div>
                             <div class="mt-3">
-                                <button class="btn btn-primary btn-sm" id="applyFilters">Apply Filters</button>
-                                <button class="btn btn-outline-secondary btn-sm ms-2" id="clearFilters">Clear Filters</button>
+                                <button class="btn btn-primary btn-sm" id="applyFilters" aria-describedby="filter-help">Apply Filters</button>
+                                <button class="btn btn-outline-secondary btn-sm ms-2" id="clearFilters" aria-describedby="filter-help">Clear Filters</button>
                                 <small class="text-muted ms-3" id="filterStatus" role="status" aria-live="polite">Showing all commits</small>
+                                <div class="visually-hidden" id="filter-help">Use filters to focus on specific authors, date ranges, or file types. Changes will update all charts in real-time.</div>
                             </div>
                         </div>
                     </div>
@@ -778,8 +840,9 @@
                     <div id="timeRangeCollapse" class="accordion-collapse collapse show" aria-labelledby="timeRangeHeading" data-bs-parent="#overviewAccordion">
                         <div class="accordion-body">
                             <p class="text-muted mb-3">Adjust the time range for all time series charts using the slider below:</p>
-                            <div id="timeSliderChart" class="chart-placeholder skeleton-loader" style="width: 100%; min-height: 150px;" data-chart-type="timeSlider" aria-label="Time range slider chart">
+                            <div id="timeSliderChart" class="chart-placeholder skeleton-loader" style="width: 100%; min-height: 150px;" data-chart-type="timeSlider" aria-label="Time range slider chart" aria-describedby="time-slider-desc">
                                 <span class="chart-loading-text">Loading time slider chart...</span>
+                                <div class="visually-hidden" id="time-slider-desc">Interactive timeline showing repository activity. Drag the handles to filter data by date range across all charts.</div>
                             </div>
                         </div>
                     </div>
@@ -788,8 +851,8 @@
         </section>
 
         <!-- Activity Section -->
-        <section id="activity">
-            <h2 class="visually-hidden">Activity</h2>
+        <section id="activity" role="region" aria-labelledby="activity-heading">
+            <h2 id="activity-heading" class="visually-hidden">Repository Activity and Growth</h2>
             <div class="accordion mb-4" id="activityAccordion">
                 <div class="accordion-item">
                     <h3 class="accordion-header" id="activityHeading">
@@ -813,8 +876,9 @@
                                 <input type="radio" class="btn-check" name="growthXAxis" id="growthXAxisCommit" value="commit" checked>
                                 <label class="btn btn-outline-primary" for="growthXAxisCommit">By Commit</label>
                             </div>
-                            <div id="growthChart" class="chart-placeholder skeleton-loader" style="min-height: 350px;" data-chart-type="growth" aria-label="Repository growth chart">
+                            <div id="growthChart" class="chart-placeholder skeleton-loader" style="min-height: 350px;" data-chart-type="growth" aria-label="Repository growth chart" aria-describedby="growth-desc">
                                 <span class="chart-loading-text">Loading growth chart...</span>
+                                <div class="visually-hidden" id="growth-desc">Line chart showing cumulative growth of lines of code, commits, and contributors over time. Switch between date-based and commit-based x-axis views.</div>
                             </div>
                         </div>
                     </div>
@@ -856,8 +920,8 @@
         </section>
         
         <!-- Code Analysis Section -->
-        <section id="code-analysis">
-            <h2 class="visually-hidden">Code Analysis</h2>
+        <section id="code-analysis" role="region" aria-labelledby="code-analysis-heading">
+            <h2 id="code-analysis-heading" class="visually-hidden">Code Analysis and File Metrics</h2>
             <div class="accordion mb-4" id="codeAccordion">
                 <div class="accordion-item">
                     <h3 class="accordion-header" id="codeHeading">
@@ -875,8 +939,9 @@
                                             <h5 class="card-title mb-0">File Types</h5>
                                         </div>
                                         <div class="card-body">
-                                            <div id="fileTypesChart" class="chart-placeholder skeleton-loader" style="min-height: 350px;" data-chart-type="fileTypes" aria-label="File types distribution chart">
+                                            <div id="fileTypesChart" class="chart-placeholder skeleton-loader" style="min-height: 350px;" data-chart-type="fileTypes" aria-label="File types distribution chart" aria-describedby="file-types-desc">
                                                 <span class="chart-loading-text">Loading file types chart...</span>
+                                                <div class="visually-hidden" id="file-types-desc">Pie chart showing distribution of code across different file types. Click segments to filter other charts by file type.</div>
                                             </div>
                                         </div>
                                     </div>
@@ -920,8 +985,9 @@
                                                     </p>
                                                 </div>
                                             </div>
-                                            <div id="topFilesChart" class="chart-placeholder skeleton-loader" style="min-height: 350px;" data-chart-type="topFiles" aria-label="Top files by size chart">
+                                            <div id="topFilesChart" class="chart-placeholder skeleton-loader" style="min-height: 350px;" data-chart-type="topFiles" aria-label="Top files by size chart" aria-describedby="top-files-desc">
                                                 <span class="chart-loading-text">Loading top files chart...</span>
+                                                <div class="visually-hidden" id="top-files-desc">Horizontal bar chart showing top 5 files by selected metric. Use tabs to switch between largest files, most churned files, and most complex files.</div>
                                             </div>
                                         </div>
                                     </div>
@@ -950,8 +1016,8 @@
         
         
         <!-- Contributors Section -->
-        <section id="contributors">
-            <h2 class="visually-hidden">Contributors</h2>
+        <section id="contributors" role="region" aria-labelledby="contributors-heading">
+            <h2 id="contributors-heading" class="visually-hidden">Contributors and Awards</h2>
             <div class="accordion mb-4" id="contributorsAccordion">
                 <div class="accordion-item">
                     <h3 class="accordion-header" id="contributorsHeading">
@@ -1006,8 +1072,9 @@
                             <h5 class="card-title mb-0">Top Contributors</h5>
                         </div>
                         <div class="card-body">
-                            <div id="contributorsChart" class="chart-placeholder skeleton-loader" style="min-height: 350px;" data-chart-type="contributors" aria-label="Contributors activity chart">
+                            <div id="contributorsChart" class="chart-placeholder skeleton-loader" style="min-height: 350px;" data-chart-type="contributors" aria-label="Contributors activity chart" aria-describedby="contributors-chart-desc">
                                 <span class="chart-loading-text">Loading contributors chart...</span>
+                                <div class="visually-hidden" id="contributors-chart-desc">Horizontal bar chart ranking top contributors by their total lines of code contributions to the repository.</div>
                             </div>
                         </div>
                     </div>
@@ -1020,14 +1087,17 @@
                             <h5 class="card-title mb-0">Commit Message Word Cloud</h5>
                         </div>
                         <div class="card-body" style="min-height: 400px;">
-                            <div id="wordCloudChart" class="chart-placeholder skeleton-loader" style="width: 100%; height: 400px;" data-chart-type="wordCloud" aria-label="Commit message word cloud">
+                            <div id="wordCloudChart" class="chart-placeholder skeleton-loader" style="width: 100%; height: 400px;" data-chart-type="wordCloud" aria-label="Commit message word cloud" aria-describedby="word-cloud-desc">
                                 <span class="chart-loading-text">Loading commit message word cloud...</span>
+                                <div class="visually-hidden" id="word-cloud-desc">Visual word cloud of most frequently used words in commit messages. Larger words appear more often across commits.</div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
+        
+        </main>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
