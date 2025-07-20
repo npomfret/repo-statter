@@ -1,44 +1,178 @@
 # Dashboard Layout and Readability Improvements
 
-Based on common dashboard design best practices, the current HTML report is cluttered and difficult to parse. This document outlines a series of improvements to enhance the layout, readability, and overall user experience.
+## Task Status
+**Status**: Ready for implementation  
+**Estimated Size**: Large - Major layout restructure with accessibility improvements
 
-## Key Improvement Areas
+## Current State Analysis
+The dashboard currently uses Bootstrap's grid system with proper cards and sections. However, there are several areas where the layout can be improved for better readability and user experience:
 
-### 1. Layout and Structure
+1. **Information Hierarchy**: 
+   - Key metrics are buried in the middle of the page
+   - No quick navigation for long dashboard
+   - All sections have equal visual weight
 
--   **Establish a Clear Visual Hierarchy:**
-    -   Adopt a grid-based layout to organize charts and data points logically.
-    -   Place the most important, high-level information (e.g., key project stats, overall churn) at the top.
-    -   Group related charts together under clear, descriptive headings (e.g., "File Analysis", "Contributor Activity").
--   **Improve Spacing and Flow:**
-    -   Increase white space between elements to reduce clutter and improve readability.
-    -   Use cards or containers to visually separate distinct sections of the report.
+2. **Performance Issues**:
+   - All charts load immediately, even those not visible
+   - No lazy loading for heavy visualizations
+   - Large repos can have slow initial render
 
-### 2. Data Visualization
+3. **Accessibility Gaps**:
+   - Missing ARIA labels and roles
+   - No keyboard navigation optimization
+   - Screen reader support is limited
 
--   **Chart Selection and Clarity:**
-    -   Review all charts to ensure they are the most effective type for the data being presented.
-    -   Ensure all charts have clear titles, labels, and legends.
--   **Color Palette and Consistency:**
-    -   Implement a consistent and accessible color palette across all charts.
-    -   Use color to highlight key information, not just for decoration.
+4. **Mobile Experience**:
+   - Excessive scrolling required
+   - No collapsible sections
+   - Navigation is cumbersome
 
-### 3. Interactivity
+## Implementation Plan
 
--   **Global Filtering:**
-    -   Introduce global filters at the top of the report (e.g., date range, author) that apply to all relevant charts.
--   **Cross-Filtering:**
-    -   Implement cross-filtering, where clicking on a data point in one chart filters other charts on the dashboard (as described in the file-type-chart-filtering.md feature).
+### Phase 1: Hero Strip & Page Structure
+1. **Create Hero Strip**:
+   - Move key metrics (Total Commits, Lines of Code, Last Commit) to always-visible hero
+   - Add repository name prominently
+   - Include "generated on" date
+   - Style with gradient background or elevated card
 
-### 4. Typography and Readability
+2. **Implement Sticky Navigation**:
+   ```html
+   <nav class="sticky-nav" aria-label="Page sections">
+     <a href="#overview">Overview</a>
+     <a href="#activity">Activity</a>
+     <a href="#code-analysis">Code</a>
+     <a href="#files">Files</a>
+     <a href="#contributors">Contributors</a>
+   </nav>
+   ```
+   - Position: left sidebar on desktop, horizontal bar on mobile
+   - Highlight active section using Intersection Observer
+   - Smooth scroll behavior
 
--   **Consistent Fonts and Sizing:**
-    -   Use a consistent and readable font throughout the report.
-    -   Establish a clear typographic hierarchy (e.g., headings, subheadings, body text) to guide the user's eye.
+### Phase 2: Accordion-Based Sections
+1. **Convert sections to collapsible accordions**:
+   - Overview (filters, time slider) - default open
+   - Activity (growth, commits) - default open  
+   - Code Analysis (LOC by category, file types)
+   - Files (top files, file activity heatmap)
+   - Contributors (chart, awards)
 
-## Proposed Action Plan
+2. **Implement ARIA-compliant accordions**:
+   ```typescript
+   interface AccordionSection {
+     id: string;
+     title: string;
+     defaultOpen: boolean;
+     content: HTMLElement;
+   }
+   
+   function createAccordion(section: AccordionSection): void {
+     // Button with aria-expanded, aria-controls
+     // Panel with role="region", aria-labelledby
+     // Save state to localStorage
+   }
+   ```
 
-1.  **Create a new CSS stylesheet** to define the improved layout, typography, and color scheme.
-2.  **Refactor the HTML template** to use a grid-based layout and incorporate the new CSS classes.
-3.  **Update the chart generation logic** to use the new color palette and improve chart-level titles and labels.
-4.  **Implement global and cross-filtering** functionality using JavaScript.
+3. **Remember user preferences**:
+   - Store accordion states in localStorage
+   - Restore on page load
+
+### Phase 3: Performance Optimization
+1. **Lazy load chart libraries**:
+   - Load ApexCharts only when needed
+   - Defer D3.js until word cloud is visible
+   - Show loading skeletons while charts render
+
+2. **Intersection Observer for charts**:
+   ```typescript
+   const chartObserver = new IntersectionObserver((entries) => {
+     entries.forEach(entry => {
+       if (entry.isIntersecting) {
+         loadChart(entry.target.id);
+         chartObserver.unobserve(entry.target);
+       }
+     });
+   });
+   ```
+
+3. **Progressive enhancement**:
+   - Basic HTML structure works without JS
+   - Enhance with interactivity when JS loads
+
+### Phase 4: Enhanced Grid System
+1. **CSS Grid implementation**:
+   ```css
+   .dashboard-grid {
+     display: grid;
+     grid-template-columns: repeat(12, 1fr);
+     gap: var(--space-lg);
+   }
+   
+   .metric-card { grid-column: span 3; }
+   .chart-full { grid-column: span 12; }
+   .chart-half { grid-column: span 6; }
+   
+   @media (max-width: 768px) {
+     .metric-card { grid-column: span 6; }
+     .chart-half { grid-column: span 12; }
+   }
+   ```
+
+2. **Consistent spacing and rhythm**:
+   - Uniform padding, margins, border-radius
+   - Visual rhythm through consistent gaps
+
+### Phase 5: Accessibility Enhancements
+1. **ARIA roles and labels**:
+   - Landmark roles for main sections
+   - Descriptive labels for interactive elements
+   - Live regions for dynamic updates
+
+2. **Keyboard navigation**:
+   - Tab order optimization
+   - Skip links for main sections
+   - Focus indicators for all interactive elements
+
+3. **Screen reader announcements**:
+   - Chart summaries in sr-only text
+   - Filter status announcements
+   - Loading state notifications
+
+### Phase 6: Mobile Optimizations
+1. **Responsive accordion behavior**:
+   - Single expanded section on mobile
+   - Tap-to-expand with clear indicators
+   - Swipe gestures for section navigation
+
+2. **Touch-friendly controls**:
+   - Larger tap targets (min 44x44px)
+   - Remove hover-dependent features
+   - Simplified interactions
+
+## Implementation Notes
+- Maintain backward compatibility
+- Keep existing tab navigation for Top Files (it works well)
+- Ensure all features work without JavaScript
+- Test with screen readers (NVDA, JAWS, VoiceOver)
+- Performance budget: First paint < 1s, Interactive < 3s
+
+## Testing Approach
+1. Accessibility audit with axe-core
+2. Performance testing with Lighthouse
+3. Cross-browser testing (Chrome, Firefox, Safari, Edge)
+4. Mobile device testing (iOS Safari, Chrome Android)
+5. Keyboard-only navigation testing
+6. Screen reader testing
+
+## Small Commits Plan
+1. Add hero strip with key metrics
+2. Implement sticky navigation sidebar
+3. Convert first section to accordion (Overview)
+4. Add localStorage for accordion states
+5. Convert remaining sections to accordions
+6. Implement lazy loading for charts
+7. Add ARIA labels and roles
+8. Optimize keyboard navigation
+9. Mobile-specific enhancements
+10. Performance optimizations and final polish
