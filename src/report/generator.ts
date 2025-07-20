@@ -14,6 +14,7 @@ import {
 import { getTopFilesStats } from '../data/top-files-calculator.js'
 import { checkLizardInstalled } from '../data/lizard-complexity-analyzer.js'
 import { getTimeSeriesData, getLinearSeriesData } from '../chart/data-transformer.js'
+import { getTimeSeriesData as getTimeSeriesDataDirect } from '../data/time-series-transformer.js'
 import { processCommitMessages } from '../text/processor.js'
 import { replaceTemplateVariables, injectIntoBody } from '../utils/template-engine.js'
 import { bundlePageScript } from '../build/bundle-page-script.js'
@@ -129,9 +130,21 @@ function formatFullDate(date: Date): string {
 }
 
 async function transformCommitData(commits: CommitData[], repoName: string, repoPath: string, progressReporter?: ProgressReporter, isLizardInstalled: boolean = true, currentFiles?: Set<string>): Promise<ChartData> {
-  // Calculate current lines of code from file size history
+  // Calculate cumulative lines of code using the same method as the time series chart
+  // This ensures consistency between the hero metric and the growth chart
   let totalLinesOfCode = 0
-  if (currentFiles && currentFiles.size > 0) {
+  
+  if (commits.length > 0) {
+    // Use the time series data to get the final cumulative total
+    const timeSeries = getTimeSeriesDataDirect(commits)
+    if (timeSeries.length > 0) {
+      const lastPoint = timeSeries[timeSeries.length - 1]
+      totalLinesOfCode = lastPoint?.cumulativeLines.total ?? 0
+    }
+  }
+  
+  // Fallback to current file calculation if time series fails
+  if (totalLinesOfCode === 0 && currentFiles && currentFiles.size > 0) {
     const fileSizeMap = new Map<string, number>()
     
     // Build up file sizes from commit history
@@ -147,9 +160,6 @@ async function transformCommitData(commits: CommitData[], repoName: string, repo
     
     // Sum up all current file sizes
     totalLinesOfCode = Array.from(fileSizeMap.values()).reduce((sum, size) => sum + size, 0)
-  } else {
-    // Fallback to total lines added if we can't determine current files
-    totalLinesOfCode = commits.reduce((sum, c) => sum + c.linesAdded, 0)
   }
   
   // Calculate unique contributors
