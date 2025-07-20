@@ -48,8 +48,7 @@ The dashboard currently uses Bootstrap's grid system with proper cards and secti
    <nav class="sticky-nav" aria-label="Page sections">
      <a href="#overview">Overview</a>
      <a href="#activity">Activity</a>
-     <a href="#code-analysis">Code</a>
-     <a href="#files">Files</a>
+     <a href="#code">Code</a>
      <a href="#contributors">Contributors</a>
    </nav>
    ```
@@ -60,7 +59,7 @@ The dashboard currently uses Bootstrap's grid system with proper cards and secti
 ### Phase 2: Accordion-Based Sections ✅ (Complete)
 1. **Convert sections to collapsible accordions**:
    - ✅ Overview (filters, time slider) - default open
-   - ✅ Activity (growth, commits) - default open  
+   - ✅ Activity (growth, commits) - default open
    - ✅ Code Analysis (LOC by category, file types)
    - ✅ Files (top files, file activity heatmap)
    - ✅ Contributors (chart, awards)
@@ -121,21 +120,25 @@ The dashboard currently uses Bootstrap's grid system with proper cards and secti
    - Uniform padding, margins, border-radius
    - Visual rhythm through consistent gaps
 
-### Phase 5: Accessibility Enhancements
+### Phase 5: Accessibility Enhancements (WCAG 2.2 AA)
 1. **ARIA roles and labels**:
    - Landmark roles for main sections
-   - Descriptive labels for interactive elements
+   - Descriptive labels for interactive elements (`role="figure"`, `aria-labelledby`)
    - Live regions for dynamic updates
 
 2. **Keyboard navigation**:
-   - Tab order optimization
-   - Skip links for main sections
+   - Logical focus order: header → filters → metrics → charts
+   - Skip-link at top of page
    - Focus indicators for all interactive elements
 
 3. **Screen reader announcements**:
    - Chart summaries in sr-only text
    - Filter status announcements
    - Loading state notifications
+
+4. **Color Contrast**:
+    - Ensure 4.5:1 contrast for text/graphics.
+    - Implement light/dark mode toggle with `localStorage` persistence.
 
 ### Phase 6: Mobile Optimizations
 1. **Responsive accordion behavior**:
@@ -147,6 +150,20 @@ The dashboard currently uses Bootstrap's grid system with proper cards and secti
    - Larger tap targets (min 44x44px)
    - Remove hover-dependent features
    - Simplified interactions
+
+3. **Responsive Layout**:
+    - On ≤ 600px screens:
+        - Stack cards vertically.
+        - Turn left-hand metric tiles into a 2-col grid.
+        - Switch charts to full-width swipeable canvases.
+
+### Phase 7: Visual Hierarchy & Clarity
+1.  **Stat Cards**:
+    *   Move headline KPIs (Commits, LOC, Contributors, Active Days) into four colored “stat cards” at the top.
+2.  **Tooltips**:
+    *   Add short tooltips on hover/tap that define each metric.
+3.  **Chart Consolidation**:
+    *   Trim low-value charts (e.g., consolidate "Growth by Date" and "Growth by Commit").
 
 ## Implementation Notes
 - Maintain backward compatibility
