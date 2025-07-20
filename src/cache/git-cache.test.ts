@@ -5,13 +5,15 @@ import type { CommitData } from '../git/parser.js'
 describe('git-cache', () => {
   const testRepoPath = process.cwd() // Use current repo for testing
   let testRepoHash: string
+  const TEST_CACHE_VERSION = '1.0'
+  const TEST_CACHE_DIR = 'repo-statter-cache-test'
   
   beforeEach(async () => {
     testRepoHash = await generateRepositoryHash(testRepoPath)
   })
   
   afterEach(async () => {
-    await clearCache(testRepoHash)
+    await clearCache(testRepoHash, TEST_CACHE_DIR)
   })
 
   describe('generateRepositoryHash', () => {
@@ -43,13 +45,13 @@ describe('git-cache', () => {
     ]
 
     it('should return null for non-existent cache', async () => {
-      const cache = await loadCache('nonexistent')
+      const cache = await loadCache('nonexistent', TEST_CACHE_VERSION, TEST_CACHE_DIR)
       expect(cache).toBeNull()
     })
 
     it('should save and load cache data', async () => {
-      await saveCache(testRepoHash, mockCommits)
-      const cache = await loadCache(testRepoHash)
+      await saveCache(testRepoHash, mockCommits, TEST_CACHE_VERSION, TEST_CACHE_DIR)
+      const cache = await loadCache(testRepoHash, TEST_CACHE_VERSION, TEST_CACHE_DIR)
       
       expect(cache).not.toBeNull()
       expect(cache!.commits).toHaveLength(1)
@@ -58,18 +60,18 @@ describe('git-cache', () => {
     })
 
     it('should validate cache correctly', async () => {
-      expect(await isCacheValid(testRepoHash)).toBe(false)
+      expect(await isCacheValid(testRepoHash, TEST_CACHE_VERSION, TEST_CACHE_DIR)).toBe(false)
       
-      await saveCache(testRepoHash, mockCommits)
-      expect(await isCacheValid(testRepoHash)).toBe(true)
+      await saveCache(testRepoHash, mockCommits, TEST_CACHE_VERSION, TEST_CACHE_DIR)
+      expect(await isCacheValid(testRepoHash, TEST_CACHE_VERSION, TEST_CACHE_DIR)).toBe(true)
     })
 
     it('should clear cache successfully', async () => {
-      await saveCache(testRepoHash, mockCommits)
-      expect(await isCacheValid(testRepoHash)).toBe(true)
+      await saveCache(testRepoHash, mockCommits, TEST_CACHE_VERSION, TEST_CACHE_DIR)
+      expect(await isCacheValid(testRepoHash, TEST_CACHE_VERSION, TEST_CACHE_DIR)).toBe(true)
       
-      await clearCache(testRepoHash)
-      expect(await isCacheValid(testRepoHash)).toBe(false)
+      await clearCache(testRepoHash, TEST_CACHE_DIR)
+      expect(await isCacheValid(testRepoHash, TEST_CACHE_VERSION, TEST_CACHE_DIR)).toBe(false)
     })
   })
 })

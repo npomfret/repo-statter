@@ -4,7 +4,7 @@ import { parseCommitDiff as parseCommitDiffData, parseByteChanges } from '../dat
 import type { ProgressReporter } from '../utils/progress-reporter.js'
 import { GitParseError, formatError } from '../utils/errors.js'
 import { generateRepositoryHash, loadCache, saveCache, clearCache } from '../cache/git-cache.js'
-import type { AnalysisConfig } from '../config/schema.js'
+import type { AnalysisConfig, RepoStatterConfig } from '../config/schema.js'
 
 // Assert utilities for fail-fast error handling
 function assert(condition: boolean, message: string): asserts condition {
@@ -40,7 +40,7 @@ export interface CacheOptions {
   clearCache?: boolean
 }
 
-export async function parseCommitHistory(repoPath: string, progressReporter?: ProgressReporter, maxCommits?: number, cacheOptions: CacheOptions = {}, analysisConfig?: AnalysisConfig): Promise<CommitData[]> {
+export async function parseCommitHistory(repoPath: string, progressReporter?: ProgressReporter, maxCommits?: number, cacheOptions: CacheOptions = {}, config?: RepoStatterConfig): Promise<CommitData[]> {
   // Validate input
   assert(repoPath.length > 0, 'Repository path cannot be empty')
   
@@ -61,7 +61,8 @@ export async function parseCommitHistory(repoPath: string, progressReporter?: Pr
   
   // Clear cache if requested
   if (cacheOptions.clearCache) {
-    await clearCache(repoHash)
+    const cacheDirName = config?.performance.cacheDirName ?? 'repo-statter-cache'
+    await clearCache(repoHash, cacheDirName)
     progressReporter?.report('Cleared existing cache')
   }
   
@@ -71,7 +72,9 @@ export async function parseCommitHistory(repoPath: string, progressReporter?: Pr
   
   if (cacheOptions.useCache !== false && !cacheOptions.clearCache && !maxCommits) {
     progressReporter?.report('Checking for cached data')
-    const cache = await loadCache(repoHash)
+    const cacheVersion = config?.performance.cacheVersion ?? '1.0'
+    const cacheDirName = config?.performance.cacheDirName ?? 'repo-statter-cache'
+    const cache = await loadCache(repoHash, cacheVersion, cacheDirName)
     if (cache && cache.commits.length > 0) {
       cachedCommits = cache.commits
       lastCachedSha = cache.lastCommitSha
@@ -124,7 +127,7 @@ export async function parseCommitHistory(repoPath: string, progressReporter?: Pr
   progressReporter?.report(`Processing ${totalNewCommits} new commits${cachedCommits.length > 0 ? ` (${cachedCommits.length} cached)` : ''}`)
   
   for (const commit of newCommits) {
-    const diffStats = await parseCommitDiff(repoPath, commit.hash, analysisConfig)
+    const diffStats = await parseCommitDiff(repoPath, commit.hash, config)
     const bytesAdded = diffStats.bytesAdded ?? 0
     const bytesDeleted = diffStats.bytesDeleted ?? 0
     cumulativeBytes += (bytesAdded - bytesDeleted)
@@ -162,7 +165,9 @@ export async function parseCommitHistory(repoPath: string, progressReporter?: Pr
   // Save to cache if caching is enabled and we processed new commits
   if (cacheOptions.useCache !== false && !maxCommits && (totalNewCommits > 0 || cachedCommits.length === 0)) {
     try {
-      await saveCache(repoHash, commits)
+      const cacheVersion = config?.performance.cacheVersion ?? '1.0'
+      const cacheDirName = config?.performance.cacheDirName ?? 'repo-statter-cache'
+      await saveCache(repoHash, commits, cacheVersion, cacheDirName)
       progressReporter?.report(`Cached ${commits.length} commits for future runs`)
     } catch (error) {
       // Don't fail the entire operation if caching fails
@@ -200,7 +205,7 @@ export async function getGitHubUrl(repoPath: string): Promise<string | null> {
   return null
 }
 
-async function parseCommitDiff(repoPath: string, commitHash: string, config?: AnalysisConfig): Promise<{ linesAdded: number; linesDeleted: number; bytesAdded: number; bytesDeleted: number; filesChanged: FileChange[] }> {
+async function parseCommitDiff(repoPath: string, commitHash: string, config?: RepoStatterConfig): Promise<{ linesAdded: number; linesDeleted: number; bytesAdded: number; bytesDeleted: number; filesChanged: FileChange[] }> {
   const git = simpleGit(repoPath)
   
   // Check if this is the first commit
@@ -221,10 +226,10 @@ async function parseCommitDiff(repoPath: string, commitHash: string, config?: An
   const diffSummary = await git.diffSummary(diffArgs)
   
   // Get byte changes using git diff --stat
-  const byteChanges = await getByteChanges(repoPath, commitHash, config)
+  const byteChanges = await getByteChanges(repoPath, commitHash, config?.analysis)
   
   // Use the extracted pure function
-  return parseCommitDiffData(diffSummary, byteChanges)
+  return parseCommitDiffData(diffSummary, byteChanges, config?.fileTypes)
 }
 
 

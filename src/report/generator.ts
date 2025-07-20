@@ -26,7 +26,7 @@ import { DEFAULT_CONFIG } from '../config/defaults.js'
 export async function generateReport(repoPath: string, outputMode: 'dist' | 'analysis' = 'dist', progressReporter?: ProgressReporter, maxCommits?: number, customFilename?: string, cacheOptions?: CacheOptions, config?: RepoStatterConfig): Promise<string> {
   // Use provided config or fall back to defaults
   const finalConfig = config || DEFAULT_CONFIG
-  const commits = await parseCommitHistory(repoPath, progressReporter, maxCommits, cacheOptions, finalConfig.analysis)
+  const commits = await parseCommitHistory(repoPath, progressReporter, maxCommits, cacheOptions, finalConfig)
   const repoName = repoPath === '.' ? basename(process.cwd()) : basename(repoPath) || 'repo'
   
   // Check if Lizard is installed early

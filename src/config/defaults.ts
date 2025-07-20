@@ -33,7 +33,9 @@ export const DEFAULT_CONFIG: RepoStatterConfig = {
   
   performance: {
     progressThrottleMs: 200,
-    cacheEnabled: true
+    cacheEnabled: true,
+    cacheVersion: '1.0',
+    cacheDirName: 'repo-statter-cache'
   },
   
   exclusions: {

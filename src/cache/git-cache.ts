@@ -14,8 +14,9 @@ export interface CacheData {
   commits: CommitData[]
 }
 
-const CACHE_VERSION = '1.0'
-const CACHE_DIR_NAME = 'repo-statter-cache'
+// These will be provided via config parameter
+// const CACHE_VERSION = '1.0'
+// const CACHE_DIR_NAME = 'repo-statter-cache'
 
 export async function generateRepositoryHash(repoPath: string): Promise<string> {
   const inputs: string[] = []
@@ -48,27 +49,27 @@ export async function generateRepositoryHash(repoPath: string): Promise<string> 
   return createHash('sha256').update(combined).digest('hex').substring(0, 16)
 }
 
-export function getCachePath(repositoryHash: string): string {
-  const cacheDir = join(tmpdir(), CACHE_DIR_NAME)
+export function getCachePath(repositoryHash: string, cacheDirName: string): string {
+  const cacheDir = join(tmpdir(), cacheDirName)
   return join(cacheDir, `${repositoryHash}.json`)
 }
 
-export async function ensureCacheDirectory(): Promise<void> {
-  const cacheDir = join(tmpdir(), CACHE_DIR_NAME)
+export async function ensureCacheDirectory(cacheDirName: string): Promise<void> {
+  const cacheDir = join(tmpdir(), cacheDirName)
   if (!existsSync(cacheDir)) {
     await mkdir(cacheDir, { recursive: true })
   }
 }
 
-export async function loadCache(repositoryHash: string): Promise<CacheData | null> {
-  const cachePath = getCachePath(repositoryHash)
+export async function loadCache(repositoryHash: string, cacheVersion: string, cacheDirName: string): Promise<CacheData | null> {
+  const cachePath = getCachePath(repositoryHash, cacheDirName)
   
   try {
     await access(cachePath)
     const content = await readFile(cachePath, 'utf-8')
     const cacheData: CacheData = JSON.parse(content)
     
-    if (cacheData.version !== CACHE_VERSION) {
+    if (cacheData.version !== cacheVersion) {
       return null
     }
     
@@ -82,24 +83,24 @@ export async function loadCache(repositoryHash: string): Promise<CacheData | nul
   }
 }
 
-export async function saveCache(repositoryHash: string, commits: CommitData[]): Promise<void> {
-  await ensureCacheDirectory()
+export async function saveCache(repositoryHash: string, commits: CommitData[], cacheVersion: string, cacheDirName: string): Promise<void> {
+  await ensureCacheDirectory(cacheDirName)
   
   const lastCommit = commits[commits.length - 1]
   const cacheData: CacheData = {
-    version: CACHE_VERSION,
+    version: cacheVersion,
     repositoryHash,
     lastCommitSha: lastCommit?.sha || '',
     cachedAt: new Date().toISOString(),
     commits
   }
   
-  const cachePath = getCachePath(repositoryHash)
+  const cachePath = getCachePath(repositoryHash, cacheDirName)
   await writeFile(cachePath, JSON.stringify(cacheData, null, 2))
 }
 
-export async function clearCache(repositoryHash: string): Promise<void> {
-  const cachePath = getCachePath(repositoryHash)
+export async function clearCache(repositoryHash: string, cacheDirName: string): Promise<void> {
+  const cachePath = getCachePath(repositoryHash, cacheDirName)
   try {
     await unlink(cachePath)
   } catch {
@@ -107,7 +108,7 @@ export async function clearCache(repositoryHash: string): Promise<void> {
   }
 }
 
-export async function isCacheValid(repositoryHash: string): Promise<boolean> {
-  const cache = await loadCache(repositoryHash)
+export async function isCacheValid(repositoryHash: string, cacheVersion: string, cacheDirName: string): Promise<boolean> {
+  const cache = await loadCache(repositoryHash, cacheVersion, cacheDirName)
   return cache !== null && cache.commits.length > 0
 }

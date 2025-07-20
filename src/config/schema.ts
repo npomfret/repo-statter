@@ -29,6 +29,8 @@ export interface ChartsConfig {
 export interface PerformanceConfig {
   progressThrottleMs: number;
   cacheEnabled: boolean;
+  cacheVersion: string;
+  cacheDirName: string;
 }
 
 export interface ExclusionsConfig {
