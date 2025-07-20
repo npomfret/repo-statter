@@ -372,4 +372,8 @@ export class ChartRenderers {
   public getTopFilesChart() {
     return this.topFilesChart
   }
+
+  public getFileTypesChart() {
+    return this.fileTypesChart
+  }
 }

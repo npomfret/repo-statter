@@ -4,9 +4,14 @@ import { assert } from '../utils/errors.js'
 export class FileTypesChart {
   private containerId: string
   private chart: any = null
+  private onFileTypeClick?: (fileType: string | null) => void
 
   constructor(containerId: string) {
     this.containerId = containerId
+  }
+
+  setClickHandler(handler: (fileType: string | null) => void): void {
+    this.onFileTypeClick = handler
   }
 
   render(fileTypes: FileTypeStats[]): void {
@@ -28,7 +33,16 @@ export class FileTypesChart {
       chart: { 
         type: 'donut', 
         height: 350,
-        background: isDark ? '#161b22' : '#ffffff'
+        background: isDark ? '#161b22' : '#ffffff',
+        events: {
+          dataPointSelection: (_event: any, _chartContext: any, config: any) => {
+            if (this.onFileTypeClick) {
+              const selectedType = config.w.config.labels[config.dataPointIndex]
+              const isAlreadySelected = config.w.globals.selectedDataPoints?.[0]?.includes(config.dataPointIndex)
+              this.onFileTypeClick(isAlreadySelected ? null : selectedType)
+            }
+          }
+        }
       },
       series: fileTypes.slice(0, 8).map(ft => ft.lines),
       labels: fileTypes.slice(0, 8).map(ft => ft.type),
@@ -38,7 +52,35 @@ export class FileTypesChart {
       legend: {
         labels: { colors: isDark ? '#f0f6fc' : '#24292f' }
       },
-      tooltip: { theme: isDark ? 'dark' : 'light' }
+      tooltip: { theme: isDark ? 'dark' : 'light' },
+      states: {
+        active: {
+          filter: {
+            type: 'none'
+          }
+        }
+      },
+      plotOptions: {
+        pie: {
+          donut: {
+            labels: {
+              show: true
+            }
+          },
+          expandOnClick: false,
+          customScale: 1
+        }
+      },
+      dataLabels: {
+        enabled: true
+      },
+      fill: {
+        opacity: 1
+      },
+      stroke: {
+        width: 2,
+        colors: [isDark ? '#0d1117' : '#ffffff']
+      }
     }
     
     // ApexCharts will be available globally in the browser

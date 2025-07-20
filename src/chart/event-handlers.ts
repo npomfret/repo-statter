@@ -11,6 +11,8 @@ import {
 } from '../chart/filter-system.js'
 
 export class EventHandlers {
+  private selectedFileType: string | null = null
+
   constructor(
     private data: PageScriptData,
     private renderers: ChartRenderers
@@ -22,6 +24,7 @@ export class EventHandlers {
     this.setupFilterSystem()
     this.setupClearFiltersButton()
     this.setupTopFilesTabs()
+    this.setupFileTypeChartClick()
   }
 
   private setupThemeToggle(): void {
@@ -109,8 +112,10 @@ export class EventHandlers {
     const clearButton = document.getElementById('clearFilters')!
     clearButton.addEventListener('click', () => {
       clearFiltersState()
+      this.selectedFileType = null
       this.updateFilterUI()
       this.applyFiltersAndUpdate()
+      this.updateTopFilesWithFilter()
     })
   }
 
@@ -183,14 +188,75 @@ export class EventHandlers {
           const tabId = target.id
           
           if (tabId === 'largest-tab') {
-            topFilesChart.render(this.data.topFilesData!, 'largest', this.data.isLizardInstalled ?? true)
+            topFilesChart.render(this.data.topFilesData!, 'largest', this.data.isLizardInstalled ?? true, this.selectedFileType)
           } else if (tabId === 'churn-tab') {
-            topFilesChart.render(this.data.topFilesData!, 'churn', this.data.isLizardInstalled ?? true)
+            topFilesChart.render(this.data.topFilesData!, 'churn', this.data.isLizardInstalled ?? true, this.selectedFileType)
           } else if (tabId === 'complex-tab') {
-            topFilesChart.render(this.data.topFilesData!, 'complex', this.data.isLizardInstalled ?? true)
+            topFilesChart.render(this.data.topFilesData!, 'complex', this.data.isLizardInstalled ?? true, this.selectedFileType)
           }
         })
       })
     }
+  }
+
+  private setupFileTypeChartClick(): void {
+    const fileTypesChart = this.renderers.getFileTypesChart()
+    fileTypesChart.setClickHandler((fileType: string | null) => {
+      this.selectedFileType = fileType
+      this.updateTopFilesWithFilter()
+      this.updateFileTypeIndicator()
+    })
+    
+    // Handle clear button
+    const clearButton = document.getElementById('clearFileTypeFilter')
+    if (clearButton) {
+      clearButton.addEventListener('click', () => {
+        this.selectedFileType = null
+        this.updateTopFilesWithFilter()
+        this.updateFileTypeIndicator()
+      })
+    }
+  }
+
+  private updateFileTypeIndicator(): void {
+    const indicator = document.getElementById('fileTypeFilterIndicator')
+    const typeSpan = document.getElementById('selectedFileType')
+    
+    if (indicator && typeSpan) {
+      if (this.selectedFileType) {
+        indicator.classList.remove('d-none')
+        typeSpan.textContent = this.selectedFileType
+      } else {
+        indicator.classList.add('d-none')
+      }
+    }
+  }
+
+  private updateTopFilesWithFilter(): void {
+    const topFilesChart = this.renderers.getTopFilesChart()
+    
+    // Get current active tab
+    const activeTab = document.querySelector('.nav-link.active[data-bs-toggle="tab"]') as HTMLElement
+    let mode: 'largest' | 'churn' | 'complex' = 'largest'
+    
+    if (activeTab) {
+      const tabId = activeTab.id
+      if (tabId === 'churn-tab') mode = 'churn'
+      else if (tabId === 'complex-tab') mode = 'complex'
+    }
+    
+    // Re-render with file type filter
+    if (this.data.topFilesData) {
+      topFilesChart.render(
+        this.data.topFilesData, 
+        mode, 
+        this.data.isLizardInstalled ?? true,
+        this.selectedFileType
+      )
+    }
+  }
+
+  public getSelectedFileType(): string | null {
+    return this.selectedFileType
   }
 }

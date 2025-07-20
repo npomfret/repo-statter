@@ -1,6 +1,48 @@
 import type { TopFilesData, TopFileStats } from '../data/top-files-calculator.js'
 import { assert } from '../utils/errors.js'
 
+// Browser-safe file type detection
+function getFileTypeBrowser(fileName: string): string {
+  const lastDotIndex = fileName.lastIndexOf('.')
+  if (lastDotIndex === -1 || lastDotIndex === fileName.length - 1) return 'Other'
+  
+  const ext = fileName.slice(lastDotIndex).toLowerCase()
+  
+  const FILE_TYPE_MAP: Record<string, string> = {
+    '.ts': 'TypeScript',
+    '.tsx': 'TypeScript',
+    '.js': 'JavaScript',
+    '.jsx': 'JavaScript',
+    '.css': 'CSS',
+    '.scss': 'SCSS',
+    '.sass': 'SCSS',
+    '.html': 'HTML',
+    '.json': 'JSON',
+    '.md': 'Markdown',
+    '.py': 'Python',
+    '.java': 'Java',
+    '.cpp': 'C++',
+    '.cc': 'C++',
+    '.cxx': 'C++',
+    '.c': 'C',
+    '.go': 'Go',
+    '.rs': 'Rust',
+    '.php': 'PHP',
+    '.rb': 'Ruby',
+    '.swift': 'Swift',
+    '.kt': 'Kotlin',
+    '.yaml': 'YAML',
+    '.yml': 'YAML',
+    '.xml': 'XML',
+    '.sh': 'Shell',
+    '.bash': 'Shell',
+    '.zsh': 'Shell',
+    '.fish': 'Shell'
+  }
+  
+  return FILE_TYPE_MAP[ext] ?? 'Other'
+}
+
 export class TopFilesChart {
   private containerId: string
   private chart: any = null
@@ -11,7 +53,7 @@ export class TopFilesChart {
     this.containerId = containerId
   }
 
-  render(topFilesData: TopFilesData, activeTab: 'largest' | 'churn' | 'complex' = 'largest', isLizardInstalled: boolean = true): void {
+  render(topFilesData: TopFilesData, activeTab: 'largest' | 'churn' | 'complex' = 'largest', isLizardInstalled: boolean = true, fileTypeFilter: string | null = null): void {
     this.isLizardInstalled = isLizardInstalled
     assert(topFilesData !== undefined, 'Top files data is required')
     
@@ -50,6 +92,11 @@ export class TopFilesChart {
         break
     }
     
+    // Apply file type filter if provided
+    if (fileTypeFilter) {
+      data = data.filter(file => getFileTypeBrowser(file.fileName) === fileTypeFilter)
+    }
+    
     // If no data, show empty state or installation message
     if (data.length === 0) {
       if (activeTab === 'complex' && !this.isLizardInstalled) {
@@ -69,6 +116,8 @@ export class TopFilesChart {
         `
       } else if (activeTab === 'complex') {
         container.innerHTML = '<div class="text-muted text-center p-4">No complex files found</div>'
+      } else if (fileTypeFilter) {
+        container.innerHTML = `<div class="text-muted text-center p-4">No ${fileTypeFilter} files found</div>`
       } else {
         container.innerHTML = '<div class="text-muted text-center p-4">No data available</div>'
       }
