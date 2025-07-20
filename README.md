@@ -12,6 +12,7 @@ To use Repo Statter, you'll need to clone the repository and run it directly. Th
 
 - Node.js (version 18 or higher)
 - Git
+- Lizard (for code complexity analysis): `pip install lizard`
 
 ### Setup
 

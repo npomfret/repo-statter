@@ -155,7 +155,7 @@ async function injectDataIntoTemplate(template: string, chartData: ChartData, co
   const linearSeries = getLinearSeriesData(commits)
   const wordCloudData = processCommitMessages(commits.map(c => c.message))
   const fileHeatData = getFileHeatData(commits, currentFiles)
-  const topFilesData = getTopFilesStats(commits, currentFiles)
+  const topFilesData = await getTopFilesStats(commits, repoPath, currentFiles)
   
   progressReporter?.report('Calculating awards')
   // Calculate awards

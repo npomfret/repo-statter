@@ -182,7 +182,7 @@ describe('top-files-calculator', () => {
   })
 
   describe('getTopFilesStats', () => {
-    it('should return all three categories', () => {
+    it('should return all three categories', async () => {
       const commits = [
         createTestCommit({
           filesChanged: [
@@ -192,7 +192,7 @@ describe('top-files-calculator', () => {
         })
       ]
 
-      const result = getTopFilesStats(commits)
+      const result = await getTopFilesStats(commits, '/fake/repo')
       
       expect(result).toHaveProperty('largest')
       expect(result).toHaveProperty('mostChurn')
@@ -200,18 +200,18 @@ describe('top-files-calculator', () => {
       
       expect(result.largest).toHaveLength(2)
       expect(result.mostChurn).toHaveLength(2)
-      expect(result.mostComplex).toEqual([]) // Should be empty for now
+      expect(result.mostComplex).toEqual([]) // Should be empty when no currentFiles provided
     })
 
-    it('should handle empty commits', () => {
-      const result = getTopFilesStats([])
+    it('should handle empty commits', async () => {
+      const result = await getTopFilesStats([], '/fake/repo')
       
       expect(result.largest).toEqual([])
       expect(result.mostChurn).toEqual([])
       expect(result.mostComplex).toEqual([])
     })
 
-    it('should calculate different rankings for size vs churn', () => {
+    it('should calculate different rankings for size vs churn', async () => {
       const commits = [
         createTestCommit({
           filesChanged: [
@@ -225,7 +225,7 @@ describe('top-files-calculator', () => {
         })
       ]
 
-      const result = getTopFilesStats(commits)
+      const result = await getTopFilesStats(commits, '/fake/repo')
       
       // Size ranking should exclude negative size file
       expect(result.largest).toHaveLength(2)

@@ -1,4 +1,5 @@
 import type { CommitData } from '../git/parser.js'
+import { analyzeRepositoryComplexity } from './lizard-complexity-analyzer.js'
 
 export interface TopFileStats {
   fileName: string
@@ -78,10 +79,47 @@ export function getTopFilesByChurn(commits: CommitData[], currentFiles?: Set<str
   }))
 }
 
-export function getTopFilesStats(commits: CommitData[], currentFiles?: Set<string>): TopFilesData {
+export async function getTopFilesByComplexity(repoPath: string, currentFiles?: Set<string>): Promise<TopFileStats[]> {
+  if (!currentFiles || currentFiles.size === 0) {
+    return []
+  }
+  
+  // Analyze entire repository with lizard
+  const complexityMap = await analyzeRepositoryComplexity(repoPath)
+  
+  if (complexityMap.size === 0) {
+    return []
+  }
+  
+  // Filter to only include files that currently exist
+  const existingFiles = Array.from(complexityMap.entries())
+    .filter(([fileName]) => currentFiles.has(fileName))
+    .map(([fileName, complexity]) => ({ fileName, complexity }))
+  
+  // Sort by complexity descending and take top 5
+  const topFiles = existingFiles
+    .sort((a, b) => b.complexity - a.complexity)
+    .slice(0, 5)
+  
+  const total = topFiles.reduce((sum, file) => sum + file.complexity, 0)
+  
+  return topFiles.map(file => ({
+    fileName: file.fileName,
+    value: file.complexity,
+    percentage: total > 0 ? (file.complexity / total) * 100 : 0
+  }))
+}
+
+export async function getTopFilesStats(commits: CommitData[], repoPath: string, currentFiles?: Set<string>): Promise<TopFilesData> {
+  const [largest, mostChurn, mostComplex] = await Promise.all([
+    Promise.resolve(getTopFilesBySize(commits, currentFiles)),
+    Promise.resolve(getTopFilesByChurn(commits, currentFiles)),
+    getTopFilesByComplexity(repoPath, currentFiles)
+  ])
+  
   return {
-    largest: getTopFilesBySize(commits, currentFiles),
-    mostChurn: getTopFilesByChurn(commits, currentFiles),
-    mostComplex: [] // Empty for now, to be implemented later
+    largest,
+    mostChurn,
+    mostComplex
   }
 }
