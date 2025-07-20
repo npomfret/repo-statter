@@ -38,3 +38,75 @@ To significantly speed up subsequent runs, it is recommended to implement a cach
 *   **Disk Space:** Caching large repositories might consume a noticeable amount of disk space. This should be manageable within a `tmp` directory.
 *   **Complexity:** Implementing incremental updates and cache management will add some complexity to the `src/git/parser.ts` module.
 *   **Error Handling:** Robust error handling will be crucial for cache corruption or inconsistencies.
+
+## Implementation Plan
+
+After analyzing the current codebase, the git parsing happens in `src/git/parser.ts` in the `parseCommitHistory` function. The main performance bottleneck is the `parseCommitDiff` function called for each commit (line 80), which runs `git diffSummary` and `git show --numstat` for every commit.
+
+### Phase 1: Cache Infrastructure
+1. Create cache utilities module (`src/cache/git-cache.ts`)
+   - Hash function for repository identification (based on git remote URL + repo path)
+   - Cache file path generation (use OS temp directory)
+   - JSON serialization/deserialization for CommitData arrays
+   - Cache validity checking (check if cache exists and is readable)
+
+### Phase 2: Cache Integration
+2. Modify `parseCommitHistory` function in `src/git/parser.ts`:
+   - Check for existing cache before processing
+   - If cache exists, load cached data and find the latest commit SHA
+   - Use `git log` with `--after` parameter to get only new commits since last cached commit
+   - Process only new commits and append to cached data
+   - Save updated cache file
+
+### Phase 3: Cache Management
+3. Add cache management features:
+   - Cache invalidation option (force full rescan)
+   - Cache cleanup for old/stale entries
+   - Error recovery for corrupted cache files
+
+### Phase 4: Integration and Testing
+4. Update `generateReport` function to pass cache options
+5. Add command-line flags for cache control:
+   - `--no-cache`: Skip cache, always do full scan
+   - `--clear-cache`: Clear cache before running
+6. Add progress reporting for cache operations
+
+## Small Commits Plan
+
+1. **Create cache utilities module**: Basic cache infrastructure without integration
+2. **Add cache reading capability**: Load existing cache in parseCommitHistory 
+3. **Add incremental commit processing**: Fetch only new commits when cache exists
+4. **Add cache writing**: Save processed commits to cache
+5. **Add cache management**: Invalidation, cleanup, error handling
+6. **Add CLI integration**: Command-line flags for cache control
+7. **Add progress reporting**: Update progress messages for cache operations
+8. **Add tests**: Unit tests for cache functionality
+9. **Documentation**: Update README with caching information
+
+## Expected Performance Impact
+
+- **First run**: Slight overhead for cache setup (~1-5% slower)
+- **Subsequent runs**: 50-90% faster depending on:
+  - Number of new commits since last run
+  - Repository size and commit complexity
+  - For repos with few new commits: near-instant analysis
+
+## Technical Details
+
+**Cache file structure:**
+```json
+{
+  "version": "1.0",
+  "repositoryHash": "abc123...",
+  "lastCommitSha": "def456...",
+  "cachedAt": "2025-07-20T10:30:00Z",
+  "commits": [CommitData array]
+}
+```
+
+**Cache location:** `${os.tmpdir()}/repo-statter-cache/${repoHash}.json`
+
+**Repository hashing:** Combined hash of:
+- Git remote origin URL (if available)
+- Absolute repository path
+- Repository root commit SHA (to detect repo changes)
