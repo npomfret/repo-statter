@@ -76,26 +76,31 @@ The dashboard currently uses Bootstrap's grid system with proper cards and secti
    - ✅ Update states on collapse/expand events
 
 ### Phase 3: Performance Optimization
-1. **Lazy load chart libraries**:
-   - Load ApexCharts only when needed
-   - Defer D3.js until word cloud is visible
-   - Show loading skeletons while charts render
 
-2. **Intersection Observer for charts**:
-   ```typescript
-   const chartObserver = new IntersectionObserver((entries) => {
-     entries.forEach(entry => {
-       if (entry.isIntersecting) {
-         loadChart(entry.target.id);
-         chartObserver.unobserve(entry.target);
-       }
-     });
-   });
-   ```
+**Implementation Plan**:
 
-3. **Progressive enhancement**:
-   - Basic HTML structure works without JS
-   - Enhance with interactivity when JS loads
+1. **Viewport-based lazy loading**:
+   - Modify ChartLoader to observe individual chart containers
+   - Only initialize charts when they enter the viewport
+   - Show loading placeholders until charts are rendered
+   - Use rootMargin to start loading slightly before visibility
+
+2. **Implementation approach**:
+   - Create LazyChartLoader class extending ChartLoader
+   - Implement Intersection Observer for each chart container
+   - Track loaded/loading states per chart
+   - Batch chart initializations when multiple become visible
+   - Maintain existing error handling
+
+3. **Chart loading priority**:
+   - Charts visible on initial load: immediate
+   - Charts below fold: lazy load on scroll
+   - Charts in collapsed accordions: load when accordion expands
+
+4. **Loading states**:
+   - Show skeleton loaders with proper dimensions
+   - Smooth transition from placeholder to chart
+   - Maintain layout stability (no content jumps)
 
 ### Phase 4: Enhanced Grid System
 1. **CSS Grid implementation**:
@@ -186,7 +191,12 @@ The dashboard currently uses Bootstrap's grid system with proper cards and secti
 3. ✅ Convert first section to accordion (Overview)
 4. ✅ Add localStorage for accordion states
 5. ✅ Convert remaining sections to accordions
-6. Implement lazy loading for charts
+6. **Phase 3 - Lazy Loading Implementation** (Current):
+   - Step 1: Add loading placeholders to chart containers in template
+   - Step 2: Create viewport observer utility for lazy loading
+   - Step 3: Modify ChartLoader to support per-chart lazy initialization
+   - Step 4: Integrate lazy loading with accordion expand events
+   - Step 5: Add performance monitoring and testing
 7. Add ARIA labels and roles
 8. Optimize keyboard navigation
 9. Mobile-specific enhancements
