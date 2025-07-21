@@ -1,5 +1,10 @@
 # Enhanced Interactive Filtering
 
+## Status
+**Status**: Planned
+**Priority**: Medium
+**Estimated effort**: Medium
+
 ## Idea
 Allow more complex filtering combinations (e.g., author AND date range AND file type) and drill-down capabilities (e.g., click a file type to see related commits) directly within the generated HTML report.
 
@@ -35,3 +40,96 @@ Allow more complex filtering combinations (e.g., author AND date range AND file 
 - Allows users to quickly explore specific aspects of the repository data.
 - Enhances data discovery and insights by enabling targeted analysis.
 - Makes the report a more powerful analytical tool rather than just a static display.
+
+## Implementation Plan
+
+### Phase 1: Multi-Select File Type Filter (Small commit)
+1. **Update Filter UI**
+   - Replace single-select file type dropdown with multi-select checkbox list
+   - Add "Select All/None" toggle for convenience
+   - Style to match existing UI components
+
+2. **Modify Filter System**
+   - Update `FilterState` interface to accept `fileTypeFilter: string[]`
+   - Modify `applyFilters` to check if any selected file types match
+   - Update filter status to show count of selected file types
+
+3. **Add Tests**
+   - Test multi-select filtering logic
+   - Test UI interaction and state management
+
+### Phase 2: Enhanced Drill-Down (Separate commit)
+1. **File Type Chart Click Handler**
+   - Make pie chart segments clickable
+   - On click, apply file type filter and update all charts
+   - Show visual indicator of active drill-down
+   - Add breadcrumb or badge showing active filter
+
+2. **Contributor Chart Click Handler**
+   - Make contributor bars clickable
+   - On click, filter to show only that author's commits
+   - Update filter UI to reflect selection
+
+3. **Time Series Point Click**
+   - Make time series data points clickable
+   - On click, filter to date range around that point (±7 days)
+   - Update date filter inputs
+
+### Phase 3: Commit Message Search (Optional, separate commit)
+1. **Add Search Input**
+   - Add text input for commit message search
+   - Implement debounced search to avoid performance issues
+   - Add to existing filter UI layout
+
+2. **Extend Filter System**
+   - Add `messageFilter: string` to FilterState
+   - Implement fuzzy or contains search in applyFilters
+   - Highlight matching terms in commit lists
+
+### Phase 4: Filter Combinations UI (Optional)
+1. **Visual Filter Summary**
+   - Show active filters as removable badges/chips
+   - Click badge to remove individual filter
+   - Show filter combination logic clearly
+
+2. **Filter Presets**
+   - Add common filter combinations as presets
+   - E.g., "Last 30 days", "Top 5 contributors", "Documentation changes"
+
+## Technical Considerations
+
+1. **Performance**
+   - Current implementation recalculates all data on filter change
+   - For large repos, consider caching calculated results
+   - Debounce rapid filter changes
+
+2. **Accessibility**
+   - Ensure all clickable elements have proper ARIA labels
+   - Keyboard navigation support for drill-downs
+   - Screen reader announcements for filter changes
+
+3. **Mobile Responsiveness**
+   - Multi-select UI needs mobile-friendly design
+   - Touch-friendly click targets for drill-down
+   - Consider simplified mobile filter UI
+
+## Current State Analysis
+
+### Existing Implementation
+- Basic single-select filters for author, date range, and file type
+- Filter system in `src/chart/filter-system.ts` with clean separation
+- Event handlers in `src/chart/event-handlers.ts`
+- All data already available client-side
+- Charts update dynamically on filter change
+
+### Key Files to Modify
+- `src/chart/filter-system.ts` - Core filtering logic
+- `src/chart/event-handlers.ts` - UI event handling
+- `src/report/template.html` - Filter UI components
+- `src/chart/chart-renderers.ts` - Chart click handlers
+
+### What Works Well
+- Clean separation of concerns
+- Efficient data recalculation
+- All necessary data structures in place
+- Good foundation for enhancement
