@@ -5,6 +5,8 @@ import { ConsoleProgressReporter } from '../utils/progress-reporter.js'
 import { ThrottledProgressReporter } from '../utils/throttled-progress-reporter.js'
 import { isRepoStatError, formatError } from '../utils/errors.js'
 import { loadConfiguration, validateConfiguration } from '../config/loader.js'
+import { getGitHubUrl } from '../git/parser.js'
+import { basename, resolve } from 'path'
 import type { ConfigOverrides } from '../config/loader.js'
 
 export async function handleCLI(args: string[]): Promise<void> {
@@ -55,6 +57,23 @@ export async function handleCLI(args: string[]): Promise<void> {
         
         const config = loadConfiguration(finalRepoPath, configOverrides)
         validateConfiguration(config)
+        
+        // Display repository information
+        const repoName = basename(resolve(finalRepoPath))
+        const outputPath = resolve(outputDir)
+        console.log(`\nAnalyzing repository: ${repoName}`)
+        console.log(`Repository path: ${finalRepoPath}`)
+        console.log(`Output directory: ${outputPath}`)
+        
+        try {
+          const githubUrl = await getGitHubUrl(finalRepoPath)
+          if (githubUrl) {
+            console.log(`Repository URL: ${githubUrl}`)
+          }
+        } catch {
+          // Silently ignore if we can't get the URL
+        }
+        console.log('')
         
         const consoleReporter = new ConsoleProgressReporter()
         const progressReporter = new ThrottledProgressReporter(consoleReporter, config.performance.progressThrottleMs)
