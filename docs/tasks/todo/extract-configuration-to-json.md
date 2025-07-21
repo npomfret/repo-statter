@@ -117,7 +117,7 @@ The codebase currently has many hardcoded configuration values scattered through
 
 ## Implementation Summary
 
-Successfully implemented in 3 commits:
+Successfully implemented in 5 commits:
 
 1. **Configuration infrastructure** (8ae3b06)
    - Created schema.ts, defaults.ts, loader.ts
@@ -135,6 +135,17 @@ Successfully implemented in 3 commits:
    - Updated git extractor (bytes per line estimation)
    - Updated time series transformer (hourly threshold)
 
+4. **Charts and UI configuration** (ba115a6)
+   - Updated all chart modules to accept configuration parameters
+   - Made chart heights and limits configurable
+   - Updated exclusions to use configuration patterns
+   - Passed configuration from server to client-side rendering
+
+5. **Cache and performance settings** (3291395)
+   - Made cache version and directory name configurable
+   - Updated git-cache.ts to accept configuration parameters
+   - Maintained backward compatibility with defaults
+
 ## Results
 
 - **Zero breaking changes** - All existing CLI usage continues to work
@@ -148,3 +159,13 @@ Successfully implemented in 3 commits:
 - Phase 6: Create example configuration files and update README documentation
 - Consider adding JSON schema for IDE autocomplete support
 - Monitor for user feedback on configuration options
+
+## Deferred Items
+
+### File Type Mappings
+The `FILE_TYPE_MAP` and `BINARY_EXTENSIONS` constants were considered for extraction to configuration but deferred because:
+- They are used in multiple disconnected parts of the codebase
+- Making them configurable would require significant architectural changes
+- The current hardcoded mappings cover most common file types
+- Users haven't expressed a need to customize these mappings
+- Can be reconsidered if user demand emerges

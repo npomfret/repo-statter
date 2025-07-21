@@ -1,6 +1,7 @@
 import type { CommitData } from '../git/parser.js'
 import { isRealCommit } from '../utils/commit-filters.js'
 import { assert } from '../utils/errors.js'
+import type { RepoStatterConfig } from '../config/schema.js'
 
 export interface ContributorStats {
   name: string
@@ -15,7 +16,7 @@ export interface ContributorAward {
   averageLinesChanged: number
 }
 
-export function getContributorStats(commits: CommitData[]): ContributorStats[] {
+export function getContributorStats(commits: CommitData[], config: RepoStatterConfig): ContributorStats[] {
   assert(commits.length > 0, 'Cannot calculate contributor stats from empty commits array')
   const contributorMap = new Map<string, ContributorStats>()
   

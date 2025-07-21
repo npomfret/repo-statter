@@ -1,5 +1,6 @@
 import type { CommitData } from '../git/parser.js'
 import { analyzeRepositoryComplexity } from './lizard-complexity-analyzer.js'
+import type { RepoStatterConfig } from '../config/schema.js'
 
 export interface TopFileStats {
   fileName: string
@@ -110,7 +111,7 @@ export async function getTopFilesByComplexity(repoPath: string, currentFiles?: S
   }))
 }
 
-export async function getTopFilesStats(commits: CommitData[], repoPath: string, currentFiles?: Set<string>): Promise<TopFilesData> {
+export async function getTopFilesStats(commits: CommitData[], repoPath: string, currentFiles: Set<string> | undefined, config: RepoStatterConfig): Promise<TopFilesData> {
   const [largest, mostChurn, mostComplex] = await Promise.all([
     Promise.resolve(getTopFilesBySize(commits, currentFiles)),
     Promise.resolve(getTopFilesByChurn(commits, currentFiles)),

@@ -1,7 +1,7 @@
 import type { CommitData } from '../git/parser.js'
 import { assert } from '../utils/errors.js'
 import { getFileCategory, type FileCategory } from '../utils/file-categories.js'
-import type { AnalysisConfig } from '../config/schema.js'
+import type { RepoStatterConfig } from '../config/schema.js'
 
 function createEmptyBreakdown(): CategoryBreakdown {
   return {
@@ -57,10 +57,10 @@ export interface TimeSeriesPoint {
   cumulativeBytes: CategoryBreakdown
 }
 
-export function getTimeSeriesData(commits: CommitData[], config?: AnalysisConfig): TimeSeriesPoint[] {
+export function getTimeSeriesData(commits: CommitData[], config: RepoStatterConfig): TimeSeriesPoint[] {
   if (commits.length === 0) return []
   
-  const hourlyThreshold = config?.timeSeriesHourlyThresholdHours ?? 48
+  const hourlyThreshold = config.analysis.timeSeriesHourlyThresholdHours
   const repoAgeHours = getRepoAgeInHours(commits)
   const useHourlyData = repoAgeHours < hourlyThreshold
   

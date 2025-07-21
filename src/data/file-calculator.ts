@@ -1,5 +1,5 @@
 import type { CommitData } from '../git/parser.js'
-import type { FileHeatConfig } from '../config/schema.js'
+import type { RepoStatterConfig } from '../config/schema.js'
 
 export interface FileTypeStats {
   type: string
@@ -16,7 +16,7 @@ export interface FileHeatData {
   fileType: string
 }
 
-export function getFileTypeStats(commits: CommitData[], currentFiles?: Set<string>): FileTypeStats[] {
+export function getFileTypeStats(commits: CommitData[], currentFiles: Set<string> | undefined, config: RepoStatterConfig): FileTypeStats[] {
   const fileTypeMap = new Map<string, number>()
   
   for (const commit of commits) {
@@ -42,12 +42,11 @@ export function getFileTypeStats(commits: CommitData[], currentFiles?: Set<strin
     .sort((a, b) => b.lines - a.lines)
 }
 
-export function getFileHeatData(commits: CommitData[], currentFiles?: Set<string>, config?: FileHeatConfig): FileHeatData[] {
-  // Use default values if config not provided
-  const recencyDecayDays = config?.recencyDecayDays ?? 30
-  const frequencyWeight = config?.frequencyWeight ?? 0.4
-  const recencyWeight = config?.recencyWeight ?? 0.6
-  const maxFilesDisplayed = config?.maxFilesDisplayed ?? 100
+export function getFileHeatData(commits: CommitData[], currentFiles: Set<string> | undefined, config: RepoStatterConfig): FileHeatData[] {
+  const recencyDecayDays = config.fileHeat.recencyDecayDays
+  const frequencyWeight = config.fileHeat.frequencyWeight
+  const recencyWeight = config.fileHeat.recencyWeight
+  const maxFilesDisplayed = config.fileHeat.maxFilesDisplayed
 
   const fileMap = new Map<string, { commitCount: number; lastModified: Date; totalLines: number; fileType: string }>()
   

@@ -1,23 +1,13 @@
 import { assert } from '../utils/errors.js'
+import type { RepoStatterConfig, WordCloudConfig } from '../config/schema.js'
 
 export interface WordFrequency {
   text: string
   size: number
 }
 
-export interface WordCloudConfig {
-  minWordLength: number
-  maxWords: number
-  minSize: number
-  maxSize: number
-}
-
-const DEFAULT_CONFIG: WordCloudConfig = {
-  minWordLength: 3,
-  maxWords: 100,
-  minSize: 10,
-  maxSize: 80
-}
+// Re-export for backward compatibility
+export type { WordCloudConfig } from '../config/schema.js'
 
 const STOP_WORDS = new Set([
   'the', 'is', 'are', 'was', 'were', 'been', 'be', 'have', 'has', 'had',
@@ -55,7 +45,7 @@ export function extractWords(messages: string[]): string[] {
   return words
 }
 
-export function filterStopWords(words: string[], config = DEFAULT_CONFIG): string[] {
+export function filterStopWords(words: string[], config: WordCloudConfig): string[] {
   return words.filter(word => 
     word.length >= config.minWordLength && 
     !STOP_WORDS.has(word) && 
@@ -63,7 +53,7 @@ export function filterStopWords(words: string[], config = DEFAULT_CONFIG): strin
   )
 }
 
-export function getWordFrequencies(words: string[], config = DEFAULT_CONFIG): WordFrequency[] {
+export function getWordFrequencies(words: string[], config: WordCloudConfig): WordFrequency[] {
   const frequencyMap = new Map<string, number>()
   
   for (const word of words) {
@@ -91,10 +81,9 @@ export function getWordFrequencies(words: string[], config = DEFAULT_CONFIG): Wo
   }))
 }
 
-export function processCommitMessages(messages: string[], config?: WordCloudConfig): WordFrequency[] {
+export function processCommitMessages(messages: string[], config: RepoStatterConfig): WordFrequency[] {
   assert(messages.length > 0, 'Cannot process empty messages array')
-  const finalConfig = config || DEFAULT_CONFIG
   const words = extractWords(messages)
-  const filteredWords = filterStopWords(words, finalConfig)
-  return getWordFrequencies(filteredWords, finalConfig)
+  const filteredWords = filterStopWords(words, config.wordCloud)
+  return getWordFrequencies(filteredWords, config.wordCloud)
 }
