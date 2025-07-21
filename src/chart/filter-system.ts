@@ -63,7 +63,7 @@ export interface FilterState {
   authorFilter: string;
   dateFromFilter: string;
   dateToFilter: string;
-  fileTypeFilter: string;
+  fileTypeFilter: string | string[];
 }
 
 export interface FilteredData {
@@ -89,8 +89,19 @@ export function applyFilters(
     if (filters.dateFromFilter && commitDate < new Date(filters.dateFromFilter)) return false;
     if (filters.dateToFilter && commitDate > new Date(filters.dateToFilter)) return false;
     
-    // File type filter
-    if (filters.fileTypeFilter && !commit.filesChanged.some(f => f.fileType === filters.fileTypeFilter)) return false;
+    // File type filter - now supports both string and array
+    if (filters.fileTypeFilter) {
+      if (Array.isArray(filters.fileTypeFilter)) {
+        // Multi-select: check if commit has any of the selected file types
+        if (filters.fileTypeFilter.length > 0 && 
+            !commit.filesChanged.some(f => filters.fileTypeFilter.includes(f.fileType))) {
+          return false;
+        }
+      } else {
+        // Single value for backward compatibility
+        if (!commit.filesChanged.some(f => f.fileType === filters.fileTypeFilter)) return false;
+      }
+    }
     
     return true;
   });
@@ -253,7 +264,7 @@ export function clearFilters(): FilterState {
     authorFilter: '',
     dateFromFilter: '',
     dateToFilter: '',
-    fileTypeFilter: ''
+    fileTypeFilter: []
   };
 }
 

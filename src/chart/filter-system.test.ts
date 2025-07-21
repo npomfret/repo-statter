@@ -54,7 +54,7 @@ describe('applyFilters', () => {
       authorFilter: '',
       dateFromFilter: '',
       dateToFilter: '',
-      fileTypeFilter: ''
+      fileTypeFilter: []
     };
     
     const result = applyFilters(mockCommits, filters);
@@ -67,7 +67,7 @@ describe('applyFilters', () => {
       authorFilter: 'John Doe',
       dateFromFilter: '',
       dateToFilter: '',
-      fileTypeFilter: ''
+      fileTypeFilter: []
     };
     
     const result = applyFilters(mockCommits, filters);
@@ -80,7 +80,7 @@ describe('applyFilters', () => {
       authorFilter: '',
       dateFromFilter: '2023-06-02T00:00:00.000Z',
       dateToFilter: '2023-06-02T23:59:59.999Z',
-      fileTypeFilter: ''
+      fileTypeFilter: []
     };
     
     const result = applyFilters(mockCommits, filters);
@@ -93,7 +93,7 @@ describe('applyFilters', () => {
       authorFilter: '',
       dateFromFilter: '',
       dateToFilter: '',
-      fileTypeFilter: 'CSS'
+      fileTypeFilter: ['CSS']
     };
     
     const result = applyFilters(mockCommits, filters);
@@ -106,12 +106,27 @@ describe('applyFilters', () => {
       authorFilter: 'John Doe',
       dateFromFilter: '2023-06-01T00:00:00.000Z',
       dateToFilter: '2023-06-01T23:59:59.999Z',
-      fileTypeFilter: 'JavaScript'
+      fileTypeFilter: ['JavaScript']
     };
     
     const result = applyFilters(mockCommits, filters);
     expect(result).toHaveLength(1);
     expect(result[0]!.sha).toBe('abc123');
+  });
+
+  it('should filter by multiple file types', () => {
+    const filters: FilterState = {
+      authorFilter: '',
+      dateFromFilter: '',
+      dateToFilter: '',
+      fileTypeFilter: ['JavaScript', 'CSS']
+    };
+    
+    const result = applyFilters(mockCommits, filters);
+    expect(result).toHaveLength(3); // All commits have either JavaScript or CSS
+    expect(result[0]!.sha).toBe('abc123');
+    expect(result[1]!.sha).toBe('def456');
+    expect(result[2]!.sha).toBe('ghi789');
   });
 });
 
@@ -360,7 +375,7 @@ describe('clearFilters', () => {
       authorFilter: '',
       dateFromFilter: '',
       dateToFilter: '',
-      fileTypeFilter: ''
+      fileTypeFilter: []
     });
   });
 });

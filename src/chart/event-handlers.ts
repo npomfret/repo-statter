@@ -6,8 +6,7 @@ import {
   populateAuthorFilter, 
   populateFileTypeFilter, 
   getDateRange, 
-  clearFilters as clearFiltersState, 
-  getFilterStatus 
+  clearFilters as clearFiltersState
 } from '../chart/filter-system.js'
 
 export class EventHandlers {
@@ -43,8 +42,8 @@ export class EventHandlers {
 
   private setupFilterSystem(): void {
     // Initialize filters
-    populateAuthorFilter(this.data.commits)
-    populateFileTypeFilter(this.data.commits)
+    this.populateAuthorDropdown()
+    this.populateFileTypeCheckboxes()
     
     // Get date range and populate date filters
     const dateRange = getDateRange(this.data.commits)
@@ -54,6 +53,63 @@ export class EventHandlers {
     this.setupAuthorFilter()
     this.setupFileTypeFilter()
     this.setupDateFilter()
+  }
+
+  private populateAuthorDropdown(): void {
+    const authorSelect = document.getElementById('authorFilter') as HTMLSelectElement
+    if (!authorSelect) return
+    
+    const authors = populateAuthorFilter(this.data.commits)
+    
+    // Keep the "All Authors" option and add the rest
+    authorSelect.innerHTML = '<option value="">All Authors</option>'
+    authors.forEach(author => {
+      const option = document.createElement('option')
+      option.value = author
+      option.textContent = author
+      authorSelect.appendChild(option)
+    })
+  }
+
+  private populateFileTypeCheckboxes(): void {
+    const container = document.getElementById('fileTypeFilterContainer')
+    if (!container) return
+    
+    const fileTypes = populateFileTypeFilter(this.data.commits)
+    container.innerHTML = ''
+    
+    fileTypes.forEach(fileType => {
+      const checkboxDiv = document.createElement('div')
+      checkboxDiv.className = 'form-check'
+      
+      const checkbox = document.createElement('input')
+      checkbox.className = 'form-check-input file-type-checkbox'
+      checkbox.type = 'checkbox'
+      checkbox.id = `fileType_${fileType}`
+      checkbox.value = fileType
+      checkbox.checked = true // Start with all selected
+      
+      const label = document.createElement('label')
+      label.className = 'form-check-label'
+      label.htmlFor = checkbox.id
+      label.textContent = fileType
+      
+      checkboxDiv.appendChild(checkbox)
+      checkboxDiv.appendChild(label)
+      container.appendChild(checkboxDiv)
+    })
+    
+    // Setup select all checkbox
+    const selectAll = document.getElementById('fileTypeSelectAll') as HTMLInputElement
+    if (selectAll) {
+      selectAll.checked = true
+      selectAll.addEventListener('change', (e) => {
+        const isChecked = (e.target as HTMLInputElement).checked
+        const checkboxes = container.querySelectorAll('.file-type-checkbox') as NodeListOf<HTMLInputElement>
+        checkboxes.forEach(cb => cb.checked = isChecked)
+        this.applyFiltersAndUpdate()
+      })
+    }
   }
 
   private populateDateFilter(dateRange: { minDate: Date, maxDate: Date }): void {
@@ -74,9 +130,24 @@ export class EventHandlers {
   }
 
   private setupFileTypeFilter(): void {
-    const fileTypeSelect = document.getElementById('fileTypeFilter') as HTMLInputElement
-    fileTypeSelect.addEventListener('change', () => {
-      this.applyFiltersAndUpdate()
+    const container = document.getElementById('fileTypeFilterContainer')
+    if (!container) return
+    
+    // Add event listener to the container for delegation
+    container.addEventListener('change', (e) => {
+      const target = e.target as HTMLInputElement
+      if (target.classList.contains('file-type-checkbox')) {
+        // Update select all checkbox state
+        const checkboxes = container.querySelectorAll('.file-type-checkbox') as NodeListOf<HTMLInputElement>
+        const selectAll = document.getElementById('fileTypeSelectAll') as HTMLInputElement
+        if (selectAll) {
+          const allChecked = Array.from(checkboxes).every(cb => cb.checked)
+          const someChecked = Array.from(checkboxes).some(cb => cb.checked)
+          selectAll.checked = allChecked
+          selectAll.indeterminate = someChecked && !allChecked
+        }
+        this.applyFiltersAndUpdate()
+      }
     })
   }
 
@@ -106,12 +177,21 @@ export class EventHandlers {
 
   private updateFilterUI(): void {
     const authorSelect = document.getElementById('authorFilter') as HTMLInputElement
-    const fileTypeSelect = document.getElementById('fileTypeFilter') as HTMLInputElement
     const startInput = document.getElementById('dateFromFilter') as HTMLInputElement
     const endInput = document.getElementById('dateToFilter') as HTMLInputElement
     
-    authorSelect.value = 'all'
-    fileTypeSelect.value = 'all'
+    authorSelect.value = ''
+    
+    // Reset all file type checkboxes to checked
+    const fileTypeCheckboxes = document.querySelectorAll('.file-type-checkbox') as NodeListOf<HTMLInputElement>
+    fileTypeCheckboxes.forEach(cb => cb.checked = true)
+    
+    // Reset select all checkbox
+    const selectAll = document.getElementById('fileTypeSelectAll') as HTMLInputElement
+    if (selectAll) {
+      selectAll.checked = true
+      selectAll.indeterminate = false
+    }
     
     const dateRange = getDateRange(this.data.commits)
     startInput.value = dateRange.minDate.toISOString().split('T')[0]!
@@ -136,27 +216,48 @@ export class EventHandlers {
 
   private getCurrentFilters() {
     const authorSelect = document.getElementById('authorFilter') as HTMLInputElement
-    const fileTypeSelect = document.getElementById('fileTypeFilter') as HTMLInputElement
     const startInput = document.getElementById('dateFromFilter') as HTMLInputElement
     const endInput = document.getElementById('dateToFilter') as HTMLInputElement
     
+    // Get selected file types from checkboxes
+    const fileTypeCheckboxes = document.querySelectorAll('.file-type-checkbox:checked') as NodeListOf<HTMLInputElement>
+    const selectedFileTypes = Array.from(fileTypeCheckboxes).map(cb => cb.value)
+    
     return {
       authorFilter: authorSelect.value,
-      fileTypeFilter: fileTypeSelect.value,
+      fileTypeFilter: selectedFileTypes,
       dateFromFilter: startInput.value,
       dateToFilter: endInput.value
     }
   }
 
   private updateFilterStatus(filters: any): void {
-    const status = getFilterStatus(filters, this.data.commits)
+    const filteredCommits = applyFilters(this.data.commits, filters)
     const statusElement = document.getElementById('filterStatus')!
     
-    statusElement.innerHTML = `
-      <div class="alert alert-info">
-        <strong>Filters Active:</strong> ${status}
-      </div>
-    `
+    let statusText = `Showing ${filteredCommits.length} of ${this.data.commits.length} commits`
+    
+    // Add details about active filters
+    const activeFilters = []
+    if (filters.authorFilter) {
+      activeFilters.push(`Author: ${filters.authorFilter}`)
+    }
+    if (filters.fileTypeFilter && filters.fileTypeFilter.length > 0 && filters.fileTypeFilter.length < populateFileTypeFilter(this.data.commits).length) {
+      activeFilters.push(`File types: ${filters.fileTypeFilter.length} selected`)
+    }
+    if (filters.dateFromFilter || filters.dateToFilter) {
+      const dateRange = getDateRange(this.data.commits)
+      if (filters.dateFromFilter !== dateRange.minDate.toISOString().split('T')[0] || 
+          filters.dateToFilter !== dateRange.maxDate.toISOString().split('T')[0]) {
+        activeFilters.push('Date range')
+      }
+    }
+    
+    if (activeFilters.length > 0) {
+      statusText += ` (${activeFilters.join(', ')})`
+    }
+    
+    statusElement.textContent = statusText
   }
 
   private setupTopFilesTabs(): void {

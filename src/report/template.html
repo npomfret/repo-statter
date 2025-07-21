@@ -923,10 +923,19 @@
                                     </div>
                                 </div>
                                 <div class="chart-third">
-                                    <label class="form-label" for="fileTypeFilter">File Type</label>
-                                    <select class="form-select" id="fileTypeFilter">
-                                        <option value="">All File Types</option>
-                                    </select>
+                                    <label class="form-label">File Types</label>
+                                    <div class="border rounded p-2" style="max-height: 200px; overflow-y: auto;">
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="fileTypeSelectAll">
+                                            <label class="form-check-label fw-bold" for="fileTypeSelectAll">
+                                                Select All
+                                            </label>
+                                        </div>
+                                        <hr class="my-1">
+                                        <div id="fileTypeFilterContainer">
+                                            <!-- File type checkboxes will be populated here -->
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="mt-3">
