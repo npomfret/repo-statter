@@ -1,7 +1,44 @@
 # Optimized Byte Calculation
 
+## Status
+**Status**: Ready for implementation
+**Priority**: Medium (accuracy improvement over existing functionality)
+**Estimated effort**: Medium
+
 ## Idea
 Improve the accuracy of byte change and repository size calculations, as the current method uses a rough estimate (1 line ≈ 50 bytes).
+
+## Implementation Plan
+
+### Phase 1: Core Implementation (Small commit)
+1. **Create new accurate byte calculator**
+   - Add new function `getAccurateByteChanges` in `src/data/git-extractor.ts`
+   - Use `git diff --raw` to get blob hashes for changed files
+   - Use `git cat-file --batch-check` for efficient size retrieval
+   - Keep existing `parseByteChanges` function for backwards compatibility
+
+2. **Add configuration option**
+   - Add `useAccurateByteCalculation: boolean` to config schema (default: false)
+   - This allows users to opt-in to the more accurate but potentially slower calculation
+
+3. **Update parser to use new function**
+   - Modify `getByteChanges` in `src/git/parser.ts` to choose between methods based on config
+
+4. **Add tests**
+   - Unit tests for new `getAccurateByteChanges` function
+   - Integration test comparing estimated vs accurate calculations
+
+### Phase 2: Performance Optimization (Separate commit if needed)
+1. **Implement caching for blob sizes**
+   - Cache blob hash -> size mappings to avoid repeated lookups
+   - Clear cache between repository analyses
+
+2. **Batch git operations**
+   - Use `git cat-file --batch` for multiple blob size lookups in one command
+
+### Phase 3: Repository Size Calculation (Optional, separate feature)
+- This can be deferred as it's a separate feature from byte change calculation
+- Would require traversing tree objects which is more complex
 
 ## Implementation Suggestions
 
