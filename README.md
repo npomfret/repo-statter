@@ -1,12 +1,22 @@
 # Repo Statter
 
-Repo Statter is a work-in-progress Git repository analysis tool designed to generate insightful, interactive HTML reports. It provides detailed statistics about your codebase, helping you understand its evolution and characteristics.
+[![npm version](https://badge.fury.io/js/repo-statter.svg)](https://www.npmjs.com/package/repo-statter)
 
-**Please Note:** This project is currently under active development. There is no official NPM package available yet. Please note that it is currently designed for small to medium-sized projects and may not scale efficiently for very large repositories (yet).
+Repo Statter is a Git repository analysis tool designed to generate insightful, interactive HTML reports. It provides detailed statistics about your codebase, helping you understand its evolution and characteristics.
 
-## How to Use (it's still in development)
+**Note:** This tool is currently designed for small to medium-sized projects and may not scale efficiently for very large repositories (yet).
 
-To use Repo Statter, you'll need to clone the repository and run it directly. There is no npm artefact, yet.
+## Installation
+
+### Install from npm
+
+```bash
+npm install -g repo-statter
+```
+
+### Install from source
+
+Alternatively, you can clone the repository and run it directly:
 
 ### Prerequisites
 
@@ -14,11 +24,11 @@ To use Repo Statter, you'll need to clone the repository and run it directly. Th
 - Git
 - Lizard (for code complexity analysis): `pip install lizard`
 
-### Setup
+### Setup (from source)
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/yourusername/repo-statter.git
+    git clone https://github.com/nickpomfret/repo-statter.git
     cd repo-statter
     ```
 2.  **Install dependencies:**
@@ -32,10 +42,14 @@ You can generate reports in two modes:
 
 #### To run analysis
 
-Thisgenerates both an interactive HTML report and a raw JSON data file with detailed statistics. The output will be placed in an `analysis/` directory, structured by repository name.
+This generates both an interactive HTML report and a raw JSON data file with detailed statistics. The output will be placed in an `analysis/` directory, structured by repository name.
 
 ```bash
-npm run analyse -- --repo /path/to/your/repo   # Analyze a specific Git repository
+# If installed globally
+repo-statter /path/to/your/repo
+
+# If running from source
+npm run analyse -- --repo /path/to/your/repo
 ```
 
 Output:
@@ -71,38 +85,42 @@ repo-statter [repo-path] [options]
 #### Examples
 
 ```bash
+# If installed globally:
+
 # Analyze current directory with default settings
-npm run analyse
+repo-statter
 
 # Analyze specific repository
-npm run analyse /path/to/repo
+repo-statter /path/to/repo
 
 # Analyze with custom output directory
-npm run analyse . -- --output reports
+repo-statter . --output reports
 
 # Analyze with custom filename
-npm run analyse . -- --output-file my-project-report
+repo-statter . --output-file my-project-report
 
 # Analyze only the last 500 commits
-npm run analyse . -- --max-commits 500
+repo-statter . --max-commits 500
 
 # Force full scan (disable cache)
-npm run analyse . -- --no-cache
+repo-statter . --no-cache
 
 # Clear cache and regenerate
-npm run analyse . -- --clear-cache
+repo-statter . --clear-cache
 
 # Export default configuration for editing
-npm run analyse -- --export-config my-config.json
+repo-statter --export-config my-config.json
 
 # Use custom configuration file
-npm run analyse -- --config-file my-config.json
+repo-statter --config-file my-config.json
 
 # Force overwrite existing config file
-npm run analyse -- --export-config my-config.json --force
+repo-statter --export-config my-config.json --force
 
 # Combine options
-npm run analyse -- --repo /path/to/repo --output custom-dir --max-commits 2000
+repo-statter --repo /path/to/repo --output custom-dir --max-commits 2000
+
+# If running from source, prefix with npm run analyse --
 ```
 
 #### Notes
@@ -124,7 +142,7 @@ Export the default configuration to see all available options:
 
 ```bash
 # Export default configuration
-npm run analyse -- --export-config my-config.json
+repo-statter --export-config my-config.json
 
 # This creates a JSON file with all available settings and their defaults
 ```
@@ -133,10 +151,10 @@ npm run analyse -- --export-config my-config.json
 
 ```bash
 # Use your custom configuration
-npm run analyse -- --config-file my-config.json
+repo-statter --config-file my-config.json
 
 # Configuration files can be combined with other options
-npm run analyse /path/to/repo -- --config-file my-config.json --output reports
+repo-statter /path/to/repo --config-file my-config.json --output reports
 ```
 
 #### Configuration Categories
@@ -158,14 +176,14 @@ The exported configuration file includes settings for:
 
 ```bash
 # 1. Export the default configuration
-npm run analyse -- --export-config project-config.json
+repo-statter --export-config project-config.json
 
 # 2. Edit project-config.json to customize settings
 #    For example, increase word cloud size:
 #    "wordCloud": { "maxWords": 200, "minWordLength": 4 }
 
 # 3. Use your customized configuration
-npm run analyse -- --config-file project-config.json
+repo-statter --config-file project-config.json
 ```
 
 ### Performance Caching
@@ -181,13 +199,13 @@ Repo Statter includes intelligent caching to dramatically speed up subsequent ru
 
 ```bash
 # Normal run with caching (default)
-npm run analyse
+repo-statter
 
 # Disable caching (always do full scan)
-npm run analyse -- --no-cache
+repo-statter --no-cache
 
 # Clear cache and regenerate (useful after git history changes)
-npm run analyse -- --clear-cache
+repo-statter --clear-cache
 ```
 
 #### Performance Impact
@@ -326,7 +344,7 @@ See the `docs/todo/` directory for planned features including:
 
 ## License
 
-This project is private and not currently licensed for public use.
+MIT License - see [LICENSE](LICENSE) file for details.
 
 ## Contributing
 
