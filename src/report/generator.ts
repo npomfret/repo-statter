@@ -1,7 +1,18 @@
 import { basename, resolve } from 'path'
-import { readFile, writeFile, mkdir } from 'fs/promises'
+import { writeFile, mkdir } from 'fs/promises'
 import { existsSync } from 'fs'
-import { TEMPLATE_HTML } from './template-embedded.js'
+import { 
+  TEMPLATE_HTML,
+  LOGO_SVG,
+  TROPHY_CONTRIBUTORS_SVG,
+  TROPHY_FILES_SVG,
+  TROPHY_BYTES_ADDED_SVG,
+  TROPHY_BYTES_REMOVED_SVG,
+  TROPHY_LINES_ADDED_SVG,
+  TROPHY_LINES_REMOVED_SVG,
+  TROPHY_AVERAGE_LOW_SVG,
+  TROPHY_AVERAGE_HIGH_SVG
+} from './embedded-assets.js'
 import { parseCommitHistory, getGitHubUrl, getCurrentFiles, type CacheOptions } from '../git/parser.js'
 import { getContributorStats, getLowestAverageLinesChanged, getHighestAverageLinesChanged, type ContributorStats } from '../data/contributor-calculator.js'
 import { getFileTypeStats, getFileHeatData, type FileTypeStats } from '../data/file-calculator.js'
@@ -198,16 +209,16 @@ async function transformCommitData(context: AnalysisContext): Promise<ChartData>
   const activeDays = uniqueDates.size
   
   progressReporter?.report('Loading image assets')
-  const logoSvg = await readFile('src/images/logo.svg', 'utf-8')
+  const logoSvg = LOGO_SVG
   const trophySvgs = {
-    contributors: await readFile('src/images/trophy-contributors.svg', 'utf-8'),
-    files: await readFile('src/images/trophy-files.svg', 'utf-8'),
-    bytesAdded: await readFile('src/images/trophy-bytes-added.svg', 'utf-8'),
-    bytesRemoved: await readFile('src/images/trophy-bytes-removed.svg', 'utf-8'),
-    linesAdded: await readFile('src/images/trophy-lines-added.svg', 'utf-8'),
-    linesRemoved: await readFile('src/images/trophy-lines-removed.svg', 'utf-8'),
-    averageLow: await readFile('src/images/trophy-average-low.svg', 'utf-8'),
-    averageHigh: await readFile('src/images/trophy-average-high.svg', 'utf-8')
+    contributors: TROPHY_CONTRIBUTORS_SVG,
+    files: TROPHY_FILES_SVG,
+    bytesAdded: TROPHY_BYTES_ADDED_SVG,
+    bytesRemoved: TROPHY_BYTES_REMOVED_SVG,
+    linesAdded: TROPHY_LINES_ADDED_SVG,
+    linesRemoved: TROPHY_LINES_REMOVED_SVG,
+    averageLow: TROPHY_AVERAGE_LOW_SVG,
+    averageHigh: TROPHY_AVERAGE_HIGH_SVG
   }
   
   const githubUrl = await getGitHubUrl(repoPath)
