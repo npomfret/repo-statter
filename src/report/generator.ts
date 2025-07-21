@@ -23,15 +23,15 @@ import type { ProgressReporter } from '../utils/progress-reporter.js'
 import type { RepoStatterConfig } from '../config/schema.js'
 import { DEFAULT_CONFIG } from '../config/defaults.js'
 
-// TODO: Refactor to use AnalysisContext to simplify function signatures
-// interface AnalysisContext {
-//   repoPath: string
-//   repoName: string
-//   isLizardInstalled: boolean
-//   currentFiles: Set<string>
-//   progressReporter?: ProgressReporter
-//   config: RepoStatterConfig
-// }
+export interface AnalysisContext {
+  repoPath: string
+  repoName: string
+  isLizardInstalled: boolean
+  currentFiles: Set<string>
+  commits: CommitData[]
+  progressReporter?: ProgressReporter
+  config: RepoStatterConfig
+}
 
 export async function generateReport(repoPath: string, outputMode: 'dist' | 'analysis' = 'dist', progressReporter?: ProgressReporter, maxCommits?: number, customFilename?: string, cacheOptions?: CacheOptions, config?: RepoStatterConfig): Promise<string> {
   // Use provided config or fall back to defaults
@@ -43,6 +43,20 @@ export async function generateReport(repoPath: string, outputMode: 'dist' | 'ana
   const isLizardInstalled = await checkLizardInstalled()
   if (!isLizardInstalled) {
     console.warn('⚠️  Lizard not found. Code complexity analysis will be skipped. Install with: pip install lizard')
+  }
+  
+  progressReporter?.report('Getting current files')
+  const currentFiles = await getCurrentFiles(repoPath)
+  
+  // Create the analysis context
+  const context: AnalysisContext = {
+    repoPath,
+    repoName,
+    isLizardInstalled,
+    currentFiles,
+    commits,
+    ...(progressReporter && { progressReporter }),
+    config: finalConfig
   }
   
   let outputDir: string
@@ -68,12 +82,9 @@ export async function generateReport(repoPath: string, outputMode: 'dist' | 'ana
   
   progressReporter?.report('Loading report template')
   const template = await readFile('src/report/template.html', 'utf-8')
-  
-  progressReporter?.report('Getting current files')
-  const currentFiles = await getCurrentFiles(repoPath)
 
   progressReporter?.report('Calculating statistics')
-  const chartData = await transformCommitData(commits, repoName, repoPath, progressReporter, isLizardInstalled, currentFiles, finalConfig)
+  const chartData = await transformCommitData(context)
   
   // Calculate all statistics once
   progressReporter?.report('Calculating contributor and file statistics')
@@ -81,7 +92,7 @@ export async function generateReport(repoPath: string, outputMode: 'dist' | 'ana
   const fileTypes = getFileTypeStats(commits, currentFiles, finalConfig)
   
   progressReporter?.report('Generating HTML report')
-  const html = await injectDataIntoTemplate(template, chartData, commits, currentFiles, contributors, fileTypes, repoPath, progressReporter, finalConfig)
+  const html = await injectDataIntoTemplate(template, chartData, contributors, fileTypes, context)
   
   progressReporter?.report('Writing report file')
   await writeFile(reportPath, html)
@@ -143,7 +154,9 @@ function formatFullDate(date: Date): string {
   });
 }
 
-async function transformCommitData(commits: CommitData[], repoName: string, repoPath: string, progressReporter: ProgressReporter | undefined, isLizardInstalled: boolean, currentFiles: Set<string> | undefined, config: RepoStatterConfig): Promise<ChartData> {
+async function transformCommitData(context: AnalysisContext): Promise<ChartData> {
+  const { commits, repoName, repoPath, progressReporter, isLizardInstalled, currentFiles, config } = context
+  
   // Calculate cumulative lines of code using the same method as the time series chart
   // This ensures consistency between the hero metric and the growth chart
   let totalLinesOfCode = 0
@@ -212,26 +225,26 @@ async function transformCommitData(commits: CommitData[], repoName: string, repo
   }
 }
 
-async function injectDataIntoTemplate(template: string, chartData: ChartData, commits: CommitData[], currentFiles: Set<string>, contributors: ContributorStats[], fileTypes: FileTypeStats[], repoPath: string, progressReporter?: ProgressReporter, config?: RepoStatterConfig): Promise<string> {
-  const finalConfig = config || DEFAULT_CONFIG
+async function injectDataIntoTemplate(template: string, chartData: ChartData, contributors: ContributorStats[], fileTypes: FileTypeStats[], context: AnalysisContext): Promise<string> {
+  const { commits, currentFiles, repoPath, progressReporter, config } = context
   
   progressReporter?.report('Generating chart data')
-  const timeSeries = getTimeSeriesData(commits, finalConfig)
+  const timeSeries = getTimeSeriesData(commits, config)
   const linearSeries = getLinearSeriesData(commits)
-  const wordCloudData = processCommitMessages(commits.map(c => c.message), finalConfig)
-  const fileHeatData = getFileHeatData(commits, currentFiles, finalConfig)
-  const topFilesData = await getTopFilesStats(commits, repoPath, currentFiles, finalConfig)
+  const wordCloudData = processCommitMessages(commits.map(c => c.message), config)
+  const fileHeatData = getFileHeatData(commits, currentFiles, config)
+  const topFilesData = await getTopFilesStats(context)
   
   progressReporter?.report('Calculating awards')
   // Calculate awards
   const awards = {
-    filesModified: getTopCommitsByFilesModified(commits, finalConfig),
-    bytesAdded: getTopCommitsByBytesAdded(commits, finalConfig),
-    bytesRemoved: getTopCommitsByBytesRemoved(commits, finalConfig),
-    linesAdded: getTopCommitsByLinesAdded(commits, finalConfig),
-    linesRemoved: getTopCommitsByLinesRemoved(commits, finalConfig),
-    lowestAverage: getLowestAverageLinesChanged(commits, finalConfig),
-    highestAverage: getHighestAverageLinesChanged(commits, finalConfig)
+    filesModified: getTopCommitsByFilesModified(commits, config),
+    bytesAdded: getTopCommitsByBytesAdded(commits, config),
+    bytesRemoved: getTopCommitsByBytesRemoved(commits, config),
+    linesAdded: getTopCommitsByLinesAdded(commits, config),
+    linesRemoved: getTopCommitsByLinesRemoved(commits, config),
+    lowestAverage: getLowestAverageLinesChanged(commits, config),
+    highestAverage: getHighestAverageLinesChanged(commits, config)
   }
   
   // Bundle the TypeScript page script
@@ -253,8 +266,8 @@ async function injectDataIntoTemplate(template: string, chartData: ChartData, co
         "trophySvgs": ${JSON.stringify(chartData.trophySvgs)},
         "githubUrl": ${JSON.stringify(await getGitHubUrl(repoPath))},
         "isLizardInstalled": ${JSON.stringify(chartData.isLizardInstalled)},
-        "chartsConfig": ${JSON.stringify(finalConfig.charts)},
-        "fileTypesConfig": ${JSON.stringify(finalConfig.fileTypes)}
+        "chartsConfig": ${JSON.stringify(config.charts)},
+        "fileTypesConfig": ${JSON.stringify(config.fileTypes)}
       }
     </script>
   `

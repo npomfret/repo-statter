@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { TEST_CONFIG } from '../test/test-config.js'
 import { getTopFilesBySize, getTopFilesByChurn, getTopFilesStats } from './top-files-calculator.js'
 import { createTestCommit } from '../test/builders.js'
+import type { AnalysisContext } from '../report/generator.js'
 
 describe('top-files-calculator', () => {
   describe('getTopFilesBySize', () => {
@@ -193,7 +194,15 @@ describe('top-files-calculator', () => {
         })
       ]
 
-      const result = await getTopFilesStats(commits, '/fake/repo', undefined, TEST_CONFIG)
+      const context: AnalysisContext = {
+        repoPath: '/fake/repo',
+        repoName: 'fake-repo',
+        isLizardInstalled: false,
+        currentFiles: new Set<string>(['file1.ts', 'file2.ts']),
+        commits,
+        config: TEST_CONFIG
+      }
+      const result = await getTopFilesStats(context)
       
       expect(result).toHaveProperty('largest')
       expect(result).toHaveProperty('mostChurn')
@@ -205,7 +214,15 @@ describe('top-files-calculator', () => {
     })
 
     it('should handle empty commits', async () => {
-      const result = await getTopFilesStats([], '/fake/repo', undefined, TEST_CONFIG)
+      const context: AnalysisContext = {
+        repoPath: '/fake/repo',
+        repoName: 'fake-repo',
+        isLizardInstalled: false,
+        currentFiles: new Set<string>(),
+        commits: [],
+        config: TEST_CONFIG
+      }
+      const result = await getTopFilesStats(context)
       
       expect(result.largest).toEqual([])
       expect(result.mostChurn).toEqual([])
@@ -226,7 +243,15 @@ describe('top-files-calculator', () => {
         })
       ]
 
-      const result = await getTopFilesStats(commits, '/fake/repo', undefined, TEST_CONFIG)
+      const context: AnalysisContext = {
+        repoPath: '/fake/repo',
+        repoName: 'fake-repo',
+        isLizardInstalled: false,
+        currentFiles: new Set<string>(['refactored.ts', 'stable.ts', 'normal.ts']),
+        commits,
+        config: TEST_CONFIG
+      }
+      const result = await getTopFilesStats(context)
       
       // Size ranking should exclude negative size file
       expect(result.largest).toHaveLength(2)
