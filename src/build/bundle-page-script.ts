@@ -1,11 +1,18 @@
 import { build } from 'esbuild'
 import { writeFile } from 'fs/promises'
 import { existsSync } from 'fs'
+import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
 import { BuildError, formatError } from '../utils/errors.js'
 
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+
 export async function bundlePageScript(): Promise<string> {
-  const entryPoint = 'src/chart/page-script.ts'
-  const outputFile = 'dist/page-script.js'
+  // Build paths relative to the project root (two levels up from dist/build/)
+  const projectRoot = join(__dirname, '../../')
+  const entryPoint = join(projectRoot, 'src/chart/page-script.ts')
+  const outputFile = join(projectRoot, 'dist/page-script.js')
   
   if (!existsSync(entryPoint)) {
     throw new BuildError(`Entry point not found: ${entryPoint}`)
