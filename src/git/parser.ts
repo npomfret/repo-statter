@@ -1,10 +1,11 @@
 import { simpleGit } from 'simple-git'
 import { validateGitRepository } from '../utils/git-validation.js'
-import { parseCommitDiff as parseCommitDiffData, parseByteChanges } from '../data/git-extractor.js'
+import { parseCommitDiff as parseCommitDiffData } from '../data/git-extractor.js'
 import type { ProgressReporter } from '../utils/progress-reporter.js'
 import { GitParseError, formatError } from '../utils/errors.js'
 import { generateRepositoryHash, loadCache, saveCache, clearCache } from '../cache/git-cache.js'
 import type { RepoStatterConfig } from '../config/schema.js'
+import { isFileExcluded } from '../utils/exclusions.js'
 
 // Assert utilities for fail-fast error handling
 function assert(condition: boolean, message: string): asserts condition {
@@ -235,8 +236,69 @@ async function getByteChanges(repoPath: string, commitHash: string, config: Repo
   totalBytesDeleted: number; 
   fileChanges: Record<string, { bytesAdded: number; bytesDeleted: number }> 
 }> {
-  // Use numstat directly for efficient byte estimation
   const git = simpleGit(repoPath)
-  const stdout = await git.show([commitHash, '--numstat', '--format='])
-  return parseByteChanges(stdout, config)
+  
+  // Get the raw diff output with blob hashes
+  const rawDiff = await git.show([commitHash, '--raw', '--format='])
+  const lines = rawDiff.trim().split('\n').filter(l => l.trim())
+  
+  const fileChanges: Record<string, { bytesAdded: number; bytesDeleted: number }> = {}
+  let totalBytesAdded = 0
+  let totalBytesDeleted = 0
+  
+  // Collect all blob hashes we need to check
+  const blobsToCheck: string[] = []
+  const fileInfo: Array<{ fileName: string; oldBlob: string; newBlob: string }> = []
+  
+  for (const line of lines) {
+    // Parse raw diff format: :100644 100644 oldblob newblob M filename
+    const match = line.match(/^:(\d+)\s+(\d+)\s+([0-9a-f]+)\s+([0-9a-f]+)\s+([AMDRC])\s+(.+)$/)
+    if (!match) continue
+    
+    const [, , , oldBlob, newBlob, , fileName] = match
+    
+    if (!oldBlob || !newBlob || !fileName) continue
+    
+    // Skip excluded files
+    if (isFileExcluded(fileName, config.exclusions.patterns)) continue
+    
+    // For deletions, oldBlob exists but newBlob is 0000000
+    // For additions, oldBlob is 0000000 but newBlob exists
+    // For modifications, both exist
+    if (oldBlob !== '0000000' && !oldBlob.startsWith('0000000')) {
+      blobsToCheck.push(oldBlob)
+    }
+    if (newBlob !== '0000000' && !newBlob.startsWith('0000000')) {
+      blobsToCheck.push(newBlob)
+    }
+    
+    fileInfo.push({ fileName, oldBlob, newBlob })
+  }
+  
+  // Get sizes for all blobs
+  const blobSizes: Record<string, number> = {}
+  for (const blob of blobsToCheck) {
+    try {
+      const size = await git.raw(['cat-file', '-s', blob])
+      blobSizes[blob] = parseInt(size.trim()) || 0
+    } catch {
+      // Blob might not exist (e.g., in shallow clones)
+      blobSizes[blob] = 0
+    }
+  }
+  
+  // Calculate byte changes for each file
+  for (const { fileName, oldBlob, newBlob } of fileInfo) {
+    const oldSize = (oldBlob === '0000000' || oldBlob.startsWith('0000000')) ? 0 : (blobSizes[oldBlob] || 0)
+    const newSize = (newBlob === '0000000' || newBlob.startsWith('0000000')) ? 0 : (blobSizes[newBlob] || 0)
+    
+    const bytesAdded = Math.max(0, newSize - oldSize)
+    const bytesDeleted = Math.max(0, oldSize - newSize)
+    
+    fileChanges[fileName] = { bytesAdded, bytesDeleted }
+    totalBytesAdded += bytesAdded
+    totalBytesDeleted += bytesDeleted
+  }
+  
+  return { totalBytesAdded, totalBytesDeleted, fileChanges }
 }
