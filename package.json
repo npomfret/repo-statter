@@ -1,6 +1,6 @@
 {
   "name": "repo-statter",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Generate beautiful, interactive HTML reports from your git repository history with charts, statistics, and insights",
   "type": "module",
   "main": "./dist/cli.js",
