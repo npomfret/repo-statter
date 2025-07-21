@@ -1,6 +1,7 @@
 import { basename, resolve } from 'path'
 import { readFile, writeFile, mkdir } from 'fs/promises'
 import { existsSync } from 'fs'
+import { TEMPLATE_HTML } from './template-embedded.js'
 import { parseCommitHistory, getGitHubUrl, getCurrentFiles, type CacheOptions } from '../git/parser.js'
 import { getContributorStats, getLowestAverageLinesChanged, getHighestAverageLinesChanged, type ContributorStats } from '../data/contributor-calculator.js'
 import { getFileTypeStats, getFileHeatData, type FileTypeStats } from '../data/file-calculator.js'
@@ -81,7 +82,7 @@ export async function generateReport(repoPath: string, outputMode: 'dist' | 'ana
   }
   
   progressReporter?.report('Loading report template')
-  const template = await readFile('src/report/template.html', 'utf-8')
+  const template = TEMPLATE_HTML
 
   progressReporter?.report('Calculating statistics')
   const chartData = await transformCommitData(context)

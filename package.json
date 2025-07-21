@@ -1,6 +1,6 @@
 {
   "name": "repo-statter",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Generate beautiful, interactive HTML reports from your git repository history with charts, statistics, and insights",
   "type": "module",
   "main": "./dist/cli.js",
@@ -18,7 +18,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
     "docs:build": "scripts/update-gh-pages.sh",
-    "build": "tsc",
+    "build": "node scripts/embed-template.js && tsc",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run clean && npm run build && npm run test"
   },

@@ -43,4 +43,5 @@ directives
 analysis/
 dist/
 tmp/
+src/report/template-embedded.ts
 
