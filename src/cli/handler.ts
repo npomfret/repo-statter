@@ -6,7 +6,8 @@ import { ThrottledProgressReporter } from '../utils/throttled-progress-reporter.
 import { isRepoStatError, formatError } from '../utils/errors.js'
 import { loadConfiguration, validateConfiguration } from '../config/loader.js'
 import { getGitHubUrl } from '../git/parser.js'
-import { basename, resolve } from 'path'
+import { basename, resolve, join } from 'path'
+import { tmpdir } from 'os'
 import type { ConfigOverrides } from '../config/loader.js'
 
 export async function handleCLI(args: string[]): Promise<void> {
@@ -61,9 +62,12 @@ export async function handleCLI(args: string[]): Promise<void> {
         // Display repository information
         const repoName = basename(resolve(finalRepoPath))
         const outputPath = resolve(outputDir)
+        const cacheDir = join(tmpdir(), config.performance.cacheDirName)
+        
         console.log(`\nAnalyzing repository: ${repoName}`)
         console.log(`Repository path: ${finalRepoPath}`)
         console.log(`Output directory: ${outputPath}`)
+        console.log(`Cache directory: ${cacheDir}`)
         
         try {
           const githubUrl = await getGitHubUrl(finalRepoPath)
