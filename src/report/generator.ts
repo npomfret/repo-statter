@@ -1,18 +1,10 @@
-import { basename, resolve } from 'path'
-import { writeFile, mkdir } from 'fs/promises'
+import { basename, resolve, dirname, join } from 'path'
+import { readFile, writeFile, mkdir } from 'fs/promises'
 import { existsSync } from 'fs'
-import { 
-  TEMPLATE_HTML,
-  LOGO_SVG,
-  TROPHY_CONTRIBUTORS_SVG,
-  TROPHY_FILES_SVG,
-  TROPHY_BYTES_ADDED_SVG,
-  TROPHY_BYTES_REMOVED_SVG,
-  TROPHY_LINES_ADDED_SVG,
-  TROPHY_LINES_REMOVED_SVG,
-  TROPHY_AVERAGE_LOW_SVG,
-  TROPHY_AVERAGE_HIGH_SVG
-} from './embedded-assets.js'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 import { parseCommitHistory, getGitHubUrl, getCurrentFiles, type CacheOptions } from '../git/parser.js'
 import { getContributorStats, getLowestAverageLinesChanged, getHighestAverageLinesChanged, type ContributorStats } from '../data/contributor-calculator.js'
 import { getFileTypeStats, getFileHeatData, type FileTypeStats } from '../data/file-calculator.js'
@@ -93,7 +85,9 @@ export async function generateReport(repoPath: string, outputMode: 'dist' | 'ana
   }
   
   progressReporter?.report('Loading report template')
-  const template = TEMPLATE_HTML
+  // In npm package: dist/report/generator.js -> src/report/template.html
+  const templatePath = join(__dirname, '../../src/report/template.html')
+  const template = await readFile(templatePath, 'utf-8')
 
   progressReporter?.report('Calculating statistics')
   const chartData = await transformCommitData(context)
@@ -209,16 +203,17 @@ async function transformCommitData(context: AnalysisContext): Promise<ChartData>
   const activeDays = uniqueDates.size
   
   progressReporter?.report('Loading image assets')
-  const logoSvg = LOGO_SVG
+  const imagesDir = join(__dirname, '../../src/images')
+  const logoSvg = await readFile(join(imagesDir, 'logo.svg'), 'utf-8')
   const trophySvgs = {
-    contributors: TROPHY_CONTRIBUTORS_SVG,
-    files: TROPHY_FILES_SVG,
-    bytesAdded: TROPHY_BYTES_ADDED_SVG,
-    bytesRemoved: TROPHY_BYTES_REMOVED_SVG,
-    linesAdded: TROPHY_LINES_ADDED_SVG,
-    linesRemoved: TROPHY_LINES_REMOVED_SVG,
-    averageLow: TROPHY_AVERAGE_LOW_SVG,
-    averageHigh: TROPHY_AVERAGE_HIGH_SVG
+    contributors: await readFile(join(imagesDir, 'trophy-contributors.svg'), 'utf-8'),
+    files: await readFile(join(imagesDir, 'trophy-files.svg'), 'utf-8'),
+    bytesAdded: await readFile(join(imagesDir, 'trophy-bytes-added.svg'), 'utf-8'),
+    bytesRemoved: await readFile(join(imagesDir, 'trophy-bytes-removed.svg'), 'utf-8'),
+    linesAdded: await readFile(join(imagesDir, 'trophy-lines-added.svg'), 'utf-8'),
+    linesRemoved: await readFile(join(imagesDir, 'trophy-lines-removed.svg'), 'utf-8'),
+    averageLow: await readFile(join(imagesDir, 'trophy-average-low.svg'), 'utf-8'),
+    averageHigh: await readFile(join(imagesDir, 'trophy-average-high.svg'), 'utf-8')
   }
   
   const githubUrl = await getGitHubUrl(repoPath)

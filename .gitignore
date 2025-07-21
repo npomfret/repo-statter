@@ -43,6 +43,4 @@ directives
 analysis/
 dist/
 tmp/
-src/report/template-embedded.ts
-src/report/embedded-assets.ts
 
