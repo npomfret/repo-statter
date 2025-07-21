@@ -16,7 +16,8 @@ Summarise what you have learned form them.
     - The script outputs the path, use it like: `npm run analyse /path/to/temp/repo -- --output test-repo.html`
     - Or use `./scripts/run-tests.sh` which handles creation, analysis, and cleanup automatically
   - Test repos are now created in the system temp directory, not in the project root
-
+  - place any temp files created during development into the tmp directory at the root of the project
+  
 # Tech Stack
 - Runtime: Node.js (latest)
 - Language: TypeScript (latest)

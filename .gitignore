@@ -43,5 +43,4 @@ directives
 analysis/
 dist/
 tmp/
-test-*.html/
 
