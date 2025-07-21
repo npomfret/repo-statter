@@ -2,6 +2,30 @@ import { describe, it, expect } from 'vitest'
 import { TEST_CONFIG } from '../test/test-config.js'
 import { getTimeSeriesData, getRepoAgeInHours } from './time-series-transformer.js'
 import { CommitDataBuilder, FileChangeBuilder } from '../test/builders.js'
+import type { CommitData } from '../git/parser.js'
+import type { AnalysisContext } from '../report/generator.js'
+
+// Helper to create AnalysisContext for tests
+function createAnalysisContext(commits: CommitData[], currentFiles?: Set<string>): AnalysisContext {
+  // If currentFiles is not provided, extract all file names from commits
+  if (!currentFiles) {
+    currentFiles = new Set<string>()
+    for (const commit of commits) {
+      for (const fileChange of commit.filesChanged) {
+        currentFiles.add(fileChange.fileName)
+      }
+    }
+  }
+  
+  return {
+    repoPath: '/test/repo',
+    repoName: 'test-repo',
+    isLizardInstalled: false,
+    currentFiles,
+    commits,
+    config: TEST_CONFIG
+  }
+}
 
 describe('Time Series Transformer', () => {
   describe('getRepoAgeInHours', () => {
@@ -43,7 +67,8 @@ describe('Time Series Transformer', () => {
 
   describe('getTimeSeriesData', () => {
     it('should return empty array for no commits', () => {
-      const result = getTimeSeriesData([], TEST_CONFIG)
+      const context = createAnalysisContext([])
+      const result = getTimeSeriesData(context)
       expect(result).toEqual([])
     })
 
@@ -63,7 +88,8 @@ describe('Time Series Transformer', () => {
           .build()
       ]
 
-      const result = getTimeSeriesData(commits, TEST_CONFIG)
+      const context = createAnalysisContext(commits)
+      const result = getTimeSeriesData(context)
       
       // Should have 3 points: start point (Dec 31), Jan 1, and Jan 4
       expect(result).toHaveLength(3)
@@ -104,7 +130,8 @@ describe('Time Series Transformer', () => {
           .build()
       ]
 
-      const result = getTimeSeriesData(commits, TEST_CONFIG)
+      const context = createAnalysisContext(commits)
+      const result = getTimeSeriesData(context)
       
       // Should have 3 points: start point (9:00), 10:00, and 11:00
       expect(result).toHaveLength(3)
@@ -148,7 +175,8 @@ describe('Time Series Transformer', () => {
           .build()
       ]
 
-      const result = getTimeSeriesData(commits, TEST_CONFIG)
+      const context = createAnalysisContext(commits)
+      const result = getTimeSeriesData(context)
       
       // Should have 3 points: start point, Jan 1, and Jan 3
       expect(result).toHaveLength(3)
@@ -190,7 +218,8 @@ describe('Time Series Transformer', () => {
       delete (commits[0]! as any).bytesAdded
       delete (commits[0]! as any).bytesDeleted
 
-      const result = getTimeSeriesData(commits, TEST_CONFIG)
+      const context = createAnalysisContext(commits)
+      const result = getTimeSeriesData(context)
       
       // Should handle missing byte data gracefully
       expect(result[1]!.bytesAdded.total).toBe(0)
@@ -218,7 +247,8 @@ describe('Time Series Transformer', () => {
           .build()
       ]
 
-      const result = getTimeSeriesData(commits, TEST_CONFIG)
+      const context = createAnalysisContext(commits)
+      const result = getTimeSeriesData(context)
       
       // Should be sorted by date in ascending order
       expect(result).toHaveLength(4)
@@ -251,7 +281,8 @@ describe('Time Series Transformer', () => {
           .build()
       ]
 
-      const result = getTimeSeriesData(commits, TEST_CONFIG)
+      const context = createAnalysisContext(commits)
+      const result = getTimeSeriesData(context)
       
       expect(result[0]!.cumulativeLines.total).toBe(0) // Start point
       expect(result[1]!.cumulativeLines.total).toBe(80) // 100 - 20
@@ -267,7 +298,8 @@ describe('Time Series Transformer', () => {
           .build()
       ]
 
-      const result = getTimeSeriesData(commits, TEST_CONFIG)
+      const context = createAnalysisContext(commits)
+      const result = getTimeSeriesData(context)
       
       // Should have 2 points: start point and the commit
       expect(result).toHaveLength(2)
