@@ -46,38 +46,38 @@ describe('extractWords', () => {
 
 describe('filterStopWords', () => {
   it('should return empty array for empty input', () => {
-    const result = filterStopWords([], TEST_CONFIG.wordCloud)
+    const result = filterStopWords([], TEST_CONFIG)
     expect(result).toEqual([])
   })
 
   it('should filter common stop words', () => {
     const words = ['the', 'fix', 'is', 'bug', 'in', 'parser']
-    const result = filterStopWords(words, TEST_CONFIG.wordCloud)
+    const result = filterStopWords(words, TEST_CONFIG)
     expect(result).toEqual(['fix', 'bug', 'parser'])
   })
 
   it('should filter words shorter than minWordLength', () => {
     const words = ['a', 'ab', 'abc', 'abcd']
-    const result = filterStopWords(words, TEST_CONFIG.wordCloud)
+    const result = filterStopWords(words, TEST_CONFIG)
     expect(result).toEqual(['abc', 'abcd'])
   })
 
   it('should filter pure numbers', () => {
     const words = ['123', 'version2', '2023', 'test']
-    const result = filterStopWords(words, TEST_CONFIG.wordCloud)
+    const result = filterStopWords(words, TEST_CONFIG)
     expect(result).toEqual(['version2', 'test'])
   })
 
   it('should respect custom config', () => {
     const words = ['ab', 'abc', 'abcd', 'abcde']
-    const config = { minWordLength: 4, maxWords: 100, minSize: 10, maxSize: 80 }
-    const result = filterStopWords(words, config)
+    const customConfig = { ...TEST_CONFIG, wordCloud: { ...TEST_CONFIG.wordCloud, minWordLength: 4 } }
+    const result = filterStopWords(words, customConfig)
     expect(result).toEqual(['abcd', 'abcde'])
   })
 
   it('should keep valid technical terms', () => {
     const words = ['refactor', 'typescript', 'async', 'component']
-    const result = filterStopWords(words, TEST_CONFIG.wordCloud)
+    const result = filterStopWords(words, TEST_CONFIG)
     expect(result).toEqual(['refactor', 'typescript', 'async', 'component'])
   })
 })

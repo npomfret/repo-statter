@@ -4,86 +4,16 @@ import { isFileExcluded } from '../utils/exclusions.js'
 import { assert, assertDefined } from '../utils/errors.js'
 import type { RepoStatterConfig } from '../config/schema.js'
 
-
-const FILE_TYPE_MAP = {
-  '.ts': 'TypeScript',
-  '.tsx': 'TypeScript',
-  '.js': 'JavaScript',
-  '.jsx': 'JavaScript',
-  '.css': 'CSS',
-  '.scss': 'SCSS',
-  '.sass': 'SCSS',
-  '.html': 'HTML',
-  '.json': 'JSON',
-  '.md': 'Markdown',
-  '.py': 'Python',
-  '.java': 'Java',
-  '.cpp': 'C++',
-  '.cc': 'C++',
-  '.cxx': 'C++',
-  '.c': 'C',
-  '.go': 'Go',
-  '.rs': 'Rust',
-  '.php': 'PHP',
-  '.rb': 'Ruby',
-  '.swift': 'Swift',
-  '.kt': 'Kotlin',
-  '.yaml': 'YAML',
-  '.yml': 'YAML',
-  '.xml': 'XML',
-  '.sh': 'Shell',
-  '.bash': 'Shell',
-  '.zsh': 'Shell',
-  '.fish': 'Shell',
-  '.ps1': 'PowerShell',
-  '.psm1': 'PowerShell',
-  '.psd1': 'PowerShell',
-  '.bat': 'Batch',
-  '.cmd': 'Batch',
-  '.dockerfile': 'Dockerfile',
-  '.makefile': 'Makefile',
-  '.mk': 'Makefile',
-  '.gitignore': 'Git',
-  '.gitattributes': 'Git',
-  '.toml': 'TOML',
-  '.ini': 'INI',
-  '.cfg': 'Config',
-  '.conf': 'Config',
-  '.properties': 'Properties',
-  '.env': 'Environment',
-  '.sql': 'SQL',
-  '.r': 'R',
-  '.R': 'R',
-  '.scala': 'Scala',
-  '.gradle': 'Gradle',
-  '.lua': 'Lua',
-  '.vim': 'VimScript',
-  '.pl': 'Perl',
-  '.pm': 'Perl'
-} as const
-
-const BINARY_EXTENSIONS = new Set([
-  '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.ico', '.svg', '.webp',
-  '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
-  '.zip', '.tar', '.gz', '.bz2', '.7z', '.rar',
-  '.exe', '.dll', '.so', '.dylib', '.lib', '.a',
-  '.class', '.jar', '.war', '.ear', '.pyc', '.pyo',
-  '.ttf', '.otf', '.woff', '.woff2', '.eot',
-  '.mp3', '.mp4', '.avi', '.mov', '.wmv', '.flv',
-  '.db', '.sqlite', '.sqlite3',
-  '.bin', '.dat', '.img', '.iso'
-])
-
-export function getFileType(fileName: string): string {
+export function getFileType(fileName: string, config: RepoStatterConfig): string {
   const ext = extname(fileName).toLowerCase()
   if (!ext) return 'Other'
-  if (BINARY_EXTENSIONS.has(ext)) return 'Binary'
-  return FILE_TYPE_MAP[ext as keyof typeof FILE_TYPE_MAP] ?? 'Other'
+  if (config.fileTypes.binaryExtensions.includes(ext)) return 'Binary'
+  return config.fileTypes.mappings[ext] ?? 'Other'
 }
 
-export function isBinaryFile(fileName: string): boolean {
+export function isBinaryFile(fileName: string, config: RepoStatterConfig): boolean {
   const ext = extname(fileName).toLowerCase()
-  return BINARY_EXTENSIONS.has(ext)
+  return config.fileTypes.binaryExtensions.includes(ext)
 }
 
 export interface ParsedCommitDiff {
@@ -112,7 +42,8 @@ export interface ByteChanges {
 
 export function parseCommitDiff(
   diffSummary: DiffSummary,
-  byteChanges: ByteChanges
+  byteChanges: ByteChanges,
+  config: RepoStatterConfig
 ): ParsedCommitDiff {
   assert(!!diffSummary, 'diffSummary must exist')
   assert(!!diffSummary.files, 'diffSummary must have files property')
@@ -129,7 +60,7 @@ export function parseCommitDiff(
       fileName: file.file,
       linesAdded: 'insertions' in file ? file.insertions : 0,
       linesDeleted: 'deletions' in file ? file.deletions : 0,
-      fileType: getFileType(file.file),
+      fileType: getFileType(file.file, config),
       bytesAdded: byteChanges.fileChanges[file.file]?.bytesAdded ?? 0,
       bytesDeleted: byteChanges.fileChanges[file.file]?.bytesDeleted ?? 0
     }))

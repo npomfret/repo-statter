@@ -8,39 +8,12 @@ function getFileTypeBrowser(fileName: string): string {
   
   const ext = fileName.slice(lastDotIndex).toLowerCase()
   
-  const FILE_TYPE_MAP: Record<string, string> = {
-    '.ts': 'TypeScript',
-    '.tsx': 'TypeScript',
-    '.js': 'JavaScript',
-    '.jsx': 'JavaScript',
-    '.css': 'CSS',
-    '.scss': 'SCSS',
-    '.sass': 'SCSS',
-    '.html': 'HTML',
-    '.json': 'JSON',
-    '.md': 'Markdown',
-    '.py': 'Python',
-    '.java': 'Java',
-    '.cpp': 'C++',
-    '.cc': 'C++',
-    '.cxx': 'C++',
-    '.c': 'C',
-    '.go': 'Go',
-    '.rs': 'Rust',
-    '.php': 'PHP',
-    '.rb': 'Ruby',
-    '.swift': 'Swift',
-    '.kt': 'Kotlin',
-    '.yaml': 'YAML',
-    '.yml': 'YAML',
-    '.xml': 'XML',
-    '.sh': 'Shell',
-    '.bash': 'Shell',
-    '.zsh': 'Shell',
-    '.fish': 'Shell'
-  }
+  // Get file type mappings from configuration if available
+  const fileTypesConfig = (window as any).repoData?.fileTypesConfig
+  const mappings = fileTypesConfig?.mappings || {}
   
-  return FILE_TYPE_MAP[ext] ?? 'Other'
+  // If configuration is not available, return 'Other' as fallback
+  return mappings[ext] || 'Other'
 }
 
 export class TopFilesChart {

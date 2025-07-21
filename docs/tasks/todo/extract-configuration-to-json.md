@@ -169,7 +169,7 @@ Successfully implemented in 6 main phases:
 - Consider adding JSON schema for IDE autocomplete support
 - Monitor for user feedback on configuration options
 
-## Phase 7: Additional Configuration Extraction (2025-01-21)
+## Phase 7: Additional Configuration Extraction ✅ COMPLETED (2025-01-21)
 
 ### Newly Identified Hardcoded Values
 
@@ -207,25 +207,27 @@ After review, several more hardcoded values were found that should be configurab
 - Moved BINARY_EXTENSIONS to `config.fileTypes.binaryExtensions`
 - Moved STOP_WORDS to `config.textAnalysis.stopWords`
 
-#### Step 3: Refactor Core Modules (TODO)
-- Update `src/data/git-extractor.ts`:
+#### Step 3: Refactor Core Modules ✅
+- Updated `src/data/git-extractor.ts`:
   - Accept config parameter in `getFileType()` and `isBinaryFile()`
-  - Remove hardcoded FILE_TYPE_MAP and BINARY_EXTENSIONS
-- Update `src/text/processor.ts`:
-  - Accept config parameter in word processing functions
-  - Remove hardcoded STOP_WORDS
-- Update `src/index.ts`:
-  - Use config.version instead of hardcoded VERSION
+  - Removed hardcoded FILE_TYPE_MAP and BINARY_EXTENSIONS
+- Updated `src/text/processor.ts`:
+  - Accept config parameter in `filterStopWords()`
+  - Removed hardcoded STOP_WORDS
+- Updated `src/index.ts`:
+  - Removed unused VERSION export
 
-#### Step 4: Remove Duplicate Mappings (TODO)
-- Remove FILE_TYPE_MAP from:
+#### Step 4: Remove Duplicate Mappings ✅
+- Removed FILE_TYPE_MAP from:
   - `src/charts/top-files-chart.ts`
   - `src/chart/event-handlers.ts`
-- Update these files to use the configuration
+- Updated these files to use configuration from window.repoData
+- Added fileTypesConfig to data passed to client in generator.ts
 
-#### Step 5: Update Tests (TODO)
-- Update all test files that use these functions
-- Ensure they pass proper configuration
+#### Step 5: Update Tests ✅
+- Updated all test files to pass configuration
+- All 301 tests passing
+- Type checking passes
 
 ## Phase 8: AnalysisContext Refactoring (Future)
 

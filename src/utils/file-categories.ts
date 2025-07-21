@@ -1,15 +1,16 @@
 import { getFileType, isBinaryFile } from '../data/git-extractor.js'
+import type { RepoStatterConfig } from '../config/schema.js'
 
 export type FileCategory = 'Application' | 'Test' | 'Build' | 'Documentation' | 'Other'
 
-export function getFileCategory(filePath: string): FileCategory {
+export function getFileCategory(filePath: string, config: RepoStatterConfig): FileCategory {
   // Binary files don't have meaningful line counts
-  if (isBinaryFile(filePath)) {
+  if (isBinaryFile(filePath, config)) {
     return 'Other' // Binary files will be excluded from line counts
   }
   
   // Use existing file type detection logic
-  const fileType = getFileType(filePath)
+  const fileType = getFileType(filePath, config)
   
   // Special handling for test files - check file path patterns first
   if (filePath.includes('.test.') || filePath.includes('.spec.') || 

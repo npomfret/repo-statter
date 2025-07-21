@@ -5,43 +5,43 @@ import type { DiffSummary, ByteChanges } from './git-extractor.js'
 
 describe('getFileType', () => {
   it('identifies common programming languages', () => {
-    expect(getFileType('index.ts')).toBe('TypeScript')
-    expect(getFileType('App.tsx')).toBe('TypeScript')
-    expect(getFileType('script.js')).toBe('JavaScript')
-    expect(getFileType('Component.jsx')).toBe('JavaScript')
-    expect(getFileType('main.py')).toBe('Python')
-    expect(getFileType('Main.java')).toBe('Java')
-    expect(getFileType('main.go')).toBe('Go')
-    expect(getFileType('lib.rs')).toBe('Rust')
+    expect(getFileType('index.ts', TEST_CONFIG)).toBe('TypeScript')
+    expect(getFileType('App.tsx', TEST_CONFIG)).toBe('TypeScript')
+    expect(getFileType('script.js', TEST_CONFIG)).toBe('JavaScript')
+    expect(getFileType('Component.jsx', TEST_CONFIG)).toBe('JavaScript')
+    expect(getFileType('main.py', TEST_CONFIG)).toBe('Python')
+    expect(getFileType('Main.java', TEST_CONFIG)).toBe('Java')
+    expect(getFileType('main.go', TEST_CONFIG)).toBe('Go')
+    expect(getFileType('lib.rs', TEST_CONFIG)).toBe('Rust')
   })
 
   it('identifies web files', () => {
-    expect(getFileType('styles.css')).toBe('CSS')
-    expect(getFileType('theme.scss')).toBe('SCSS')
-    expect(getFileType('styles.sass')).toBe('SCSS')
-    expect(getFileType('index.html')).toBe('HTML')
-    expect(getFileType('config.json')).toBe('JSON')
-    expect(getFileType('README.md')).toBe('Markdown')
+    expect(getFileType('styles.css', TEST_CONFIG)).toBe('CSS')
+    expect(getFileType('theme.scss', TEST_CONFIG)).toBe('SCSS')
+    expect(getFileType('styles.sass', TEST_CONFIG)).toBe('SCSS')
+    expect(getFileType('index.html', TEST_CONFIG)).toBe('HTML')
+    expect(getFileType('config.json', TEST_CONFIG)).toBe('JSON')
+    expect(getFileType('README.md', TEST_CONFIG)).toBe('Markdown')
   })
 
   it('identifies C/C++ files', () => {
-    expect(getFileType('main.c')).toBe('C')
-    expect(getFileType('main.cpp')).toBe('C++')
-    expect(getFileType('app.cc')).toBe('C++')
-    expect(getFileType('lib.cxx')).toBe('C++')
+    expect(getFileType('main.c', TEST_CONFIG)).toBe('C')
+    expect(getFileType('main.cpp', TEST_CONFIG)).toBe('C++')
+    expect(getFileType('app.cc', TEST_CONFIG)).toBe('C++')
+    expect(getFileType('lib.cxx', TEST_CONFIG)).toBe('C++')
   })
 
   it('handles case insensitivity', () => {
-    expect(getFileType('INDEX.TS')).toBe('TypeScript')
-    expect(getFileType('MAIN.PY')).toBe('Python')
-    expect(getFileType('Style.CSS')).toBe('CSS')
+    expect(getFileType('INDEX.TS', TEST_CONFIG)).toBe('TypeScript')
+    expect(getFileType('MAIN.PY', TEST_CONFIG)).toBe('Python')
+    expect(getFileType('Style.CSS', TEST_CONFIG)).toBe('CSS')
   })
 
   it('handles unknown extensions', () => {
-    expect(getFileType('file.xyz')).toBe('Other')
-    expect(getFileType('config.custom')).toBe('Other')
-    expect(getFileType('no-extension')).toBe('Other')
-    expect(getFileType('')).toBe('Other')
+    expect(getFileType('file.xyz', TEST_CONFIG)).toBe('Other')
+    expect(getFileType('config.custom', TEST_CONFIG)).toBe('Other')
+    expect(getFileType('no-extension', TEST_CONFIG)).toBe('Other')
+    expect(getFileType('', TEST_CONFIG)).toBe('Other')
   })
 })
 
@@ -65,7 +65,7 @@ describe('parseCommitDiff', () => {
       }
     }
     
-    const result = parseCommitDiff(diffSummary, byteChanges)
+    const result = parseCommitDiff(diffSummary, byteChanges, TEST_CONFIG)
     
     expect(result.linesAdded).toBe(45)
     expect(result.linesDeleted).toBe(15)
@@ -99,7 +99,7 @@ describe('parseCommitDiff', () => {
       }
     }
     
-    const result = parseCommitDiff(diffSummary, byteChanges)
+    const result = parseCommitDiff(diffSummary, byteChanges, TEST_CONFIG)
     
     expect(result.filesChanged[0]!.linesAdded).toBe(0)
     expect(result.filesChanged[0]!.linesDeleted).toBe(0)
@@ -124,7 +124,7 @@ describe('parseCommitDiff', () => {
       }
     }
     
-    const result = parseCommitDiff(diffSummary, byteChanges)
+    const result = parseCommitDiff(diffSummary, byteChanges, TEST_CONFIG)
     
     expect(result.filesChanged).toHaveLength(1)
     expect(result.filesChanged[0]!.fileName).toBe('src/app.ts')
@@ -145,7 +145,7 @@ describe('parseCommitDiff', () => {
       fileChanges: {} // No byte data for the file
     }
     
-    const result = parseCommitDiff(diffSummary, byteChanges)
+    const result = parseCommitDiff(diffSummary, byteChanges, TEST_CONFIG)
     
     expect(result.filesChanged[0]!.bytesAdded).toBe(0)
     expect(result.filesChanged[0]!.bytesDeleted).toBe(0)
@@ -154,9 +154,9 @@ describe('parseCommitDiff', () => {
   })
 
   it('throws on invalid input', () => {
-    expect(() => parseCommitDiff(null as any, {} as any)).toThrow('diffSummary must exist')
-    expect(() => parseCommitDiff({ files: null as any }, {} as any)).toThrow('diffSummary must have files property')
-    expect(() => parseCommitDiff({ files: [] }, null as any)).toThrow('byteChanges must exist')
+    expect(() => parseCommitDiff(null as any, {} as any, TEST_CONFIG)).toThrow('diffSummary must exist')
+    expect(() => parseCommitDiff({ files: null as any }, {} as any, TEST_CONFIG)).toThrow('diffSummary must have files property')
+    expect(() => parseCommitDiff({ files: [] }, null as any, TEST_CONFIG)).toThrow('byteChanges must exist')
   })
 })
 

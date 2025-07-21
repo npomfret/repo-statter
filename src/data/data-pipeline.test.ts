@@ -347,7 +347,7 @@ describe('Data Pipeline Integration', () => {
       }
     }
 
-    const parsed = parseCommitDiff(diffSummary, byteChanges)
+    const parsed = parseCommitDiff(diffSummary, byteChanges, TEST_CONFIG)
     expect(parsed.filesChanged).toHaveLength(1)
     expect(parsed.filesChanged[0]).toMatchObject({
       fileName: 'src/app.ts',

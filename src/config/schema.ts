@@ -37,6 +37,15 @@ export interface ExclusionsConfig {
   patterns: string[];
 }
 
+export interface FileTypesConfig {
+  mappings: Record<string, string>;
+  binaryExtensions: string[];
+}
+
+export interface TextAnalysisConfig {
+  stopWords: string[];
+}
+
 export interface RepoStatterConfig {
   version: string;
   analysis: AnalysisConfig;
@@ -45,4 +54,6 @@ export interface RepoStatterConfig {
   charts: ChartsConfig;
   performance: PerformanceConfig;
   exclusions: ExclusionsConfig;
+  fileTypes: FileTypesConfig;
+  textAnalysis: TextAnalysisConfig;
 }

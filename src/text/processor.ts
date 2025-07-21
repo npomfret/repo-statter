@@ -9,25 +9,6 @@ export interface WordFrequency {
 // Re-export for backward compatibility
 export type { WordCloudConfig } from '../config/schema.js'
 
-const STOP_WORDS = new Set([
-  'the', 'is', 'are', 'was', 'were', 'been', 'be', 'have', 'has', 'had',
-  'do', 'does', 'did', 'will', 'would', 'should', 'could', 'may', 'might', 'must',
-  'can', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
-  'of', 'with', 'by', 'from', 'up', 'about', 'into', 'through', 'during', 'before',
-  'after', 'above', 'below', 'between', 'under', 'since', 'without', 'within', 'along',
-  'following', 'across', 'behind', 'beyond', 'plus', 'except', 'but', 'yet', 'so',
-  'if', 'then', 'than', 'such', 'both', 'either', 'neither', 'all', 'each',
-  'every', 'any', 'some', 'no', 'not', 'only', 'just', 'also', 'very',
-  'too', 'quite', 'almost', 'always', 'often', 'never', 'seldom', 'rarely', 'usually',
-  'generally', 'sometimes', 'now', 'then', 'once', 'twice', 'first', 'second', 'last',
-  'next', 'this', 'that', 'these', 'those', 'it', 'its', 'our', 'their',
-  'there', 'here', 'when', 'where', 'why', 'how', 'what', 'which', 'who',
-  'whom', 'whose', 'i', 'me', 'my', 'we', 'you', 'your', 'he', 'him',
-  'his', 'she', 'her', 'they', 'them', 'as', 'more', 'most', 'other',
-  'another', 'much', 'many', 'few', 'less', 'least', 'own', 'same', 'different',
-  'small', 'large', 'big', 'high', 'low', 'early', 'late', 'new', 'old'
-])
-
 export function extractWords(messages: string[]): string[] {
   const words: string[] = []
   
@@ -45,10 +26,11 @@ export function extractWords(messages: string[]): string[] {
   return words
 }
 
-export function filterStopWords(words: string[], config: WordCloudConfig): string[] {
+export function filterStopWords(words: string[], config: RepoStatterConfig): string[] {
+  const stopWordsSet = new Set(config.textAnalysis.stopWords)
   return words.filter(word => 
-    word.length >= config.minWordLength && 
-    !STOP_WORDS.has(word) && 
+    word.length >= config.wordCloud.minWordLength && 
+    !stopWordsSet.has(word) && 
     !/^\d+$/.test(word) // Filter out pure numbers
   )
 }
@@ -84,6 +66,6 @@ export function getWordFrequencies(words: string[], config: WordCloudConfig): Wo
 export function processCommitMessages(messages: string[], config: RepoStatterConfig): WordFrequency[] {
   assert(messages.length > 0, 'Cannot process empty messages array')
   const words = extractWords(messages)
-  const filteredWords = filterStopWords(words, config.wordCloud)
+  const filteredWords = filterStopWords(words, config)
   return getWordFrequencies(filteredWords, config.wordCloud)
 }

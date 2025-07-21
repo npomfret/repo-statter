@@ -107,7 +107,7 @@ export function getTimeSeriesData(commits: CommitData[], config: RepoStatterConf
     
     // Aggregate by file category
     for (const fileChange of commit.filesChanged) {
-      const category = getFileCategory(fileChange.fileName)
+      const category = getFileCategory(fileChange.fileName, config)
       
       // For binary files, only count bytes, not lines
       if (fileChange.fileType === 'Binary') {
