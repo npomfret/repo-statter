@@ -783,11 +783,7 @@ var PageScript = (() => {
           break;
       }
       if (data.length === 0) {
-        if (activeTab === "complex") {
-          container.innerHTML = '<div class="text-muted text-center p-4">TODO: Complexity analysis coming soon</div>';
-        } else {
-          container.innerHTML = '<div class="text-muted text-center p-4">No data available</div>';
-        }
+        container.innerHTML = '<div class="text-muted text-center p-4">No data available</div>';
         return;
       }
       const truncateFileName = (fileName, maxLength = 40) => {
