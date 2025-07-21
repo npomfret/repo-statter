@@ -93,7 +93,7 @@ export class ChartInitializer {
       if (category.data.length === 0) return
       
       const col = document.createElement('div')
-      col.className = 'col-lg-4 col-md-6 mb-4'
+      col.className = 'chart-third'
       
       const card = document.createElement('div')
       card.className = 'card h-100'
