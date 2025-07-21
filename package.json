@@ -6,7 +6,7 @@
   "main": "./dist/cli.js",
   "types": "./dist/cli.d.ts",
   "bin": {
-    "repo-statter": "./dist/cli.js"
+    "repo-statter": "dist/cli.js"
   },
   "scripts": {
     "start": "tsx src/cli.ts",
@@ -19,7 +19,8 @@
     "lint": "tsc --noEmit",
     "docs:build": "scripts/update-gh-pages.sh",
     "build": "tsc",
-    "prepublishOnly": "npm run build && npm run test"
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build && npm run test"
   },
   "dependencies": {
     "commander": "^14.0.0",
@@ -43,7 +44,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/nickpomfret/repo-statter.git"
+    "url": "git+https://github.com/nickpomfret/repo-statter.git"
   },
   "keywords": [
     "git",
