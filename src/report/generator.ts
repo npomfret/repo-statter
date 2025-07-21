@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
-import { parseCommitHistory, getGitHubUrl, getCurrentFiles, type CacheOptions } from '../git/parser.js'
+import { parseCommitHistory, getGitHubUrl, getCurrentFiles, getRepositoryName, type CacheOptions } from '../git/parser.js'
 import { getContributorStats, getLowestAverageLinesChanged, getHighestAverageLinesChanged, type ContributorStats } from '../data/contributor-calculator.js'
 import { getFileTypeStats, getFileHeatData, type FileTypeStats } from '../data/file-calculator.js'
 import { 
@@ -41,7 +41,12 @@ export async function generateReport(repoPath: string, outputMode: 'dist' | 'ana
   // Use provided config or fall back to defaults
   const finalConfig = config || DEFAULT_CONFIG
   const commits = await parseCommitHistory(repoPath, progressReporter, maxCommits, cacheOptions || {}, finalConfig)
-  const repoName = repoPath === '.' ? basename(process.cwd()) : basename(repoPath) || 'repo'
+  
+  // Try to get repository name from git remote, fallback to directory name
+  let repoName = await getRepositoryName(repoPath)
+  if (!repoName) {
+    repoName = repoPath === '.' ? basename(process.cwd()) : basename(repoPath) || 'repo'
+  }
   
   // Check if Lizard is installed early
   const isLizardInstalled = await checkLizardInstalled()

@@ -201,6 +201,29 @@ export async function getGitHubUrl(repoPath: string): Promise<string | null> {
   return null
 }
 
+export async function getRepositoryName(repoPath: string): Promise<string | null> {
+  const git = simpleGit(repoPath)
+  const remotes = await git.getRemotes(true)
+  const origin = remotes.find(r => r.name === 'origin')
+  if (origin && origin.refs.fetch) {
+    // Match various git URL formats
+    const patterns = [
+      /github\.com[:/](?:.+?\/)?([^/]+?)(?:\.git)?$/,
+      /gitlab\.com[:/](?:.+?\/)?([^/]+?)(?:\.git)?$/,
+      /bitbucket\.org[:/](?:.+?\/)?([^/]+?)(?:\.git)?$/,
+      /([^/]+?)(?:\.git)?$/ // Generic fallback for other hosts
+    ]
+    
+    for (const pattern of patterns) {
+      const match = origin.refs.fetch.match(pattern)
+      if (match && match[1]) {
+        return match[1]
+      }
+    }
+  }
+  return null
+}
+
 async function parseCommitDiff(repoPath: string, commitHash: string, config: RepoStatterConfig): Promise<{ linesAdded: number; linesDeleted: number; bytesAdded: number; bytesDeleted: number; filesChanged: FileChange[] }> {
   const git = simpleGit(repoPath)
   

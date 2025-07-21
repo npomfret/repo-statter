@@ -5,7 +5,7 @@ import { ConsoleProgressReporter } from '../utils/progress-reporter.js'
 import { ThrottledProgressReporter } from '../utils/throttled-progress-reporter.js'
 import { isRepoStatError, formatError } from '../utils/errors.js'
 import { loadConfiguration, validateConfiguration } from '../config/loader.js'
-import { getGitHubUrl } from '../git/parser.js'
+import { getGitHubUrl, getRepositoryName } from '../git/parser.js'
 import { basename, resolve, join } from 'path'
 import { tmpdir } from 'os'
 import type { ConfigOverrides } from '../config/loader.js'
@@ -60,7 +60,10 @@ export async function handleCLI(args: string[]): Promise<void> {
         validateConfiguration(config)
         
         // Display repository information
-        const repoName = basename(resolve(finalRepoPath))
+        let repoName = await getRepositoryName(finalRepoPath)
+        if (!repoName) {
+          repoName = basename(resolve(finalRepoPath))
+        }
         const outputPath = resolve(outputDir)
         const cacheDir = join(tmpdir(), config.performance.cacheDirName)
         
