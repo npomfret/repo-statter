@@ -18,7 +18,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
     "docs:build": "scripts/update-gh-pages.sh",
-    "build": "tsc",
+    "build": "tsc && node scripts/prebundle-page-script.js",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run clean && npm run build && npm run test",
     "preversion": "npm run test",

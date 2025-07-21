@@ -1,46 +1,23 @@
-import { build } from 'esbuild'
-import { writeFile } from 'fs/promises'
+import { readFile } from 'fs/promises'
 import { existsSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
-import { BuildError, formatError } from '../utils/errors.js'
+import { BuildError } from '../utils/errors.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 export async function bundlePageScript(): Promise<string> {
-  // Build paths relative to the project root (two levels up from dist/build/)
+  // Use pre-bundled page script from build process
   const projectRoot = join(__dirname, '../../')
-  const entryPoint = join(projectRoot, 'src/chart/page-script.ts')
-  const outputFile = join(projectRoot, 'dist/page-script.js')
+  const bundleFile = join(projectRoot, 'dist/page-script-bundle.js')
   
-  if (!existsSync(entryPoint)) {
-    throw new BuildError(`Entry point not found: ${entryPoint}`)
+  if (!existsSync(bundleFile)) {
+    throw new BuildError(`Pre-bundled page script not found: ${bundleFile}. Run 'npm run build' first.`)
   }
   
   try {
-    const result = await build({
-      entryPoints: [entryPoint],
-      bundle: true,
-      format: 'iife',
-      globalName: 'PageScript',
-      outfile: outputFile,
-      platform: 'browser',
-      target: 'es2020',
-      minify: false,
-      sourcemap: false,
-      external: ['ApexCharts', 'd3'],
-      define: {
-        'process.env.NODE_ENV': '"production"'
-      },
-      write: false
-    })
-    
-    if (result.errors.length > 0) {
-      throw new BuildError(`Build errors: ${result.errors.map(e => e.text).join(', ')}`)
-    }
-    
-    const bundledCode = result.outputFiles[0]?.text || ''
+    const bundledCode = await readFile(bundleFile, 'utf-8')
     
     // Wrap the bundle to make it work with our template injection
     const wrappedCode = `
@@ -56,14 +33,9 @@ export async function bundlePageScript(): Promise<string> {
 })();
 `
     
-    await writeFile(outputFile, wrappedCode)
-    
     return wrappedCode
   } catch (error) {
-    if (error instanceof BuildError) {
-      throw error
-    }
-    throw new BuildError('Build failed', error instanceof Error ? error : undefined)
+    throw new BuildError('Failed to load pre-bundled page script', error instanceof Error ? error : undefined)
   }
 }
 
@@ -73,7 +45,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     .then(() => {})
     .catch(error => {
       // Build script error logging - this is acceptable for build-time debugging
-      console.error('Bundle failed:', formatError(error))
+      console.error('Bundle failed:', error)
       process.exit(1)
     })
 }
