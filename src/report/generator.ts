@@ -23,19 +23,20 @@ import type { ProgressReporter } from '../utils/progress-reporter.js'
 import type { RepoStatterConfig } from '../config/schema.js'
 import { DEFAULT_CONFIG } from '../config/defaults.js'
 
-interface AnalysisContext {
-  repoPath: string
-  repoName: string
-  isLizardInstalled: boolean
-  currentFiles: Set<string>
-  progressReporter?: ProgressReporter
-  config: RepoStatterConfig
-}
+// TODO: Refactor to use AnalysisContext to simplify function signatures
+// interface AnalysisContext {
+//   repoPath: string
+//   repoName: string
+//   isLizardInstalled: boolean
+//   currentFiles: Set<string>
+//   progressReporter?: ProgressReporter
+//   config: RepoStatterConfig
+// }
 
 export async function generateReport(repoPath: string, outputMode: 'dist' | 'analysis' = 'dist', progressReporter?: ProgressReporter, maxCommits?: number, customFilename?: string, cacheOptions?: CacheOptions, config?: RepoStatterConfig): Promise<string> {
   // Use provided config or fall back to defaults
   const finalConfig = config || DEFAULT_CONFIG
-  const commits = await parseCommitHistory(repoPath, progressReporter, maxCommits, cacheOptions, finalConfig)
+  const commits = await parseCommitHistory(repoPath, progressReporter, maxCommits, cacheOptions || {}, finalConfig)
   const repoName = repoPath === '.' ? basename(process.cwd()) : basename(repoPath) || 'repo'
   
   // Check if Lizard is installed early
