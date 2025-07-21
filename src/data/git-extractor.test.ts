@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { TEST_CONFIG } from '../test/test-config.js'
 import { getFileType, parseCommitDiff, parseByteChanges } from './git-extractor.js'
 import type { DiffSummary, ByteChanges } from './git-extractor.js'
 
@@ -165,7 +166,7 @@ describe('parseByteChanges', () => {
 20\t0\tsrc/utils.js
 15\t10\ttest/app.test.ts`
     
-    const result = parseByteChanges(gitOutput)
+    const result = parseByteChanges(gitOutput, TEST_CONFIG)
     
     expect(result.totalBytesAdded).toBe(2250) // (10+20+15) * 50
     expect(result.totalBytesDeleted).toBe(750) // (5+0+10) * 50
@@ -175,7 +176,7 @@ describe('parseByteChanges', () => {
   })
 
   it('handles empty output', () => {
-    const result = parseByteChanges('')
+    const result = parseByteChanges('', TEST_CONFIG)
     
     expect(result.totalBytesAdded).toBe(0)
     expect(result.totalBytesDeleted).toBe(0)
@@ -186,7 +187,7 @@ describe('parseByteChanges', () => {
     const gitOutput = `-\t-\tassets/logo.png
 10\t5\tsrc/app.ts`
     
-    const result = parseByteChanges(gitOutput)
+    const result = parseByteChanges(gitOutput, TEST_CONFIG)
     
     // Should skip the binary file and only process the text file
     expect(result.totalBytesAdded).toBe(500)
@@ -200,7 +201,7 @@ describe('parseByteChanges', () => {
 100\t50\tnode_modules/lib.js
 1\t0\t.git/config`
     
-    const result = parseByteChanges(gitOutput)
+    const result = parseByteChanges(gitOutput, TEST_CONFIG)
     
     // Should only include src/app.ts
     expect(result.totalBytesAdded).toBe(500)
@@ -216,7 +217,7 @@ invalid line
 \t10\ttest.js
 15\t10\tvalid.js`
     
-    const result = parseByteChanges(gitOutput)
+    const result = parseByteChanges(gitOutput, TEST_CONFIG)
     
     // Should process only valid lines
     expect(result.fileChanges['src/app.ts']).toBeDefined()
@@ -227,15 +228,15 @@ invalid line
   it('handles tabs in filenames', () => {
     const gitOutput = `10\t5\tsrc/file\twith\ttabs.ts`
     
-    const result = parseByteChanges(gitOutput)
+    const result = parseByteChanges(gitOutput, TEST_CONFIG)
     
     // Should handle the filename with tabs correctly
     expect(result.fileChanges['src/file\twith\ttabs.ts']).toEqual({ bytesAdded: 500, bytesDeleted: 250 })
   })
 
   it('throws on invalid input type', () => {
-    expect(() => parseByteChanges(null as any)).toThrow('gitNumstatOutput must be a string')
-    expect(() => parseByteChanges(undefined as any)).toThrow('gitNumstatOutput must be a string')
-    expect(() => parseByteChanges(123 as any)).toThrow('gitNumstatOutput must be a string')
+    expect(() => parseByteChanges(null as any, TEST_CONFIG)).toThrow('gitNumstatOutput must be a string')
+    expect(() => parseByteChanges(undefined as any, TEST_CONFIG)).toThrow('gitNumstatOutput must be a string')
+    expect(() => parseByteChanges(123 as any, TEST_CONFIG)).toThrow('gitNumstatOutput must be a string')
   })
 })

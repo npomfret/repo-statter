@@ -112,6 +112,8 @@ export async function getTopFilesByComplexity(repoPath: string, currentFiles?: S
 }
 
 export async function getTopFilesStats(commits: CommitData[], repoPath: string, currentFiles: Set<string> | undefined, config: RepoStatterConfig): Promise<TopFilesData> {
+  // Config will be used for filtering/customization in future updates
+  void config
   const [largest, mostChurn, mostComplex] = await Promise.all([
     Promise.resolve(getTopFilesBySize(commits, currentFiles)),
     Promise.resolve(getTopFilesByChurn(commits, currentFiles)),

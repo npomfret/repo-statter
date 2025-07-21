@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { TEST_CONFIG } from '../test/test-config.js'
 import { extractWords, filterStopWords, getWordFrequencies, processCommitMessages } from './processor.js'
 
 describe('extractWords', () => {
@@ -45,25 +46,25 @@ describe('extractWords', () => {
 
 describe('filterStopWords', () => {
   it('should return empty array for empty input', () => {
-    const result = filterStopWords([])
+    const result = filterStopWords([], TEST_CONFIG.wordCloud)
     expect(result).toEqual([])
   })
 
   it('should filter common stop words', () => {
     const words = ['the', 'fix', 'is', 'bug', 'in', 'parser']
-    const result = filterStopWords(words)
+    const result = filterStopWords(words, TEST_CONFIG.wordCloud)
     expect(result).toEqual(['fix', 'bug', 'parser'])
   })
 
   it('should filter words shorter than minWordLength', () => {
     const words = ['a', 'ab', 'abc', 'abcd']
-    const result = filterStopWords(words)
+    const result = filterStopWords(words, TEST_CONFIG.wordCloud)
     expect(result).toEqual(['abc', 'abcd'])
   })
 
   it('should filter pure numbers', () => {
     const words = ['123', 'version2', '2023', 'test']
-    const result = filterStopWords(words)
+    const result = filterStopWords(words, TEST_CONFIG.wordCloud)
     expect(result).toEqual(['version2', 'test'])
   })
 
@@ -76,25 +77,25 @@ describe('filterStopWords', () => {
 
   it('should keep valid technical terms', () => {
     const words = ['refactor', 'typescript', 'async', 'component']
-    const result = filterStopWords(words)
+    const result = filterStopWords(words, TEST_CONFIG.wordCloud)
     expect(result).toEqual(['refactor', 'typescript', 'async', 'component'])
   })
 })
 
 describe('getWordFrequencies', () => {
   it('should return empty array for empty input', () => {
-    const result = getWordFrequencies([])
+    const result = getWordFrequencies([], TEST_CONFIG.wordCloud)
     expect(result).toEqual([])
   })
 
   it('should count single occurrence', () => {
-    const result = getWordFrequencies(['test'])
+    const result = getWordFrequencies(['test'], TEST_CONFIG.wordCloud)
     expect(result).toEqual([{ text: 'test', size: 10 }])
   })
 
   it('should count multiple occurrences', () => {
     const words = ['fix', 'bug', 'fix', 'fix', 'bug']
-    const result = getWordFrequencies(words)
+    const result = getWordFrequencies(words, TEST_CONFIG.wordCloud)
     expect(result).toHaveLength(2)
     expect(result[0]!.text).toBe('fix')
     expect(result[1]!.text).toBe('bug')
@@ -102,20 +103,20 @@ describe('getWordFrequencies', () => {
 
   it('should sort by frequency descending', () => {
     const words = ['rare', 'common', 'common', 'common', 'medium', 'medium']
-    const result = getWordFrequencies(words)
+    const result = getWordFrequencies(words, TEST_CONFIG.wordCloud)
     expect(result.map(w => w.text)).toEqual(['common', 'medium', 'rare'])
   })
 
   it('should scale sizes correctly', () => {
     const words = ['max', 'max', 'max', 'min']
-    const result = getWordFrequencies(words)
+    const result = getWordFrequencies(words, TEST_CONFIG.wordCloud)
     expect(result[0]!.size).toBe(80) // maxSize
     expect(result[1]!.size).toBe(10) // minSize
   })
 
   it('should handle all same frequency', () => {
     const words = ['a', 'b', 'c']
-    const result = getWordFrequencies(words)
+    const result = getWordFrequencies(words, TEST_CONFIG.wordCloud)
     expect(result).toHaveLength(3)
     // All should have same size when frequencies are equal
     expect(new Set(result.map(w => w.size)).size).toBe(1)
@@ -130,7 +131,7 @@ describe('getWordFrequencies', () => {
 
   it('should handle intermediate scaling', () => {
     const words = ['max', 'max', 'max', 'max', 'med', 'med', 'min']
-    const result = getWordFrequencies(words)
+    const result = getWordFrequencies(words, TEST_CONFIG.wordCloud)
     const sizes = result.map(w => w.size)
     expect(sizes[0]).toBe(80) // max
     expect(sizes[2]).toBe(10) // min
@@ -141,11 +142,11 @@ describe('getWordFrequencies', () => {
 
 describe('processCommitMessages', () => {
   it('should throw on empty messages array', () => {
-    expect(() => processCommitMessages([])).toThrowError('Cannot process empty messages array')
+    expect(() => processCommitMessages([], TEST_CONFIG)).toThrowError('Cannot process empty messages array')
   })
 
   it('should process single message', () => {
-    const result = processCommitMessages(['Fix critical bug in parser module'])
+    const result = processCommitMessages(['Fix critical bug in parser module'], TEST_CONFIG)
     expect(result.map(w => w.text)).toContain('fix')
     expect(result.map(w => w.text)).toContain('critical')
     expect(result.map(w => w.text)).toContain('bug')
@@ -159,7 +160,7 @@ describe('processCommitMessages', () => {
       'Fix authentication bug',
       'Update authentication docs'
     ]
-    const result = processCommitMessages(messages)
+    const result = processCommitMessages(messages, TEST_CONFIG)
     const authWord = result.find(w => w.text === 'authentication')
     expect(authWord).toBeDefined()
     expect(authWord!.size).toBe(80) // Should be most frequent
@@ -167,7 +168,7 @@ describe('processCommitMessages', () => {
 
   it('should filter stop words from messages', () => {
     const messages = ['The quick brown fox jumps over the lazy dog']
-    const result = processCommitMessages(messages)
+    const result = processCommitMessages(messages, TEST_CONFIG)
     const texts = result.map(w => w.text)
     expect(texts).not.toContain('the')
     expect(texts).toContain('quick')
@@ -181,7 +182,7 @@ describe('processCommitMessages', () => {
 
   it('should handle messages with only stop words gracefully', () => {
     const messages = ['the is are was were been be have has had']
-    const result = processCommitMessages(messages)
+    const result = processCommitMessages(messages, TEST_CONFIG)
     expect(result).toEqual([])
   })
 
@@ -193,7 +194,7 @@ describe('processCommitMessages', () => {
       'refactor: improve auth performance',
       'test: add auth integration tests'
     ]
-    const result = processCommitMessages(messages)
+    const result = processCommitMessages(messages, TEST_CONFIG)
     const texts = result.map(w => w.text)
     expect(texts).toContain('auth')
     expect(texts).toContain('authentication')
@@ -207,7 +208,7 @@ describe('processCommitMessages', () => {
       'release: v1.2.3',
       'fix: bug in version 3'
     ]
-    const result = processCommitMessages(messages)
+    const result = processCommitMessages(messages, TEST_CONFIG)
     const texts = result.map(w => w.text)
     expect(texts).toContain('version')
     expect(texts).toContain('bump')

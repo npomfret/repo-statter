@@ -17,6 +17,8 @@ export interface ContributorAward {
 }
 
 export function getContributorStats(commits: CommitData[], config: RepoStatterConfig): ContributorStats[] {
+  // Config will be used for filtering/customization in future updates
+  void config
   assert(commits.length > 0, 'Cannot calculate contributor stats from empty commits array')
   const contributorMap = new Map<string, ContributorStats>()
   

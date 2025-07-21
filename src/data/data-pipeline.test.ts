@@ -1,4 +1,5 @@
 import { describe, test, expect } from 'vitest'
+import { TEST_CONFIG } from '../test/test-config.js'
 import { CommitDataBuilder } from '../test/builders.js'
 import { getContributorStats, getLowestAverageLinesChanged, getHighestAverageLinesChanged } from './contributor-calculator.js'
 import { getFileTypeStats, getFileHeatData } from './file-calculator.js'
@@ -20,12 +21,12 @@ describe('Data Pipeline Integration', () => {
     const commits: CommitData[] = []
 
     // All functions should handle empty arrays gracefully
-    expect(() => getContributorStats(commits)).toThrow('Cannot calculate contributor stats from empty commits array')
-    expect(getFileTypeStats(commits)).toEqual([])
-    expect(getFileHeatData(commits)).toEqual([])
-    expect(getTimeSeriesData(commits)).toEqual([])
+    expect(() => getContributorStats(commits, TEST_CONFIG)).toThrow('Cannot calculate contributor stats from empty commits array')
+    expect(getFileTypeStats(commits, undefined, TEST_CONFIG)).toEqual([])
+    expect(getFileHeatData(commits, undefined, TEST_CONFIG)).toEqual([])
+    expect(getTimeSeriesData(commits, TEST_CONFIG)).toEqual([])
     expect(getLinearSeriesData(commits)).toEqual([])
-    expect(() => processCommitMessages([])).toThrow('Cannot process empty messages array')
+    expect(() => processCommitMessages([], TEST_CONFIG)).toThrow('Cannot process empty messages array')
     expect(getTopCommitsByFilesModified(commits)).toEqual([])
     expect(getTopCommitsByBytesAdded(commits)).toEqual([])
     expect(getTopCommitsByBytesRemoved(commits)).toEqual([])
@@ -50,7 +51,7 @@ describe('Data Pipeline Integration', () => {
     const commits = [commit]
 
     // Contributor stats
-    const contributors = getContributorStats(commits)
+    const contributors = getContributorStats(commits, TEST_CONFIG)
     expect(contributors).toHaveLength(1)
     expect(contributors[0]).toMatchObject({
       name: 'Alice',
@@ -60,7 +61,7 @@ describe('Data Pipeline Integration', () => {
     })
 
     // File type stats
-    const fileTypes = getFileTypeStats(commits)
+    const fileTypes = getFileTypeStats(commits, undefined, TEST_CONFIG)
     expect(fileTypes).toHaveLength(1)
     expect(fileTypes[0]).toMatchObject({
       type: 'TypeScript',
@@ -69,7 +70,7 @@ describe('Data Pipeline Integration', () => {
     })
 
     // Time series data
-    const timeSeries = getTimeSeriesData(commits)
+    const timeSeries = getTimeSeriesData(commits, TEST_CONFIG)
     expect(timeSeries.length).toBeGreaterThan(0)
     expect(timeSeries[timeSeries.length - 1]?.cumulativeLines.total).toBe(40)
 
@@ -93,7 +94,7 @@ describe('Data Pipeline Integration', () => {
     })
 
     // Word cloud
-    const wordCloud = processCommitMessages(['feat: Add user authentication'])
+    const wordCloud = processCommitMessages(['feat: Add user authentication'], TEST_CONFIG)
     expect(wordCloud).toContainEqual(
       expect.objectContaining({ text: 'authentication' })
     )
@@ -148,7 +149,7 @@ describe('Data Pipeline Integration', () => {
     ]
 
     // Contributor stats - should be sorted by commits/lines
-    const contributors = getContributorStats(commits)
+    const contributors = getContributorStats(commits, TEST_CONFIG)
     expect(contributors).toHaveLength(2)
     expect(contributors[0]?.name).toBe('Alice')
     expect(contributors[0]?.commits).toBe(2)
@@ -157,7 +158,7 @@ describe('Data Pipeline Integration', () => {
     expect(contributors[1]?.commits).toBe(1)
 
     // File type stats - should show distribution
-    const fileTypes = getFileTypeStats(commits)
+    const fileTypes = getFileTypeStats(commits, undefined, TEST_CONFIG)
     const tsFiles = fileTypes.find(ft => ft.type === 'TypeScript')
     const cssFiles = fileTypes.find(ft => ft.type === 'CSS')
     const mdFiles = fileTypes.find(ft => ft.type === 'Markdown')
@@ -171,7 +172,7 @@ describe('Data Pipeline Integration', () => {
     expect(totalPercentage).toBeCloseTo(100, 0)
 
     // Heat map data
-    const heatData = getFileHeatData(commits)
+    const heatData = getFileHeatData(commits, undefined, TEST_CONFIG)
     expect(heatData.length).toBeGreaterThan(0)
     expect(heatData[0]?.heatScore).toBeGreaterThan(0)
 
@@ -219,7 +220,7 @@ describe('Data Pipeline Integration', () => {
     ]
 
     // Time series should aggregate based on time gaps
-    const timeSeries = getTimeSeriesData(commits)
+    const timeSeries = getTimeSeriesData(commits, TEST_CONFIG)
     expect(timeSeries.length).toBeGreaterThan(0)
     
     // Verify cumulative calculation
@@ -235,7 +236,7 @@ describe('Data Pipeline Integration', () => {
 
     // Word cloud should extract meaningful words
     const messages = commits.map(c => c.message)
-    const wordCloud = processCommitMessages(messages)
+    const wordCloud = processCommitMessages(messages, TEST_CONFIG)
     const words = wordCloud.map(w => w.text)
     expect(words).toContain('feature')
     expect(words).toContain('tests')
@@ -273,14 +274,14 @@ describe('Data Pipeline Integration', () => {
     const netLines = totalAdded - totalDeleted
 
     // Verify contributor stats match
-    const contributors = getContributorStats(commits)
+    const contributors = getContributorStats(commits, TEST_CONFIG)
     const contributorTotalAdded = contributors.reduce((sum, c) => sum + c.linesAdded, 0)
     const contributorTotalDeleted = contributors.reduce((sum, c) => sum + c.linesDeleted, 0)
     expect(contributorTotalAdded).toBe(totalAdded)
     expect(contributorTotalDeleted).toBe(totalDeleted)
 
     // Verify time series ends with correct cumulative
-    const timeSeries = getTimeSeriesData(commits)
+    const timeSeries = getTimeSeriesData(commits, TEST_CONFIG)
     const lastTimePoint = timeSeries[timeSeries.length - 1]
     expect(lastTimePoint?.cumulativeLines.total).toBe(netLines)
 
@@ -301,9 +302,9 @@ describe('Data Pipeline Integration', () => {
       .build()
     
     // Should not crash any calculations
-    expect(() => getContributorStats([emptyCommit])).not.toThrow()
-    expect(() => getFileTypeStats([emptyCommit])).not.toThrow()
-    expect(() => getTimeSeriesData([emptyCommit])).not.toThrow()
+    expect(() => getContributorStats([emptyCommit], TEST_CONFIG)).not.toThrow()
+    expect(() => getFileTypeStats([emptyCommit], undefined, TEST_CONFIG)).not.toThrow()
+    expect(() => getTimeSeriesData([emptyCommit], TEST_CONFIG)).not.toThrow()
     expect(() => getLinearSeriesData([emptyCommit])).not.toThrow()
 
     // Commit with unusual file extensions
@@ -316,13 +317,13 @@ describe('Data Pipeline Integration', () => {
       })
       .build()
 
-    const fileTypes = getFileTypeStats([unusualCommit])
+    const fileTypes = getFileTypeStats([unusualCommit], undefined, TEST_CONFIG)
     expect(fileTypes[0]?.type).toBe('Other')
 
     // Very long commit message
     const longMessage = 'fix: ' + 'word '.repeat(1000)
 
-    expect(() => processCommitMessages([longMessage])).not.toThrow()
+    expect(() => processCommitMessages([longMessage], TEST_CONFIG)).not.toThrow()
   })
 
   test('git extractor integration', () => {
@@ -361,7 +362,7 @@ describe('Data Pipeline Integration', () => {
 
     // Test byte changes extraction
     const byteOutput = `100\t50\tsrc/file.ts`
-    const bytes = parseByteChanges(byteOutput)
+    const bytes = parseByteChanges(byteOutput, TEST_CONFIG)
     expect(bytes).toMatchObject({
       totalBytesAdded: 5000,
       totalBytesDeleted: 2500,

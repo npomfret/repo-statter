@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { TEST_CONFIG } from '../test/test-config.js'
 import { getFileTypeStats, getFileHeatData } from './file-calculator.js'
 import { createTestCommit, FileChangeBuilder } from '../test/builders.js'
 
@@ -16,7 +17,7 @@ describe('getFileTypeStats', () => {
       })
     ]
     
-    const stats = getFileTypeStats(commits)
+    const stats = getFileTypeStats(commits, undefined, TEST_CONFIG)
     
     expect(stats).toHaveLength(1)
     expect(stats[0]!).toEqual({
@@ -53,7 +54,7 @@ describe('getFileTypeStats', () => {
       })
     ]
     
-    const stats = getFileTypeStats(commits)
+    const stats = getFileTypeStats(commits, undefined, TEST_CONFIG)
     
     expect(stats).toHaveLength(2)
     expect(stats[0]!).toEqual({
@@ -79,13 +80,13 @@ describe('getFileTypeStats', () => {
       })
     ]
     
-    const stats = getFileTypeStats(commits)
+    const stats = getFileTypeStats(commits, undefined, TEST_CONFIG)
     
     expect(stats.map(s => s.type)).toEqual(['JavaScript', 'TypeScript', 'CSS'])
   })
   
   it('handles empty commits array', () => {
-    const stats = getFileTypeStats([])
+    const stats = getFileTypeStats([], undefined, TEST_CONFIG)
     expect(stats).toEqual([])
   })
   
@@ -94,7 +95,7 @@ describe('getFileTypeStats', () => {
       createTestCommit({ filesChanged: [] })
     ]
     
-    const stats = getFileTypeStats(commits)
+    const stats = getFileTypeStats(commits, undefined, TEST_CONFIG)
     expect(stats).toEqual([])
   })
   
@@ -110,7 +111,7 @@ describe('getFileTypeStats', () => {
       })
     ]
     
-    const stats = getFileTypeStats(commits)
+    const stats = getFileTypeStats(commits, undefined, TEST_CONFIG)
     
     expect(stats).toHaveLength(1)
     expect(stats[0]!.percentage).toBe(0)
@@ -141,7 +142,7 @@ describe('getFileHeatData', () => {
       })
     ]
     
-    const heatData = getFileHeatData(commits)
+    const heatData = getFileHeatData(commits, undefined, TEST_CONFIG)
     
     expect(heatData).toHaveLength(1)
     expect(heatData[0]!.fileName).toBe('src/index.js')
@@ -174,7 +175,7 @@ describe('getFileHeatData', () => {
       })
     ]
     
-    const heatData = getFileHeatData(commits)
+    const heatData = getFileHeatData(commits, undefined, TEST_CONFIG)
     
     expect(heatData).toHaveLength(1)
     expect(heatData[0]!.commitCount).toBe(2)
@@ -202,7 +203,7 @@ describe('getFileHeatData', () => {
       })
     ]
     
-    const heatData = getFileHeatData(commits)
+    const heatData = getFileHeatData(commits, undefined, TEST_CONFIG)
     
     expect(heatData[0]!.lastModified).toBe('2024-01-10T10:00:00.000Z')
   })
@@ -237,7 +238,7 @@ describe('getFileHeatData', () => {
       })
     ]
     
-    const heatData = getFileHeatData(commits)
+    const heatData = getFileHeatData(commits, undefined, TEST_CONFIG)
     
     expect(heatData).toHaveLength(2)
     expect(heatData[0]!.fileName).toBe('recent.js')
@@ -261,7 +262,7 @@ describe('getFileHeatData', () => {
       })
     ]
     
-    const heatData = getFileHeatData(commits)
+    const heatData = getFileHeatData(commits, undefined, TEST_CONFIG)
     
     expect(heatData.map(h => h.fileName)).toEqual(['high-heat.js', 'low-heat.js'])
   })
@@ -278,13 +279,13 @@ describe('getFileHeatData', () => {
       })
     ]
     
-    const heatData = getFileHeatData(commits)
+    const heatData = getFileHeatData(commits, undefined, TEST_CONFIG)
     
     expect(heatData[0]!.totalLines).toBe(1)
   })
   
   it('handles empty commits array', () => {
-    const heatData = getFileHeatData([])
+    const heatData = getFileHeatData([], undefined, TEST_CONFIG)
     expect(heatData).toEqual([])
   })
   
@@ -300,7 +301,7 @@ describe('getFileHeatData', () => {
       })
     ]
     
-    const heatData = getFileHeatData(commits)
+    const heatData = getFileHeatData(commits, undefined, TEST_CONFIG)
     
     expect(heatData[0]!.fileType).toBe('TypeScript')
   })

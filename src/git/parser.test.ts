@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { TEST_CONFIG } from '../test/test-config.js'
 import { parseCommitHistory } from './parser.js'
 import path from 'path'
 import { existsSync } from 'fs'
@@ -15,7 +16,7 @@ describe('byte calculation integration test', () => {
     }
     
     // Get all commit history with byte changes
-    const commits = await parseCommitHistory(testRepoPath)
+    const commits = await parseCommitHistory(testRepoPath, undefined, undefined, { useCache: true }, TEST_CONFIG)
     
     // Verify that byte changes are calculated (using line-based estimation)
     let hasNonZeroBytes = false
@@ -62,7 +63,7 @@ describe('parseCommitHistory with progress reporting', () => {
     }
     
     // Parse commits with progress reporter
-    await parseCommitHistory(testRepoPath, mockProgressReporter)
+    await parseCommitHistory(testRepoPath, mockProgressReporter, undefined, { useCache: true }, TEST_CONFIG)
     
     // Verify progress was reported
     expect(progressUpdates).toContain('Fetching commit history')

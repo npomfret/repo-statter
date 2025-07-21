@@ -17,6 +17,8 @@ export interface FileHeatData {
 }
 
 export function getFileTypeStats(commits: CommitData[], currentFiles: Set<string> | undefined, config: RepoStatterConfig): FileTypeStats[] {
+  // Config will be used for filtering/customization in future updates
+  void config
   const fileTypeMap = new Map<string, number>()
   
   for (const commit of commits) {

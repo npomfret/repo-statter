@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { TEST_CONFIG } from '../test/test-config.js'
 import { getTimeSeriesData, getRepoAgeInHours } from './time-series-transformer.js'
 import { CommitDataBuilder, FileChangeBuilder } from '../test/builders.js'
 
@@ -42,7 +43,7 @@ describe('Time Series Transformer', () => {
 
   describe('getTimeSeriesData', () => {
     it('should return empty array for no commits', () => {
-      const result = getTimeSeriesData([])
+      const result = getTimeSeriesData([], TEST_CONFIG)
       expect(result).toEqual([])
     })
 
@@ -62,7 +63,7 @@ describe('Time Series Transformer', () => {
           .build()
       ]
 
-      const result = getTimeSeriesData(commits)
+      const result = getTimeSeriesData(commits, TEST_CONFIG)
       
       // Should have 3 points: start point (Dec 31), Jan 1, and Jan 4
       expect(result).toHaveLength(3)
@@ -103,7 +104,7 @@ describe('Time Series Transformer', () => {
           .build()
       ]
 
-      const result = getTimeSeriesData(commits)
+      const result = getTimeSeriesData(commits, TEST_CONFIG)
       
       // Should have 3 points: start point (9:00), 10:00, and 11:00
       expect(result).toHaveLength(3)
@@ -147,7 +148,7 @@ describe('Time Series Transformer', () => {
           .build()
       ]
 
-      const result = getTimeSeriesData(commits)
+      const result = getTimeSeriesData(commits, TEST_CONFIG)
       
       // Should have 3 points: start point, Jan 1, and Jan 3
       expect(result).toHaveLength(3)
@@ -189,7 +190,7 @@ describe('Time Series Transformer', () => {
       delete (commits[0]! as any).bytesAdded
       delete (commits[0]! as any).bytesDeleted
 
-      const result = getTimeSeriesData(commits)
+      const result = getTimeSeriesData(commits, TEST_CONFIG)
       
       // Should handle missing byte data gracefully
       expect(result[1]!.bytesAdded.total).toBe(0)
@@ -217,7 +218,7 @@ describe('Time Series Transformer', () => {
           .build()
       ]
 
-      const result = getTimeSeriesData(commits)
+      const result = getTimeSeriesData(commits, TEST_CONFIG)
       
       // Should be sorted by date in ascending order
       expect(result).toHaveLength(4)
@@ -250,7 +251,7 @@ describe('Time Series Transformer', () => {
           .build()
       ]
 
-      const result = getTimeSeriesData(commits)
+      const result = getTimeSeriesData(commits, TEST_CONFIG)
       
       expect(result[0]!.cumulativeLines.total).toBe(0) // Start point
       expect(result[1]!.cumulativeLines.total).toBe(80) // 100 - 20
@@ -266,7 +267,7 @@ describe('Time Series Transformer', () => {
           .build()
       ]
 
-      const result = getTimeSeriesData(commits)
+      const result = getTimeSeriesData(commits, TEST_CONFIG)
       
       // Should have 2 points: start point and the commit
       expect(result).toHaveLength(2)

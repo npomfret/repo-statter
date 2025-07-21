@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { TEST_CONFIG } from '../test/test-config.js'
 import { 
   getContributorStats, 
   getContributorsByAverageLinesChanged,
@@ -22,7 +23,7 @@ describe('getContributorStats', () => {
       })
     ]
     
-    const stats = getContributorStats(commits)
+    const stats = getContributorStats(commits, TEST_CONFIG)
     
     expect(stats).toHaveLength(1)
     expect(stats[0]!).toEqual({
@@ -41,7 +42,7 @@ describe('getContributorStats', () => {
       createTestCommit({ authorName: 'Charlie', linesAdded: 5, linesDeleted: 2 })
     ]
     
-    const stats = getContributorStats(commits)
+    const stats = getContributorStats(commits, TEST_CONFIG)
     
     expect(stats).toHaveLength(3)
     expect(stats[0]!.name).toBe('Alice') // 2 commits, should be first
@@ -63,7 +64,7 @@ describe('getContributorStats', () => {
       createTestCommit({ authorName: 'TwoCommits' })
     ]
     
-    const stats = getContributorStats(commits)
+    const stats = getContributorStats(commits, TEST_CONFIG)
     
     expect(stats.map(s => s.name)).toEqual(['ThreeCommits', 'TwoCommits', 'OneCommit'])
     expect(stats.map(s => s.commits)).toEqual([3, 2, 1])
@@ -75,7 +76,7 @@ describe('getContributorStats', () => {
       createTestCommit({ authorName: 'Alice', linesAdded: 10, linesDeleted: 5 })
     ]
     
-    const stats = getContributorStats(commits)
+    const stats = getContributorStats(commits, TEST_CONFIG)
     
     expect(stats[0]!).toEqual({
       name: 'Alice',
@@ -86,7 +87,7 @@ describe('getContributorStats', () => {
   })
   
   it('throws on empty commits array', () => {
-    expect(() => getContributorStats([])).toThrow('Cannot calculate contributor stats from empty commits array')
+    expect(() => getContributorStats([], TEST_CONFIG)).toThrow('Cannot calculate contributor stats from empty commits array')
   })
 })
 
