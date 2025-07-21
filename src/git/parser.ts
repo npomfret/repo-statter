@@ -229,7 +229,7 @@ async function parseCommitDiff(repoPath: string, commitHash: string, config?: Re
   const byteChanges = await getByteChanges(repoPath, commitHash, config?.analysis)
   
   // Use the extracted pure function
-  return parseCommitDiffData(diffSummary, byteChanges, config?.fileTypes)
+  return parseCommitDiffData(diffSummary, byteChanges)
 }
 
 
