@@ -1,7 +1,7 @@
 {
   "name": "repo-statter",
   "version": "0.0.1",
-  "description": "CLI tool for analyzing git repository statistics and generating HTML reports",
+  "description": "Generate beautiful, interactive HTML reports from your git repository history with charts, statistics, and insights",
   "type": "module",
   "main": "./dist/cli.js",
   "types": "./dist/cli.d.ts",
