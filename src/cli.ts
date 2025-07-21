@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { handleCLI } from './cli/handler.js'
 import { isRepoStatError, formatError } from './utils/errors.js'
 

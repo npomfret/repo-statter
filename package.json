@@ -1,6 +1,6 @@
 {
   "name": "repo-statter",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "CLI tool for analyzing git repository statistics and generating HTML reports",
   "type": "module",
   "main": "./dist/cli.js",
@@ -17,7 +17,9 @@
     "test:clean": "./scripts/clean-test-repo.sh",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
-    "docs:build": "scripts/update-gh-pages.sh"
+    "docs:build": "scripts/update-gh-pages.sh",
+    "build": "tsc",
+    "prepublishOnly": "npm run build && npm run test"
   },
   "dependencies": {
     "commander": "^14.0.0",
