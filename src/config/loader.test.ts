@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vitest';
-import { mkdirSync, writeFileSync, rmSync, existsSync } from 'fs';
+import { mkdirSync, writeFileSync, rmSync, existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { loadConfiguration, validateConfiguration } from './loader.js';
 import type { ConfigOverrides } from './loader.js';
@@ -120,5 +120,65 @@ describe('Configuration Loader', () => {
   test('handles clearCache override', () => {
     const config = loadConfiguration(TEST_TMP_DIR, { clearCache: true });
     expect(config.performance.cacheEnabled).toBe(false);
+  });
+
+  test('exports configuration to JSON file', async () => {
+    const { exportConfiguration } = await import('./loader.js');
+    const exportPath = join(TEST_TMP_DIR, 'exported-config.json');
+    
+    await exportConfiguration(exportPath);
+    
+    expect(existsSync(exportPath)).toBe(true);
+    
+    const exportedContent = JSON.parse(readFileSync(exportPath, 'utf-8'));
+    expect(exportedContent).toEqual(DEFAULT_CONFIG);
+  });
+
+  test('adds .json extension if not provided', async () => {
+    const { exportConfiguration } = await import('./loader.js');
+    const exportPath = join(TEST_TMP_DIR, 'config-no-ext');
+    
+    await exportConfiguration(exportPath);
+    
+    expect(existsSync(exportPath + '.json')).toBe(true);
+    
+    const exportedContent = JSON.parse(readFileSync(exportPath + '.json', 'utf-8'));
+    expect(exportedContent).toEqual(DEFAULT_CONFIG);
+  });
+
+  test('throws error when file exists without force', async () => {
+    const { exportConfiguration } = await import('./loader.js');
+    const exportPath = join(TEST_TMP_DIR, 'existing.json');
+    
+    // Create existing file
+    writeFileSync(exportPath, '{}');
+    
+    await expect(exportConfiguration(exportPath, false)).rejects.toThrow('Configuration file already exists');
+  });
+
+  test('overwrites existing file with force flag', async () => {
+    const { exportConfiguration } = await import('./loader.js');
+    const exportPath = join(TEST_TMP_DIR, 'existing.json');
+    
+    // Create existing file with different content
+    writeFileSync(exportPath, '{"test": true}');
+    
+    await exportConfiguration(exportPath, true);
+    
+    const exportedContent = JSON.parse(readFileSync(exportPath, 'utf-8'));
+    expect(exportedContent).toEqual(DEFAULT_CONFIG);
+  });
+
+  test('creates directory if it doesn\'t exist', async () => {
+    const { exportConfiguration } = await import('./loader.js');
+    const subDir = join(TEST_TMP_DIR, 'new-dir');
+    const exportPath = join(subDir, 'config.json');
+    
+    await exportConfiguration(exportPath);
+    
+    expect(existsSync(exportPath)).toBe(true);
+    
+    const exportedContent = JSON.parse(readFileSync(exportPath, 'utf-8'));
+    expect(exportedContent).toEqual(DEFAULT_CONFIG);
   });
 });

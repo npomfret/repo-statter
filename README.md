@@ -62,6 +62,9 @@ repo-statter [repo-path] [options]
 - `--max-commits <number>` - Maximum number of recent commits to analyze
 - `--no-cache` - Disable caching (always do full scan)
 - `--clear-cache` - Clear existing cache before running
+- `--config-file <path>` - Path to custom configuration file
+- `--export-config <path>` - Export default configuration to specified file
+- `--force` - Force overwrite existing files when exporting configuration
 - `-h, --help` - Display help information
 - `-V, --version` - Display version number
 
@@ -89,6 +92,15 @@ npm run analyse . -- --no-cache
 # Clear cache and regenerate
 npm run analyse . -- --clear-cache
 
+# Export default configuration for editing
+npm run analyse -- --export-config my-config.json
+
+# Use custom configuration file
+npm run analyse -- --config-file my-config.json
+
+# Force overwrite existing config file
+npm run analyse -- --export-config my-config.json --force
+
 # Combine options
 npm run analyse -- --repo /path/to/repo --output custom-dir --max-commits 2000
 ```
@@ -99,6 +111,62 @@ npm run analyse -- --repo /path/to/repo --output custom-dir --max-commits 2000
 - The `--output-file` option allows you to specify a custom filename, automatically adding `.html` extension if not provided
 - When using npm scripts, remember to use `--` before passing options to separate npm arguments from script arguments
 - Output paths are relative to the current working directory
+- Use `--export-config` to create a configuration file you can edit, then `--config-file` to use it
+- The exported configuration file contains all available settings with their default values
+
+### Configuration Files
+
+Repo Statter supports custom configuration files for easy customization of analysis settings:
+
+#### Creating a Configuration File
+
+Export the default configuration to see all available options:
+
+```bash
+# Export default configuration
+npm run analyse -- --export-config my-config.json
+
+# This creates a JSON file with all available settings and their defaults
+```
+
+#### Using a Configuration File
+
+```bash
+# Use your custom configuration
+npm run analyse -- --config-file my-config.json
+
+# Configuration files can be combined with other options
+npm run analyse /path/to/repo -- --config-file my-config.json --output reports
+```
+
+#### Configuration Categories
+
+The exported configuration file includes settings for:
+
+- **Analysis**: Commit limits, byte estimation, time series thresholds
+- **Word Cloud**: Size, word limits, display parameters  
+- **Charts**: Dimensions, limits for various chart types
+- **File Heat**: Recency decay, weighting factors, display limits
+- **Performance**: Caching, progress reporting settings
+- **Exclusions**: File patterns to ignore during analysis
+- **File Types**: Extension mappings and binary file detection
+- **Text Analysis**: Stop words for text processing
+- **File Categories**: Patterns for categorizing files
+- **Commit Filters**: Patterns for filtering merge/automated commits
+
+#### Example Workflow
+
+```bash
+# 1. Export the default configuration
+npm run analyse -- --export-config project-config.json
+
+# 2. Edit project-config.json to customize settings
+#    For example, increase word cloud size:
+#    "wordCloud": { "maxWords": 200, "minWordLength": 4 }
+
+# 3. Use your customized configuration
+npm run analyse -- --config-file project-config.json
+```
 
 ### Performance Caching
 

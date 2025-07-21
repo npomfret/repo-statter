@@ -1,5 +1,6 @@
 import { readFileSync, existsSync } from 'fs';
-import { resolve } from 'path';
+import { writeFile, mkdir } from 'fs/promises';
+import { resolve, dirname, extname } from 'path';
 import type { RepoStatterConfig } from './schema.js';
 import { DEFAULT_CONFIG } from './defaults.js';
 
@@ -26,6 +27,33 @@ function deepMerge<T extends Record<string, any>>(target: T, source: Partial<T>)
   }
   
   return result;
+}
+
+export async function exportConfiguration(filePath: string, force: boolean = false): Promise<void> {
+  // Add .json extension if not provided
+  const finalPath = extname(filePath) ? filePath : `${filePath}.json`;
+  
+  // Check if file already exists
+  if (existsSync(finalPath) && !force) {
+    throw new Error(`Configuration file already exists: ${finalPath}. Use --force to overwrite.`);
+  }
+  
+  // Create directory if it doesn't exist
+  const dir = dirname(finalPath);
+  try {
+    await mkdir(dir, { recursive: true });
+  } catch (error) {
+    // Directory might already exist, ignore error
+  }
+  
+  // Export configuration as pretty JSON
+  const configJson = JSON.stringify(DEFAULT_CONFIG, null, 2);
+  
+  try {
+    await writeFile(finalPath, configJson, 'utf-8');
+  } catch (error) {
+    throw new Error(`Failed to write configuration file: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 
 function loadConfigFile(configPath: string): Partial<RepoStatterConfig> | null {
@@ -93,7 +121,7 @@ export function loadConfiguration(repoPath: string, overrides: ConfigOverrides =
     }
   }
   
-  // Apply CLI overrides
+  // Apply simple CLI overrides
   if (overrides.maxCommits !== undefined) {
     mergedConfig.analysis.maxCommits = overrides.maxCommits;
   }

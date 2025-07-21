@@ -21,7 +21,9 @@ export async function handleCLI(args: string[]): Promise<void> {
     .option('--max-commits <number>', 'Maximum number of recent commits to analyze')
     .option('--no-cache', 'Disable caching (always do full scan)')
     .option('--clear-cache', 'Clear existing cache before running')
-    .option('--config <path>', 'Path to configuration file')
+    .option('--config-file <path>', 'Path to configuration file')
+    .option('--export-config <path>', 'Export default configuration to specified file')
+    .option('--force', 'Force overwrite existing files when exporting configuration')
     .action(async (repoPath, options) => {
       const finalRepoPath = options.repo || repoPath || process.cwd()
       const outputDir = options.output
@@ -30,6 +32,17 @@ export async function handleCLI(args: string[]): Promise<void> {
       try {
         await validateGitRepository(finalRepoPath)
         
+        // Handle config export first
+        if (options.exportConfig) {
+          const { exportConfiguration } = await import('../config/loader.js');
+          await exportConfiguration(options.exportConfig, options.force || false);
+          console.log(`Configuration exported to: ${options.exportConfig}`);
+          console.log(`\nNext steps:`);
+          console.log(`1. Edit ${options.exportConfig} to customize settings`);
+          console.log(`2. Use --config-file ${options.exportConfig} to apply your configuration`);
+          return;
+        }
+
         // Load configuration with CLI overrides
         const configOverrides: ConfigOverrides = {
           maxCommits: options.maxCommits ? parseInt(options.maxCommits, 10) : null,
@@ -37,7 +50,7 @@ export async function handleCLI(args: string[]): Promise<void> {
           outputFile: outputFile,
           noCache: options.noCache,
           clearCache: options.clearCache,
-          configPath: options.config
+          configPath: options.configFile
         }
         
         const config = loadConfiguration(finalRepoPath, configOverrides)
