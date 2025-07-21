@@ -34,11 +34,18 @@ export class FileTypesChart {
         type: 'donut', 
         height: 350,
         background: isDark ? '#161b22' : '#ffffff',
+        selection: {
+          enabled: true
+        },
         events: {
           dataPointSelection: (_event: any, _chartContext: any, config: any) => {
             if (this.onFileTypeClick) {
               const selectedType = config.w.config.labels[config.dataPointIndex]
-              const isAlreadySelected = config.w.globals.selectedDataPoints?.[0]?.includes(config.dataPointIndex)
+              // Check if this slice is already selected
+              const selectedPoints = config.w.globals.selectedDataPoints?.[0] || []
+              const isAlreadySelected = Array.isArray(selectedPoints) && selectedPoints.includes(config.dataPointIndex)
+              
+              // Toggle selection
               this.onFileTypeClick(isAlreadySelected ? null : selectedType)
             }
           }

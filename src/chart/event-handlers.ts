@@ -226,8 +226,7 @@ export class EventHandlers {
     if (this.selectedFileType && fileHeatmapChart) {
       // Filter file heat data by file type
       const filteredData = this.data.fileHeatData.filter(file => {
-        const fileType = this.getFileTypeBrowser(file.fileName)
-        return fileType === this.selectedFileType
+        return file.fileType === this.selectedFileType
       })
       
       if (filteredData.length > 0) {
@@ -252,20 +251,6 @@ export class EventHandlers {
       const maxFiles = this.data.chartsConfig?.fileHeatmapMaxFiles ?? 100
       fileHeatmapChart.render(this.data.fileHeatData, height, maxFiles)
     }
-  }
-  
-  private getFileTypeBrowser(fileName: string): string {
-    const lastDotIndex = fileName.lastIndexOf('.')
-    if (lastDotIndex === -1 || lastDotIndex === fileName.length - 1) return 'Other'
-    
-    const ext = fileName.slice(lastDotIndex).toLowerCase()
-    
-    // Get file type mappings from configuration if available
-    const fileTypesConfig = (window as any).repoData?.fileTypesConfig
-    const mappings = fileTypesConfig?.mappings || {}
-    
-    // If configuration is not available, return 'Other' as fallback
-    return mappings[ext] || 'Other'
   }
   
   private updateTopFilesWithFilter(): void {
