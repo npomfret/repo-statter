@@ -1,8 +1,8 @@
 # Extract configuration to JSON files
 
-## Status: ✅ COMPLETED (2025-01-21)
+## Status: 🔄 IN PROGRESS (Phase 7 - Additional Configuration Extraction)
 **Priority**: High (Cleanup/Refactoring)
-**Estimated Size**: Medium
+**Estimated Size**: Large
 **Type**: Refactoring
 
 ## Problem
@@ -169,20 +169,142 @@ Successfully implemented in 6 main phases:
 - Consider adding JSON schema for IDE autocomplete support
 - Monitor for user feedback on configuration options
 
-## Deferred Items
+## Phase 7: Additional Configuration Extraction (2025-01-21)
 
-### File Type Mappings
-The `FILE_TYPE_MAP` and `BINARY_EXTENSIONS` constants were considered for extraction to configuration but deferred because:
-- They are used in multiple disconnected parts of the codebase
-- Making them configurable would require significant architectural changes
-- The current hardcoded mappings cover most common file types
-- Users haven't expressed a need to customize these mappings
-- Can be reconsidered if user demand emerges
+### Newly Identified Hardcoded Values
 
-### AnalysisContext Refactoring
-A potential improvement identified during the configuration refactoring:
-- Create an `AnalysisContext` interface to group related parameters
-- Would include: `repoPath`, `repoName`, `isLizardInstalled`, `currentFiles`, `progressReporter`, and `config`
-- Would simplify function signatures throughout the codebase
-- Added as a TODO comment in `src/report/generator.ts`
-- Can be implemented as a follow-up refactoring task
+After review, several more hardcoded values were found that should be configurable:
+
+1. **FILE_TYPE_MAP** (`src/data/git-extractor.ts:8-63`)
+   - Maps file extensions to language names
+   - Duplicated in multiple files:
+     - `src/charts/top-files-chart.ts:11`
+     - `src/chart/event-handlers.ts:263`
+     - `docs/repo-statter/index.html` (multiple locations)
+
+2. **BINARY_EXTENSIONS** (`src/data/git-extractor.ts:65-75`)
+   - Set of binary file extensions to exclude from analysis
+
+3. **STOP_WORDS** (`src/text/processor.ts:12-28`)
+   - Common English words to exclude from word cloud analysis
+   - Users may want to customize for different languages
+
+4. **VERSION** (`src/index.ts:8`)
+   - Application version constant "1.0.0"
+   - Should match config version
+
+### Implementation Plan for Phase 7
+
+#### Step 1: Update Configuration Schema ✅
+- Added `FileTypesConfig` interface with:
+  - `mappings: Record<string, string>` for file type mappings
+  - `binaryExtensions: string[]` for binary file detection
+- Added `TextAnalysisConfig` interface with:
+  - `stopWords: string[]` for customizable stop words
+
+#### Step 2: Update Defaults ✅
+- Moved FILE_TYPE_MAP to `config.fileTypes.mappings`
+- Moved BINARY_EXTENSIONS to `config.fileTypes.binaryExtensions`
+- Moved STOP_WORDS to `config.textAnalysis.stopWords`
+
+#### Step 3: Refactor Core Modules (TODO)
+- Update `src/data/git-extractor.ts`:
+  - Accept config parameter in `getFileType()` and `isBinaryFile()`
+  - Remove hardcoded FILE_TYPE_MAP and BINARY_EXTENSIONS
+- Update `src/text/processor.ts`:
+  - Accept config parameter in word processing functions
+  - Remove hardcoded STOP_WORDS
+- Update `src/index.ts`:
+  - Use config.version instead of hardcoded VERSION
+
+#### Step 4: Remove Duplicate Mappings (TODO)
+- Remove FILE_TYPE_MAP from:
+  - `src/charts/top-files-chart.ts`
+  - `src/chart/event-handlers.ts`
+- Update these files to use the configuration
+
+#### Step 5: Update Tests (TODO)
+- Update all test files that use these functions
+- Ensure they pass proper configuration
+
+## Phase 8: AnalysisContext Refactoring (Future)
+
+### Problem
+Currently, many functions accept numerous parameters:
+- `repoPath: string`
+- `repoName: string`
+- `isLizardInstalled: boolean`
+- `currentFiles: Set<string>`
+- `progressReporter?: ProgressReporter`
+- `config: RepoStatterConfig`
+
+This leads to:
+- Long function signatures
+- Difficult refactoring when adding new parameters
+- Repetitive parameter passing through call chains
+
+### Proposed Solution: AnalysisContext Interface
+
+```typescript
+interface AnalysisContext {
+  // Repository information
+  repoPath: string;
+  repoName: string;
+  
+  // Analysis state
+  currentFiles: Set<string>;
+  isLizardInstalled: boolean;
+  
+  // Configuration and utilities
+  config: RepoStatterConfig;
+  progressReporter?: ProgressReporter;
+  
+  // Optional: Analysis metadata
+  startTime?: Date;
+  commitCount?: number;
+}
+```
+
+### Benefits
+1. **Cleaner APIs**: Functions accept a single context parameter
+2. **Easier Extension**: Add new fields without changing all function signatures
+3. **Better Organization**: Related data grouped together
+4. **Reduced Coupling**: Functions don't need to know about all parameters
+
+### Implementation Approach
+1. Create `AnalysisContext` interface in `src/types/context.ts`
+2. Start with high-level functions in `src/report/generator.ts`
+3. Gradually refactor downward through the call chain
+4. Update tests to use context builders
+
+### Example Refactoring
+
+Before:
+```typescript
+async function analyzeRepository(
+  repoPath: string,
+  repoName: string,
+  isLizardInstalled: boolean,
+  currentFiles: Set<string>,
+  progressReporter?: ProgressReporter,
+  config?: RepoStatterConfig
+): Promise<AnalysisResult>
+```
+
+After:
+```typescript
+async function analyzeRepository(
+  context: AnalysisContext
+): Promise<AnalysisResult>
+```
+
+## Next Steps
+
+1. Complete Phase 7 implementation
+2. Run all tests and fix any failures
+3. Update documentation with new configuration options
+4. Create example configuration showing:
+   - Custom file type mappings for domain-specific languages
+   - Stop words for different languages
+   - Binary extensions for proprietary formats
+5. Consider Phase 8 (AnalysisContext) as a separate task
