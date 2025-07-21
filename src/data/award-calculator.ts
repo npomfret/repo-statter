@@ -1,6 +1,6 @@
 import type { CommitData } from '../git/parser.js'
 import { isRealCommit } from '../utils/commit-filters.js'
-import type { RepoStatterConfig } from '../config/schema.js'
+import type { AnalysisContext } from '../report/generator.js'
 
 export interface CommitAward {
   sha: string
@@ -11,11 +11,11 @@ export interface CommitAward {
 }
 
 function getTopCommitsByMetric(
-  commits: CommitData[],
-  config: RepoStatterConfig,
+  context: AnalysisContext,
   getValue: (commit: CommitData) => number,
   additionalFilter?: (commit: CommitData) => boolean
 ): CommitAward[] {
+  const { commits, config } = context
   return commits
     .filter(commit => isRealCommit(commit, config) && (!additionalFilter || additionalFilter(commit)))
     .map(commit => ({
@@ -29,32 +29,30 @@ function getTopCommitsByMetric(
     .slice(0, 5)
 }
 
-export function getTopCommitsByFilesModified(commits: CommitData[], config: RepoStatterConfig): CommitAward[] {
-  return getTopCommitsByMetric(commits, config, commit => commit.filesChanged.length)
+export function getTopCommitsByFilesModified(context: AnalysisContext): CommitAward[] {
+  return getTopCommitsByMetric(context, commit => commit.filesChanged.length)
 }
 
-export function getTopCommitsByBytesAdded(commits: CommitData[], config: RepoStatterConfig): CommitAward[] {
+export function getTopCommitsByBytesAdded(context: AnalysisContext): CommitAward[] {
   return getTopCommitsByMetric(
-    commits,
-    config,
+    context,
     commit => commit.bytesAdded ?? 0,
     commit => commit.bytesAdded !== undefined
   )
 }
 
-export function getTopCommitsByBytesRemoved(commits: CommitData[], config: RepoStatterConfig): CommitAward[] {
+export function getTopCommitsByBytesRemoved(context: AnalysisContext): CommitAward[] {
   return getTopCommitsByMetric(
-    commits,
-    config,
+    context,
     commit => commit.bytesDeleted ?? 0,
     commit => commit.bytesDeleted !== undefined
   )
 }
 
-export function getTopCommitsByLinesAdded(commits: CommitData[], config: RepoStatterConfig): CommitAward[] {
-  return getTopCommitsByMetric(commits, config, commit => commit.linesAdded)
+export function getTopCommitsByLinesAdded(context: AnalysisContext): CommitAward[] {
+  return getTopCommitsByMetric(context, commit => commit.linesAdded)
 }
 
-export function getTopCommitsByLinesRemoved(commits: CommitData[], config: RepoStatterConfig): CommitAward[] {
-  return getTopCommitsByMetric(commits, config, commit => commit.linesDeleted)
+export function getTopCommitsByLinesRemoved(context: AnalysisContext): CommitAward[] {
+  return getTopCommitsByMetric(context, commit => commit.linesDeleted)
 }

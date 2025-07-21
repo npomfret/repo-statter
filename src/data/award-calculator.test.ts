@@ -10,9 +10,20 @@ import {
 } from './award-calculator.js'
 import { CommitDataBuilder, FileChangeBuilder } from '../test/builders.js'
 import type { CommitData } from '../git/parser.js'
-import type { RepoStatterConfig } from '../config/schema.js'
+import type { AnalysisContext } from '../report/generator.js'
 
-type AwardFunction = (commits: CommitData[], config: RepoStatterConfig) => CommitAward[]
+type AwardFunction = (context: AnalysisContext) => CommitAward[]
+
+function createTestContext(commits: CommitData[]): AnalysisContext {
+  return {
+    repoPath: '/fake/repo',
+    repoName: 'test-repo',
+    isLizardInstalled: false,
+    currentFiles: new Set<string>(),
+    commits,
+    config: TEST_CONFIG
+  }
+}
 
 interface TestCase {
   name: string
@@ -67,7 +78,7 @@ const testCases: TestCase[] = [
 describe('Award Calculator', () => {
   describe.each(testCases)('$name', ({ fn, setupCommit, skipUndefinedTest }) => {
     it('should return empty array for no commits', () => {
-      const result = fn([], TEST_CONFIG)
+      const result = fn(createTestContext([]))
       expect(result).toEqual([])
     })
 
@@ -78,7 +89,7 @@ describe('Award Calculator', () => {
         setupCommit(new CommitDataBuilder().withHash('3').withMessage('Medium change'), 50).build()
       ]
 
-      const result = fn(commits, TEST_CONFIG)
+      const result = fn(createTestContext(commits))
       
       expect(result).toHaveLength(3)
       expect(result[0]!.sha).toBe('2')
@@ -105,7 +116,7 @@ describe('Award Calculator', () => {
         ).build()
       ]
 
-      const result = fn(commits, TEST_CONFIG)
+      const result = fn(createTestContext(commits))
       
       expect(result).toHaveLength(1)
       expect(result[0]!.sha).toBe('2')
@@ -131,7 +142,7 @@ describe('Award Calculator', () => {
         ).build()
       ]
 
-      const result = fn(commits, TEST_CONFIG)
+      const result = fn(createTestContext(commits))
       
       expect(result).toHaveLength(1)
       expect(result[0]!.sha).toBe('4')
@@ -157,7 +168,7 @@ describe('Award Calculator', () => {
         ).build()
       ]
 
-      const result = fn(commits, TEST_CONFIG)
+      const result = fn(createTestContext(commits))
       
       expect(result).toHaveLength(1)
       expect(result[0]!.sha).toBe('4')
@@ -183,7 +194,7 @@ describe('Award Calculator', () => {
         ).build()
       ]
 
-      const result = fn(commits, TEST_CONFIG)
+      const result = fn(createTestContext(commits))
       
       expect(result).toHaveLength(1)
       expect(result[0]!.sha).toBe('4')
@@ -199,7 +210,7 @@ describe('Award Calculator', () => {
         ).build()
       )
 
-      const result = fn(commits, TEST_CONFIG)
+      const result = fn(createTestContext(commits))
       
       expect(result).toHaveLength(5)
       expect(result[0]!.sha).toBe('0')
@@ -216,7 +227,7 @@ describe('Award Calculator', () => {
           ).build()
         ]
 
-        const result = fn(commits, TEST_CONFIG)
+        const result = fn(createTestContext(commits))
         
         expect(result.length).toBeGreaterThan(0)
         expect(result.some(r => r.sha === '2')).toBe(true)
@@ -248,7 +259,7 @@ describe('Award Calculator', () => {
           .build()
       ]
 
-      const result = getTopCommitsByBytesAdded(commits, TEST_CONFIG)
+      const result = getTopCommitsByBytesAdded(createTestContext(commits))
       
       // Should only include commits with bytes added > 0
       const commitsWithBytesAdded = result.filter(r => r.value > 0)
@@ -270,7 +281,7 @@ describe('Award Calculator', () => {
         .withFileChange(new FileChangeBuilder().withPath('c.js').build())
         .build()
       
-      const filesResult = getTopCommitsByFilesModified([filesCommit], TEST_CONFIG)
+      const filesResult = getTopCommitsByFilesModified(createTestContext([filesCommit]))
       expect(filesResult[0]!.value).toBe(3)
       
       // Test bytes added
@@ -285,7 +296,7 @@ describe('Award Calculator', () => {
         )
         .build()
       
-      const bytesAddedResult = getTopCommitsByBytesAdded([bytesCommit], TEST_CONFIG)
+      const bytesAddedResult = getTopCommitsByBytesAdded(createTestContext([bytesCommit]))
       expect(bytesAddedResult[0]!.value).toBe(5000)
       
       // Test lines added
@@ -300,7 +311,7 @@ describe('Award Calculator', () => {
         )
         .build()
       
-      const linesAddedResult = getTopCommitsByLinesAdded([linesCommit], TEST_CONFIG)
+      const linesAddedResult = getTopCommitsByLinesAdded(createTestContext([linesCommit]))
       expect(linesAddedResult[0]!.value).toBe(150)
     })
   })
@@ -332,11 +343,11 @@ describe('Award Calculator', () => {
           .build()
       ]
 
-      const filesResult = getTopCommitsByFilesModified(commits, TEST_CONFIG)
-      const bytesAddedResult = getTopCommitsByBytesAdded(commits, TEST_CONFIG)
-      const bytesRemovedResult = getTopCommitsByBytesRemoved(commits, TEST_CONFIG)
-      const linesAddedResult = getTopCommitsByLinesAdded(commits, TEST_CONFIG)
-      const linesRemovedResult = getTopCommitsByLinesRemoved(commits, TEST_CONFIG)
+      const filesResult = getTopCommitsByFilesModified(createTestContext(commits))
+      const bytesAddedResult = getTopCommitsByBytesAdded(createTestContext(commits))
+      const bytesRemovedResult = getTopCommitsByBytesRemoved(createTestContext(commits))
+      const linesAddedResult = getTopCommitsByLinesAdded(createTestContext(commits))
+      const linesRemovedResult = getTopCommitsByLinesRemoved(createTestContext(commits))
 
       // All should exclude the merge commit
       expect(filesResult).toHaveLength(1)
@@ -364,7 +375,7 @@ describe('Award Calculator', () => {
         .withFileChange(new FileChangeBuilder().withPath('feature.js').build())
         .build()
 
-      const result = getTopCommitsByFilesModified([commit], TEST_CONFIG)
+      const result = getTopCommitsByFilesModified(createTestContext([commit]))
       
       expect(result[0]).toEqual({
         sha: 'abc123',
@@ -383,9 +394,9 @@ describe('Award Calculator', () => {
         expect(award!.value).toBeGreaterThanOrEqual(0)
       }
 
-      const filesResult = getTopCommitsByFilesModified([commit], TEST_CONFIG)[0]
-      const bytesAddedResult = getTopCommitsByBytesAdded([commit], TEST_CONFIG)[0]
-      const linesAddedResult = getTopCommitsByLinesAdded([commit], TEST_CONFIG)[0]
+      const filesResult = getTopCommitsByFilesModified(createTestContext([commit]))[0]
+      const bytesAddedResult = getTopCommitsByBytesAdded(createTestContext([commit]))[0]
+      const linesAddedResult = getTopCommitsByLinesAdded(createTestContext([commit]))[0]
 
       checkAward(filesResult)
       checkAward(bytesAddedResult)

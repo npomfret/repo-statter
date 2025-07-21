@@ -13,8 +13,8 @@ import {
 } from '../data/award-calculator.js'
 import { getTopFilesStats } from '../data/top-files-calculator.js'
 import { checkLizardInstalled } from '../data/lizard-complexity-analyzer.js'
-import { getTimeSeriesData, getLinearSeriesData } from '../chart/data-transformer.js'
-import { getTimeSeriesData as getTimeSeriesDataDirect } from '../data/time-series-transformer.js'
+import { getLinearSeriesData } from '../chart/data-transformer.js'
+import { getTimeSeriesData } from '../data/time-series-transformer.js'
 import { processCommitMessages } from '../text/processor.js'
 import { replaceTemplateVariables, injectIntoBody } from '../utils/template-engine.js'
 import { bundlePageScript } from '../build/bundle-page-script.js'
@@ -88,8 +88,8 @@ export async function generateReport(repoPath: string, outputMode: 'dist' | 'ana
   
   // Calculate all statistics once
   progressReporter?.report('Calculating contributor and file statistics')
-  const contributors = getContributorStats(commits, finalConfig)
-  const fileTypes = getFileTypeStats(commits, currentFiles, finalConfig)
+  const contributors = getContributorStats(context)
+  const fileTypes = getFileTypeStats(context)
   
   progressReporter?.report('Generating HTML report')
   const html = await injectDataIntoTemplate(template, chartData, contributors, fileTypes, context)
@@ -155,7 +155,7 @@ function formatFullDate(date: Date): string {
 }
 
 async function transformCommitData(context: AnalysisContext): Promise<ChartData> {
-  const { commits, repoName, repoPath, progressReporter, isLizardInstalled, currentFiles, config } = context
+  const { commits, repoName, repoPath, progressReporter, isLizardInstalled, currentFiles } = context
   
   // Calculate cumulative lines of code using the same method as the time series chart
   // This ensures consistency between the hero metric and the growth chart
@@ -163,7 +163,7 @@ async function transformCommitData(context: AnalysisContext): Promise<ChartData>
   
   if (commits.length > 0) {
     // Use the time series data to get the final cumulative total
-    const timeSeries = getTimeSeriesDataDirect(commits, config)
+    const timeSeries = getTimeSeriesData(context)
     if (timeSeries.length > 0) {
       const lastPoint = timeSeries[timeSeries.length - 1]
       totalLinesOfCode = lastPoint?.cumulativeLines.total ?? 0
@@ -226,25 +226,25 @@ async function transformCommitData(context: AnalysisContext): Promise<ChartData>
 }
 
 async function injectDataIntoTemplate(template: string, chartData: ChartData, contributors: ContributorStats[], fileTypes: FileTypeStats[], context: AnalysisContext): Promise<string> {
-  const { commits, currentFiles, repoPath, progressReporter, config } = context
+  const { commits, repoPath, progressReporter, config } = context
   
   progressReporter?.report('Generating chart data')
-  const timeSeries = getTimeSeriesData(commits, config)
+  const timeSeries = getTimeSeriesData(context)
   const linearSeries = getLinearSeriesData(commits)
   const wordCloudData = processCommitMessages(commits.map(c => c.message), config)
-  const fileHeatData = getFileHeatData(commits, currentFiles, config)
+  const fileHeatData = getFileHeatData(context)
   const topFilesData = await getTopFilesStats(context)
   
   progressReporter?.report('Calculating awards')
   // Calculate awards
   const awards = {
-    filesModified: getTopCommitsByFilesModified(commits, config),
-    bytesAdded: getTopCommitsByBytesAdded(commits, config),
-    bytesRemoved: getTopCommitsByBytesRemoved(commits, config),
-    linesAdded: getTopCommitsByLinesAdded(commits, config),
-    linesRemoved: getTopCommitsByLinesRemoved(commits, config),
-    lowestAverage: getLowestAverageLinesChanged(commits, config),
-    highestAverage: getHighestAverageLinesChanged(commits, config)
+    filesModified: getTopCommitsByFilesModified(context),
+    bytesAdded: getTopCommitsByBytesAdded(context),
+    bytesRemoved: getTopCommitsByBytesRemoved(context),
+    linesAdded: getTopCommitsByLinesAdded(context),
+    linesRemoved: getTopCommitsByLinesRemoved(context),
+    lowestAverage: getLowestAverageLinesChanged(context),
+    highestAverage: getHighestAverageLinesChanged(context)
   }
   
   // Bundle the TypeScript page script

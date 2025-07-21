@@ -1,7 +1,6 @@
-import type { CommitData } from '../git/parser.js'
 import { isRealCommit } from '../utils/commit-filters.js'
 import { assert } from '../utils/errors.js'
-import type { RepoStatterConfig } from '../config/schema.js'
+import type { AnalysisContext } from '../report/generator.js'
 
 export interface ContributorStats {
   name: string
@@ -16,7 +15,9 @@ export interface ContributorAward {
   averageLinesChanged: number
 }
 
-export function getContributorStats(commits: CommitData[], config: RepoStatterConfig): ContributorStats[] {
+export function getContributorStats(context: AnalysisContext): ContributorStats[] {
+  const { commits, config } = context
+  
   // Config will be used for filtering/customization in future updates
   void config
   assert(commits.length > 0, 'Cannot calculate contributor stats from empty commits array')
@@ -43,7 +44,9 @@ export function getContributorStats(commits: CommitData[], config: RepoStatterCo
 }
 
 
-export function getContributorsByAverageLinesChanged(commits: CommitData[], config: RepoStatterConfig): ContributorAward[] {
+export function getContributorsByAverageLinesChanged(context: AnalysisContext): ContributorAward[] {
+  const { commits, config } = context
+  
   const contributorMap = new Map<string, { commits: number; totalLinesChanged: number }>()
   
   for (const commit of commits) {
@@ -70,14 +73,14 @@ export function getContributorsByAverageLinesChanged(commits: CommitData[], conf
     }))
 }
 
-export function getLowestAverageLinesChanged(commits: CommitData[], config: RepoStatterConfig): ContributorAward[] {
-  return getContributorsByAverageLinesChanged(commits, config)
+export function getLowestAverageLinesChanged(context: AnalysisContext): ContributorAward[] {
+  return getContributorsByAverageLinesChanged(context)
     .sort((a, b) => a.averageLinesChanged - b.averageLinesChanged)
     .slice(0, 5)
 }
 
-export function getHighestAverageLinesChanged(commits: CommitData[], config: RepoStatterConfig): ContributorAward[] {
-  return getContributorsByAverageLinesChanged(commits, config)
+export function getHighestAverageLinesChanged(context: AnalysisContext): ContributorAward[] {
+  return getContributorsByAverageLinesChanged(context)
     .sort((a, b) => b.averageLinesChanged - a.averageLinesChanged)
     .slice(0, 5)
 }

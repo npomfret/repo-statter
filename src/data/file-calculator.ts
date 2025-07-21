@@ -1,5 +1,4 @@
-import type { CommitData } from '../git/parser.js'
-import type { RepoStatterConfig } from '../config/schema.js'
+import type { AnalysisContext } from '../report/generator.js'
 
 export interface FileTypeStats {
   type: string
@@ -16,7 +15,9 @@ export interface FileHeatData {
   fileType: string
 }
 
-export function getFileTypeStats(commits: CommitData[], currentFiles: Set<string> | undefined, config: RepoStatterConfig): FileTypeStats[] {
+export function getFileTypeStats(context: AnalysisContext): FileTypeStats[] {
+  const { commits, currentFiles, config } = context
+  
   // Config will be used for filtering/customization in future updates
   void config
   const fileTypeMap = new Map<string, number>()
@@ -44,7 +45,9 @@ export function getFileTypeStats(commits: CommitData[], currentFiles: Set<string
     .sort((a, b) => b.lines - a.lines)
 }
 
-export function getFileHeatData(commits: CommitData[], currentFiles: Set<string> | undefined, config: RepoStatterConfig): FileHeatData[] {
+export function getFileHeatData(context: AnalysisContext): FileHeatData[] {
+  const { commits, currentFiles, config } = context
+  
   const recencyDecayDays = config.fileHeat.recencyDecayDays
   const frequencyWeight = config.fileHeat.frequencyWeight
   const recencyWeight = config.fileHeat.recencyWeight
