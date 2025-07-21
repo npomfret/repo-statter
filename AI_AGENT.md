@@ -1,16 +1,11 @@
-# 🛑 MANDATORY: READ THIS FIRST - DO NOT SKIP
+Before making **ANY** code changes, you MUST read these files:
 
-STOP! DO NOT WRITE ANY CODE until you have completed ALL items in this document.
+- directives/engineering.md
+- directives/code-style.md
+- directives/logging.md
+- directives/testing.md
 
-## Required Pre-Work Checklist
-
-Before making **ANY** code changes, you MUST:
-
-- [ ] Read [engineering.md](directives/engineering.md) completely
-- [ ] Read [code-style.md](directives/code-style.md) completely
-- [ ] Read [logging.md](directives/logging.md) completely
-- [ ] Read [testing.md](directives/testing.md) completely
-- [ ] State: "I have read all directive files and understand I cannot make code changes until instructed."
+Summarise what you have learned form them.
 
 # Development Workflow
 - After any change, run the appropriate build and tests
