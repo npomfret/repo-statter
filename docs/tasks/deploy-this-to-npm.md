@@ -2,6 +2,41 @@
 
 This guide will walk you through the process of publishing a Node.js package to the npm registry for the first time.
 
+## Implementation Plan
+
+### Analysis
+This task is valid and worthwhile. The repo-statter project is a useful CLI tool for analyzing git repositories and would benefit from being available as an npm package. The package.json currently has `"private": true` which needs to be removed.
+
+### Required Changes (Small Commits)
+
+1. **Update package.json metadata** (Commit 1)
+   - Remove `"private": true`
+   - Add proper description: "CLI tool for analyzing git repository statistics and generating HTML reports"
+   - Update main/types to point to built files: `"dist/cli.js"` and `"dist/cli.d.ts"`
+   - Add bin field for CLI: `"bin": { "repo-statter": "dist/cli.js" }`
+   - Add files array: `["dist", "README.md", "LICENSE"]`
+   - Add repository field
+   - Add keywords: ["git", "statistics", "analysis", "repository", "cli", "metrics"]
+   - Verify license field exists
+
+2. **Add build configuration** (Commit 2)
+   - Update tsconfig.json to add `"outDir": "./dist"`
+   - Add build script to package.json: `"build": "tsc"`
+   - Add prepublishOnly script: `"prepublishOnly": "npm run build && npm run test"`
+   - Ensure CLI script has proper shebang: `#!/usr/bin/env node`
+
+3. **Documentation updates** (Commit 3)
+   - Ensure README.md has clear installation and usage instructions
+   - Add LICENSE file if missing
+   - Update README with npm badge once published
+
+### Publishing Steps (After Implementation)
+1. Run `npm run build` to test build process
+2. Run `npm publish --dry-run` to verify files
+3. Log in with `npm login`
+4. Publish with `npm publish`
+5. Verify at https://www.npmjs.com/package/repo-statter
+
 ## Prerequisites
 
 1.  **Node.js and npm:** You must have Node.js installed, which includes the npm command-line interface (CLI). You can download it from [nodejs.org](https://nodejs.org/).
