@@ -225,13 +225,13 @@ async function injectDataIntoTemplate(template: string, chartData: ChartData, co
   progressReporter?.report('Calculating awards')
   // Calculate awards
   const awards = {
-    filesModified: getTopCommitsByFilesModified(commits),
-    bytesAdded: getTopCommitsByBytesAdded(commits),
-    bytesRemoved: getTopCommitsByBytesRemoved(commits),
-    linesAdded: getTopCommitsByLinesAdded(commits),
-    linesRemoved: getTopCommitsByLinesRemoved(commits),
-    lowestAverage: getLowestAverageLinesChanged(commits),
-    highestAverage: getHighestAverageLinesChanged(commits)
+    filesModified: getTopCommitsByFilesModified(commits, finalConfig),
+    bytesAdded: getTopCommitsByBytesAdded(commits, finalConfig),
+    bytesRemoved: getTopCommitsByBytesRemoved(commits, finalConfig),
+    linesAdded: getTopCommitsByLinesAdded(commits, finalConfig),
+    linesRemoved: getTopCommitsByLinesRemoved(commits, finalConfig),
+    lowestAverage: getLowestAverageLinesChanged(commits, finalConfig),
+    highestAverage: getHighestAverageLinesChanged(commits, finalConfig)
   }
   
   // Bundle the TypeScript page script

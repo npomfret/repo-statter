@@ -102,7 +102,7 @@ describe('getContributorsByAverageLinesChanged', () => {
       // Total: 70 lines changed, 5 commits = 14 average
     ]
     
-    const stats = getContributorsByAverageLinesChanged(commits)
+    const stats = getContributorsByAverageLinesChanged(commits, TEST_CONFIG)
     
     expect(stats).toHaveLength(1)
     expect(stats[0]!).toEqual({
@@ -124,7 +124,7 @@ describe('getContributorsByAverageLinesChanged', () => {
       )
     ]
     
-    const stats = getContributorsByAverageLinesChanged(commits)
+    const stats = getContributorsByAverageLinesChanged(commits, TEST_CONFIG)
     
     expect(stats).toHaveLength(1)
     expect(stats[0]!.name).toBe('Bob')
@@ -156,7 +156,7 @@ describe('getContributorsByAverageLinesChanged', () => {
       })
     ]
     
-    const stats = getContributorsByAverageLinesChanged(commits)
+    const stats = getContributorsByAverageLinesChanged(commits, TEST_CONFIG)
     
     expect(stats).toHaveLength(1)
     expect(stats[0]!.commits).toBe(5) // Only real commits counted
@@ -175,7 +175,7 @@ describe('getContributorsByAverageLinesChanged', () => {
       )
     ]
     
-    const stats = getContributorsByAverageLinesChanged(commits)
+    const stats = getContributorsByAverageLinesChanged(commits, TEST_CONFIG)
     
     expect(stats).toHaveLength(2)
     const alice = stats.find(s => s.name === 'Alice')
@@ -203,7 +203,7 @@ describe('getLowestAverageLinesChanged', () => {
       )
     ]
     
-    const stats = getLowestAverageLinesChanged(commits)
+    const stats = getLowestAverageLinesChanged(commits, TEST_CONFIG)
     
     expect(stats).toHaveLength(3)
     expect(stats[0]!.name).toBe('Charlie')
@@ -227,7 +227,7 @@ describe('getLowestAverageLinesChanged', () => {
       }
     }
     
-    const stats = getLowestAverageLinesChanged(commits)
+    const stats = getLowestAverageLinesChanged(commits, TEST_CONFIG)
     
     expect(stats).toHaveLength(5)
     expect(stats[0]!.averageLinesChanged).toBe(2) // Contributor1
@@ -241,7 +241,7 @@ describe('getLowestAverageLinesChanged', () => {
       ...Array(4).fill(null).map(() => createTestCommit({ authorName: 'Bob' }))
     ]
     
-    const stats = getLowestAverageLinesChanged(commits)
+    const stats = getLowestAverageLinesChanged(commits, TEST_CONFIG)
     
     expect(stats).toEqual([])
   })
@@ -264,7 +264,7 @@ describe('getHighestAverageLinesChanged', () => {
       )
     ]
     
-    const stats = getHighestAverageLinesChanged(commits)
+    const stats = getHighestAverageLinesChanged(commits, TEST_CONFIG)
     
     expect(stats).toHaveLength(3)
     expect(stats[0]!.name).toBe('Bob')
@@ -285,7 +285,7 @@ describe('getHighestAverageLinesChanged', () => {
       )
     ]
     
-    const stats = getHighestAverageLinesChanged(commits)
+    const stats = getHighestAverageLinesChanged(commits, TEST_CONFIG)
     
     expect(stats).toHaveLength(1)
     expect(stats[0]!.name).toBe('Alice')

@@ -27,13 +27,13 @@ describe('Data Pipeline Integration', () => {
     expect(getTimeSeriesData(commits, TEST_CONFIG)).toEqual([])
     expect(getLinearSeriesData(commits)).toEqual([])
     expect(() => processCommitMessages([], TEST_CONFIG)).toThrow('Cannot process empty messages array')
-    expect(getTopCommitsByFilesModified(commits)).toEqual([])
-    expect(getTopCommitsByBytesAdded(commits)).toEqual([])
-    expect(getTopCommitsByBytesRemoved(commits)).toEqual([])
-    expect(getTopCommitsByLinesAdded(commits)).toEqual([])
-    expect(getTopCommitsByLinesRemoved(commits)).toEqual([])
-    expect(getLowestAverageLinesChanged(commits)).toEqual([])
-    expect(getHighestAverageLinesChanged(commits)).toEqual([])
+    expect(getTopCommitsByFilesModified(commits, TEST_CONFIG)).toEqual([])
+    expect(getTopCommitsByBytesAdded(commits, TEST_CONFIG)).toEqual([])
+    expect(getTopCommitsByBytesRemoved(commits, TEST_CONFIG)).toEqual([])
+    expect(getTopCommitsByLinesAdded(commits, TEST_CONFIG)).toEqual([])
+    expect(getTopCommitsByLinesRemoved(commits, TEST_CONFIG)).toEqual([])
+    expect(getLowestAverageLinesChanged(commits, TEST_CONFIG)).toEqual([])
+    expect(getHighestAverageLinesChanged(commits, TEST_CONFIG)).toEqual([])
   })
 
   test('complete flow with single contributor, single commit', () => {
@@ -86,7 +86,7 @@ describe('Data Pipeline Integration', () => {
     })
 
     // Awards
-    const topByFiles = getTopCommitsByFilesModified(commits)
+    const topByFiles = getTopCommitsByFilesModified(commits, TEST_CONFIG)
     expect(topByFiles).toHaveLength(1)
     expect(topByFiles[0]).toMatchObject({
       authorName: 'Alice',
@@ -177,12 +177,12 @@ describe('Data Pipeline Integration', () => {
     expect(heatData[0]?.heatScore).toBeGreaterThan(0)
 
     // Awards should identify different leaders
-    const mostLines = getTopCommitsByLinesAdded(commits)
+    const mostLines = getTopCommitsByLinesAdded(commits, TEST_CONFIG)
     expect(mostLines).toHaveLength(3)
     expect(mostLines[0]?.authorName).toBe('Alice')
     expect(mostLines[0]?.value).toBe(150)
 
-    const mostFiles = getTopCommitsByFilesModified(commits)
+    const mostFiles = getTopCommitsByFilesModified(commits, TEST_CONFIG)
     expect(mostFiles).toHaveLength(3)
     expect(mostFiles[0]?.value).toBe(2)
   })

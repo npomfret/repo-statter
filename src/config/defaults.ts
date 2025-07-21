@@ -206,5 +206,85 @@ export const DEFAULT_CONFIG: RepoStatterConfig = {
       'yourselves', 'themselves', 'yes', 'no', 'as', 'because', 'while', 'until', 'although',
       'though', 'unless', 'however', 'therefore', 'thus', 'hence', 'moreover', 'furthermore', 'meanwhile'
     ]
+  },
+  
+  fileCategories: {
+    testPatterns: [
+      '.test.',
+      '.spec.',
+      '/test/',
+      '/tests/',
+      '/__tests__/',
+      'test/',
+      'tests/',
+      '__tests__/'
+    ],
+    categoryMappings: {
+      'TypeScript': 'Application',
+      'JavaScript': 'Application',
+      'Python': 'Application',
+      'Java': 'Application',
+      'C++': 'Application',
+      'C': 'Application',
+      'Go': 'Application',
+      'Rust': 'Application',
+      'PHP': 'Application',
+      'Ruby': 'Application',
+      'Swift': 'Application',
+      'Kotlin': 'Application',
+      'Scala': 'Application',
+      'R': 'Application',
+      'Lua': 'Application',
+      'Perl': 'Application',
+      'CSS': 'Application',
+      'SCSS': 'Application',
+      'HTML': 'Application',
+      'SQL': 'Application',
+      'JSON': 'Build',
+      'YAML': 'Build',
+      'XML': 'Build',
+      'Shell': 'Build',
+      'PowerShell': 'Build',
+      'Batch': 'Build',
+      'Dockerfile': 'Build',
+      'Makefile': 'Build',
+      'Git': 'Build',
+      'TOML': 'Build',
+      'INI': 'Build',
+      'Config': 'Build',
+      'Properties': 'Build',
+      'Environment': 'Build',
+      'Gradle': 'Build',
+      'VimScript': 'Build',
+      'Markdown': 'Documentation',
+      'Binary': 'Other'
+    }
+  },
+  
+  commitFilters: {
+    mergePatterns: [
+      'merge remote-tracking branch',
+      'merge branch',
+      'merge pull request'
+    ],
+    automatedPatterns: [
+      'resolved conflict',
+      'resolving conflict',
+      'accept.*conflict',
+      'conflict.*accept',
+      'auto-merge',
+      'automated merge',
+      'revert "',
+      'bump version',
+      'update dependencies',
+      'update dependency',
+      'renovate\\[bot\\]',
+      'dependabot\\[bot\\]',
+      'whitesource',
+      'accepting remote',
+      'accepting local',
+      'accepting incoming',
+      'accepting current'
+    ]
   }
 };

@@ -1,35 +1,19 @@
 import type { CommitData } from '../git/parser.js'
+import type { RepoStatterConfig } from '../config/schema.js'
 
-export function isRealCommit(commit: CommitData): boolean {
+export function isRealCommit(commit: CommitData, config: RepoStatterConfig): boolean {
   const message = commit.message.toLowerCase()
   
-  if (message.startsWith('merge remote-tracking branch') ||
-      message.startsWith('merge branch') ||
-      message.startsWith('merge pull request')) {
+  // Check merge patterns
+  const isMergeCommit = config.commitFilters.mergePatterns.some(pattern =>
+    message.startsWith(pattern.toLowerCase())
+  )
+  if (isMergeCommit) {
     return false
   }
   
-  const automatedPatterns = [
-    'resolved conflict',
-    'resolving conflict',
-    'accept.*conflict',
-    'conflict.*accept',
-    'auto-merge',
-    'automated merge',
-    'revert "',
-    'bump version',
-    'update dependencies',
-    'update dependency',
-    'renovate\\[bot\\]',
-    'dependabot\\[bot\\]',
-    'whitesource',
-    'accepting remote',
-    'accepting local',
-    'accepting incoming',
-    'accepting current'
-  ]
-  
-  return !automatedPatterns.some(pattern => 
+  // Check automated patterns
+  return !config.commitFilters.automatedPatterns.some(pattern => 
     new RegExp(pattern).test(message)
   )
 }

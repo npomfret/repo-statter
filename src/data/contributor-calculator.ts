@@ -43,11 +43,11 @@ export function getContributorStats(commits: CommitData[], config: RepoStatterCo
 }
 
 
-export function getContributorsByAverageLinesChanged(commits: CommitData[]): ContributorAward[] {
+export function getContributorsByAverageLinesChanged(commits: CommitData[], config: RepoStatterConfig): ContributorAward[] {
   const contributorMap = new Map<string, { commits: number; totalLinesChanged: number }>()
   
   for (const commit of commits) {
-    if (!isRealCommit(commit)) continue
+    if (!isRealCommit(commit, config)) continue
     
     if (!contributorMap.has(commit.authorName)) {
       contributorMap.set(commit.authorName, {
@@ -70,14 +70,14 @@ export function getContributorsByAverageLinesChanged(commits: CommitData[]): Con
     }))
 }
 
-export function getLowestAverageLinesChanged(commits: CommitData[]): ContributorAward[] {
-  return getContributorsByAverageLinesChanged(commits)
+export function getLowestAverageLinesChanged(commits: CommitData[], config: RepoStatterConfig): ContributorAward[] {
+  return getContributorsByAverageLinesChanged(commits, config)
     .sort((a, b) => a.averageLinesChanged - b.averageLinesChanged)
     .slice(0, 5)
 }
 
-export function getHighestAverageLinesChanged(commits: CommitData[]): ContributorAward[] {
-  return getContributorsByAverageLinesChanged(commits)
+export function getHighestAverageLinesChanged(commits: CommitData[], config: RepoStatterConfig): ContributorAward[] {
+  return getContributorsByAverageLinesChanged(commits, config)
     .sort((a, b) => b.averageLinesChanged - a.averageLinesChanged)
     .slice(0, 5)
 }

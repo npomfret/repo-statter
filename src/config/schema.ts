@@ -46,6 +46,16 @@ export interface TextAnalysisConfig {
   stopWords: string[];
 }
 
+export interface FileCategoriesConfig {
+  testPatterns: string[];
+  categoryMappings: Record<string, 'Application' | 'Test' | 'Build' | 'Documentation' | 'Other'>;
+}
+
+export interface CommitFiltersConfig {
+  mergePatterns: string[];
+  automatedPatterns: string[];
+}
+
 export interface RepoStatterConfig {
   version: string;
   analysis: AnalysisConfig;
@@ -56,4 +66,6 @@ export interface RepoStatterConfig {
   exclusions: ExclusionsConfig;
   fileTypes: FileTypesConfig;
   textAnalysis: TextAnalysisConfig;
+  fileCategories: FileCategoriesConfig;
+  commitFilters: CommitFiltersConfig;
 }

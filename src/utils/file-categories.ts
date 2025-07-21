@@ -13,54 +13,13 @@ export function getFileCategory(filePath: string, config: RepoStatterConfig): Fi
   const fileType = getFileType(filePath, config)
   
   // Special handling for test files - check file path patterns first
-  if (filePath.includes('.test.') || filePath.includes('.spec.') || 
-      filePath.includes('/test/') || filePath.includes('/tests/') ||
-      filePath.includes('/__tests__/') || filePath.includes('test/') ||
-      filePath.includes('tests/') || filePath.includes('__tests__/')) {
+  const isTestFile = config.fileCategories.testPatterns.some(pattern => 
+    filePath.includes(pattern)
+  )
+  if (isTestFile) {
     return 'Test'
   }
   
-  // Map file types to categories
-  const categoryMap: Record<string, FileCategory> = {
-    'TypeScript': 'Application',
-    'JavaScript': 'Application',
-    'Python': 'Application',
-    'Java': 'Application',
-    'C++': 'Application',
-    'C': 'Application',
-    'Go': 'Application',
-    'Rust': 'Application',
-    'PHP': 'Application',
-    'Ruby': 'Application',
-    'Swift': 'Application',
-    'Kotlin': 'Application',
-    'Scala': 'Application',
-    'R': 'Application',
-    'Lua': 'Application',
-    'Perl': 'Application',
-    'CSS': 'Application',
-    'SCSS': 'Application',
-    'HTML': 'Application',
-    'SQL': 'Application',
-    'JSON': 'Build',
-    'YAML': 'Build',
-    'XML': 'Build',
-    'Shell': 'Build',
-    'PowerShell': 'Build',
-    'Batch': 'Build',
-    'Dockerfile': 'Build',
-    'Makefile': 'Build',
-    'Git': 'Build',
-    'TOML': 'Build',
-    'INI': 'Build',
-    'Config': 'Build',
-    'Properties': 'Build',
-    'Environment': 'Build',
-    'Gradle': 'Build',
-    'VimScript': 'Build',
-    'Markdown': 'Documentation',
-    'Binary': 'Other' // Should not reach here due to early return
-  }
-  
-  return categoryMap[fileType] || 'Other'
+  // Map file types to categories using configuration
+  return config.fileCategories.categoryMappings[fileType] || 'Other'
 }
