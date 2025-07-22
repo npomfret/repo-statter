@@ -22,10 +22,6 @@ export async function bundlePageScript(): Promise<string> {
     // Wrap the bundle to make it work with our template injection
     const wrappedCode = `
 (function() {
-  // Make ApexCharts and d3 available to the bundle
-  window.ApexCharts = window.ApexCharts || {};
-  window.d3 = window.d3 || {};
-  
   ${bundledCode}
   
   // Export the initialization function to global scope
