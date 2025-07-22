@@ -17,7 +17,7 @@
     "test:clean": "./scripts/clean-test-repo.sh",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
-    "docs:build": "scripts/update-gh-pages.sh",
+    "gh-pages": "scripts/update-gh-pages.sh",
     "build": "tsc && node scripts/prebundle-page-script.js",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run clean && npm run build && npm run test",
