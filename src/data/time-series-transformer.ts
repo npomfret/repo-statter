@@ -19,6 +19,15 @@ function addToBreakdown(breakdown: CategoryBreakdown, category: FileCategory, va
   breakdown[category.toLowerCase() as keyof Omit<CategoryBreakdown, 'total'>] += value
 }
 
+function ensureNonNegative(breakdown: CategoryBreakdown): void {
+  breakdown.total = Math.max(0, breakdown.total)
+  breakdown.application = Math.max(0, breakdown.application)
+  breakdown.test = Math.max(0, breakdown.test)
+  breakdown.build = Math.max(0, breakdown.build)
+  breakdown.documentation = Math.max(0, breakdown.documentation)
+  breakdown.other = Math.max(0, breakdown.other)
+}
+
 
 function getDateKey(date: Date, useHourly: boolean): string {
   if (useHourly) {
@@ -127,6 +136,10 @@ export function getTimeSeriesData(context: AnalysisContext): TimeSeriesPoint[] {
         addToBreakdown(cumulativeBytes, category, (fileChange.bytesAdded ?? 0) - (fileChange.bytesDeleted ?? 0))
       }
     }
+    
+    // Ensure cumulative values never go negative
+    ensureNonNegative(cumulativeLines)
+    ensureNonNegative(cumulativeBytes)
     
     // Copy cumulative totals
     existing.cumulativeLines = { ...cumulativeLines }
