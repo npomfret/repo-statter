@@ -12,6 +12,41 @@ import type { LinearSeriesPoint } from './data/linear-transformer.js'
 import type { WordFrequency } from './text/processor.js'
 import type { TopFilesData } from './data/top-files-calculator.js'
 import type { ChartsConfig } from './config/schema.js'
+// Remove getFileCategory import to avoid Node.js dependencies in browser bundle
+
+// Simple inline file categorization for browser
+function getSimpleFileCategory(fileName: string): string {
+  const lowerPath = fileName.toLowerCase()
+  
+  // Test files
+  if (lowerPath.includes('test') || lowerPath.includes('spec') || 
+      lowerPath.includes('__tests__') || lowerPath.includes('__mocks__')) {
+    return 'test'
+  }
+  
+  // Build files
+  if (lowerPath.includes('webpack') || lowerPath.includes('rollup') || 
+      lowerPath.includes('gulpfile') || lowerPath.includes('gruntfile') ||
+      lowerPath.includes('.config.') || lowerPath.includes('tsconfig') ||
+      lowerPath.includes('package.json') || lowerPath.includes('yarn.lock') ||
+      lowerPath.includes('package-lock.json')) {
+    return 'build'
+  }
+  
+  // Documentation files
+  if (lowerPath.endsWith('.md') || lowerPath.endsWith('.txt') || 
+      lowerPath.endsWith('.rst') || lowerPath.endsWith('.adoc')) {
+    return 'documentation'
+  }
+  
+  // Application files by extension
+  const ext = lowerPath.split('.').pop() || ''
+  if (['js', 'ts', 'jsx', 'tsx', 'py', 'java', 'cpp', 'c', 'cs', 'go', 'rs', 'rb', 'php'].includes(ext)) {
+    return 'application'
+  }
+  
+  return 'other'
+}
 
 // Global references to charts that need to be controlled by other charts
 const chartRefs: { [key: string]: any } = {}
@@ -162,6 +197,17 @@ function setupEventHandlers(): void {
       const target = e.target as HTMLInputElement
       if (target.checked) {
         updateGrowthChartAxis(target.value as 'date' | 'commit')
+      }
+    })
+  })
+
+  // Category lines chart axis toggle
+  const categoryRadios = document.querySelectorAll('input[name="categoryXAxis"]')
+  categoryRadios.forEach(radio => {
+    radio.addEventListener('change', (e) => {
+      const target = e.target as HTMLInputElement
+      if (target.checked) {
+        updateCategoryChartAxis(target.value as 'date' | 'commit')
       }
     })
   })
@@ -713,6 +759,12 @@ function renderCategoryLinesChart(timeSeries: TimeSeriesPoint[], commits: Commit
   if (!container) return
 
   const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark'
+  
+  // Get saved axis mode or default to 'commit'
+  const xAxisMode = localStorage.getItem('categoryChartXAxis') || 'commit'
+
+  // Store data for axis switching
+  chartData['categoryChart'] = { timeSeries, commits }
 
   // Create separate series for each category
   const categories = ['application', 'test', 'build', 'documentation', 'other'] as const
@@ -733,17 +785,64 @@ function renderCategoryLinesChart(timeSeries: TimeSeriesPoint[], commits: Commit
 
   const series: any[] = []
 
-  for (const category of categories) {
-    const data = timeSeries.map(point => ({
-      x: new Date(point.date).getTime(),
-      y: point.cumulativeLines[category]
-    }))
+  if (xAxisMode === 'date') {
+    // Date-based series using time series data
+    for (const category of categories) {
+      const data = timeSeries.map(point => ({
+        x: new Date(point.date).getTime(),
+        y: point.cumulativeLines[category]
+      }))
 
-    series.push({
-      name: categoryNames[category],
-      data,
-      color: categoryColors[category]
+      series.push({
+        name: categoryNames[category],
+        data,
+        color: categoryColors[category]
+      })
+    }
+  } else {
+    // Commit-based series - calculate cumulative lines per commit
+    const commitCumulatives: { [category: string]: number[] } = {
+      application: [],
+      test: [],
+      build: [],
+      documentation: [],
+      other: []
+    }
+    
+    let cumulative = {
+      application: 0,
+      test: 0,
+      build: 0,
+      documentation: 0,
+      other: 0
+    }
+    
+    commits.forEach((commit) => {
+      // Calculate lines for this commit by category
+      commit.filesChanged.forEach(file => {
+        const category = getSimpleFileCategory(file.fileName) as keyof typeof cumulative
+        cumulative[category] += file.linesAdded - file.linesDeleted
+      })
+      
+      // Store cumulative values for each category
+      for (const category of categories) {
+        commitCumulatives[category]!.push(Math.max(0, cumulative[category]))
+      }
     })
+    
+    // Create series for each category
+    for (const category of categories) {
+      const data = commitCumulatives[category]!.map((value, index) => ({
+        x: index,
+        y: value
+      }))
+
+      series.push({
+        name: categoryNames[category],
+        data,
+        color: categoryColors[category]
+      })
+    }
   }
 
   const options = {
@@ -767,7 +866,7 @@ function renderCategoryLinesChart(timeSeries: TimeSeriesPoint[], commits: Commit
       curve: 'smooth',
       width: 2
     },
-    xaxis: {
+    xaxis: xAxisMode === 'date' ? {
       type: 'datetime',
       title: {
         text: 'Date',
@@ -783,6 +882,19 @@ function renderCategoryLinesChart(timeSeries: TimeSeriesPoint[], commits: Commit
         datetimeUTC: false,
         style: { colors: isDark ? '#f0f6fc' : '#24292f' }
       }
+    } : {
+      type: 'numeric',
+      title: {
+        text: 'Commit Index',
+        style: { color: isDark ? '#f0f6fc' : '#24292f' }
+      },
+      labels: {
+        style: { colors: isDark ? '#f0f6fc' : '#24292f' },
+        formatter: function(val: number) {
+          return Math.round(val).toString()
+        }
+      },
+      tickAmount: 10
     },
     yaxis: {
       title: {
@@ -810,69 +922,105 @@ function renderCategoryLinesChart(timeSeries: TimeSeriesPoint[], commits: Commit
       shared: true,
       intersect: false,
       custom: function({ dataPointIndex }: any) {
-        const point = timeSeries[dataPointIndex]
-        if (!point) return ''
-        
-        const date = new Date(point.date)
-        const dateStr = date.toLocaleDateString('en-US', { 
-          weekday: 'short', 
-          year: 'numeric', 
-          month: 'short', 
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        })
-        
-        let html = '<div class="custom-tooltip"><div class="tooltip-title">' + dateStr + '</div>'
-        html += '<div class="tooltip-content">'
-        
-        // Show commit info
-        if (point.commits > 0) {
-          html += '<div><strong>Commits:</strong> ' + point.commits + '</div>'
-          if (point.commitShas && point.commitShas.length > 0) {
-            html += '<div class="mt-1"><strong>Commit hashes:</strong></div>'
-            html += '<div class="tooltip-commit-list">'
-            const maxCommits = 5
-            const commitsToShow = point.commitShas.slice(0, maxCommits)
-            commitsToShow.forEach(sha => {
-              const commit = commits.find(c => c.sha === sha)
-              if (commit) {
-                html += '<div class="tooltip-commit-item">'
-                html += '<code>' + sha.substring(0, 7) + '</code> - '
-                html += commit.authorName + ': '
-                html += (commit.message.length > 50 ? commit.message.substring(0, 50) + '...' : commit.message)
-                html += '</div>'
+        if (xAxisMode === 'date') {
+          const point = timeSeries[dataPointIndex]
+          if (!point) return ''
+          
+          const date = new Date(point.date)
+          const dateStr = date.toLocaleDateString('en-US', { 
+            weekday: 'short', 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+          
+          let html = '<div class="custom-tooltip"><div class="tooltip-title">' + dateStr + '</div>'
+          html += '<div class="tooltip-content">'
+          
+          // Show commit info
+          if (point.commits > 0) {
+            html += '<div><strong>Commits:</strong> ' + point.commits + '</div>'
+            if (point.commitShas && point.commitShas.length > 0) {
+              html += '<div class="mt-1"><strong>Commit hashes:</strong></div>'
+              html += '<div class="tooltip-commit-list">'
+              const maxCommits = 5
+              const commitsToShow = point.commitShas.slice(0, maxCommits)
+              commitsToShow.forEach(sha => {
+                const commit = commits.find(c => c.sha === sha)
+                if (commit) {
+                  html += '<div class="tooltip-commit-item">'
+                  html += '<code>' + sha.substring(0, 7) + '</code> - '
+                  html += commit.authorName + ': '
+                  html += (commit.message.length > 50 ? commit.message.substring(0, 50) + '...' : commit.message)
+                  html += '</div>'
+                }
+              })
+              if (point.commitShas.length > maxCommits) {
+                html += '<div class="tooltip-commit-item text-muted">... and ' + (point.commitShas.length - maxCommits) + ' more</div>'
               }
-            })
-            if (point.commitShas.length > maxCommits) {
-              html += '<div class="tooltip-commit-item text-muted">... and ' + (point.commitShas.length - maxCommits) + ' more</div>'
+              html += '</div>'
             }
-            html += '</div>'
           }
-        }
-        
-        // Show category breakdown
-        html += '<div class="mt-2"><strong>Cumulative Lines by Category:</strong></div>'
-        const categories = ['application', 'test', 'build', 'documentation', 'other'] as const
-        const categoryNames = {
-          application: 'Application',
-          test: 'Test',
-          build: 'Build',
-          documentation: 'Documentation',
-          other: 'Other'
-        }
-        
-        categories.forEach(cat => {
-          const value = point.cumulativeLines[cat]
-          if (value > 0) {
-            html += '<div>' + categoryNames[cat] + ': ' + value.toLocaleString() + ' lines</div>'
+          
+          // Show category breakdown
+          html += '<div class="mt-2"><strong>Cumulative Lines by Category:</strong></div>'
+          const categories = ['application', 'test', 'build', 'documentation', 'other'] as const
+          const categoryNames = {
+            application: 'Application',
+            test: 'Test',
+            build: 'Build',
+            documentation: 'Documentation',
+            other: 'Other'
           }
-        })
-        
-        html += '<div class="mt-1"><strong>Total:</strong> ' + point.cumulativeLines.total.toLocaleString() + ' lines</div>'
-        html += '</div></div>'
-        
-        return html
+          
+          categories.forEach(cat => {
+            const value = point.cumulativeLines[cat]
+            if (value > 0) {
+              html += '<div>' + categoryNames[cat] + ': ' + value.toLocaleString() + ' lines</div>'
+            }
+          })
+          
+          html += '<div class="mt-1"><strong>Total:</strong> ' + point.cumulativeLines.total.toLocaleString() + ' lines</div>'
+          html += '</div></div>'
+          
+          return html
+        } else {
+          // Commit mode
+          const commit = commits[dataPointIndex]
+          if (!commit) return ''
+          
+          const date = new Date(commit.date)
+          const dateStr = date.toLocaleDateString('en-US', { 
+            weekday: 'short', 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+          
+          let html = '<div class="custom-tooltip"><div class="tooltip-title">Commit #' + (dataPointIndex + 1) + '</div>'
+          html += '<div class="tooltip-content">'
+          html += '<div><strong>SHA:</strong> <code>' + commit.sha.substring(0, 7) + '</code></div>'
+          html += '<div><strong>Author:</strong> ' + commit.authorName + '</div>'
+          html += '<div><strong>Date:</strong> ' + dateStr + '</div>'
+          html += '<div><strong>Message:</strong> ' + (commit.message.length > 80 ? commit.message.substring(0, 80) + '...' : commit.message) + '</div>'
+          
+          // Show cumulative values from series data
+          html += '<div class="mt-2"><strong>Cumulative Lines at this commit:</strong></div>'
+          series.forEach((s: any) => {
+            const value = s.data[dataPointIndex]?.y || 0
+            if (value > 0) {
+              html += '<div>' + s.name + ': ' + value.toLocaleString() + ' lines</div>'
+            }
+          })
+          
+          html += '</div></div>'
+          
+          return html
+        }
       }
     },
     grid: {
@@ -883,6 +1031,17 @@ function renderCategoryLinesChart(timeSeries: TimeSeriesPoint[], commits: Commit
   const chart = new (window as any).ApexCharts(container, options)
   chart.render()
   chartRefs['category-lines-chart'] = chart
+  
+  // Set initial button state
+  const dateBtn = document.getElementById('categoryXAxisDate') as HTMLInputElement
+  const commitBtn = document.getElementById('categoryXAxisCommit') as HTMLInputElement
+  if (xAxisMode === 'date' && dateBtn && commitBtn) {
+    dateBtn.checked = true
+    commitBtn.checked = false
+  } else if (dateBtn && commitBtn) {
+    dateBtn.checked = false
+    commitBtn.checked = true
+  }
 }
 
 function renderCommitActivityChart(timeSeries: TimeSeriesPoint[]): void {
@@ -1768,6 +1927,32 @@ export function updateGrowthChartAxis(mode: 'date' | 'commit'): void {
   const newChart = new (window as any).ApexCharts(container, options)
   newChart.render()
   chartRefs['growthChart'] = newChart
+}
+
+export function updateCategoryChartAxis(mode: 'date' | 'commit'): void {
+  const chart = chartRefs['category-lines-chart']
+  const data = chartData['categoryChart']
+  if (!chart || !data) return
+
+  localStorage.setItem('categoryChartXAxis', mode)
+
+  // Update button states
+  const dateBtn = document.getElementById('categoryXAxisDate') as HTMLInputElement
+  const commitBtn = document.getElementById('categoryXAxisCommit') as HTMLInputElement
+
+  if (mode === 'date' && dateBtn && commitBtn) {
+    dateBtn.checked = true
+    commitBtn.checked = false
+  } else if (dateBtn && commitBtn) {
+    dateBtn.checked = false
+    commitBtn.checked = true
+  }
+
+  // Destroy old chart
+  chart.destroy()
+
+  // Rebuild with new axis mode
+  renderCategoryLinesChart(data.timeSeries, data.commits)
 }
 
 export function updateTopFilesView(view: 'size' | 'changes' | 'complexity'): void {

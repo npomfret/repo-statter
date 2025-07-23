@@ -1011,6 +1011,12 @@
                             <h5 class="card-title mb-0">Lines of Code by Category</h5>
                         </div>
                         <div class="card-body card-body-collapsible" id="categoryLinesChartBody">
+                            <div class="btn-group btn-group-sm mb-3" role="group">
+                                <input type="radio" class="btn-check" name="categoryXAxis" id="categoryXAxisDate" value="date">
+                                <label class="btn btn-outline-primary" for="categoryXAxisDate">By Date</label>
+                                <input type="radio" class="btn-check" name="categoryXAxis" id="categoryXAxisCommit" value="commit" checked>
+                                <label class="btn btn-outline-primary" for="categoryXAxisCommit">By Commit</label>
+                            </div>
                             <div id="categoryLinesChart" style="min-height: 350px;" data-chart-type="categoryLines" aria-label="Lines of code by category chart">
                             </div>
                         </div>
