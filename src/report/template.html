@@ -1092,20 +1092,23 @@
                                                     <p class="card-text small text-muted mb-3">
                                                         Files with the most lines of code in the repository
                                                     </p>
+                                                    <div id="topFilesChartSize" style="min-height: 350px;" data-chart-type="topFiles" aria-label="Top files by size chart">
+                                                    </div>
                                                 </div>
                                                 <div class="tab-pane fade" id="churn-pane" role="tabpanel" aria-labelledby="churn-tab" tabindex="0">
                                                     <p class="card-text small text-muted mb-3">
                                                         Files with the most changes (lines added + deleted)
                                                     </p>
+                                                    <div id="topFilesChartChurn" style="min-height: 350px;" data-chart-type="topFiles" aria-label="Top files by churn chart">
+                                                    </div>
                                                 </div>
                                                 <div class="tab-pane fade" id="complex-pane" role="tabpanel" aria-labelledby="complex-tab" tabindex="0">
                                                     <p class="card-text small text-muted mb-3">
                                                         Files with the highest complexity scores
                                                     </p>
+                                                    <div id="topFilesChartComplex" style="min-height: 350px;" data-chart-type="topFiles" aria-label="Top files by complexity chart">
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div id="topFilesChart" style="min-height: 350px;" data-chart-type="topFiles" aria-label="Top files by size chart" aria-describedby="top-files-desc">
-                                                <div class="visually-hidden" id="top-files-desc">Horizontal bar chart showing top 5 files by selected metric. Use tabs to switch between largest files, most churned files, and most complex files.</div>
                                             </div>
                                         </div>
                                     </div>
@@ -1354,6 +1357,18 @@
                 }
                 
                 header.addEventListener('click', function(e) {
+                    // Check if click came from a tab or tab-related element
+                    const clickedElement = e.target;
+                    const isTabClick = clickedElement.closest('.nav-tabs') || 
+                                     clickedElement.closest('[data-bs-toggle="tab"]') ||
+                                     clickedElement.classList.contains('nav-link') ||
+                                     clickedElement.classList.contains('nav-item');
+                    
+                    // If it's a tab click, don't collapse/expand
+                    if (isTabClick) {
+                        return;
+                    }
+                    
                     e.preventDefault();
                     e.stopPropagation();
                     
@@ -1389,7 +1404,8 @@
                         this.setAttribute('aria-expanded', 'true');
                         
                         // Announce state change for screen readers
-                        const announcement = 'Expanded ' + this.querySelector('.card-title').textContent;
+                        const titleElement = this.querySelector('.card-title');
+                        const announcement = 'Expanded ' + (titleElement ? titleElement.textContent : 'chart section');
                         announceToScreenReader(announcement);
                     } else {
                         // Collapse
@@ -1419,7 +1435,8 @@
                         this.setAttribute('aria-expanded', 'false');
                         
                         // Announce state change for screen readers
-                        const announcement = 'Collapsed ' + this.querySelector('.card-title').textContent;
+                        const titleElement = this.querySelector('.card-title');
+                        const announcement = 'Collapsed ' + (titleElement ? titleElement.textContent : 'chart section');
                         announceToScreenReader(announcement);
                     }
                 });

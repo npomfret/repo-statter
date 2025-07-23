@@ -213,29 +213,7 @@ function setupEventHandlers(): void {
   })
 
 
-  // Top Files chart tab switching - listen for Bootstrap tab events
-  const largestTab = document.getElementById('largest-tab')
-  const churnTab = document.getElementById('churn-tab')
-  const complexTab = document.getElementById('complex-tab')
-
-
-  if (largestTab) {
-    largestTab.addEventListener('shown.bs.tab', () => {
-      updateTopFilesChart('size')
-    })
-  }
-
-  if (churnTab) {
-    churnTab.addEventListener('shown.bs.tab', () => {
-      updateTopFilesChart('changes')
-    })
-  }
-
-  if (complexTab) {
-    complexTab.addEventListener('shown.bs.tab', () => {
-      updateTopFilesChart('complexity')
-    })
-  }
+  // No need for tab switching event listeners anymore since all charts are rendered
 }
 
 function showChartError(containerId: string, message: string): void {
@@ -1303,35 +1281,14 @@ function renderFileHeatmapChart(fileHeatData: FileHeatData[], height: number, ma
 }
 
 function renderTopFilesChart(topFilesData: TopFilesData): void {
-  const container = document.getElementById('topFilesChart')
-  if (!container) return
-
-  // Default to size view
-  let currentView = 'size'
-  const savedView = localStorage.getItem('topFilesView')
-  if (savedView === 'size' || savedView === 'changes' || savedView === 'complexity') {
-    currentView = savedView
-  }
-
   // Store data for filtering
-  chartData['topFilesChart'] = { data: topFilesData, currentView }
+  chartData['topFilesChart'] = { data: topFilesData, currentView: 'size' }
 
-  renderTopFilesChartWithFilter(topFilesData, currentView)
+  // Render all three charts
+  renderTopFilesChartWithFilter(topFilesData, 'size', 'topFilesChartSize')
+  renderTopFilesChartWithFilter(topFilesData, 'changes', 'topFilesChartChurn')
+  renderTopFilesChartWithFilter(topFilesData, 'complexity', 'topFilesChartComplex')
 
-  // Set initial button state
-  const sizeBtn = document.getElementById('largest-tab')
-  const changesBtn = document.getElementById('churn-tab')
-  const complexityBtn = document.getElementById('complex-tab')
-
-  if (sizeBtn && changesBtn && complexityBtn) {
-    sizeBtn.classList.remove('active')
-    changesBtn.classList.remove('active')
-    complexityBtn.classList.remove('active')
-
-    if (currentView === 'size') sizeBtn.classList.add('active')
-    else if (currentView === 'changes') changesBtn.classList.add('active')
-    else if (currentView === 'complexity') complexityBtn.classList.add('active')
-  }
 }
 
 // Helper function to extract filename from path (global scope for data labels)
@@ -1455,8 +1412,9 @@ function buildTopFilesChartOptions(view: string, data: TopFilesData, isDark: boo
   }
 }
 
+// No longer needed since we render all three charts at once
+/*
 function updateTopFilesChart(view: string): void {
-
   // Get stored chart data
   const storedData = chartData['topFilesChart']
   if (!storedData || !storedData.data) {
@@ -1485,6 +1443,7 @@ function updateTopFilesChart(view: string): void {
   // Re-render chart with new view
   renderTopFilesChartWithFilter(storedData.data, view)
 }
+*/
 
 function renderTimeSliderChart(timeSeries: TimeSeriesPoint[], linearSeries: LinearSeriesPoint[]): void {
   const container = document.getElementById('timeSliderChart')
@@ -2022,10 +1981,12 @@ function updateChartsWithFileTypeFilter(): void {
     renderFileHeatmapChart(heatmapData.fileHeatData, heatmapData.height, heatmapData.maxFiles)
   }
 
-  // Update top files chart if it exists and has data
+  // Update all three top files charts if they exist and have data
   const topFilesData = chartData['topFilesChart']
   if (topFilesData) {
-    renderTopFilesChartWithFilter(topFilesData.data, topFilesData.currentView)
+    renderTopFilesChartWithFilter(topFilesData.data, 'size', 'topFilesChartSize')
+    renderTopFilesChartWithFilter(topFilesData.data, 'changes', 'topFilesChartChurn')
+    renderTopFilesChartWithFilter(topFilesData.data, 'complexity', 'topFilesChartComplex')
   }
 }
 
@@ -2094,8 +2055,8 @@ function calculateTopFilesByType(commits: CommitData[], selectedFileType: string
   return []
 }
 
-function renderTopFilesChartWithFilter(topFilesData: TopFilesData, currentView: string): void {
-  const container = document.getElementById('topFilesChart')
+function renderTopFilesChartWithFilter(topFilesData: TopFilesData, currentView: string, containerId: string = 'topFilesChart'): void {
+  const container = document.getElementById(containerId)
   if (!container) return
 
   // Get file type mapping from original chart data if available
@@ -2142,12 +2103,15 @@ function renderTopFilesChartWithFilter(topFilesData: TopFilesData, currentView: 
   const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark'
   const options = buildTopFilesChartOptions(currentView, filteredData, isDark)
 
-  // Destroy existing chart
-  if (chartRefs['topFilesChart']) {
-    chartRefs['topFilesChart'].destroy()
+  // Update existing chart or create new one
+  const chartRefKey = `topFilesChart_${containerId}`
+  if (chartRefs[chartRefKey]) {
+    // Update existing chart with new options
+    chartRefs[chartRefKey].updateOptions(options, true, true, true)
+  } else {
+    // Create new chart only if it doesn't exist
+    const chart = new (window as any).ApexCharts(container, options)
+    chart.render()
+    chartRefs[chartRefKey] = chart
   }
-
-  const chart = new (window as any).ApexCharts(container, options)
-  chart.render()
-  chartRefs['topFilesChart'] = chart
 }
