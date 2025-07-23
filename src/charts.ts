@@ -212,13 +212,6 @@ function setupEventHandlers(): void {
     })
   })
 
-  // File type filter clear button
-  const clearButton = document.getElementById('clearFileTypeFilter')
-  if (clearButton) {
-    clearButton.addEventListener('click', () => {
-      clearFileTypeFilter()
-    })
-  }
 
   // Top Files chart tab switching - listen for Bootstrap tab events
   const largestTab = document.getElementById('largest-tab')
@@ -1411,14 +1404,15 @@ function buildTopFilesChartOptions(view: string, data: TopFilesData, isDark: boo
       bar: {
         horizontal: true,
         dataLabels: {
-          position: 'top'
+          position: 'left'
         }
       }
     },
     dataLabels: {
       enabled: true,
-      offsetX: 10,
+      offsetX: 0,
       textAnchor: 'start',
+      distributed: false,
       style: {
         fontSize: '12px',
         colors: ['#000000']
@@ -2013,29 +2007,14 @@ export function updateChartsTheme(): void {
 // File type filtering functions
 function setFileTypeFilter(fileType: string): void {
   selectedFileType = fileType
-  updateFileTypeIndicator()
   updateChartsWithFileTypeFilter()
 }
 
 function clearFileTypeFilter(): void {
   selectedFileType = null
-  updateFileTypeIndicator()
   updateChartsWithFileTypeFilter()
 }
 
-function updateFileTypeIndicator(): void {
-  const indicator = document.getElementById('fileTypeFilterIndicator')
-  const typeSpan = document.getElementById('selectedFileType')
-
-  if (indicator && typeSpan) {
-    if (selectedFileType) {
-      indicator.classList.remove('d-none')
-      typeSpan.textContent = selectedFileType
-    } else {
-      indicator.classList.add('d-none')
-    }
-  }
-}
 
 function updateChartsWithFileTypeFilter(): void {
   // Update file heatmap chart
