@@ -1,0 +1,2934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>repo-statter-test-repo.j4GNWw - Repository Statistics</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <!-- Preconnect to CDN domains for faster loading -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://d3js.org" crossorigin>
+    <style>
+        :root {
+            /* Light mode colors */
+            --bs-body-bg: #ffffff;
+            --bs-body-color: #24292f;
+            --bs-border-color: #d1d9e0;
+            --bs-card-bg: #ffffff;
+            --bs-card-border-color: #d1d9e0;
+            --bs-secondary-bg: #f6f8fa;
+            --chart-bg: #ffffff;
+            --chart-text: #24292f;
+            --chart-grid: #e1e4e8;
+
+            /* UI accent colors */
+            --accent-primary: #27aeef;
+            --accent-success: #87bc45;
+            --accent-warning: #ef9b20;
+            --accent-info: #b33dc6;
+            --accent-danger: #ea5545;
+            --accent-secondary: #656d76;
+
+            /* Text colors */
+            --text-primary: #24292f;
+            --text-secondary: #656d76;
+            --text-muted: #8c959f;
+            --text-inverse: #f0f6fc;
+        }
+
+        [data-bs-theme="dark"] {
+            /* Modern dark mode palette inspired by GitHub/VS Code */
+            --bs-body-bg: #0d1117;
+            --bs-body-color: #f0f6fc;
+            --bs-border-color: #21262d;
+            --bs-card-bg: #161b22;
+            --bs-card-border-color: #30363d;
+            --bs-secondary-bg: #21262d;
+            --chart-bg: #161b22;
+            --chart-text: #f0f6fc;
+            --chart-grid: #30363d;
+
+            /* Dark mode accent colors - desaturated for better contrast */
+            --accent-primary: #58a6ff;
+            --accent-success: #3fb950;
+            --accent-warning: #d29922;
+            --accent-info: #a5a5ff;
+            --accent-danger: #f85149;
+            --accent-secondary: #8b949e;
+
+            /* Dark mode text colors */
+            --text-primary: #f0f6fc;
+            --text-secondary: #c9d1d9;
+            --text-muted: #8b949e;
+            --text-inverse: #24292f;
+        }
+
+        body {
+            background-color: var(--bs-body-bg);
+            color: var(--bs-body-color);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .card {
+            background-color: var(--bs-card-bg);
+            border-color: var(--bs-card-border-color);
+        }
+
+        .border-bottom {
+            border-color: var(--bs-border-color) !important;
+        }
+
+        .theme-toggle {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+            margin-left: 15px;
+        }
+
+        .theme-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .theme-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--bs-border-color);
+            transition: 0.4s;
+            border-radius: 34px;
+        }
+
+        .theme-slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: var(--bs-body-bg);
+            transition: 0.4s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        input:checked + .theme-slider {
+            background-color: var(--accent-primary);
+        }
+
+        input:checked + .theme-slider:before {
+            transform: translateX(26px);
+        }
+
+        .theme-toggle-label {
+            font-size: 0.875rem;
+            margin-right: 10px;
+            color: var(--bs-body-color);
+        }
+
+        .theme-controls {
+            display: flex;
+            align-items: center;
+            margin-left: 20px;
+        }
+
+        /* Enhanced styling for better visual hierarchy */
+        .text-muted {
+            color: var(--text-muted) !important;
+        }
+        
+        .text-secondary {
+            color: var(--text-secondary) !important;
+        }
+
+        .bg-secondary {
+            background-color: var(--bs-secondary-bg) !important;
+        }
+
+        .border-bottom {
+            border-color: var(--bs-border-color) !important;
+        }
+
+        /* Card enhancements */
+        .card {
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--bs-card-border-color);
+            transition: box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+
+        [data-bs-theme="dark"] .card {
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Chart container styling */
+        .chart-container {
+            background-color: var(--chart-bg);
+            border-radius: 0.375rem;
+            transition: background-color 0.3s ease;
+        }
+
+        /* Update text colors to use new accent palette */
+        .text-primary {
+            color: var(--accent-primary) !important;
+        }
+
+        .text-success {
+            color: var(--accent-success) !important;
+        }
+
+        .text-warning {
+            color: var(--accent-warning) !important;
+        }
+
+        .text-info {
+            color: var(--accent-info) !important;
+        }
+
+        .text-danger {
+            color: var(--accent-danger) !important;
+        }
+
+        /* Custom tooltip styles */
+        .custom-tooltip {
+            background: var(--bs-card-bg);
+            color: var(--bs-body-color);
+            border: 1px solid var(--bs-border-color);
+            border-radius: 4px;
+            padding: 12px;
+            font-size: 12px;
+            line-height: 1.4;
+            min-width: 250px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .custom-tooltip .tooltip-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--bs-border-color);
+            color: var(--accent-primary);
+        }
+
+        .custom-tooltip .tooltip-content > div {
+            margin: 4px 0;
+        }
+
+        .custom-tooltip .tooltip-message {
+            word-wrap: break-word;
+            word-break: break-word;
+            white-space: pre-wrap;
+            max-width: 350px;
+        }
+
+        .custom-tooltip strong {
+            color: var(--text-secondary);
+            margin-right: 4px;
+        }
+
+        /* Fix button styling in dark mode */
+        [data-bs-theme="dark"] .btn-outline-primary {
+            color: var(--accent-primary);
+            border-color: var(--accent-primary);
+        }
+
+        [data-bs-theme="dark"] .btn-check:checked + .btn-outline-primary,
+        [data-bs-theme="dark"] .btn-outline-primary:hover,
+        [data-bs-theme="dark"] .btn-outline-primary:focus,
+        [data-bs-theme="dark"] .btn-outline-primary:active,
+        [data-bs-theme="dark"] .btn-outline-primary.active {
+            background-color: var(--accent-primary);
+            border-color: var(--accent-primary);
+            color: var(--bs-body-bg);
+        }
+
+        [data-bs-theme="dark"] .btn-outline-secondary {
+            color: var(--accent-secondary);
+            border-color: var(--accent-secondary);
+        }
+
+        [data-bs-theme="dark"] .btn-check:checked + .btn-outline-secondary,
+        [data-bs-theme="dark"] .btn-outline-secondary:hover,
+        [data-bs-theme="dark"] .btn-outline-secondary:focus,
+        [data-bs-theme="dark"] .btn-outline-secondary:active,
+        [data-bs-theme="dark"] .btn-outline-secondary.active {
+            background-color: var(--accent-secondary);
+            border-color: var(--accent-secondary);
+            color: var(--bs-body-bg);
+        }
+        
+        /* File type chart interaction styles */
+        #fileTypesChart .apexcharts-pie-slice {
+            cursor: pointer;
+        }
+        
+        #fileTypesChart .apexcharts-pie-slice:hover {
+            filter: brightness(1.1);
+        }
+        
+        /* Hero Strip Styles */
+        .hero-strip {
+            background: linear-gradient(135deg, var(--bs-secondary-bg) 0%, var(--bs-body-bg) 100%);
+            border-bottom: 1px solid var(--bs-border-color);
+            padding: 1.5rem 0;
+        }
+        
+        .metric-card {
+            background: var(--bs-card-bg);
+            border: 1px solid var(--bs-card-border-color);
+            border-radius: 0.5rem;
+            padding: 1.25rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        [data-bs-theme="dark"] .metric-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .metric-label {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+        
+        @media (max-width: 768px) {
+            .metric-value {
+                font-size: 1.5rem;
+            }
+        }
+        
+        /* Sticky Navigation Styles */
+        .sticky-nav {
+            position: fixed;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--bs-card-bg);
+            border: 1px solid var(--bs-card-border-color);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            max-height: 80vh;
+            overflow-y: auto;
+            width: 180px;
+        }
+        
+        [data-bs-theme="dark"] .sticky-nav {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .sticky-nav nav {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .sticky-nav a {
+            display: block;
+            padding: 0.5rem 0.75rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 0.25rem;
+            transition: all 0.2s ease;
+            font-size: 0.875rem;
+            position: relative;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .sticky-nav a:hover {
+            color: var(--text-primary);
+            background: var(--bs-secondary-bg);
+        }
+        
+        .sticky-nav a.active {
+            color: var(--accent-primary);
+            font-weight: 600;
+        }
+        
+        .sticky-nav a.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 60%;
+            background: var(--accent-primary);
+            border-radius: 2px;
+        }
+        
+        /* Main content adjustment */
+        .main-content {
+            margin-left: 200px;
+            padding-right: 20px;
+            transition: margin-left 0.3s ease;
+            overflow-x: hidden;
+        }
+        
+        /* Mobile navigation */
+        @media (max-width: 991px) {
+            .sticky-nav {
+                position: fixed;
+                left: 0;
+                right: 0;
+                top: auto;
+                bottom: 0;
+                transform: none;
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
+                border-bottom: none;
+                padding: 0.5rem;
+                max-height: none;
+                overflow-x: auto;
+                overflow-y: hidden;
+            }
+            
+            .sticky-nav nav {
+                flex-direction: row;
+                gap: 0.25rem;
+                white-space: nowrap;
+            }
+            
+            .sticky-nav a {
+                padding: 0.5rem 1rem;
+                flex-shrink: 0;
+            }
+            
+            .sticky-nav a.active::before {
+                top: auto;
+                bottom: 0;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 60%;
+                height: 3px;
+            }
+            
+            .main-content {
+                margin-left: 0;
+                padding-right: 15px;
+                padding-left: 15px;
+                margin-bottom: 60px;
+            }
+        }
+        
+        /* Accordion Styles */
+        .accordion-button {
+            background-color: var(--bs-card-bg);
+            color: var(--bs-body-color);
+            border: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            padding: 1rem 1.25rem;
+            transition: all 0.3s ease;
+        }
+        
+        .accordion-button:not(.collapsed) {
+            background-color: var(--bs-secondary-bg);
+            color: var(--accent-primary);
+            box-shadow: none;
+        }
+        
+        .accordion-button:focus {
+            box-shadow: 0 0 0 0.25rem rgba(var(--accent-primary), 0.25);
+            border-color: transparent;
+        }
+        
+        .accordion-button::after {
+            background-image: none;
+            content: '\25BC';
+            font-size: 0.8rem;
+            transform: rotate(0deg);
+            transition: transform 0.3s ease;
+        }
+        
+        .accordion-button:not(.collapsed)::after {
+            transform: rotate(-180deg);
+        }
+        
+        .accordion-item {
+            background-color: var(--bs-card-bg);
+            border: 1px solid var(--bs-card-border-color);
+            margin-bottom: 0.5rem;
+        }
+        
+        .accordion-item:first-of-type,
+        .accordion-item:last-of-type {
+            border-radius: 0.5rem;
+        }
+        
+        .accordion-body {
+            padding: 1.25rem;
+            background-color: var(--bs-card-bg);
+        }
+        
+        [data-bs-theme="dark"] .accordion-button::after {
+            filter: invert(1);
+        }
+        
+        /* Loading text for accessibility */
+        .chart-loading-text {
+            position: absolute;
+            left: -9999px;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+        }
+        
+        /* Remove placeholder styling once chart is rendered */
+        .chart-rendered {
+            background-color: transparent;
+            min-height: auto !important;
+            animation: none;
+        }
+        
+        /* CSS Grid Layout System */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        /* Grid column spans */
+        .grid-col-1 { grid-column: span 1; }
+        .grid-col-2 { grid-column: span 2; }
+        .grid-col-3 { grid-column: span 3; }
+        .grid-col-4 { grid-column: span 4; }
+        .grid-col-6 { grid-column: span 6; }
+        .grid-col-8 { grid-column: span 8; }
+        .grid-col-9 { grid-column: span 9; }
+        .grid-col-12 { grid-column: span 12; }
+        
+        /* Specific grid item types */
+        .metric-card-grid { grid-column: span 3; }
+        .chart-full { grid-column: span 12; }
+        .chart-half { grid-column: span 6; }
+        .chart-third { grid-column: span 4; }
+        
+        /* Tablet breakpoint (768px - 1024px) */
+        @media (max-width: 1024px) and (min-width: 768px) {
+            .dashboard-grid {
+                gap: 1rem;
+            }
+            
+            .metric-card-grid { grid-column: span 6; }
+            .chart-half { grid-column: span 12; }
+            .chart-third { grid-column: span 6; }
+        }
+        
+        /* Mobile breakpoint (< 768px) */
+        @media (max-width: 767px) {
+            .dashboard-grid {
+                grid-template-columns: repeat(6, 1fr);
+                gap: 0.75rem;
+            }
+            
+            .metric-card-grid { grid-column: span 6; }
+            .chart-full { grid-column: span 6; }
+            .chart-half { grid-column: span 6; }
+            .chart-third { grid-column: span 6; }
+            .grid-col-1,
+            .grid-col-2,
+            .grid-col-3,
+            .grid-col-4,
+            .grid-col-6,
+            .grid-col-8,
+            .grid-col-9,
+            .grid-col-12 {
+                grid-column: span 6;
+            }
+        }
+        
+        /* Enhanced mobile breakpoint (≤ 600px) for better UX */
+        @media (max-width: 600px) {
+            /* Stack metric cards in 2-column grid */
+            .dashboard-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.5rem;
+                margin-bottom: 1rem;
+            }
+            
+            .metric-card-grid { grid-column: span 1; }
+            .chart-full,
+            .chart-half,
+            .chart-third { 
+                grid-column: span 2; 
+            }
+            
+            /* Mobile-first accordion behavior - single expanded section */
+            .accordion {
+                margin-bottom: 1rem;
+            }
+            
+            .accordion-item {
+                margin-bottom: 0.25rem;
+            }
+            
+            .accordion-button {
+                font-size: 1rem;
+                padding: 0.875rem 1rem;
+                min-height: 44px; /* Touch-friendly minimum */
+            }
+            
+            /* Chart containers become full-width and swipeable */
+            .chart-container {
+                min-height: 300px;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            /* Reduce spacing for mobile */
+            .main-content {
+                padding-right: 0.75rem;
+                padding-left: 0.75rem;
+            }
+            
+            .hero-strip {
+                padding: 1rem 0;
+            }
+            
+            .metric-card {
+                padding: 0.75rem;
+                font-size: 0.875rem;
+            }
+            
+            .metric-value {
+                font-size: 1.25rem;
+            }
+            
+            /* Improve tab navigation for touch */
+            .nav-tabs .nav-link {
+                padding: 0.75rem 1rem;
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            /* Remove hover effects on touch devices */
+            .metric-card:hover {
+                transform: none;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            }
+            
+            [data-bs-theme="dark"] .metric-card:hover {
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            }
+            
+            /* Enhance touch targets for all interactive elements */
+            .btn,
+            .nav-link,
+            .accordion-button,
+            .form-control,
+            .form-select {
+                min-height: 44px;
+                min-width: 44px;
+            }
+            
+            /* Improve filter controls for touch */
+            .input-group .form-control {
+                padding: 0.75rem;
+            }
+            
+            .btn-group .btn {
+                padding: 0.5rem 0.875rem;
+            }
+            
+            /* Better spacing for filter section */
+            .accordion-body .dashboard-grid {
+                gap: 0.75rem;
+            }
+            
+            /* Enhanced sticky nav for mobile */
+            .sticky-nav a {
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+        
+        /* CSS Custom Properties for consistent spacing */
+        :root {
+            --space-xs: 0.25rem;
+            --space-sm: 0.5rem;
+            --space-md: 1rem;
+            --space-lg: 1.5rem;
+            --space-xl: 2rem;
+            --space-xxl: 3rem;
+            
+            --radius-sm: 0.25rem;
+            --radius-md: 0.375rem;
+            --radius-lg: 0.5rem;
+            --radius-xl: 0.75rem;
+        }
+        
+        /* Apply consistent spacing to cards */
+        .dashboard-grid .card {
+            margin-bottom: 0; /* Remove Bootstrap's default margin */
+            border-radius: var(--radius-lg);
+            height: 100%; /* Ensure cards fill their grid cells */
+        }
+        
+        .dashboard-grid .card-body {
+            padding: var(--space-lg);
+        }
+        
+        /* Ensure charts fill their containers */
+        .dashboard-grid .chart-container {
+            height: 100%;
+            min-height: 350px;
+        }
+        
+        /* Special handling for metric cards */
+        .metric-card {
+            padding: var(--space-lg);
+            border-radius: var(--radius-lg);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        /* Ensure consistent spacing in accordion bodies */
+        .accordion-body .dashboard-grid {
+            margin-bottom: 0;
+        }
+        
+        /* Skip link accessibility */
+        .visually-hidden-focusable {
+            position: absolute !important;
+            left: -9999px !important;
+            width: 1px !important;
+            height: 1px !important;
+            overflow: hidden !important;
+        }
+        
+        .visually-hidden-focusable:focus {
+            position: fixed !important;
+            top: 10px !important;
+            left: 10px !important;
+            width: auto !important;
+            height: auto !important;
+            padding: 0.5rem 1rem !important;
+            background: var(--accent-primary) !important;
+            color: white !important;
+            text-decoration: none !important;
+            border-radius: 0.25rem !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+            z-index: 9999 !important;
+            font-weight: 600 !important;
+            overflow: visible !important;
+        }
+        
+        /* Enhanced focus indicators for better accessibility */
+        :focus {
+            outline: 2px solid var(--accent-primary) !important;
+            outline-offset: 2px !important;
+        }
+        
+        /* Focus styles for interactive elements */
+        .nav-link:focus,
+        .btn:focus,
+        .form-control:focus,
+        .form-select:focus,
+        .accordion-button:focus {
+            box-shadow: 0 0 0 0.25rem rgba(39, 174, 239, 0.25) !important;
+        }
+        
+        /* Dark mode focus adjustments */
+        [data-bs-theme="dark"] :focus {
+            outline-color: var(--accent-primary) !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sticky Navigation -->
+    <!-- Skip to main content link -->
+    <a href="#main-content" class="visually-hidden-focusable">Skip to main content</a>
+    
+    <aside class="sticky-nav" role="navigation" aria-label="Page sections navigation">
+        <nav>
+            <a href="#overview" class="active">Overview</a>
+            <a href="#activity">Activity</a>
+            <a href="#code-analysis">Code Analysis</a>
+            <a href="#contributors">Contributors</a>
+        </nav>
+    </aside>
+    
+    <div class="main-content">
+        <header class="py-3 mb-4 border-bottom" role="banner">
+            <div class="row align-items-center">
+                <div class="col">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3" style="width: 48px; height: 48px; flex-shrink: 0; overflow: hidden;">
+                            <div style="width: 100%; height: 100;">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="48" height="48">
+  <defs>
+    <linearGradient id="swooshGradient3D" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00BFFF;" />
+      <stop offset="100%" style="stop-color:#FFD700;" />
+    </linearGradient>
+    <linearGradient id="shadowGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#008FBF;" />
+      <stop offset="100%" style="stop-color:#CCA700;" />
+    </linearGradient>
+  </defs>
+
+  <g>
+    <animateTransform
+      attributeName="transform"
+      type="rotate"
+      from="0 50 50"
+      to="360 50 50"
+      dur="8s"
+      repeatCount="indefinite"
+    />
+
+    <!-- Back part of the swoosh (darker) -->
+    <path
+      d="M 20,50 A 30,30 0 0 1 80,50"
+      stroke="url(#shadowGradient)"
+      stroke-width="12"
+      stroke-linecap="round"
+      fill="none"
+    />
+
+    <!-- Front part of the swoosh (brighter) -->
+    <path
+      d="M 80,50 A 30,30 0 0 1 20,50"
+      stroke="url(#swooshGradient3D)"
+      stroke-width="12"
+      stroke-linecap="round"
+      fill="none"
+    />
+    
+    <!-- Inner highlight for depth -->
+    <path
+      d="M 80,50 A 30,30 0 0 1 20,50"
+      stroke="#FFFFFF"
+      stroke-width="2"
+      stroke-linecap="round"
+      fill="none"
+      opacity="0.7"
+    />
+  </g>
+</svg>
+
+                            </div>
+                        </div>
+                        <div>
+                            <h5 class="mb-0 fw-semibold">Repository Statistics for repo-statter-test-repo.j4GNWw</h5>
+                            <small class="text-muted">Generated by repo-statter</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <div class="d-flex flex-column align-items-end">
+                        <div class="theme-controls mb-2">
+                            <span class="theme-toggle-label">Dark Mode</span>
+                            <label class="theme-toggle" for="themeToggle">
+                                <input type="checkbox" id="themeToggle" aria-describedby="theme-description">
+                                <span class="theme-slider"></span>
+                            </label>
+                            <div class="visually-hidden" id="theme-description">Toggle between light and dark mode for better visibility</div>
+                        </div>
+                        <div class="text-muted small">Report Generated: <span class="badge bg-dark">Wednesday, July 23, 2025 at 7:25:57 PM</span></div>
+                        <div class="text-muted small">Latest Commit: <span class="fw-semibold">f799f78</span> by <span class="fw-semibold">Carol Davis</span> on <span class="fw-semibold">Wednesday, July 23, 2025 at 7:25:39 PM</span></div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Live region for dynamic announcements -->
+        <div id="live-region" aria-live="polite" aria-atomic="true" class="visually-hidden"></div>
+        
+        <!-- Main content area -->
+        <main id="main-content" role="main" aria-label="Repository statistics dashboard">
+        
+        <!-- Hero Strip with Key Metrics -->
+        <div class="hero-strip mb-4" role="region" aria-labelledby="metrics-heading">
+            <h2 id="metrics-heading" class="visually-hidden">Key Repository Metrics</h2>
+            <div class="dashboard-grid">
+                <div class="metric-card-grid">
+                    <div class="metric-card" role="img" aria-labelledby="commits-label" aria-describedby="commits-desc">
+                        <div class="metric-label" id="commits-label">Total Commits</div>
+                        <div class="metric-value text-primary">12</div>
+                        <div class="visually-hidden" id="commits-desc">Total number of commits in the repository</div>
+                    </div>
+                </div>
+                <div class="metric-card-grid">
+                    <div class="metric-card" role="img" aria-labelledby="loc-label" aria-describedby="loc-desc">
+                        <div class="metric-label" id="loc-label">Lines of Code</div>
+                        <div class="metric-value text-success">236</div>
+                        <div class="visually-hidden" id="loc-desc">Total lines of code in the repository</div>
+                    </div>
+                </div>
+                <div class="metric-card-grid">
+                    <div class="metric-card" role="img" aria-labelledby="contributors-label" aria-describedby="contributors-desc">
+                        <div class="metric-label" id="contributors-label">Contributors</div>
+                        <div class="metric-value text-info">3</div>
+                        <div class="visually-hidden" id="contributors-desc">Number of unique contributors to the repository</div>
+                    </div>
+                </div>
+                <div class="metric-card-grid">
+                    <div class="metric-card" role="img" aria-labelledby="active-days-label" aria-describedby="active-days-desc">
+                        <div class="metric-label" id="active-days-label">Active Days</div>
+                        <div class="metric-value text-warning">12</div>
+                        <div class="visually-hidden" id="active-days-desc">Number of days with commit activity</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overview Section with Accordions -->
+        <section id="overview" role="region" aria-labelledby="overview-heading">
+            <h2 id="overview-heading" class="visually-hidden">Overview and Data Filters</h2>
+            <div class="accordion" id="overviewAccordion">
+                <!-- Filter Controls Accordion -->
+                <div class="accordion-item">
+                    <h3 class="accordion-header" id="filterHeading">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="true" aria-controls="filterCollapse">
+                            <i class="bi bi-funnel me-2"></i> Filter Data
+                        </button>
+                    </h3>
+                    <div id="filterCollapse" class="accordion-collapse collapse show" aria-labelledby="filterHeading" data-bs-parent="#overviewAccordion">
+                        <div class="accordion-body">
+                            <div class="dashboard-grid">
+                                <div class="chart-third">
+                                    <label class="form-label" for="authorFilter">Author</label>
+                                    <select class="form-select" id="authorFilter">
+                                        <option value="">All Authors</option>
+                                    </select>
+                                </div>
+                                <div class="chart-third">
+                                    <label class="form-label">Date Range</label>
+                                    <div class="input-group">
+                                        <input type="date" class="form-control" id="dateFromFilter" aria-label="Start date">
+                                        <span class="input-group-text">to</span>
+                                        <input type="date" class="form-control" id="dateToFilter" aria-label="End date">
+                                    </div>
+                                </div>
+                                <div class="chart-third">
+                                    <label class="form-label">File Types</label>
+                                    <div class="border rounded p-2" style="max-height: 200px; overflow-y: auto;">
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="fileTypeSelectAll">
+                                            <label class="form-check-label fw-bold" for="fileTypeSelectAll">
+                                                Select All
+                                            </label>
+                                        </div>
+                                        <hr class="my-1">
+                                        <div id="fileTypeFilterContainer">
+                                            <!-- File type checkboxes will be populated here -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <button class="btn btn-primary btn-sm" id="applyFilters" aria-describedby="filter-help">Apply Filters</button>
+                                <button class="btn btn-outline-secondary btn-sm ms-2" id="clearFilters" aria-describedby="filter-help">Clear Filters</button>
+                                <small class="text-muted ms-3" id="filterStatus" role="status" aria-live="polite">Showing all commits</small>
+                                <div class="visually-hidden" id="filter-help">Use filters to focus on specific authors, date ranges, or file types. Changes will update all charts in real-time.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Time Range and Contributors Accordion -->
+                <div class="accordion-item">
+                    <h3 class="accordion-header" id="timeRangeHeading">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#timeRangeCollapse" aria-expanded="true" aria-controls="timeRangeCollapse">
+                            <i class="bi bi-clock-history me-2"></i> Time Range Selector
+                        </button>
+                    </h3>
+                    <div id="timeRangeCollapse" class="accordion-collapse collapse show" aria-labelledby="timeRangeHeading" data-bs-parent="#overviewAccordion">
+                        <div class="accordion-body">
+                            <p class="text-muted mb-3">Adjust the time range for all time series charts using the slider below:</p>
+                            <div id="timeSliderChart" style="width: 100%; min-height: 150px;" data-chart-type="timeSlider" aria-label="Time range slider chart" aria-describedby="time-slider-desc">
+                                <div class="visually-hidden" id="time-slider-desc">Interactive timeline showing repository activity. Drag the handles to filter data by date range across all charts.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Activity Section -->
+        <section id="activity" role="region" aria-labelledby="activity-heading">
+            <h2 id="activity-heading" class="visually-hidden">Repository Activity and Growth</h2>
+            <div class="accordion mb-4" id="activityAccordion">
+                <div class="accordion-item">
+                    <h3 class="accordion-header" id="activityHeading">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#activityCollapse" aria-expanded="true" aria-controls="activityCollapse">
+                            <i class="bi bi-graph-up me-2"></i> Activity & Growth Charts
+                        </button>
+                    </h3>
+                    <div id="activityCollapse" class="accordion-collapse collapse show" aria-labelledby="activityHeading" data-bs-parent="#activityAccordion">
+                        <div class="accordion-body">
+            <div class="dashboard-grid">
+                <!-- Growth Over Time Chart -->
+                <div class="chart-full">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Growth Over Time</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="btn-group btn-group-sm mb-3" role="group">
+                                <input type="radio" class="btn-check" name="growthXAxis" id="growthXAxisDate" value="date">
+                                <label class="btn btn-outline-primary" for="growthXAxisDate">By Date</label>
+                                <input type="radio" class="btn-check" name="growthXAxis" id="growthXAxisCommit" value="commit" checked>
+                                <label class="btn btn-outline-primary" for="growthXAxisCommit">By Commit</label>
+                            </div>
+                            <div id="growthChart" style="min-height: 350px;" data-chart-type="growth" aria-label="Repository growth chart" aria-describedby="growth-desc">
+                                <div class="visually-hidden" id="growth-desc">Line chart showing cumulative growth of lines of code, commits, and contributors over time. Switch between date-based and commit-based x-axis views.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lines of Code by Category Chart -->
+                <div class="chart-full">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Lines of Code by Category</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="categoryLinesChart" style="min-height: 350px;" data-chart-type="categoryLines" aria-label="Lines of code by category chart">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Commit Activity Chart -->
+                <div class="chart-full">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Commit Activity Over Time</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="commitActivityChart" style="min-height: 350px;" data-chart-type="commitActivity" aria-label="Commit activity chart">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Code Analysis Section -->
+        <section id="code-analysis" role="region" aria-labelledby="code-analysis-heading">
+            <h2 id="code-analysis-heading" class="visually-hidden">Code Analysis and File Metrics</h2>
+            <div class="accordion mb-4" id="codeAccordion">
+                <div class="accordion-item">
+                    <h3 class="accordion-header" id="codeHeading">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#codeCollapse" aria-expanded="true" aria-controls="codeCollapse">
+                            <i class="bi bi-code-slash me-2"></i> Code Analysis & File Metrics
+                        </button>
+                    </h3>
+                    <div id="codeCollapse" class="accordion-collapse collapse show" aria-labelledby="codeHeading" data-bs-parent="#codeAccordion">
+                        <div class="accordion-body">
+                            <div class="dashboard-grid">
+                                <!-- File Types Chart -->
+                                <div class="chart-half">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h5 class="card-title mb-0">File Types</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="fileTypesChart" style="min-height: 350px;" data-chart-type="fileTypes" aria-label="File types distribution chart" aria-describedby="file-types-desc">
+                                                <div class="visually-hidden" id="file-types-desc">Pie chart showing distribution of code across different file types. Click segments to filter other charts by file type.</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Top 5 Files Chart -->
+                                <div class="chart-half">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                                                <li class="nav-item">
+                                                    <button class="nav-link active" id="largest-tab" data-bs-toggle="tab" data-bs-target="#largest-pane" type="button" role="tab" aria-controls="largest-pane" aria-selected="true">Largest</button>
+                                                </li>
+                                                <li class="nav-item">
+                                                    <button class="nav-link" id="churn-tab" data-bs-toggle="tab" data-bs-target="#churn-pane" type="button" role="tab" aria-controls="churn-pane" aria-selected="false">Most Churn</button>
+                                                </li>
+                                                <li class="nav-item">
+                                                    <button class="nav-link" id="complex-tab" data-bs-toggle="tab" data-bs-target="#complex-pane" type="button" role="tab" aria-controls="complex-pane" aria-selected="false">Most Complex</button>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="fileTypeFilterIndicator" class="alert alert-info mb-3 d-none" role="alert">
+                                                <i class="bi bi-funnel"></i> Showing only <strong id="selectedFileType"></strong> files
+                                                <button type="button" class="btn-close btn-sm float-end" aria-label="Clear filter" id="clearFileTypeFilter"></button>
+                                            </div>
+                                            <div class="tab-content">
+                                                <div class="tab-pane fade show active" id="largest-pane" role="tabpanel" aria-labelledby="largest-tab" tabindex="0">
+                                                    <p class="card-text small text-muted mb-3">
+                                                        Files with the most lines of code in the repository
+                                                    </p>
+                                                </div>
+                                                <div class="tab-pane fade" id="churn-pane" role="tabpanel" aria-labelledby="churn-tab" tabindex="0">
+                                                    <p class="card-text small text-muted mb-3">
+                                                        Files with the most changes (lines added + deleted)
+                                                    </p>
+                                                </div>
+                                                <div class="tab-pane fade" id="complex-pane" role="tabpanel" aria-labelledby="complex-tab" tabindex="0">
+                                                    <p class="card-text small text-muted mb-3">
+                                                        Files with the highest complexity scores
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div id="topFilesChart" style="min-height: 350px;" data-chart-type="topFiles" aria-label="Top files by size chart" aria-describedby="top-files-desc">
+                                                <div class="visually-hidden" id="top-files-desc">Horizontal bar chart showing top 5 files by selected metric. Use tabs to switch between largest files, most churned files, and most complex files.</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- File Heatmap -->
+                                <div class="chart-full">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h5 class="card-title mb-0">File Activity Heatmap</h5>
+                                        </div>
+                                        <div class="card-body" style="min-height: 400px;">
+                                            <p class="card-text">Interactive treemap showing file activity based on commit frequency and recency. Larger rectangles represent files with more lines of code, while color intensity indicates higher activity.</p>
+                                            <div id="fileHeatmapChart" style="width: 100%; height: 400px;" data-chart-type="fileHeatmap" aria-label="File activity heatmap">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        
+        <!-- Contributors Section -->
+        <section id="contributors" role="region" aria-labelledby="contributors-heading">
+            <h2 id="contributors-heading" class="visually-hidden">Contributors and Awards</h2>
+            <div class="accordion mb-4" id="contributorsAccordion">
+                <div class="accordion-item">
+                    <h3 class="accordion-header" id="contributorsHeading">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#contributorsCollapse" aria-expanded="true" aria-controls="contributorsCollapse">
+                            <i class="bi bi-people me-2"></i> Contributors & Awards
+                        </button>
+                    </h3>
+                    <div id="contributorsCollapse" class="accordion-collapse collapse show" aria-labelledby="contributorsHeading" data-bs-parent="#contributorsAccordion">
+                        <div class="accordion-body">
+            <!-- Awards Section -->
+            <div class="dashboard-grid">
+                <div class="chart-full">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Commit Awards</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="dashboard-grid" id="awardsContainer">
+                                <!-- Awards will be populated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- User-Specific Time Series Charts -->
+                <div class="chart-full">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Per-User Activity Charts</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="dashboard-grid" id="userChartsContainer">
+                                <!-- User charts will be populated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Bottom Section: Contributors and Word Cloud -->
+        <section id="bottom-section">
+            <div class="dashboard-grid">
+                <!-- Contributors Chart -->
+                <div class="chart-half">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Top Contributors</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="contributorsChart" style="min-height: 350px;" data-chart-type="contributors" aria-label="Contributors activity chart" aria-describedby="contributors-chart-desc">
+                                <div class="visually-hidden" id="contributors-chart-desc">Horizontal bar chart ranking top contributors by their total lines of code contributions to the repository.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Word Cloud -->
+                <div class="chart-half">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Commit Message Word Cloud</h5>
+                        </div>
+                        <div class="card-body" style="min-height: 400px;">
+                            <div id="wordCloudChart" style="width: 100%; height: 400px;" data-chart-type="wordCloud" aria-label="Commit message word cloud" aria-describedby="word-cloud-desc">
+                                <div class="visually-hidden" id="word-cloud-desc">Visual word cloud of most frequently used words in commit messages. Larger words appear more often across commits.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+    <!-- Load chart libraries with defer to not block page rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.54.0/dist/apexcharts.min.js" crossorigin="anonymous" defer></script>
+    <script src="https://d3js.org/d3.v7.min.js" crossorigin="anonymous" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-cloud@1.2.7/build/d3.layout.cloud.js" crossorigin="anonymous" defer></script>
+
+    <!-- Mobile optimizations -->
+    <script>
+        // Mobile-specific optimizations for accordion behavior
+        function isMobileDevice() {
+            return window.innerWidth <= 600;
+        }
+
+        // Handle mobile accordion behavior - only one section open at a time
+        function initMobileAccordions() {
+            if (!isMobileDevice()) return;
+            
+            const accordions = document.querySelectorAll('.accordion');
+            
+            accordions.forEach(accordion => {
+                const accordionButtons = accordion.querySelectorAll('.accordion-button');
+                
+                accordionButtons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        if (!isMobileDevice()) return;
+                        
+                        const targetId = this.getAttribute('data-bs-target');
+                        const targetCollapse = document.querySelector(targetId);
+                        
+                        // On mobile, close other accordions in the same accordion group
+                        setTimeout(() => {
+                            const otherCollapses = accordion.querySelectorAll('.accordion-collapse.show');
+                            otherCollapses.forEach(collapse => {
+                                if (collapse !== targetCollapse) {
+                                    const collapseInstance = bootstrap.Collapse.getInstance(collapse);
+                                    if (collapseInstance) {
+                                        collapseInstance.hide();
+                                    }
+                                }
+                            });
+                        }, 50);
+                    });
+                });
+            });
+        }
+
+        // Add touch feedback to interactive elements
+        function initTouchFeedback() {
+            if (!isMobileDevice()) return;
+            
+            const touchElements = document.querySelectorAll('.btn, .nav-link, .accordion-button, .metric-card');
+            
+            touchElements.forEach(element => {
+                element.addEventListener('touchstart', function() {
+                    this.style.transform = 'scale(0.98)';
+                    this.style.transition = 'transform 0.1s ease';
+                });
+                
+                element.addEventListener('touchend', function() {
+                    this.style.transform = 'scale(1)';
+                    setTimeout(() => {
+                        this.style.transition = '';
+                    }, 100);
+                });
+            });
+        }
+
+        // Swipe gestures for section navigation (basic implementation)
+        function initSwipeNavigation() {
+            if (!isMobileDevice()) return;
+            
+            let startX = 0;
+            let startY = 0;
+            
+            document.addEventListener('touchstart', function(e) {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+            });
+            
+            document.addEventListener('touchend', function(e) {
+                if (!startX || !startY) return;
+                
+                const endX = e.changedTouches[0].clientX;
+                const endY = e.changedTouches[0].clientY;
+                
+                const deltaX = endX - startX;
+                const deltaY = endY - startY;
+                
+                // Only process horizontal swipes
+                if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 100) {
+                    const navLinks = document.querySelectorAll('.sticky-nav a');
+                    const activeLink = document.querySelector('.sticky-nav a.active');
+                    const currentIndex = Array.from(navLinks).indexOf(activeLink);
+                    
+                    let targetIndex;
+                    if (deltaX > 0 && currentIndex > 0) {
+                        // Swipe right - go to previous section
+                        targetIndex = currentIndex - 1;
+                    } else if (deltaX < 0 && currentIndex < navLinks.length - 1) {
+                        // Swipe left - go to next section
+                        targetIndex = currentIndex + 1;
+                    }
+                    
+                    if (targetIndex !== undefined) {
+                        navLinks[targetIndex].click();
+                    }
+                }
+                
+                startX = 0;
+                startY = 0;
+            });
+        }
+
+        // Initialize mobile optimizations when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            initMobileAccordions();
+            initTouchFeedback();
+            initSwipeNavigation();
+            
+            // Reinitialize on window resize
+            window.addEventListener('resize', function() {
+                setTimeout(() => {
+                    initMobileAccordions();
+                    initTouchFeedback();
+                    initSwipeNavigation();
+                }, 100);
+            });
+        });
+    </script>
+
+    <script>
+      
+(function() {
+  "use strict";
+var Charts = (() => {
+  var __defProp = Object.defineProperty;
+  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+  var __getOwnPropNames = Object.getOwnPropertyNames;
+  var __hasOwnProp = Object.prototype.hasOwnProperty;
+  var __export = (target, all) => {
+    for (var name in all)
+      __defProp(target, name, { get: all[name], enumerable: true });
+  };
+  var __copyProps = (to, from, except, desc) => {
+    if (from && typeof from === "object" || typeof from === "function") {
+      for (let key of __getOwnPropNames(from))
+        if (!__hasOwnProp.call(to, key) && key !== except)
+          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+    }
+    return to;
+  };
+  var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+  // src/charts.ts
+  var charts_exports = {};
+  __export(charts_exports, {
+    renderAllCharts: () => renderAllCharts,
+    updateChartsTheme: () => updateChartsTheme,
+    updateGrowthChartAxis: () => updateGrowthChartAxis,
+    updateTopFilesView: () => updateTopFilesView
+  });
+  var chartRefs = {};
+  var chartData = {};
+  var selectedFileType = null;
+  function formatBytes(bytes) {
+    if (bytes >= 1e9) {
+      return (bytes / 1e9).toFixed(2) + " GB";
+    } else if (bytes >= 1e6) {
+      return (bytes / 1e6).toFixed(2) + " MB";
+    } else if (bytes >= 1e3) {
+      return (bytes / 1e3).toFixed(2) + " KB";
+    } else {
+      return bytes.toFixed(0) + " bytes";
+    }
+  }
+  function renderAllCharts(data) {
+    chartData["allData"] = data;
+    try {
+      renderContributorsChart(data.contributors, data.chartsConfig?.topContributorsLimit ?? 10);
+    } catch (error) {
+      console.error("Failed to render contributors chart:", error);
+      showChartError("contributorsChart", "Contributors chart failed to load");
+    }
+    try {
+      renderFileTypesChart(data.fileTypes);
+    } catch (error) {
+      console.error("Failed to render file types chart:", error);
+      showChartError("fileTypesChart", "File types chart failed to load");
+    }
+    try {
+      renderGrowthChart(data.linearSeries, data.timeSeries, data.commits);
+    } catch (error) {
+      console.error("Failed to render growth chart:", error);
+      showChartError("growthChart", "Growth chart failed to load");
+    }
+    try {
+      renderCategoryLinesChart(data.timeSeries, data.commits);
+    } catch (error) {
+      console.error("Failed to render category lines chart:", error);
+      showChartError("categoryLinesChart", "Category lines chart failed to load");
+    }
+    try {
+      renderCommitActivityChart(data.timeSeries);
+    } catch (error) {
+      console.error("Failed to render commit activity chart:", error);
+      showChartError("commitActivityChart", "Commit activity chart failed to load");
+    }
+    try {
+      renderWordCloudChart(data.wordCloudData, data.chartsConfig?.wordCloudHeight ?? 400);
+    } catch (error) {
+      console.error("Failed to render word cloud:", error);
+      showChartError("wordCloudChart", "Word cloud failed to load");
+    }
+    try {
+      renderFileHeatmapChart(data.fileHeatData, data.chartsConfig?.fileHeatmapHeight ?? 400, data.chartsConfig?.fileHeatmapMaxFiles ?? 100);
+    } catch (error) {
+      console.error("Failed to render file heatmap:", error);
+      showChartError("fileHeatmapChart", "File heatmap failed to load");
+    }
+    if (data.topFilesData) {
+      try {
+        renderTopFilesChart(data.topFilesData);
+      } catch (error) {
+        console.error("Failed to render top files chart:", error);
+        showChartError("topFilesChart", "Top files chart failed to load");
+      }
+    }
+    try {
+      renderTimeSliderChart(data.timeSeries, data.linearSeries);
+    } catch (error) {
+      console.error("Failed to render time slider:", error);
+      showChartError("timeSliderChart", "Time slider failed to load");
+    }
+    const limit = data.chartsConfig?.topContributorsLimit ?? 10;
+    const topContributors = data.contributors.slice(0, limit);
+    renderUserCharts(topContributors, data.commits);
+    if (data.awards) {
+      renderAwards(data.awards, data.githubUrl);
+    }
+    setupEventHandlers();
+  }
+  function setupEventHandlers() {
+    const growthRadios = document.querySelectorAll('input[name="growthXAxis"]');
+    growthRadios.forEach((radio) => {
+      radio.addEventListener("change", (e) => {
+        const target = e.target;
+        if (target.checked) {
+          updateGrowthChartAxis(target.value);
+        }
+      });
+    });
+    const clearButton = document.getElementById("clearFileTypeFilter");
+    if (clearButton) {
+      clearButton.addEventListener("click", () => {
+        clearFileTypeFilter();
+      });
+    }
+    const largestTab = document.getElementById("largest-tab");
+    const churnTab = document.getElementById("churn-tab");
+    const complexTab = document.getElementById("complex-tab");
+    if (largestTab) {
+      largestTab.addEventListener("shown.bs.tab", () => {
+        updateTopFilesChart("size");
+      });
+    }
+    if (churnTab) {
+      churnTab.addEventListener("shown.bs.tab", () => {
+        updateTopFilesChart("changes");
+      });
+    }
+    if (complexTab) {
+      complexTab.addEventListener("shown.bs.tab", () => {
+        updateTopFilesChart("complexity");
+      });
+    }
+  }
+  function showChartError(containerId, message) {
+    const container = document.getElementById(containerId);
+    if (container) {
+      container.innerHTML = `
+      <div class="d-flex align-items-center justify-content-center h-100 text-muted">
+        <div class="text-center">
+          <i class="bi bi-exclamation-circle fs-4 mb-2"></i>
+          <p class="mb-0">${message}</p>
+        </div>
+      </div>
+    `;
+    }
+  }
+  function renderContributorsChart(contributors, limit) {
+    const container = document.getElementById("contributorsChart");
+    if (!container) return;
+    const isDark = document.documentElement.getAttribute("data-bs-theme") === "dark";
+    const topContributors = contributors.slice(0, limit);
+    const options = {
+      chart: {
+        type: "bar",
+        height: 350,
+        toolbar: { show: false },
+        background: isDark ? "#161b22" : "#ffffff"
+      },
+      series: [{
+        data: topContributors.map((c) => ({
+          x: c.name,
+          y: c.commits
+        }))
+      }],
+      plotOptions: {
+        bar: {
+          horizontal: true,
+          distributed: true,
+          dataLabels: {
+            position: "top"
+          }
+        }
+      },
+      colors: isDark ? ["#f85149", "#f0883e", "#ffd33d", "#a5a5ff", "#7ce38b", "#2ea043", "#58a6ff", "#79c0ff", "#c69026", "#8b949e"] : ["#ea5545", "#f46a9b", "#ffd33d", "#b33dc6", "#27aeef", "#2ea043", "#0366d6", "#79c0ff", "#e27300", "#666666"],
+      dataLabels: {
+        enabled: true,
+        formatter: function(val) {
+          return val.toString();
+        },
+        style: {
+          colors: [isDark ? "#f0f6fc" : "#24292f"]
+        }
+      },
+      xaxis: {
+        title: {
+          text: "Number of Commits",
+          style: { color: isDark ? "#f0f6fc" : "#24292f" }
+        },
+        labels: { style: { colors: isDark ? "#f0f6fc" : "#24292f" } }
+      },
+      yaxis: {
+        labels: { style: { colors: isDark ? "#f0f6fc" : "#24292f" } }
+      },
+      grid: {
+        borderColor: isDark ? "#30363d" : "#e1e4e8"
+      },
+      tooltip: {
+        theme: isDark ? "dark" : "light",
+        y: {
+          title: {
+            formatter: function() {
+              return "Commits:";
+            }
+          }
+        },
+        marker: { show: false },
+        custom: function({ dataPointIndex }) {
+          const contributor = topContributors[dataPointIndex];
+          if (!contributor) return "";
+          return `
+          <div class="p-2">
+            <strong>${contributor.name}</strong><br/>
+            Commits: ${contributor.commits}<br/>
+            Lines changed: ${(contributor.linesAdded + contributor.linesDeleted).toLocaleString()}<br/>
+            Avg lines/commit: ${((contributor.linesAdded + contributor.linesDeleted) / contributor.commits).toFixed(1)}
+          </div>
+        `;
+        }
+      }
+    };
+    const chart = new window.ApexCharts(container, options);
+    chart.render();
+    chartRefs["contributorsChart"] = chart;
+  }
+  function renderFileTypesChart(fileTypes) {
+    const container = document.getElementById("fileTypesChart");
+    if (!container) return;
+    const isDark = document.documentElement.getAttribute("data-bs-theme") === "dark";
+    const topFileTypes = fileTypes.slice(0, 10);
+    chartData["fileTypesChart"] = { fileTypes: topFileTypes };
+    const options = {
+      chart: {
+        type: "donut",
+        height: 350,
+        background: isDark ? "#161b22" : "#ffffff",
+        events: {
+          dataPointSelection: function(_event, _chartContext, config) {
+            const selectedType = config.w.config.labels[config.dataPointIndex];
+            if (selectedFileType === selectedType) {
+              clearFileTypeFilter();
+            } else {
+              setFileTypeFilter(selectedType);
+            }
+          }
+        }
+      },
+      series: topFileTypes.map((ft) => ft.lines),
+      labels: topFileTypes.map((ft) => ft.type),
+      colors: isDark ? ["#f85149", "#f0883e", "#ffd33d", "#a5a5ff", "#7ce38b", "#2ea043", "#58a6ff", "#79c0ff", "#c69026", "#8b949e"] : ["#ea5545", "#f46a9b", "#ffd33d", "#b33dc6", "#27aeef", "#2ea043", "#0366d6", "#79c0ff", "#e27300", "#666666"],
+      dataLabels: {
+        enabled: true,
+        formatter: function(val, opts) {
+          const name = opts.w.globals.labels[opts.seriesIndex];
+          return name + ": " + val.toFixed(1) + "%";
+        },
+        style: {
+          fontSize: "12px",
+          fontFamily: "inherit",
+          fontWeight: "600",
+          colors: [isDark ? "#f0f6fc" : "#24292f"]
+        }
+      },
+      legend: {
+        position: "bottom",
+        labels: { colors: isDark ? "#f0f6fc" : "#24292f" }
+      },
+      tooltip: {
+        theme: isDark ? "dark" : "light",
+        y: {
+          formatter: function(val) {
+            return val.toLocaleString() + " lines";
+          }
+        }
+      }
+    };
+    const chart = new window.ApexCharts(container, options);
+    chart.render();
+    chartRefs["fileTypesChart"] = chart;
+  }
+  function renderGrowthChart(linearSeries, timeSeries, commits) {
+    const container = document.getElementById("growthChart");
+    if (!container) return;
+    const isDark = document.documentElement.getAttribute("data-bs-theme") === "dark";
+    chartData["growthChart"] = { linearSeries, timeSeries, commits };
+    let xAxisMode = "commit";
+    const savedMode = localStorage.getItem("growthChartXAxis");
+    if (savedMode === "date" || savedMode === "commit") {
+      xAxisMode = savedMode;
+    }
+    const options = buildGrowthChartOptions(xAxisMode, linearSeries, timeSeries, commits, isDark);
+    const chart = new window.ApexCharts(container, options);
+    chart.render();
+    chartRefs["growthChart"] = chart;
+    const dateBtn = document.getElementById("growthXAxisDate");
+    const commitBtn = document.getElementById("growthXAxisCommit");
+    if (xAxisMode === "date" && dateBtn && commitBtn) {
+      dateBtn.classList.add("active");
+      commitBtn.classList.remove("active");
+    }
+  }
+  function buildGrowthChartOptions(xAxisMode, linearSeries, timeSeries, commits, isDark) {
+    if (xAxisMode === "date") {
+      return {
+        chart: {
+          id: "growth-chart",
+          type: "area",
+          height: 350,
+          toolbar: { show: false },
+          background: isDark ? "#161b22" : "#ffffff",
+          zoom: {
+            enabled: true,
+            allowMouseWheelZoom: false
+          }
+        },
+        series: [
+          {
+            name: "Lines of Code",
+            data: timeSeries.map((point) => ({
+              x: new Date(point.date).getTime(),
+              y: point.cumulativeLines.total
+            })),
+            yAxisIndex: 0
+          },
+          {
+            name: "Repository Size",
+            data: timeSeries.map((point) => ({
+              x: new Date(point.date).getTime(),
+              y: point.cumulativeBytes.total
+            })),
+            yAxisIndex: 1
+          }
+        ],
+        xaxis: {
+          type: "datetime",
+          title: {
+            text: "Date",
+            style: { color: isDark ? "#f0f6fc" : "#24292f" }
+          },
+          labels: {
+            datetimeUTC: false,
+            style: { colors: isDark ? "#f0f6fc" : "#24292f" }
+          }
+        },
+        yaxis: [
+          {
+            title: {
+              text: "Lines of Code",
+              style: { color: isDark ? "#f0f6fc" : "#24292f" }
+            },
+            min: 0,
+            labels: {
+              style: { colors: isDark ? "#f0f6fc" : "#24292f" },
+              formatter: function(val) {
+                return val.toLocaleString();
+              }
+            }
+          },
+          {
+            opposite: true,
+            title: {
+              text: "Repository Size",
+              style: { color: isDark ? "#f0f6fc" : "#24292f" }
+            },
+            min: 0,
+            labels: {
+              formatter: formatBytes,
+              style: { colors: isDark ? "#f0f6fc" : "#24292f" }
+            }
+          }
+        ],
+        colors: [
+          isDark ? "#f85149" : "#ea5545",
+          // Lines of Code color
+          isDark ? "#a5a5ff" : "#b33dc6"
+          // Repository Size color
+        ],
+        stroke: { curve: "smooth", width: 2 },
+        fill: {
+          type: "gradient",
+          gradient: {
+            opacityFrom: 0.6,
+            opacityTo: 0.1
+          }
+        },
+        legend: {
+          position: "top",
+          horizontalAlign: "left",
+          labels: { colors: isDark ? "#f0f6fc" : "#24292f" }
+        },
+        grid: { borderColor: isDark ? "#30363d" : "#e1e4e8" },
+        dataLabels: { enabled: false },
+        tooltip: {
+          theme: isDark ? "dark" : "light",
+          x: { format: "dd MMM yyyy" }
+        }
+      };
+    } else {
+      return {
+        chart: {
+          id: "growth-chart",
+          type: "area",
+          height: 350,
+          toolbar: { show: false },
+          background: isDark ? "#161b22" : "#ffffff",
+          zoom: {
+            enabled: true,
+            allowMouseWheelZoom: false
+          }
+        },
+        series: [
+          {
+            name: "Lines of Code",
+            data: linearSeries.map((point) => ({
+              x: point.commitIndex + 1,
+              y: point.cumulativeLines
+            })),
+            yAxisIndex: 0
+          },
+          {
+            name: "Repository Size",
+            data: linearSeries.map((point) => ({
+              x: point.commitIndex + 1,
+              y: point.cumulativeBytes
+            })),
+            yAxisIndex: 1
+          }
+        ],
+        xaxis: {
+          type: "numeric",
+          title: {
+            text: "Commit Number",
+            style: { color: isDark ? "#f0f6fc" : "#24292f" }
+          },
+          labels: {
+            style: { colors: isDark ? "#f0f6fc" : "#24292f" },
+            formatter: function(val) {
+              return Math.round(val).toString();
+            }
+          },
+          min: 1,
+          max: linearSeries.length
+        },
+        yaxis: [
+          {
+            title: {
+              text: "Lines of Code",
+              style: { color: isDark ? "#f0f6fc" : "#24292f" }
+            },
+            min: 0,
+            labels: {
+              style: { colors: isDark ? "#f0f6fc" : "#24292f" },
+              formatter: function(val) {
+                return val.toLocaleString();
+              }
+            }
+          },
+          {
+            opposite: true,
+            title: {
+              text: "Repository Size",
+              style: { color: isDark ? "#f0f6fc" : "#24292f" }
+            },
+            min: 0,
+            labels: {
+              formatter: formatBytes,
+              style: { colors: isDark ? "#f0f6fc" : "#24292f" }
+            }
+          }
+        ],
+        colors: [
+          isDark ? "#f85149" : "#ea5545",
+          // Lines of Code color
+          isDark ? "#a5a5ff" : "#b33dc6"
+          // Repository Size color
+        ],
+        stroke: { curve: "smooth", width: 2 },
+        fill: {
+          type: "gradient",
+          gradient: {
+            opacityFrom: 0.6,
+            opacityTo: 0.1
+          }
+        },
+        legend: {
+          position: "top",
+          horizontalAlign: "left",
+          labels: { colors: isDark ? "#f0f6fc" : "#24292f" }
+        },
+        grid: { borderColor: isDark ? "#30363d" : "#e1e4e8" },
+        dataLabels: { enabled: false },
+        tooltip: {
+          theme: isDark ? "dark" : "light",
+          custom: function({ dataPointIndex }) {
+            const point = linearSeries[dataPointIndex];
+            if (!point || point.sha === "start") return "";
+            const commit = commits.find((c) => c.sha === point.sha);
+            if (!commit) return "";
+            const truncateMessage = (msg, maxLength) => {
+              if (msg.length <= maxLength) return msg;
+              return msg.substring(0, maxLength) + "...";
+            };
+            let linesDisplay = "";
+            const added = commit.linesAdded;
+            const deleted = commit.linesDeleted;
+            const net = point.netLines;
+            if (added > 0) {
+              linesDisplay += "+" + added;
+            }
+            if (deleted > 0) {
+              if (linesDisplay !== "") {
+                linesDisplay += " / ";
+              }
+              linesDisplay += "-" + deleted;
+            }
+            let netDisplay = "";
+            if (added > 0 && deleted > 0) {
+              netDisplay = " (Net: " + (net > 0 ? "+" : "") + net + ")";
+            } else if (added === 0 && deleted === 0) {
+              linesDisplay = "0";
+            }
+            const bytesAdded = commit.bytesAdded || 0;
+            const bytesDeleted = commit.bytesDeleted || 0;
+            let bytesDisplay = "";
+            if (bytesAdded > 0) {
+              bytesDisplay += "+" + formatBytes(bytesAdded);
+            }
+            if (bytesDeleted > 0) {
+              if (bytesDisplay !== "") {
+                bytesDisplay += " / ";
+              }
+              bytesDisplay += "-" + formatBytes(bytesDeleted);
+            }
+            if (bytesAdded === 0 && bytesDeleted === 0) {
+              bytesDisplay = "0 bytes";
+            }
+            return '<div class="custom-tooltip"><div class="tooltip-title">Commit #' + (point.commitIndex + 1) + '</div><div class="tooltip-content"><div><strong>SHA:</strong> ' + commit.sha.substring(0, 7) + "</div><div><strong>Author:</strong> " + commit.authorName + "</div><div><strong>Date:</strong> " + new Date(commit.date).toLocaleString() + '</div><div class="tooltip-message"><strong>Message:</strong> ' + truncateMessage(commit.message, 200) + "</div><div><strong>Lines:</strong> " + linesDisplay + netDisplay + "</div><div><strong>Total Lines:</strong> " + point.cumulativeLines.toLocaleString() + "</div><div><strong>Bytes:</strong> " + bytesDisplay + "</div><div><strong>Total Size:</strong> " + formatBytes(point.cumulativeBytes) + "</div></div></div>";
+          }
+        }
+      };
+    }
+  }
+  function createCommitActivityBuckets(timeSeries) {
+    if (timeSeries.length === 0) {
+      return { data: [], bucketType: "Day" };
+    }
+    const dates = timeSeries.map((point) => new Date(point.date).getTime());
+    const minDate = Math.min(...dates);
+    const maxDate = Math.max(...dates);
+    const totalDays = Math.ceil((maxDate - minDate) / (1e3 * 60 * 60 * 24));
+    let bucketType;
+    if (totalDays <= 50) {
+      bucketType = "Day";
+    } else if (Math.ceil(totalDays / 7) <= 50) {
+      bucketType = "Week";
+    } else {
+      bucketType = "Month";
+    }
+    const buckets = /* @__PURE__ */ new Map();
+    for (const point of timeSeries) {
+      const pointDate = new Date(point.date).getTime();
+      let bucketStart;
+      if (bucketType === "Day") {
+        const date = new Date(pointDate);
+        date.setHours(0, 0, 0, 0);
+        bucketStart = date.getTime();
+      } else if (bucketType === "Week") {
+        const date = new Date(pointDate);
+        const dayOfWeek = date.getDay();
+        const diff = date.getDate() - dayOfWeek;
+        const weekStart = new Date(date.setDate(diff));
+        weekStart.setHours(0, 0, 0, 0);
+        bucketStart = weekStart.getTime();
+      } else {
+        const date = new Date(pointDate);
+        date.setDate(1);
+        date.setHours(0, 0, 0, 0);
+        bucketStart = date.getTime();
+      }
+      buckets.set(bucketStart, (buckets.get(bucketStart) || 0) + point.commits);
+    }
+    const data = Array.from(buckets.entries()).map(([x, y]) => ({ x, y })).sort((a, b) => a.x - b.x).slice(0, 50);
+    return { data, bucketType };
+  }
+  function renderCategoryLinesChart(timeSeries, commits) {
+    const container = document.getElementById("categoryLinesChart");
+    if (!container) return;
+    const isDark = document.documentElement.getAttribute("data-bs-theme") === "dark";
+    const categories = ["application", "test", "build", "documentation", "other"];
+    const categoryNames = {
+      application: "Application",
+      test: "Test",
+      build: "Build",
+      documentation: "Documentation",
+      other: "Other"
+    };
+    const categoryColors = {
+      application: isDark ? "#f85149" : "#ea5545",
+      test: isDark ? "#a5a5ff" : "#b33dc6",
+      build: isDark ? "#f0883e" : "#f27036",
+      documentation: isDark ? "#7ce38b" : "#27ae60",
+      other: isDark ? "#c69026" : "#f39c12"
+    };
+    const series = [];
+    for (const category of categories) {
+      const data = timeSeries.map((point) => ({
+        x: new Date(point.date).getTime(),
+        y: point.cumulativeLines[category]
+      }));
+      series.push({
+        name: categoryNames[category],
+        data,
+        color: categoryColors[category]
+      });
+    }
+    const options = {
+      chart: {
+        id: "category-lines-chart",
+        type: "line",
+        height: 350,
+        toolbar: { show: false },
+        background: isDark ? "#161b22" : "#ffffff",
+        zoom: {
+          enabled: true,
+          allowMouseWheelZoom: false,
+          type: "x"
+        }
+      },
+      series,
+      dataLabels: {
+        enabled: false
+      },
+      stroke: {
+        curve: "smooth",
+        width: 2
+      },
+      xaxis: {
+        type: "datetime",
+        title: {
+          text: "Date",
+          style: { color: isDark ? "#f0f6fc" : "#24292f" }
+        },
+        labels: {
+          datetimeFormatter: {
+            year: "yyyy",
+            month: "MMM yyyy",
+            day: "dd MMM",
+            hour: "HH:mm"
+          },
+          datetimeUTC: false,
+          style: { colors: isDark ? "#f0f6fc" : "#24292f" }
+        }
+      },
+      yaxis: {
+        title: {
+          text: "Lines of Code",
+          style: { color: isDark ? "#f0f6fc" : "#24292f" }
+        },
+        min: 0,
+        labels: {
+          style: { colors: isDark ? "#f0f6fc" : "#24292f" },
+          formatter: function(val) {
+            return val.toLocaleString();
+          }
+        }
+      },
+      legend: {
+        position: "top",
+        horizontalAlign: "left",
+        labels: {
+          colors: isDark ? "#f0f6fc" : "#24292f"
+        }
+      },
+      tooltip: {
+        theme: isDark ? "dark" : "light",
+        enabled: true,
+        shared: true,
+        intersect: false,
+        custom: function({ dataPointIndex }) {
+          const point = timeSeries[dataPointIndex];
+          if (!point) return "";
+          const date = new Date(point.date);
+          const dateStr = date.toLocaleDateString("en-US", {
+            weekday: "short",
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+          });
+          let html = '<div class="custom-tooltip"><div class="tooltip-title">' + dateStr + "</div>";
+          html += '<div class="tooltip-content">';
+          if (point.commits > 0) {
+            html += "<div><strong>Commits:</strong> " + point.commits + "</div>";
+            if (point.commitShas && point.commitShas.length > 0) {
+              html += '<div class="mt-1"><strong>Commit hashes:</strong></div>';
+              html += '<div class="tooltip-commit-list">';
+              const maxCommits = 5;
+              const commitsToShow = point.commitShas.slice(0, maxCommits);
+              commitsToShow.forEach((sha) => {
+                const commit = commits.find((c) => c.sha === sha);
+                if (commit) {
+                  html += '<div class="tooltip-commit-item">';
+                  html += "<code>" + sha.substring(0, 7) + "</code> - ";
+                  html += commit.authorName + ": ";
+                  html += commit.message.length > 50 ? commit.message.substring(0, 50) + "..." : commit.message;
+                  html += "</div>";
+                }
+              });
+              if (point.commitShas.length > maxCommits) {
+                html += '<div class="tooltip-commit-item text-muted">... and ' + (point.commitShas.length - maxCommits) + " more</div>";
+              }
+              html += "</div>";
+            }
+          }
+          html += '<div class="mt-2"><strong>Cumulative Lines by Category:</strong></div>';
+          const categories2 = ["application", "test", "build", "documentation", "other"];
+          const categoryNames2 = {
+            application: "Application",
+            test: "Test",
+            build: "Build",
+            documentation: "Documentation",
+            other: "Other"
+          };
+          categories2.forEach((cat) => {
+            const value = point.cumulativeLines[cat];
+            if (value > 0) {
+              html += "<div>" + categoryNames2[cat] + ": " + value.toLocaleString() + " lines</div>";
+            }
+          });
+          html += '<div class="mt-1"><strong>Total:</strong> ' + point.cumulativeLines.total.toLocaleString() + " lines</div>";
+          html += "</div></div>";
+          return html;
+        }
+      },
+      grid: {
+        borderColor: isDark ? "#30363d" : "#e1e4e8"
+      }
+    };
+    const chart = new window.ApexCharts(container, options);
+    chart.render();
+    chartRefs["category-lines-chart"] = chart;
+  }
+  function renderCommitActivityChart(timeSeries) {
+    const container = document.getElementById("commitActivityChart");
+    if (!container) return;
+    const isDark = document.documentElement.getAttribute("data-bs-theme") === "dark";
+    const bucketedData = createCommitActivityBuckets(timeSeries);
+    const options = {
+      chart: {
+        id: "commit-activity-chart",
+        type: "bar",
+        height: 350,
+        toolbar: { show: false },
+        background: isDark ? "#161b22" : "#ffffff",
+        zoom: {
+          enabled: true,
+          allowMouseWheelZoom: false
+        }
+      },
+      series: [{
+        name: "Commits",
+        data: bucketedData.data
+      }],
+      plotOptions: {
+        bar: {
+          columnWidth: "80%",
+          borderRadius: 2
+        }
+      },
+      xaxis: {
+        type: "datetime",
+        title: {
+          text: `${bucketedData.bucketType} (${bucketedData.data.length} ${bucketedData.bucketType.toLowerCase()}s)`,
+          style: { color: isDark ? "#f0f6fc" : "#24292f" }
+        },
+        labels: {
+          datetimeUTC: false,
+          style: { colors: isDark ? "#f0f6fc" : "#24292f" },
+          datetimeFormatter: bucketedData.bucketType === "Day" ? {
+            day: "dd MMM",
+            month: "MMM yyyy"
+          } : bucketedData.bucketType === "Week" ? {
+            day: "dd MMM",
+            month: "MMM yyyy"
+          } : {
+            month: "MMM yyyy",
+            year: "yyyy"
+          }
+        }
+      },
+      yaxis: {
+        title: {
+          text: "Number of Commits",
+          style: { color: isDark ? "#f0f6fc" : "#24292f" }
+        },
+        min: 0,
+        labels: { style: { colors: isDark ? "#f0f6fc" : "#24292f" } }
+      },
+      colors: [isDark ? "#58a6ff" : "#0366d6"],
+      dataLabels: {
+        enabled: false
+      },
+      grid: {
+        borderColor: isDark ? "#30363d" : "#e1e4e8"
+      },
+      tooltip: {
+        theme: isDark ? "dark" : "light",
+        x: {
+          formatter: function(val) {
+            const date = new Date(val);
+            if (bucketedData.bucketType === "Day") {
+              return date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+            } else if (bucketedData.bucketType === "Week") {
+              const endDate = new Date(date);
+              endDate.setDate(endDate.getDate() + 6);
+              return `Week of ${date.toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${endDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`;
+            } else {
+              return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+            }
+          }
+        }
+      }
+    };
+    const chart = new window.ApexCharts(container, options);
+    chart.render();
+    chartRefs["commit-activity-chart"] = chart;
+  }
+  function renderWordCloudChart(wordCloudData, height) {
+    const container = document.getElementById("wordCloudChart");
+    if (!container) return;
+    const isDark = document.documentElement.getAttribute("data-bs-theme") === "dark";
+    const width = container.offsetWidth;
+    const maxFontSize = 60;
+    const minFontSize = 12;
+    const maxFreq = Math.max(...wordCloudData.map((d) => d.size));
+    const minFreq = Math.min(...wordCloudData.map((d) => d.size));
+    const fontSize = window.d3.scaleLinear().domain([minFreq, maxFreq]).range([minFontSize, maxFontSize]);
+    const layout = window.d3.layout.cloud().size([width, height]).words(wordCloudData.map((d) => ({
+      text: d.text,
+      size: fontSize(d.size),
+      frequency: d.size
+    }))).padding(5).rotate(() => (Math.random() - 0.5) * 60).font("Arial").fontSize((d) => d.size).on("end", draw);
+    layout.start();
+    function draw(words) {
+      const colorScale = isDark ? ["#f85149", "#f0883e", "#ffd33d", "#a5a5ff", "#7ce38b", "#2ea043", "#58a6ff", "#79c0ff", "#c69026"] : ["#ea5545", "#f46a9b", "#ffd33d", "#b33dc6", "#27aeef", "#2ea043", "#0366d6", "#79c0ff", "#e27300"];
+      const svg = window.d3.select(container).append("svg").attr("width", width).attr("height", height).append("g").attr("transform", `translate(${width / 2},${height / 2})`);
+      svg.selectAll("text").data(words).enter().append("text").style("font-size", (d) => `${d.size}px`).style("font-family", "Arial").style("fill", (_, i) => colorScale[i % colorScale.length]).attr("text-anchor", "middle").attr("transform", (d) => `translate(${d.x},${d.y})rotate(${d.rotate})`).text((d) => d.text).append("title").text((d) => `${d.text}: ${d.frequency} occurrences`);
+    }
+  }
+  function renderFileHeatmapChart(fileHeatData, height, maxFiles) {
+    const container = document.getElementById("fileHeatmapChart");
+    if (!container) return;
+    const isDark = document.documentElement.getAttribute("data-bs-theme") === "dark";
+    chartData["fileHeatmapChart"] = { fileHeatData, height, maxFiles };
+    let filteredData = fileHeatData;
+    if (selectedFileType) {
+      filteredData = fileHeatData.filter((file) => file.fileType === selectedFileType);
+      if (filteredData.length === 0) {
+        if (chartRefs["fileHeatmapChart"]) {
+          chartRefs["fileHeatmapChart"].destroy();
+          chartRefs["fileHeatmapChart"] = null;
+        }
+        container.innerHTML = `
+        <div class="d-flex align-items-center justify-content-center h-100 text-muted" style="height: ${height}px;">
+          <div class="text-center">
+            <i class="bi bi-funnel fs-1 mb-3"></i>
+            <p class="mb-0">No files with type "${selectedFileType}" found</p>
+          </div>
+        </div>
+      `;
+        return;
+      }
+    }
+    const limitedData = filteredData.slice(0, maxFiles);
+    const data = limitedData.map((file) => ({
+      x: file.fileName,
+      y: file.totalLines
+    }));
+    const options = {
+      chart: {
+        type: "treemap",
+        height,
+        toolbar: { show: false },
+        background: isDark ? "#161b22" : "#ffffff"
+      },
+      series: [{
+        data
+      }],
+      dataLabels: {
+        enabled: true,
+        style: {
+          fontSize: "12px",
+          colors: [isDark ? "#f0f6fc" : "#24292f"]
+        },
+        formatter: function(val, opts) {
+          return [val, opts.value.toLocaleString() + " lines"].join("\n");
+        }
+      },
+      plotOptions: {
+        treemap: {
+          enableShades: true,
+          shadeIntensity: 0.5,
+          reverseNegativeShade: true,
+          colorScale: {
+            ranges: [{
+              from: 0,
+              to: 50,
+              color: isDark ? "#0e4429" : "#9be9a8"
+            }, {
+              from: 51,
+              to: 200,
+              color: isDark ? "#006d32" : "#40c463"
+            }, {
+              from: 201,
+              to: 500,
+              color: isDark ? "#26a641" : "#30a14e"
+            }, {
+              from: 501,
+              to: 99999,
+              color: isDark ? "#39d353" : "#216e39"
+            }]
+          }
+        }
+      },
+      tooltip: {
+        theme: isDark ? "dark" : "light",
+        custom: function({ dataPointIndex }) {
+          const file = limitedData[dataPointIndex];
+          if (!file) return "";
+          return `
+          <div class="p-2">
+            <strong>${file.fileName}</strong><br/>
+            Lines: ${file.totalLines.toLocaleString()}<br/>
+            Commits: ${file.commitCount}<br/>
+            Type: ${file.fileType}<br/>
+            Last modified: ${new Date(file.lastModified).toLocaleDateString()}
+          </div>
+        `;
+        }
+      }
+    };
+    if (chartRefs["fileHeatmapChart"]) {
+      chartRefs["fileHeatmapChart"].destroy();
+      chartRefs["fileHeatmapChart"] = null;
+    }
+    const chart = new window.ApexCharts(container, options);
+    chart.render();
+    chartRefs["fileHeatmapChart"] = chart;
+  }
+  function renderTopFilesChart(topFilesData) {
+    const container = document.getElementById("topFilesChart");
+    if (!container) return;
+    let currentView = "size";
+    const savedView = localStorage.getItem("topFilesView");
+    if (savedView === "size" || savedView === "changes" || savedView === "complexity") {
+      currentView = savedView;
+    }
+    chartData["topFilesChart"] = { data: topFilesData, currentView };
+    renderTopFilesChartWithFilter(topFilesData, currentView);
+    const sizeBtn = document.getElementById("largest-tab");
+    const changesBtn = document.getElementById("churn-tab");
+    const complexityBtn = document.getElementById("complex-tab");
+    if (sizeBtn && changesBtn && complexityBtn) {
+      sizeBtn.classList.remove("active");
+      changesBtn.classList.remove("active");
+      complexityBtn.classList.remove("active");
+      if (currentView === "size") sizeBtn.classList.add("active");
+      else if (currentView === "changes") changesBtn.classList.add("active");
+      else if (currentView === "complexity") complexityBtn.classList.add("active");
+    }
+  }
+  function buildTopFilesChartOptions(view, data, isDark) {
+    let series;
+    let yaxisTitle;
+    let tooltipFormatter;
+    if (view === "size") {
+      series = [{
+        name: "Lines of Code",
+        data: data.largest.map((f) => ({
+          x: f.fileName,
+          y: f.value
+        }))
+      }];
+      yaxisTitle = "Lines of Code";
+      tooltipFormatter = function(val) {
+        return val.toLocaleString() + " lines";
+      };
+    } else if (view === "changes") {
+      series = [{
+        name: "Number of Changes",
+        data: data.mostChurn.map((f) => ({
+          x: f.fileName,
+          y: f.value
+        }))
+      }];
+      yaxisTitle = "Number of Changes";
+      tooltipFormatter = function(val) {
+        return val.toLocaleString() + " commits";
+      };
+    } else {
+      series = [{
+        name: "Cyclomatic Complexity",
+        data: data.mostComplex.map((f) => ({
+          x: f.fileName,
+          y: f.value
+        }))
+      }];
+      yaxisTitle = "Cyclomatic Complexity";
+      tooltipFormatter = function(val) {
+        return "Complexity: " + val;
+      };
+    }
+    return {
+      chart: {
+        type: "bar",
+        height: 350,
+        toolbar: { show: false },
+        background: isDark ? "#161b22" : "#ffffff"
+      },
+      series,
+      plotOptions: {
+        bar: {
+          horizontal: true,
+          dataLabels: {
+            position: "top"
+          }
+        }
+      },
+      dataLabels: {
+        enabled: true,
+        offsetX: -6,
+        style: {
+          fontSize: "12px",
+          colors: [isDark ? "#f0f6fc" : "#ffffff"]
+        }
+      },
+      colors: [isDark ? "#58a6ff" : "#0366d6"],
+      xaxis: {
+        title: {
+          text: yaxisTitle,
+          style: { color: isDark ? "#f0f6fc" : "#24292f" }
+        },
+        labels: {
+          style: { colors: isDark ? "#f0f6fc" : "#24292f" },
+          formatter: function(val) {
+            return val.toLocaleString();
+          }
+        }
+      },
+      yaxis: {
+        labels: {
+          style: { colors: isDark ? "#f0f6fc" : "#24292f" }
+        }
+      },
+      grid: {
+        borderColor: isDark ? "#30363d" : "#e1e4e8"
+      },
+      tooltip: {
+        theme: isDark ? "dark" : "light",
+        y: {
+          formatter: tooltipFormatter
+        }
+      }
+    };
+  }
+  function updateTopFilesChart(view) {
+    const storedData = chartData["topFilesChart"];
+    if (!storedData || !storedData.data) {
+      return;
+    }
+    chartData["topFilesChart"].currentView = view;
+    localStorage.setItem("topFilesView", view);
+    const sizeBtn = document.getElementById("largest-tab");
+    const changesBtn = document.getElementById("churn-tab");
+    const complexityBtn = document.getElementById("complex-tab");
+    if (sizeBtn && changesBtn && complexityBtn) {
+      sizeBtn.classList.remove("active");
+      changesBtn.classList.remove("active");
+      complexityBtn.classList.remove("active");
+      if (view === "size") sizeBtn.classList.add("active");
+      else if (view === "changes") changesBtn.classList.add("active");
+      else if (view === "complexity") complexityBtn.classList.add("active");
+    }
+    renderTopFilesChartWithFilter(storedData.data, view);
+  }
+  function renderTimeSliderChart(timeSeries, linearSeries) {
+    const container = document.getElementById("timeSliderChart");
+    if (!container) return;
+    const isDark = document.documentElement.getAttribute("data-bs-theme") === "dark";
+    const dates = timeSeries.map((point) => new Date(point.date).getTime());
+    const minDate = Math.min(...dates);
+    const maxDate = Math.max(...dates);
+    const totalCommits = linearSeries.length;
+    container.innerHTML = `
+    <div class="time-range-slider" style="padding: 15px 10px;">
+      <div class="row mb-3">
+        <div class="col-6">
+          <div class="text-start">
+            <span class="text-muted me-2">Start:</span>
+            <span class="fw-semibold text-primary" id="selectedStartLabel" style="font-size: 0.95rem;">${formatShortDateTime(new Date(minDate))}</span>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="text-end">
+            <span class="text-muted me-2">End:</span>
+            <span class="fw-semibold text-primary" id="selectedEndLabel" style="font-size: 0.95rem;">${formatShortDateTime(new Date(maxDate))}</span>
+          </div>
+        </div>
+      </div>
+      <div class="row align-items-center">
+        <div class="col-auto">
+          <small class="text-muted" id="minDateLabel" style="font-size: 0.75rem;">${new Date(minDate).toLocaleDateString()}</small>
+        </div>
+        <div class="col">
+          <div class="range-slider-container" style="position: relative; height: 40px;">
+            <input type="range" class="form-range" id="startRange" 
+              min="0" max="100" value="0" 
+              style="position: absolute; pointer-events: none; background: transparent;">
+            <input type="range" class="form-range" id="endRange" 
+              min="0" max="100" value="100" 
+              style="position: absolute; pointer-events: none; background: transparent;">
+            <div class="slider-track" style="position: absolute; top: 18px; left: 0; right: 0; height: 4px; background: ${isDark ? "#30363d" : "#e1e4e8"}; border-radius: 2px;"></div>
+            <div class="slider-range" id="sliderRange" style="position: absolute; top: 18px; height: 4px; background: ${isDark ? "#58a6ff" : "#27aeef"}; border-radius: 2px;"></div>
+          </div>
+        </div>
+        <div class="col-auto">
+          <small class="text-muted" id="maxDateLabel" style="font-size: 0.75rem;">${new Date(maxDate).toLocaleDateString()}</small>
+        </div>
+      </div>
+    </div>
+    <style>
+      .range-slider-container input[type="range"] {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 4px;
+        outline: none;
+        margin: 0;
+      }
+      
+      .range-slider-container input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        background: ${isDark ? "#58a6ff" : "#27aeef"};
+        border-radius: 50%;
+        cursor: pointer;
+        pointer-events: all;
+        position: relative;
+        z-index: 1;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+      }
+      
+      .range-slider-container input[type="range"]::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        background: ${isDark ? "#58a6ff" : "#27aeef"};
+        border-radius: 50%;
+        cursor: pointer;
+        pointer-events: all;
+        position: relative;
+        z-index: 1;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        border: none;
+      }
+      
+      #startRange::-webkit-slider-thumb {
+        z-index: 2;
+      }
+      
+      #endRange::-webkit-slider-thumb {
+        z-index: 3;
+      }
+    </style>
+  `;
+    const startSlider = container.querySelector("#startRange");
+    const endSlider = container.querySelector("#endRange");
+    const updateSliderRange = () => {
+      const sliderRange = document.querySelector("#sliderRange");
+      if (sliderRange && startSlider && endSlider) {
+        const startPercent = parseFloat(startSlider.value);
+        const endPercent = parseFloat(endSlider.value);
+        sliderRange.style.left = startPercent + "%";
+        sliderRange.style.width = endPercent - startPercent + "%";
+      }
+    };
+    const updateDateRange = () => {
+      const selectedStartLabel = document.querySelector("#selectedStartLabel");
+      const selectedEndLabel = document.querySelector("#selectedEndLabel");
+      if (startSlider && endSlider && selectedStartLabel && selectedEndLabel) {
+        const startPercent = parseFloat(startSlider.value) / 100;
+        const endPercent = parseFloat(endSlider.value) / 100;
+        const startDate = minDate + (maxDate - minDate) * startPercent;
+        const endDate = minDate + (maxDate - minDate) * endPercent;
+        selectedStartLabel.textContent = formatShortDateTime(new Date(startDate));
+        selectedEndLabel.textContent = formatShortDateTime(new Date(endDate));
+        updateTargetCharts(startDate, endDate, minDate, maxDate, totalCommits);
+      }
+    };
+    startSlider.addEventListener("input", () => {
+      if (parseFloat(startSlider.value) > parseFloat(endSlider.value)) {
+        startSlider.value = endSlider.value;
+      }
+      updateSliderRange();
+      updateDateRange();
+    });
+    endSlider.addEventListener("input", () => {
+      if (parseFloat(endSlider.value) < parseFloat(startSlider.value)) {
+        endSlider.value = startSlider.value;
+      }
+      updateSliderRange();
+      updateDateRange();
+    });
+    updateSliderRange();
+  }
+  function formatShortDateTime(date) {
+    const dateOptions = {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    };
+    return date.toLocaleString(void 0, dateOptions);
+  }
+  function updateTargetCharts(min, max, minDate, maxDate, totalCommits) {
+    if (window.ApexCharts) {
+      const commitChart = chartRefs["commit-activity-chart"];
+      if (commitChart) {
+        commitChart.zoomX(min, max);
+      }
+      const categoryChart = chartRefs["category-lines-chart"];
+      if (categoryChart) {
+        categoryChart.zoomX(min, max);
+      }
+      const growthChart = chartRefs["growthChart"];
+      if (growthChart) {
+        const xAxisType = growthChart.opts?.xaxis?.type;
+        if (xAxisType === "datetime") {
+          growthChart.zoomX(min, max);
+        } else {
+          const dateRange = maxDate - minDate;
+          const startPercent = (min - minDate) / dateRange;
+          const endPercent = (max - minDate) / dateRange;
+          const startIndex = Math.max(1, Math.round(startPercent * (totalCommits - 1)) + 1);
+          const endIndex = Math.min(totalCommits, Math.round(endPercent * (totalCommits - 1)) + 1);
+          growthChart.zoomX(startIndex, endIndex);
+        }
+      }
+    }
+  }
+  function renderUserCharts(topContributors, commits) {
+    const container = document.getElementById("userChartsContainer");
+    if (!container) {
+      return;
+    }
+    topContributors.forEach((contributor, index) => {
+      const userCommits = commits.filter((c) => c.authorName === contributor.name);
+      const chartData2 = buildUserTimeSeriesData(userCommits);
+      const chartId = `userChart${index}`;
+      const chartCard = document.createElement("div");
+      chartCard.className = "chart-full";
+      chartCard.innerHTML = `
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">${contributor.name}</h5>
+          <p class="card-text small text-muted mb-0">${contributor.commits} commits \u2022 ${contributor.linesAdded + contributor.linesDeleted} lines changed</p>
+        </div>
+        <div class="card-body">
+          <div id="${chartId}" style="min-height: 250px;"></div>
+        </div>
+      </div>
+    `;
+      container.appendChild(chartCard);
+      renderUserChart(chartId, chartData2);
+    });
+  }
+  async function renderUserChart(chartId, data) {
+    const container = document.getElementById(chartId);
+    if (!container) {
+      return;
+    }
+    if (chartRefs[chartId]) {
+      return;
+    }
+    const isDark = document.documentElement.getAttribute("data-bs-theme") === "dark";
+    const options = {
+      chart: {
+        type: "line",
+        height: 250,
+        toolbar: { show: false },
+        background: isDark ? "#161b22" : "#ffffff",
+        zoom: {
+          enabled: false,
+          allowMouseWheelZoom: false
+        }
+      },
+      series: [{
+        name: "Daily Commits",
+        data: data.map((d) => ({ x: new Date(d.date), y: d.value }))
+      }],
+      xaxis: {
+        type: "datetime",
+        labels: {
+          datetimeUTC: false,
+          style: { colors: isDark ? "#f0f6fc" : "#24292f" },
+          formatter: function(val) {
+            return new Date(val).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+          }
+        }
+      },
+      yaxis: {
+        title: {
+          text: "Commits",
+          style: { color: isDark ? "#f0f6fc" : "#24292f" }
+        },
+        labels: {
+          style: { colors: isDark ? "#f0f6fc" : "#24292f" },
+          formatter: function(val) {
+            return Math.round(val).toString();
+          }
+        },
+        min: 0,
+        forceNiceScale: true
+      },
+      colors: [isDark ? "#58a6ff" : "#0366d6"],
+      stroke: { curve: "smooth", width: 2 },
+      markers: {
+        size: 4,
+        hover: { size: 6 }
+      },
+      grid: { borderColor: isDark ? "#30363d" : "#e1e4e8" },
+      tooltip: {
+        theme: isDark ? "dark" : "light",
+        x: { format: "dd MMM yyyy" }
+      }
+    };
+    try {
+      const chart = new window.ApexCharts(container, options);
+      await chart.render();
+      chartRefs[chartId] = chart;
+    } catch (error) {
+      console.error(`Failed to render chart ${chartId}:`, error);
+    }
+  }
+  function buildUserTimeSeriesData(commits) {
+    const dailyCommits = /* @__PURE__ */ new Map();
+    commits.forEach((commit) => {
+      const date = new Date(commit.date);
+      const dateKey = date.toISOString().split("T")[0];
+      dailyCommits.set(dateKey, (dailyCommits.get(dateKey) || 0) + 1);
+    });
+    return Array.from(dailyCommits.entries()).map(([date, value]) => ({ date, value })).sort((a, b) => a.date.localeCompare(b.date));
+  }
+  function renderAwards(awards, githubUrl) {
+    const container = document.getElementById("awardsContainer");
+    if (!container) return;
+    const awardCategories = [
+      { title: "Most Files Modified", data: awards.filesModified, icon: "\u{1F4C1}", color: "primary", type: "commit" },
+      { title: "Most Bytes Added", data: awards.bytesAdded, icon: "\u2795", color: "success", type: "commit" },
+      { title: "Most Bytes Removed", data: awards.bytesRemoved, icon: "\u2796", color: "danger", type: "commit" },
+      { title: "Most Lines Added", data: awards.linesAdded, icon: "\u{1F4C8}", color: "info", type: "commit" },
+      { title: "Most Lines Removed", data: awards.linesRemoved, icon: "\u{1F4C9}", color: "warning", type: "commit" },
+      { title: "Lowest Average Lines Changed", data: awards.lowestAverage, icon: "\u{1F3AF}", color: "secondary", type: "contributor" },
+      { title: "Highest Average Lines Changed", data: awards.highestAverage, icon: "\u{1F4A5}", color: "dark", type: "contributor" }
+    ];
+    container.innerHTML = "";
+    awardCategories.forEach((category) => {
+      if (category.data.length === 0) return;
+      const col = document.createElement("div");
+      col.className = "chart-third";
+      const card = document.createElement("div");
+      card.className = "card h-100";
+      const cardHeader = document.createElement("div");
+      cardHeader.className = `card-header bg-${category.color} text-white`;
+      cardHeader.innerHTML = `
+      <h6 class="mb-0">
+        <span class="me-2" style="font-size: 1.2em;">${category.icon}</span>
+        ${category.title}
+      </h6>
+    `;
+      const cardBody = document.createElement("div");
+      cardBody.className = "card-body";
+      const list = document.createElement("ol");
+      list.className = "list-group list-group-flush";
+      category.data.forEach((award) => {
+        const item = document.createElement("li");
+        item.className = "list-group-item d-flex justify-content-between align-items-start";
+        const content = document.createElement("div");
+        content.className = "ms-2 me-auto";
+        const header = document.createElement("div");
+        header.className = "fw-bold";
+        const meta = document.createElement("small");
+        meta.className = "text-muted";
+        const badge = document.createElement("span");
+        badge.className = `badge bg-${category.color} rounded-pill`;
+        if (category.type === "commit") {
+          header.textContent = award.message.length > 50 ? award.message.substring(0, 50) + "..." : award.message;
+          const commitLink = githubUrl ? `<a href="${githubUrl}/commit/${award.sha}" target="_blank" class="text-decoration-none" title="${award.sha}">
+            ${award.sha.substring(0, 7)}
+          </a>` : `<span title="${award.sha}">${award.sha.substring(0, 7)}</span>`;
+          meta.innerHTML = `
+          ${award.authorName} \u2022 
+          ${new Date(award.date).toLocaleDateString()} \u2022 
+          ${commitLink}
+        `;
+          badge.textContent = award.value.toLocaleString();
+        } else {
+          header.textContent = award.name;
+          meta.innerHTML = `
+          ${award.commits} commits \u2022 
+          ${award.averageLinesChanged.toFixed(1)} avg lines/commit
+        `;
+          badge.textContent = award.averageLinesChanged.toFixed(1);
+        }
+        content.appendChild(header);
+        content.appendChild(meta);
+        item.appendChild(content);
+        item.appendChild(badge);
+        list.appendChild(item);
+      });
+      cardBody.appendChild(list);
+      card.appendChild(cardHeader);
+      card.appendChild(cardBody);
+      col.appendChild(card);
+      container.appendChild(col);
+    });
+  }
+  function updateGrowthChartAxis(mode) {
+    const chart = chartRefs["growthChart"];
+    const data = chartData["growthChart"];
+    if (!chart || !data) return;
+    localStorage.setItem("growthChartXAxis", mode);
+    const dateBtn = document.getElementById("growthXAxisDate");
+    const commitBtn = document.getElementById("growthXAxisCommit");
+    if (mode === "date") {
+      dateBtn?.classList.add("active");
+      commitBtn?.classList.remove("active");
+    } else {
+      commitBtn?.classList.add("active");
+      dateBtn?.classList.remove("active");
+    }
+    chart.destroy();
+    const container = document.getElementById("growthChart");
+    if (!container) return;
+    const isDark = document.documentElement.getAttribute("data-bs-theme") === "dark";
+    const options = buildGrowthChartOptions(mode, data.linearSeries, data.timeSeries, data.commits, isDark);
+    const newChart = new window.ApexCharts(container, options);
+    newChart.render();
+    chartRefs["growthChart"] = newChart;
+  }
+  function updateTopFilesView(view) {
+    const topFilesData = chartData["topFilesChart"];
+    if (!topFilesData) return;
+    localStorage.setItem("topFilesView", view);
+    topFilesData.currentView = view;
+    const sizeBtn = document.getElementById("largest-tab");
+    const changesBtn = document.getElementById("churn-tab");
+    const complexityBtn = document.getElementById("complex-tab");
+    sizeBtn?.classList.remove("active");
+    changesBtn?.classList.remove("active");
+    complexityBtn?.classList.remove("active");
+    if (view === "size") sizeBtn?.classList.add("active");
+    else if (view === "changes") changesBtn?.classList.add("active");
+    else if (view === "complexity") complexityBtn?.classList.add("active");
+    renderTopFilesChartWithFilter(topFilesData.data, view);
+  }
+  function updateChartsTheme() {
+  }
+  function setFileTypeFilter(fileType) {
+    selectedFileType = fileType;
+    updateFileTypeIndicator();
+    updateChartsWithFileTypeFilter();
+  }
+  function clearFileTypeFilter() {
+    selectedFileType = null;
+    updateFileTypeIndicator();
+    updateChartsWithFileTypeFilter();
+  }
+  function updateFileTypeIndicator() {
+    const indicator = document.getElementById("fileTypeFilterIndicator");
+    const typeSpan = document.getElementById("selectedFileType");
+    if (indicator && typeSpan) {
+      if (selectedFileType) {
+        indicator.classList.remove("d-none");
+        typeSpan.textContent = selectedFileType;
+      } else {
+        indicator.classList.add("d-none");
+      }
+    }
+  }
+  function updateChartsWithFileTypeFilter() {
+    const heatmapData = chartData["fileHeatmapChart"];
+    if (heatmapData) {
+      renderFileHeatmapChart(heatmapData.fileHeatData, heatmapData.height, heatmapData.maxFiles);
+    }
+    const topFilesData = chartData["topFilesChart"];
+    if (topFilesData) {
+      renderTopFilesChartWithFilter(topFilesData.data, topFilesData.currentView);
+    }
+  }
+  function renderTopFilesChartWithFilter(topFilesData, currentView) {
+    const container = document.getElementById("topFilesChart");
+    if (!container) return;
+    const originalChartData = chartData["allData"];
+    let fileTypeMap = /* @__PURE__ */ new Map();
+    if (originalChartData && originalChartData.commits) {
+      for (const commit of originalChartData.commits) {
+        for (const fileChange of commit.filesChanged) {
+          fileTypeMap.set(fileChange.fileName, fileChange.fileType);
+        }
+      }
+    }
+    let filteredData = topFilesData;
+    if (selectedFileType && fileTypeMap.size > 0) {
+      filteredData = {
+        largest: topFilesData.largest.filter((f) => fileTypeMap.get(f.fileName) === selectedFileType),
+        mostChurn: topFilesData.mostChurn.filter((f) => fileTypeMap.get(f.fileName) === selectedFileType),
+        mostComplex: topFilesData.mostComplex.filter((f) => fileTypeMap.get(f.fileName) === selectedFileType)
+      };
+      const currentData = currentView === "size" ? filteredData.largest : currentView === "changes" ? filteredData.mostChurn : filteredData.mostComplex;
+      if (currentData.length === 0) {
+        container.innerHTML = `
+        <div class="d-flex align-items-center justify-content-center h-100 text-muted" style="height: 350px;">
+          <div class="text-center">
+            <i class="bi bi-funnel fs-1 mb-3"></i>
+            <p class="mb-0">No files with type "${selectedFileType}" found in ${currentView} view</p>
+          </div>
+        </div>
+      `;
+        return;
+      }
+    }
+    const isDark = document.documentElement.getAttribute("data-bs-theme") === "dark";
+    const options = buildTopFilesChartOptions(currentView, filteredData, isDark);
+    if (chartRefs["topFilesChart"]) {
+      chartRefs["topFilesChart"].destroy();
+    }
+    const chart = new window.ApexCharts(container, options);
+    chart.render();
+    chartRefs["topFilesChart"] = chart;
+  }
+  return __toCommonJS(charts_exports);
+})();
+
+  
+  // Export the render function to global scope
+  window.renderAllCharts = Charts.renderAllCharts;
+})();
+
+      
+      // Chart data
+      const chartData = {"commits":[{"sha":"a16d33d1f44dc89743bc681e6b4d72cfe43c9a18","authorName":"Alice Johnson","authorEmail":"alice@example.com","date":"2025-06-23T19:25:37+0100","message":"Initial commit: Add basic JavaScript application structure","linesAdded":20,"linesDeleted":0,"bytesAdded":739,"bytesDeleted":0,"filesChanged":[{"fileName":"app.js","linesAdded":12,"linesDeleted":0,"fileType":"JavaScript","bytesAdded":435,"bytesDeleted":0},{"fileName":"utils.js","linesAdded":8,"linesDeleted":0,"fileType":"JavaScript","bytesAdded":304,"bytesDeleted":0}]},{"sha":"27ce5535870b1ea4f9b5626ba3030b1452f68e39","authorName":"Bob Smith","authorEmail":"bob@example.com","date":"2025-06-28T19:25:38+0100","message":"Add TypeScript configuration and API client","linesAdded":52,"linesDeleted":0,"bytesAdded":2140,"bytesDeleted":0,"filesChanged":[{"fileName":"src/api.ts","linesAdded":25,"linesDeleted":0,"fileType":"TypeScript","bytesAdded":1191,"bytesDeleted":0},{"fileName":"src/types.ts","linesAdded":15,"linesDeleted":0,"fileType":"TypeScript","bytesAdded":741,"bytesDeleted":0},{"fileName":"tsconfig.json","linesAdded":12,"linesDeleted":0,"fileType":"JSON","bytesAdded":208,"bytesDeleted":0}]},{"sha":"c08cc71d6227a80cdee4231f6a8be671413e0ce5","authorName":"Carol Davis","authorEmail":"carol@example.com","date":"2025-07-01T19:25:38+0100","message":"Add package.json and helper utilities","linesAdded":35,"linesDeleted":0,"bytesAdded":1085,"bytesDeleted":0,"filesChanged":[{"fileName":"helpers.js","linesAdded":20,"linesDeleted":0,"fileType":"JavaScript","bytesAdded":811,"bytesDeleted":0},{"fileName":"package.json","linesAdded":15,"linesDeleted":0,"fileType":"JSON","bytesAdded":274,"bytesDeleted":0}]},{"sha":"1c1d74ccbfb5baa2f07e5c990fbcb64e46f8fbec","authorName":"Alice Johnson","authorEmail":"alice@example.com","date":"2025-07-05T19:25:38+0100","message":"Add logging system and extend utilities","linesAdded":35,"linesDeleted":0,"bytesAdded":1741,"bytesDeleted":0,"filesChanged":[{"fileName":"src/logger.ts","linesAdded":30,"linesDeleted":0,"fileType":"TypeScript","bytesAdded":1521,"bytesDeleted":0},{"fileName":"utils.js","linesAdded":5,"linesDeleted":0,"fileType":"JavaScript","bytesAdded":220,"bytesDeleted":0}]},{"sha":"fd4f6550dd1219a66c58458ed2a9491b5f536610","authorName":"Bob Smith","authorEmail":"bob@example.com","date":"2025-07-08T19:25:38+0100","message":"Add database layer and user repository","linesAdded":35,"linesDeleted":0,"bytesAdded":1846,"bytesDeleted":0,"filesChanged":[{"fileName":"src/database.ts","linesAdded":35,"linesDeleted":0,"fileType":"TypeScript","bytesAdded":1846,"bytesDeleted":0}]},{"sha":"0e41752ec904882a069b91e89309bf1f9d947ece","authorName":"Carol Davis","authorEmail":"carol@example.com","date":"2025-07-11T19:25:38+0100","message":"Add input validation and error handling","linesAdded":25,"linesDeleted":0,"bytesAdded":1091,"bytesDeleted":0,"filesChanged":[{"fileName":"validation.js","linesAdded":25,"linesDeleted":0,"fileType":"JavaScript","bytesAdded":1091,"bytesDeleted":0}]},{"sha":"8eb62e10f917e74d8e958e5764ca6c8121dd26ce","authorName":"Alice Johnson","authorEmail":"alice@example.com","date":"2025-07-13T19:25:38+0100","message":"Remove helpers.js and refactor app to use validation","linesAdded":18,"linesDeleted":32,"bytesAdded":222,"bytesDeleted":811,"filesChanged":[{"fileName":"app.js","linesAdded":18,"linesDeleted":12,"fileType":"JavaScript","bytesAdded":222,"bytesDeleted":0},{"fileName":"helpers.js","linesAdded":0,"linesDeleted":20,"fileType":"JavaScript","bytesAdded":0,"bytesDeleted":811}]},{"sha":"fb6a04f101fc289e0c97af3bb154a84ff8bbebc6","authorName":"Bob Smith","authorEmail":"bob@example.com","date":"2025-07-15T19:25:38+0100","message":"Add event system with TypeScript generics","linesAdded":28,"linesDeleted":0,"bytesAdded":1419,"bytesDeleted":0,"filesChanged":[{"fileName":"src/events.ts","linesAdded":28,"linesDeleted":0,"fileType":"TypeScript","bytesAdded":1419,"bytesDeleted":0}]},{"sha":"2c04c66133e99e2e2ba8bc7097392e13347e204f","authorName":"Carol Davis","authorEmail":"carol@example.com","date":"2025-07-17T19:25:38+0100","message":"Add configuration management system","linesAdded":30,"linesDeleted":0,"bytesAdded":1191,"bytesDeleted":0,"filesChanged":[{"fileName":"config.js","linesAdded":30,"linesDeleted":0,"fileType":"JavaScript","bytesAdded":1191,"bytesDeleted":0}]},{"sha":"bf963110811ab5775a97e08835d5ca08186cfe6b","authorName":"Carol Davis","authorEmail":"carol@example.com","date":"2025-07-19T19:25:39+0100","message":"Major cleanup: Remove validation system and simplify utils","linesAdded":11,"linesDeleted":56,"bytesAdded":0,"bytesDeleted":1870,"filesChanged":[{"fileName":"app.js","linesAdded":8,"linesDeleted":18,"fileType":"JavaScript","bytesAdded":0,"bytesDeleted":369},{"fileName":"utils.js","linesAdded":3,"linesDeleted":13,"fileType":"JavaScript","bytesAdded":0,"bytesDeleted":410},{"fileName":"validation.js","linesAdded":0,"linesDeleted":25,"fileType":"JavaScript","bytesAdded":0,"bytesDeleted":1091}]},{"sha":"4eb30d16b831fc5229759d2495142ee04eeda10d","authorName":"Alice Johnson","authorEmail":"alice@example.com","date":"2025-07-21T19:25:39+0100","message":"Add service layer with event integration","linesAdded":32,"linesDeleted":0,"bytesAdded":1687,"bytesDeleted":0,"filesChanged":[{"fileName":"src/services.ts","linesAdded":32,"linesDeleted":0,"fileType":"TypeScript","bytesAdded":1687,"bytesDeleted":0}]},{"sha":"f799f78e62857e6ae50dc2d6d9b3ce32b888741f","authorName":"Carol Davis","authorEmail":"carol@example.com","date":"2025-07-23T19:25:39+0100","message":"Update package.json and add .gitignore","linesAdded":3,"linesDeleted":0,"bytesAdded":66,"bytesDeleted":0,"filesChanged":[{"fileName":"package.json","linesAdded":3,"linesDeleted":0,"fileType":"JSON","bytesAdded":66,"bytesDeleted":0}]}],"contributors":[{"name":"Carol Davis","commits":5,"linesAdded":104,"linesDeleted":56},{"name":"Alice Johnson","commits":4,"linesAdded":105,"linesDeleted":32},{"name":"Bob Smith","commits":3,"linesAdded":115,"linesDeleted":0}],"fileTypes":[{"type":"TypeScript","lines":165,"percentage":59.13978494623656},{"type":"JavaScript","lines":84,"percentage":30.107526881720432},{"type":"JSON","lines":30,"percentage":10.75268817204301}],"timeSeries":[{"date":"2025-06-22","commits":0,"commitShas":[],"linesAdded":{"total":0,"application":0,"test":0,"build":0,"documentation":0,"other":0},"linesDeleted":{"total":0,"application":0,"test":0,"build":0,"documentation":0,"other":0},"cumulativeLines":{"total":0,"application":0,"test":0,"build":0,"documentation":0,"other":0},"bytesAdded":{"total":0,"application":0,"test":0,"build":0,"documentation":0,"other":0},"bytesDeleted":{"total":0,"application":0,"test":0,"build":0,"documentation":0,"other":0},"cumulativeBytes":{"total":0,"application":0,"test":0,"build":0,"documentation":0,"other":0}},{"date":"2025-06-23","commits":1,"commitShas":["a16d33d1f44dc89743bc681e6b4d72cfe43c9a18"],"linesAdded":{"total":20,"application":20,"test":0,"build":0,"documentation":0,"other":0},"linesDeleted":{"total":0,"application":0,"test":0,"build":0,"documentation":0,"other":0},"cumulativeLines":{"total":20,"application":20,"test":0,"build":0,"documentation":0,"other":0},"bytesAdded":{"total":739,"application":739,"test":0,"build":0,"documentation":0,"other":0},"bytesDeleted":{"total":0,"application":0,"test":0,"build":0,"documentation":0,"other":0},"cumulativeBytes":{"total":739,"application":739,"test":0,"build":0,"documentation":0,"other":0}},{"date":"2025-06-28","commits":1,"commitShas":["27ce5535870b1ea4f9b5626ba3030b1452f68e39"],"linesAdded":{"total":52,"application":40,"test":0,"build":12,"documentation":0,"other":0},"linesDeleted":{"total":0,"application":0,"test":0,"build":0,"documentation":0,"other":0},"cumulativeLines":{"total":72,"application":60,"test":0,"build":12,"documentation":0,"other":0},"bytesAdded":{"total":2140,"application":1932,"test":0,"build":208,"documentation":0,"other":0},"bytesDeleted":{"total":0,"application":0,"test":0,"build":0,"documentation":0,"other":0},"cumulativeBytes":{"total":2879,"application":2671,"test":0,"build":208,"documentation":0,"other":0}},{"date":"2025-07-01","commits":1,"commitShas":["c08cc71d6227a80cdee4231f6a8be671413e0ce5"],"linesAdded":{"total":35,"application":20,"test":0,"build":15,"documentation":0,"other":0},"linesDeleted":{"total":0,"application":0,"test":0,"build":0,"documentation":0,"other":0},"cumulativeLines":{"total":107,"application":80,"test":0,"build":27,"documentation":0,"other":0},"bytesAdded":{"total":1085,"application":811,"test":0,"build":274,"documentation":0,"other":0},"bytesDeleted":{"total":0,"application":0,"test":0,"build":0,"documentation":0,"other":0},"cumulativeBytes":{"total":3964,"application":3482,"test":0,"build":482,"documentation":0,"other":0}},{"date":"2025-07-05","commits":1,"commitShas":["1c1d74ccbfb5baa2f07e5c990fbcb64e46f8fbec"],"linesAdded":{"total":35,"application":35,"test":0,"build":0,"documentation":0,"other":0},"linesDeleted":{"total":0,"application":0,"test":0,"build":0,"documentation":0,"other":0},"cumulativeLines":{"total":142,"application":115,"test":0,"build":27,"documentation":0,"other":0},"bytesAdded":{"total":1741,"application":1741,"test":0,"build":0,"documentation":0,"other":0},"bytesDeleted":{"total":0,"application":0,"test":0,"build":0,"documentation":0,"other":0},"cumulativeBytes":{"total":5705,"application":5223,"test":0,"build":482,"documentation":0,"other":0}},{"date":"2025-07-08","commits":1,"commitShas":["fd4f6550dd1219a66c58458ed2a9491b5f536610"],"linesAdded":{"total":35,"application":35,"test":0,"build":0,"documentation":0,"other":0},"linesDeleted":{"total":0,"application":0,"test":0,"build":0,"documentation":0,"other":0},"cumulativeLines":{"total":177,"application":150,"test":0,"build":27,"documentation":0,"other":0},"bytesAdded":{"total":1846,"application":1846,"test":0,"build":0,"documentation":0,"other":0},"bytesDeleted":{"total":0,"application":0,"test":0,"build":0,"documentation":0,"other":0},"cumulativeBytes":{"total":7551,"application":7069,"test":0,"build":482,"documentation":0,"other":0}},{"date":"2025-07-11","commits":1,"commitShas":["0e41752ec904882a069b91e89309bf1f9d947ece"],"linesAdded":{"total":25,"application":25,"test":0,"build":0,"documentation":0,"other":0},"linesDeleted":{"total":0,"application":0,"test":0,"build":0,"documentation":0,"other":0},"cumulativeLines":{"total":202,"application":175,"test":0,"build":27,"documentation":0,"other":0},"bytesAdded":{"total":1091,"application":1091,"test":0,"build":0,"documentation":0,"other":0},"bytesDeleted":{"total":0,"application":0,"test":0,"build":0,"documentation":0,"other":0},"cumulativeBytes":{"total":8642,"application":8160,"test":0,"build":482,"documentation":0,"other":0}},{"date":"2025-07-13","commits":1,"commitShas":["8eb62e10f917e74d8e958e5764ca6c8121dd26ce"],"linesAdded":{"total":18,"application":18,"test":0,"build":0,"documentation":0,"other":0},"linesDeleted":{"total":32,"application":32,"test":0,"build":0,"documentation":0,"other":0},"cumulativeLines":{"total":188,"application":161,"test":0,"build":27,"documentation":0,"other":0},"bytesAdded":{"total":222,"application":222,"test":0,"build":0,"documentation":0,"other":0},"bytesDeleted":{"total":811,"application":811,"test":0,"build":0,"documentation":0,"other":0},"cumulativeBytes":{"total":8053,"application":7571,"test":0,"build":482,"documentation":0,"other":0}},{"date":"2025-07-15","commits":1,"commitShas":["fb6a04f101fc289e0c97af3bb154a84ff8bbebc6"],"linesAdded":{"total":28,"application":28,"test":0,"build":0,"documentation":0,"other":0},"linesDeleted":{"total":0,"application":0,"test":0,"build":0,"documentation":0,"other":0},"cumulativeLines":{"total":216,"application":189,"test":0,"build":27,"documentation":0,"other":0},"bytesAdded":{"total":1419,"application":1419,"test":0,"build":0,"documentation":0,"other":0},"bytesDeleted":{"total":0,"application":0,"test":0,"build":0,"documentation":0,"other":0},"cumulativeBytes":{"total":9472,"application":8990,"test":0,"build":482,"documentation":0,"other":0}},{"date":"2025-07-17","commits":1,"commitShas":["2c04c66133e99e2e2ba8bc7097392e13347e204f"],"linesAdded":{"total":30,"application":30,"test":0,"build":0,"documentation":0,"other":0},"linesDeleted":{"total":0,"application":0,"test":0,"build":0,"documentation":0,"other":0},"cumulativeLines":{"total":246,"application":219,"test":0,"build":27,"documentation":0,"other":0},"bytesAdded":{"total":1191,"application":1191,"test":0,"build":0,"documentation":0,"other":0},"bytesDeleted":{"total":0,"application":0,"test":0,"build":0,"documentation":0,"other":0},"cumulativeBytes":{"total":10663,"application":10181,"test":0,"build":482,"documentation":0,"other":0}},{"date":"2025-07-19","commits":1,"commitShas":["bf963110811ab5775a97e08835d5ca08186cfe6b"],"linesAdded":{"total":11,"application":11,"test":0,"build":0,"documentation":0,"other":0},"linesDeleted":{"total":56,"application":56,"test":0,"build":0,"documentation":0,"other":0},"cumulativeLines":{"total":201,"application":174,"test":0,"build":27,"documentation":0,"other":0},"bytesAdded":{"total":0,"application":0,"test":0,"build":0,"documentation":0,"other":0},"bytesDeleted":{"total":1870,"application":1870,"test":0,"build":0,"documentation":0,"other":0},"cumulativeBytes":{"total":8793,"application":8311,"test":0,"build":482,"documentation":0,"other":0}},{"date":"2025-07-21","commits":1,"commitShas":["4eb30d16b831fc5229759d2495142ee04eeda10d"],"linesAdded":{"total":32,"application":32,"test":0,"build":0,"documentation":0,"other":0},"linesDeleted":{"total":0,"application":0,"test":0,"build":0,"documentation":0,"other":0},"cumulativeLines":{"total":233,"application":206,"test":0,"build":27,"documentation":0,"other":0},"bytesAdded":{"total":1687,"application":1687,"test":0,"build":0,"documentation":0,"other":0},"bytesDeleted":{"total":0,"application":0,"test":0,"build":0,"documentation":0,"other":0},"cumulativeBytes":{"total":10480,"application":9998,"test":0,"build":482,"documentation":0,"other":0}},{"date":"2025-07-23","commits":1,"commitShas":["f799f78e62857e6ae50dc2d6d9b3ce32b888741f"],"linesAdded":{"total":3,"application":0,"test":0,"build":3,"documentation":0,"other":0},"linesDeleted":{"total":0,"application":0,"test":0,"build":0,"documentation":0,"other":0},"cumulativeLines":{"total":236,"application":206,"test":0,"build":30,"documentation":0,"other":0},"bytesAdded":{"total":66,"application":0,"test":0,"build":66,"documentation":0,"other":0},"bytesDeleted":{"total":0,"application":0,"test":0,"build":0,"documentation":0,"other":0},"cumulativeBytes":{"total":10546,"application":9998,"test":0,"build":548,"documentation":0,"other":0}}],"linearSeries":[{"commitIndex":0,"sha":"a16d33d1f44dc89743bc681e6b4d72cfe43c9a18","date":"2025-06-23T19:25:37+0100","cumulativeLines":20,"commits":1,"linesAdded":20,"linesDeleted":0,"netLines":20,"cumulativeBytes":739},{"commitIndex":1,"sha":"27ce5535870b1ea4f9b5626ba3030b1452f68e39","date":"2025-06-28T19:25:38+0100","cumulativeLines":72,"commits":1,"linesAdded":52,"linesDeleted":0,"netLines":52,"cumulativeBytes":2879},{"commitIndex":2,"sha":"c08cc71d6227a80cdee4231f6a8be671413e0ce5","date":"2025-07-01T19:25:38+0100","cumulativeLines":107,"commits":1,"linesAdded":35,"linesDeleted":0,"netLines":35,"cumulativeBytes":3964},{"commitIndex":3,"sha":"1c1d74ccbfb5baa2f07e5c990fbcb64e46f8fbec","date":"2025-07-05T19:25:38+0100","cumulativeLines":142,"commits":1,"linesAdded":35,"linesDeleted":0,"netLines":35,"cumulativeBytes":5705},{"commitIndex":4,"sha":"fd4f6550dd1219a66c58458ed2a9491b5f536610","date":"2025-07-08T19:25:38+0100","cumulativeLines":177,"commits":1,"linesAdded":35,"linesDeleted":0,"netLines":35,"cumulativeBytes":7551},{"commitIndex":5,"sha":"0e41752ec904882a069b91e89309bf1f9d947ece","date":"2025-07-11T19:25:38+0100","cumulativeLines":202,"commits":1,"linesAdded":25,"linesDeleted":0,"netLines":25,"cumulativeBytes":8642},{"commitIndex":6,"sha":"8eb62e10f917e74d8e958e5764ca6c8121dd26ce","date":"2025-07-13T19:25:38+0100","cumulativeLines":188,"commits":1,"linesAdded":18,"linesDeleted":32,"netLines":-14,"cumulativeBytes":8053},{"commitIndex":7,"sha":"fb6a04f101fc289e0c97af3bb154a84ff8bbebc6","date":"2025-07-15T19:25:38+0100","cumulativeLines":216,"commits":1,"linesAdded":28,"linesDeleted":0,"netLines":28,"cumulativeBytes":9472},{"commitIndex":8,"sha":"2c04c66133e99e2e2ba8bc7097392e13347e204f","date":"2025-07-17T19:25:38+0100","cumulativeLines":246,"commits":1,"linesAdded":30,"linesDeleted":0,"netLines":30,"cumulativeBytes":10663},{"commitIndex":9,"sha":"bf963110811ab5775a97e08835d5ca08186cfe6b","date":"2025-07-19T19:25:39+0100","cumulativeLines":201,"commits":1,"linesAdded":11,"linesDeleted":56,"netLines":-45,"cumulativeBytes":8793},{"commitIndex":10,"sha":"4eb30d16b831fc5229759d2495142ee04eeda10d","date":"2025-07-21T19:25:39+0100","cumulativeLines":233,"commits":1,"linesAdded":32,"linesDeleted":0,"netLines":32,"cumulativeBytes":10480},{"commitIndex":11,"sha":"f799f78e62857e6ae50dc2d6d9b3ce32b888741f","date":"2025-07-23T19:25:39+0100","cumulativeLines":236,"commits":1,"linesAdded":3,"linesDeleted":0,"netLines":3,"cumulativeBytes":10546}],"wordCloudData":[{"text":"add","size":80},{"text":"system","size":33.33333333333333},{"text":"validation","size":25.555555555555557},{"text":"typescript","size":17.77777777777778},{"text":"configuration","size":17.77777777777778},{"text":"package","size":17.77777777777778},{"text":"json","size":17.77777777777778},{"text":"utilities","size":17.77777777777778},{"text":"layer","size":17.77777777777778},{"text":"remove","size":17.77777777777778},{"text":"event","size":17.77777777777778},{"text":"initial","size":10},{"text":"commit","size":10},{"text":"basic","size":10},{"text":"javascript","size":10},{"text":"application","size":10},{"text":"structure","size":10},{"text":"api","size":10},{"text":"client","size":10},{"text":"helper","size":10},{"text":"logging","size":10},{"text":"extend","size":10},{"text":"database","size":10},{"text":"user","size":10},{"text":"repository","size":10},{"text":"input","size":10},{"text":"error","size":10},{"text":"handling","size":10},{"text":"helpers","size":10},{"text":"refactor","size":10},{"text":"app","size":10},{"text":"use","size":10},{"text":"generics","size":10},{"text":"management","size":10},{"text":"major","size":10},{"text":"cleanup","size":10},{"text":"simplify","size":10},{"text":"utils","size":10},{"text":"service","size":10},{"text":"integration","size":10},{"text":"update","size":10},{"text":"gitignore","size":10}],"fileHeatData":[{"fileName":"app.js","heatScore":1.7251001514142859,"commitCount":3,"lastModified":"2025-07-19T18:25:39.000Z","totalLines":8,"fileType":"JavaScript"},{"fileName":"utils.js","heatScore":1.7251001514142859,"commitCount":3,"lastModified":"2025-07-19T18:25:39.000Z","totalLines":3,"fileType":"JavaScript"},{"fileName":"package.json","heatScore":1.3999956122845618,"commitCount":2,"lastModified":"2025-07-23T18:25:39.000Z","totalLines":18,"fileType":"JSON"},{"fileName":"src/services.ts","heatScore":0.9613000862805301,"commitCount":1,"lastModified":"2025-07-21T18:25:39.000Z","totalLines":32,"fileType":"TypeScript"},{"fileName":"config.js","heatScore":0.8912346699696392,"commitCount":1,"lastModified":"2025-07-17T18:25:38.000Z","totalLines":30,"fileType":"JavaScript"},{"fileName":"src/events.ts","heatScore":0.8595534650462988,"commitCount":1,"lastModified":"2025-07-15T18:25:38.000Z","totalLines":28,"fileType":"TypeScript"},{"fileName":"src/database.ts","heatScore":0.763915594144079,"commitCount":1,"lastModified":"2025-07-08T18:25:38.000Z","totalLines":35,"fileType":"TypeScript"},{"fileName":"src/logger.ts","heatScore":0.7292844465883506,"commitCount":1,"lastModified":"2025-07-05T18:25:38.000Z","totalLines":30,"fileType":"TypeScript"},{"fileName":"src/api.ts","heatScore":0.6607569176102961,"commitCount":1,"lastModified":"2025-06-28T18:25:38.000Z","totalLines":25,"fileType":"TypeScript"},{"fileName":"src/types.ts","heatScore":0.6607569176102961,"commitCount":1,"lastModified":"2025-06-28T18:25:38.000Z","totalLines":15,"fileType":"TypeScript"},{"fileName":"tsconfig.json","heatScore":0.6607569176102961,"commitCount":1,"lastModified":"2025-06-28T18:25:38.000Z","totalLines":12,"fileType":"JSON"}],"topFilesData":{"largest":[{"fileName":"src/database.ts","value":35,"percentage":22.58064516129032},{"fileName":"src/services.ts","value":32,"percentage":20.64516129032258},{"fileName":"src/logger.ts","value":30,"percentage":19.35483870967742},{"fileName":"config.js","value":30,"percentage":19.35483870967742},{"fileName":"src/events.ts","value":28,"percentage":18.064516129032256}],"mostChurn":[{"fileName":"app.js","value":68,"percentage":34.87179487179487},{"fileName":"src/database.ts","value":35,"percentage":17.94871794871795},{"fileName":"src/services.ts","value":32,"percentage":16.41025641025641},{"fileName":"src/logger.ts","value":30,"percentage":15.384615384615385},{"fileName":"config.js","value":30,"percentage":15.384615384615385}],"mostComplex":[]},"awards":{"filesModified":[{"sha":"27ce5535870b1ea4f9b5626ba3030b1452f68e39","authorName":"Bob Smith","date":"2025-06-28T19:25:38+0100","message":"Add TypeScript configuration and API client","value":3},{"sha":"bf963110811ab5775a97e08835d5ca08186cfe6b","authorName":"Carol Davis","date":"2025-07-19T19:25:39+0100","message":"Major cleanup: Remove validation system and simplify utils","value":3},{"sha":"a16d33d1f44dc89743bc681e6b4d72cfe43c9a18","authorName":"Alice Johnson","date":"2025-06-23T19:25:37+0100","message":"Initial commit: Add basic JavaScript application structure","value":2},{"sha":"c08cc71d6227a80cdee4231f6a8be671413e0ce5","authorName":"Carol Davis","date":"2025-07-01T19:25:38+0100","message":"Add package.json and helper utilities","value":2},{"sha":"1c1d74ccbfb5baa2f07e5c990fbcb64e46f8fbec","authorName":"Alice Johnson","date":"2025-07-05T19:25:38+0100","message":"Add logging system and extend utilities","value":2}],"bytesAdded":[{"sha":"27ce5535870b1ea4f9b5626ba3030b1452f68e39","authorName":"Bob Smith","date":"2025-06-28T19:25:38+0100","message":"Add TypeScript configuration and API client","value":2140},{"sha":"fd4f6550dd1219a66c58458ed2a9491b5f536610","authorName":"Bob Smith","date":"2025-07-08T19:25:38+0100","message":"Add database layer and user repository","value":1846},{"sha":"1c1d74ccbfb5baa2f07e5c990fbcb64e46f8fbec","authorName":"Alice Johnson","date":"2025-07-05T19:25:38+0100","message":"Add logging system and extend utilities","value":1741},{"sha":"4eb30d16b831fc5229759d2495142ee04eeda10d","authorName":"Alice Johnson","date":"2025-07-21T19:25:39+0100","message":"Add service layer with event integration","value":1687},{"sha":"fb6a04f101fc289e0c97af3bb154a84ff8bbebc6","authorName":"Bob Smith","date":"2025-07-15T19:25:38+0100","message":"Add event system with TypeScript generics","value":1419}],"bytesRemoved":[{"sha":"bf963110811ab5775a97e08835d5ca08186cfe6b","authorName":"Carol Davis","date":"2025-07-19T19:25:39+0100","message":"Major cleanup: Remove validation system and simplify utils","value":1870},{"sha":"8eb62e10f917e74d8e958e5764ca6c8121dd26ce","authorName":"Alice Johnson","date":"2025-07-13T19:25:38+0100","message":"Remove helpers.js and refactor app to use validation","value":811},{"sha":"a16d33d1f44dc89743bc681e6b4d72cfe43c9a18","authorName":"Alice Johnson","date":"2025-06-23T19:25:37+0100","message":"Initial commit: Add basic JavaScript application structure","value":0},{"sha":"27ce5535870b1ea4f9b5626ba3030b1452f68e39","authorName":"Bob Smith","date":"2025-06-28T19:25:38+0100","message":"Add TypeScript configuration and API client","value":0},{"sha":"c08cc71d6227a80cdee4231f6a8be671413e0ce5","authorName":"Carol Davis","date":"2025-07-01T19:25:38+0100","message":"Add package.json and helper utilities","value":0}],"linesAdded":[{"sha":"27ce5535870b1ea4f9b5626ba3030b1452f68e39","authorName":"Bob Smith","date":"2025-06-28T19:25:38+0100","message":"Add TypeScript configuration and API client","value":52},{"sha":"c08cc71d6227a80cdee4231f6a8be671413e0ce5","authorName":"Carol Davis","date":"2025-07-01T19:25:38+0100","message":"Add package.json and helper utilities","value":35},{"sha":"1c1d74ccbfb5baa2f07e5c990fbcb64e46f8fbec","authorName":"Alice Johnson","date":"2025-07-05T19:25:38+0100","message":"Add logging system and extend utilities","value":35},{"sha":"fd4f6550dd1219a66c58458ed2a9491b5f536610","authorName":"Bob Smith","date":"2025-07-08T19:25:38+0100","message":"Add database layer and user repository","value":35},{"sha":"4eb30d16b831fc5229759d2495142ee04eeda10d","authorName":"Alice Johnson","date":"2025-07-21T19:25:39+0100","message":"Add service layer with event integration","value":32}],"linesRemoved":[{"sha":"bf963110811ab5775a97e08835d5ca08186cfe6b","authorName":"Carol Davis","date":"2025-07-19T19:25:39+0100","message":"Major cleanup: Remove validation system and simplify utils","value":56},{"sha":"8eb62e10f917e74d8e958e5764ca6c8121dd26ce","authorName":"Alice Johnson","date":"2025-07-13T19:25:38+0100","message":"Remove helpers.js and refactor app to use validation","value":32},{"sha":"a16d33d1f44dc89743bc681e6b4d72cfe43c9a18","authorName":"Alice Johnson","date":"2025-06-23T19:25:37+0100","message":"Initial commit: Add basic JavaScript application structure","value":0},{"sha":"27ce5535870b1ea4f9b5626ba3030b1452f68e39","authorName":"Bob Smith","date":"2025-06-28T19:25:38+0100","message":"Add TypeScript configuration and API client","value":0},{"sha":"c08cc71d6227a80cdee4231f6a8be671413e0ce5","authorName":"Carol Davis","date":"2025-07-01T19:25:38+0100","message":"Add package.json and helper utilities","value":0}],"lowestAverage":[{"name":"Carol Davis","commits":5,"averageLinesChanged":32}],"highestAverage":[{"name":"Carol Davis","commits":5,"averageLinesChanged":32}]},"trophySvgs":{"contributors":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\">\n  <defs>\n    <linearGradient id=\"goldGradient\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"100%\">\n      <stop offset=\"0%\" style=\"stop-color:#FFD700;stop-opacity:1\" />\n      <stop offset=\"50%\" style=\"stop-color:#FFA500;stop-opacity:1\" />\n      <stop offset=\"100%\" style=\"stop-color:#FFD700;stop-opacity:1\" />\n    </linearGradient>\n    <linearGradient id=\"baseGradient\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"100%\">\n      <stop offset=\"0%\" style=\"stop-color:#8B4513;stop-opacity:1\" />\n      <stop offset=\"100%\" style=\"stop-color:#654321;stop-opacity:1\" />\n    </linearGradient>\n  </defs>\n  \n  <!-- Trophy Cup -->\n  <path d=\"M 30 25 Q 30 15 40 15 L 60 15 Q 70 15 70 25 L 70 40 Q 70 50 60 55 L 55 57 Q 50 58 50 60 L 50 65 L 45 65 Q 50 58 50 60 Q 50 58 45 57 L 40 55 Q 30 50 30 40 Z\" fill=\"url(#goldGradient)\" stroke=\"#B8860B\" stroke-width=\"2\"/>\n  \n  <!-- Handles -->\n  <path d=\"M 30 30 Q 20 30 20 35 Q 20 40 25 40 Q 30 40 30 35\" fill=\"none\" stroke=\"url(#goldGradient)\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n  <path d=\"M 70 30 Q 80 30 80 35 Q 80 40 75 40 Q 70 40 70 35\" fill=\"none\" stroke=\"url(#goldGradient)\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n  \n  <!-- Base -->\n  <rect x=\"35\" y=\"65\" width=\"30\" height=\"5\" fill=\"url(#baseGradient)\"/>\n  <path d=\"M 30 70 L 35 70 L 35 75 L 30 80 L 70 80 L 65 75 L 65 70 L 70 70 L 75 75 L 75 85 L 25 85 L 25 75 Z\" fill=\"url(#baseGradient)\"/>\n  \n  <!-- Team Icons -->\n  <circle cx=\"40\" cy=\"35\" r=\"4\" fill=\"#FFF\" opacity=\"0.8\"/>\n  <circle cx=\"50\" cy=\"35\" r=\"4\" fill=\"#FFF\" opacity=\"0.8\"/>\n  <circle cx=\"60\" cy=\"35\" r=\"4\" fill=\"#FFF\" opacity=\"0.8\"/>\n  <circle cx=\"45\" cy=\"42\" r=\"4\" fill=\"#FFF\" opacity=\"0.8\"/>\n  <circle cx=\"55\" cy=\"42\" r=\"4\" fill=\"#FFF\" opacity=\"0.8\"/>\n  \n  <!-- Shine effect -->\n  <ellipse cx=\"45\" cy=\"28\" rx=\"8\" ry=\"4\" fill=\"#FFF\" opacity=\"0.3\"/>\n</svg>","files":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\">\n  <defs>\n    <linearGradient id=\"silverGradient\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"100%\">\n      <stop offset=\"0%\" style=\"stop-color:#E0E0E0;stop-opacity:1\" />\n      <stop offset=\"50%\" style=\"stop-color:#C0C0C0;stop-opacity:1\" />\n      <stop offset=\"100%\" style=\"stop-color:#E0E0E0;stop-opacity:1\" />\n    </linearGradient>\n    <linearGradient id=\"silverBase\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"100%\">\n      <stop offset=\"0%\" style=\"stop-color:#696969;stop-opacity:1\" />\n      <stop offset=\"100%\" style=\"stop-color:#4A4A4A;stop-opacity:1\" />\n    </linearGradient>\n  </defs>\n  \n  <!-- Trophy Diamond Shape -->\n  <path d=\"M 50 15 L 65 30 L 65 45 L 50 60 L 35 45 L 35 30 Z\" fill=\"url(#silverGradient)\" stroke=\"#A9A9A9\" stroke-width=\"2\"/>\n  \n  <!-- Side facets -->\n  <path d=\"M 35 30 L 20 35 L 20 40 L 35 45\" fill=\"url(#silverGradient)\" stroke=\"#A9A9A9\" stroke-width=\"1.5\"/>\n  <path d=\"M 65 30 L 80 35 L 80 40 L 65 45\" fill=\"url(#silverGradient)\" stroke=\"#A9A9A9\" stroke-width=\"1.5\"/>\n  \n  <!-- File/Folder Icons -->\n  <g transform=\"translate(44, 30)\">\n    <rect x=\"0\" y=\"0\" width=\"12\" height=\"15\" fill=\"#FFF\" opacity=\"0.8\" rx=\"1\"/>\n    <rect x=\"0\" y=\"0\" width=\"12\" height=\"3\" fill=\"#4A90E2\" opacity=\"0.8\"/>\n  </g>\n  <g transform=\"translate(40, 38)\">\n    <rect x=\"0\" y=\"0\" width=\"12\" height=\"15\" fill=\"#FFF\" opacity=\"0.6\" rx=\"1\"/>\n    <rect x=\"0\" y=\"0\" width=\"12\" height=\"3\" fill=\"#4A90E2\" opacity=\"0.6\"/>\n  </g>\n  <g transform=\"translate(48, 38)\">\n    <rect x=\"0\" y=\"0\" width=\"12\" height=\"15\" fill=\"#FFF\" opacity=\"0.6\" rx=\"1\"/>\n    <rect x=\"0\" y=\"0\" width=\"12\" height=\"3\" fill=\"#4A90E2\" opacity=\"0.6\"/>\n  </g>\n  \n  <!-- Stem -->\n  <rect x=\"47\" y=\"60\" width=\"6\" height=\"10\" fill=\"url(#silverGradient)\"/>\n  \n  <!-- Base -->\n  <path d=\"M 40 70 L 40 75 L 35 80 L 65 80 L 60 75 L 60 70 Z\" fill=\"url(#silverBase)\"/>\n  <rect x=\"30\" y=\"80\" width=\"40\" height=\"5\" fill=\"url(#silverBase)\"/>\n  \n  <!-- Shine -->\n  <ellipse cx=\"50\" cy=\"25\" rx=\"10\" ry=\"5\" fill=\"#FFF\" opacity=\"0.4\"/>\n</svg>","bytesAdded":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\">\n  <defs>\n    <linearGradient id=\"emeraldGradient\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"100%\">\n      <stop offset=\"0%\" style=\"stop-color:#50C878;stop-opacity:1\" />\n      <stop offset=\"50%\" style=\"stop-color:#00A86B;stop-opacity:1\" />\n      <stop offset=\"100%\" style=\"stop-color:#50C878;stop-opacity:1\" />\n    </linearGradient>\n    <linearGradient id=\"emeraldBase\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"100%\">\n      <stop offset=\"0%\" style=\"stop-color:#228B22;stop-opacity:1\" />\n      <stop offset=\"100%\" style=\"stop-color:#006400;stop-opacity:1\" />\n    </linearGradient>\n  </defs>\n  \n  <!-- Trophy Hexagon Shape -->\n  <path d=\"M 50 15 L 65 25 L 65 45 L 50 55 L 35 45 L 35 25 Z\" fill=\"url(#emeraldGradient)\" stroke=\"#00A86B\" stroke-width=\"2\"/>\n  \n  <!-- Binary/Byte Pattern -->\n  <text x=\"50\" y=\"35\" text-anchor=\"middle\" fill=\"#FFF\" font-family=\"monospace\" font-size=\"8\" font-weight=\"bold\">10110</text>\n  <text x=\"50\" y=\"43\" text-anchor=\"middle\" fill=\"#FFF\" font-family=\"monospace\" font-size=\"8\" font-weight=\"bold\">01101</text>\n  \n  <!-- Plus Symbol -->\n  <g transform=\"translate(50, 37)\">\n    <rect x=\"-8\" y=\"-1.5\" width=\"16\" height=\"3\" fill=\"#FFF\" opacity=\"0.8\"/>\n    <rect x=\"-1.5\" y=\"-8\" width=\"3\" height=\"16\" fill=\"#FFF\" opacity=\"0.8\"/>\n  </g>\n  \n  <!-- Side Wings -->\n  <path d=\"M 35 30 Q 25 28 20 32 Q 25 36 35 34\" fill=\"url(#emeraldGradient)\" stroke=\"#00A86B\" stroke-width=\"1.5\"/>\n  <path d=\"M 65 30 Q 75 28 80 32 Q 75 36 65 34\" fill=\"url(#emeraldGradient)\" stroke=\"#00A86B\" stroke-width=\"1.5\"/>\n  \n  <!-- Stem -->\n  <rect x=\"46\" y=\"55\" width=\"8\" height=\"15\" fill=\"url(#emeraldGradient)\"/>\n  \n  <!-- Base -->\n  <ellipse cx=\"50\" cy=\"70\" rx=\"15\" ry=\"3\" fill=\"url(#emeraldBase)\"/>\n  <rect x=\"35\" y=\"70\" width=\"30\" height=\"10\" fill=\"url(#emeraldBase)\"/>\n  <ellipse cx=\"50\" cy=\"80\" rx=\"20\" ry=\"5\" fill=\"url(#emeraldBase)\"/>\n  \n  <!-- Shine -->\n  <ellipse cx=\"45\" cy=\"22\" rx=\"8\" ry=\"4\" fill=\"#FFF\" opacity=\"0.4\"/>\n</svg>","bytesRemoved":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\">\n  <defs>\n    <linearGradient id=\"rubyGradient\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"100%\">\n      <stop offset=\"0%\" style=\"stop-color:#E0115F;stop-opacity:1\" />\n      <stop offset=\"50%\" style=\"stop-color:#DC143C;stop-opacity:1\" />\n      <stop offset=\"100%\" style=\"stop-color:#E0115F;stop-opacity:1\" />\n    </linearGradient>\n    <linearGradient id=\"rubyBase\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"100%\">\n      <stop offset=\"0%\" style=\"stop-color:#8B0000;stop-opacity:1\" />\n      <stop offset=\"100%\" style=\"stop-color:#660000;stop-opacity:1\" />\n    </linearGradient>\n  </defs>\n  \n  <!-- Trophy Shield Shape -->\n  <path d=\"M 50 15 Q 30 15 30 30 L 30 40 Q 30 55 50 60 Q 70 55 70 40 L 70 30 Q 70 15 50 15 Z\" fill=\"url(#rubyGradient)\" stroke=\"#DC143C\" stroke-width=\"2\"/>\n  \n  <!-- Binary/Byte Pattern with Strike-through -->\n  <text x=\"50\" y=\"35\" text-anchor=\"middle\" fill=\"#FFF\" font-family=\"monospace\" font-size=\"8\" font-weight=\"bold\" opacity=\"0.5\" text-decoration=\"line-through\">11010</text>\n  <text x=\"50\" y=\"43\" text-anchor=\"middle\" fill=\"#FFF\" font-family=\"monospace\" font-size=\"8\" font-weight=\"bold\" opacity=\"0.5\" text-decoration=\"line-through\">10011</text>\n  \n  <!-- Minus Symbol -->\n  <rect x=\"42\" y=\"36\" width=\"16\" height=\"3\" fill=\"#FFF\" opacity=\"0.9\"/>\n  \n  <!-- Decorative elements -->\n  <circle cx=\"35\" cy=\"25\" r=\"3\" fill=\"#FFF\" opacity=\"0.3\"/>\n  <circle cx=\"65\" cy=\"25\" r=\"3\" fill=\"#FFF\" opacity=\"0.3\"/>\n  \n  <!-- Stem -->\n  <rect x=\"47\" y=\"60\" width=\"6\" height=\"10\" fill=\"url(#rubyGradient)\"/>\n  \n  <!-- Base with layers -->\n  <rect x=\"40\" y=\"70\" width=\"20\" height=\"3\" fill=\"url(#rubyBase)\"/>\n  <rect x=\"35\" y=\"73\" width=\"30\" height=\"3\" fill=\"url(#rubyBase)\"/>\n  <rect x=\"30\" y=\"76\" width=\"40\" height=\"4\" fill=\"url(#rubyBase)\"/>\n  <ellipse cx=\"50\" cy=\"80\" rx=\"20\" ry=\"5\" fill=\"url(#rubyBase)\"/>\n  \n  <!-- Shine -->\n  <ellipse cx=\"45\" cy=\"23\" rx=\"10\" ry=\"5\" fill=\"#FFF\" opacity=\"0.3\"/>\n</svg>","linesAdded":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\">\n  <defs>\n    <linearGradient id=\"sapphireGradient\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"100%\">\n      <stop offset=\"0%\" style=\"stop-color:#0F52BA;stop-opacity:1\" />\n      <stop offset=\"50%\" style=\"stop-color:#0047AB;stop-opacity:1\" />\n      <stop offset=\"100%\" style=\"stop-color:#0F52BA;stop-opacity:1\" />\n    </linearGradient>\n    <linearGradient id=\"sapphireBase\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"100%\">\n      <stop offset=\"0%\" style=\"stop-color:#002FA7;stop-opacity:1\" />\n      <stop offset=\"100%\" style=\"stop-color:#002366;stop-opacity:1\" />\n    </linearGradient>\n  </defs>\n  \n  <!-- Trophy Star Shape -->\n  <path d=\"M 50 15 L 56 30 L 72 30 L 59 40 L 65 55 L 50 45 L 35 55 L 41 40 L 28 30 L 44 30 Z\" fill=\"url(#sapphireGradient)\" stroke=\"#0047AB\" stroke-width=\"2\"/>\n  \n  <!-- Code Lines -->\n  <g transform=\"translate(40, 32)\">\n    <rect x=\"0\" y=\"0\" width=\"20\" height=\"2\" fill=\"#FFF\" opacity=\"0.9\"/>\n    <rect x=\"0\" y=\"4\" width=\"15\" height=\"2\" fill=\"#FFF\" opacity=\"0.7\"/>\n    <rect x=\"0\" y=\"8\" width=\"18\" height=\"2\" fill=\"#FFF\" opacity=\"0.8\"/>\n    <rect x=\"0\" y=\"12\" width=\"12\" height=\"2\" fill=\"#FFF\" opacity=\"0.6\"/>\n  </g>\n  \n  <!-- Plus signs on sides -->\n  <g transform=\"translate(25, 35)\">\n    <rect x=\"-3\" y=\"-0.5\" width=\"6\" height=\"1\" fill=\"#FFF\" opacity=\"0.8\"/>\n    <rect x=\"-0.5\" y=\"-3\" width=\"1\" height=\"6\" fill=\"#FFF\" opacity=\"0.8\"/>\n  </g>\n  <g transform=\"translate(75, 35)\">\n    <rect x=\"-3\" y=\"-0.5\" width=\"6\" height=\"1\" fill=\"#FFF\" opacity=\"0.8\"/>\n    <rect x=\"-0.5\" y=\"-3\" width=\"1\" height=\"6\" fill=\"#FFF\" opacity=\"0.8\"/>\n  </g>\n  \n  <!-- Stem with ridges -->\n  <rect x=\"48\" y=\"55\" width=\"4\" height=\"15\" fill=\"url(#sapphireGradient)\"/>\n  <rect x=\"46\" y=\"58\" width=\"8\" height=\"1\" fill=\"#0047AB\" opacity=\"0.5\"/>\n  <rect x=\"46\" y=\"62\" width=\"8\" height=\"1\" fill=\"#0047AB\" opacity=\"0.5\"/>\n  <rect x=\"46\" y=\"66\" width=\"8\" height=\"1\" fill=\"#0047AB\" opacity=\"0.5\"/>\n  \n  <!-- Base -->\n  <path d=\"M 35 70 L 40 75 L 60 75 L 65 70 Z\" fill=\"url(#sapphireBase)\"/>\n  <rect x=\"30\" y=\"75\" width=\"40\" height=\"5\" fill=\"url(#sapphireBase)\"/>\n  <path d=\"M 25 80 L 30 85 L 70 85 L 75 80 Z\" fill=\"url(#sapphireBase)\"/>\n  \n  <!-- Shine -->\n  <ellipse cx=\"50\" cy=\"25\" rx=\"8\" ry=\"4\" fill=\"#FFF\" opacity=\"0.4\"/>\n</svg>","linesRemoved":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\">\n  <defs>\n    <linearGradient id=\"amethystGradient\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"100%\">\n      <stop offset=\"0%\" style=\"stop-color:#9966CC;stop-opacity:1\" />\n      <stop offset=\"50%\" style=\"stop-color:#8B3A8B;stop-opacity:1\" />\n      <stop offset=\"100%\" style=\"stop-color:#9966CC;stop-opacity:1\" />\n    </linearGradient>\n    <linearGradient id=\"amethystBase\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"100%\">\n      <stop offset=\"0%\" style=\"stop-color:#663399;stop-opacity:1\" />\n      <stop offset=\"100%\" style=\"stop-color:#4B0082;stop-opacity:1\" />\n    </linearGradient>\n  </defs>\n  \n  <!-- Trophy Flame/Teardrop Shape -->\n  <path d=\"M 50 15 Q 35 25 35 40 Q 35 55 50 60 Q 65 55 65 40 Q 65 25 50 15 Z\" fill=\"url(#amethystGradient)\" stroke=\"#8B3A8B\" stroke-width=\"2\"/>\n  \n  <!-- Code Lines with strikethrough effect -->\n  <g transform=\"translate(42, 30)\">\n    <rect x=\"0\" y=\"0\" width=\"16\" height=\"1.5\" fill=\"#FFF\" opacity=\"0.4\"/>\n    <rect x=\"0\" y=\"5\" width=\"12\" height=\"1.5\" fill=\"#FFF\" opacity=\"0.4\"/>\n    <rect x=\"0\" y=\"10\" width=\"14\" height=\"1.5\" fill=\"#FFF\" opacity=\"0.4\"/>\n    <rect x=\"0\" y=\"15\" width=\"10\" height=\"1.5\" fill=\"#FFF\" opacity=\"0.4\"/>\n    <!-- Diagonal strikethrough -->\n    <line x1=\"-2\" y1=\"-2\" x2=\"18\" y2=\"18\" stroke=\"#FFF\" stroke-width=\"2\" opacity=\"0.9\"/>\n  </g>\n  \n  <!-- Minus symbols floating -->\n  <rect x=\"25\" y=\"35\" width=\"8\" height=\"2\" fill=\"#FFF\" opacity=\"0.7\"/>\n  <rect x=\"67\" y=\"35\" width=\"8\" height=\"2\" fill=\"#FFF\" opacity=\"0.7\"/>\n  \n  <!-- Crystal facets -->\n  <path d=\"M 50 15 L 42 30 L 50 45\" fill=\"none\" stroke=\"#FFF\" stroke-width=\"1\" opacity=\"0.3\"/>\n  <path d=\"M 50 15 L 58 30 L 50 45\" fill=\"none\" stroke=\"#FFF\" stroke-width=\"1\" opacity=\"0.3\"/>\n  \n  <!-- Stem -->\n  <rect x=\"47\" y=\"60\" width=\"6\" height=\"10\" fill=\"url(#amethystGradient)\"/>\n  \n  <!-- Ornate Base -->\n  <ellipse cx=\"50\" cy=\"70\" rx=\"12\" ry=\"2\" fill=\"url(#amethystBase)\"/>\n  <path d=\"M 38 70 Q 35 72 35 75 L 35 78 Q 35 80 38 80 L 62 80 Q 65 80 65 78 L 65 75 Q 65 72 62 70 Z\" fill=\"url(#amethystBase)\"/>\n  <rect x=\"30\" y=\"80\" width=\"40\" height=\"5\" fill=\"url(#amethystBase)\"/>\n  \n  <!-- Shine -->\n  <ellipse cx=\"48\" cy=\"25\" rx=\"6\" ry=\"8\" fill=\"#FFF\" opacity=\"0.3\"/>\n</svg>","averageLow":"<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\">\n  <defs>\n    <linearGradient id=\"trophyGradientLow\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"100%\">\n      <stop offset=\"0%\" style=\"stop-color:#9333ea;stop-opacity:1\" />\n      <stop offset=\"100%\" style=\"stop-color:#7c3aed;stop-opacity:1\" />\n    </linearGradient>\n  </defs>\n  \n  <!-- Trophy cup -->\n  <path d=\"M 30 25 L 30 40 C 30 55 40 65 50 65 C 60 65 70 55 70 40 L 70 25 Z\" \n        fill=\"url(#trophyGradientLow)\" stroke=\"#6b21a8\" stroke-width=\"2\"/>\n  \n  <!-- Handles -->\n  <path d=\"M 30 30 C 20 30 15 35 15 40 C 15 45 20 50 30 50\" \n        fill=\"none\" stroke=\"#6b21a8\" stroke-width=\"2\"/>\n  <path d=\"M 70 30 C 80 30 85 35 85 40 C 85 45 80 50 70 50\" \n        fill=\"none\" stroke=\"#6b21a8\" stroke-width=\"2\"/>\n  \n  <!-- Base -->\n  <rect x=\"45\" y=\"65\" width=\"10\" height=\"15\" fill=\"#6b21a8\"/>\n  <rect x=\"35\" y=\"80\" width=\"30\" height=\"5\" fill=\"#6b21a8\"/>\n  \n  <!-- Precision symbol (target) -->\n  <circle cx=\"50\" cy=\"45\" r=\"8\" fill=\"none\" stroke=\"white\" stroke-width=\"1.5\"/>\n  <circle cx=\"50\" cy=\"45\" r=\"4\" fill=\"none\" stroke=\"white\" stroke-width=\"1.5\"/>\n  <circle cx=\"50\" cy=\"45\" r=\"1\" fill=\"white\"/>\n</svg>","averageHigh":"<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\">\n  <defs>\n    <linearGradient id=\"trophyGradientHigh\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"100%\">\n      <stop offset=\"0%\" style=\"stop-color:#f59e0b;stop-opacity:1\" />\n      <stop offset=\"100%\" style=\"stop-color:#d97706;stop-opacity:1\" />\n    </linearGradient>\n  </defs>\n  \n  <!-- Trophy cup -->\n  <path d=\"M 30 25 L 30 40 C 30 55 40 65 50 65 C 60 65 70 55 70 40 L 70 25 Z\" \n        fill=\"url(#trophyGradientHigh)\" stroke=\"#b45309\" stroke-width=\"2\"/>\n  \n  <!-- Handles -->\n  <path d=\"M 30 30 C 20 30 15 35 15 40 C 15 45 20 50 30 50\" \n        fill=\"none\" stroke=\"#b45309\" stroke-width=\"2\"/>\n  <path d=\"M 70 30 C 80 30 85 35 85 40 C 85 45 80 50 70 50\" \n        fill=\"none\" stroke=\"#b45309\" stroke-width=\"2\"/>\n  \n  <!-- Base -->\n  <rect x=\"45\" y=\"65\" width=\"10\" height=\"15\" fill=\"#b45309\"/>\n  <rect x=\"35\" y=\"80\" width=\"30\" height=\"5\" fill=\"#b45309\"/>\n  \n  <!-- Explosion/impact symbol -->\n  <path d=\"M 50 35 L 53 42 L 60 42 L 54 47 L 57 54 L 50 49 L 43 54 L 46 47 L 40 42 L 47 42 Z\" \n        fill=\"white\" stroke=\"white\" stroke-width=\"1\"/>\n</svg>"},"githubUrl":null,"isLizardInstalled":true,"chartsConfig":{"wordCloudHeight":400,"topContributorsLimit":10,"fileHeatmapHeight":400,"fileHeatmapMaxFiles":100,"topFilesChartHeight":400},"fileTypesConfig":{"mappings":{".ts":"TypeScript",".tsx":"TypeScript",".js":"JavaScript",".jsx":"JavaScript",".css":"CSS",".scss":"SCSS",".sass":"SCSS",".html":"HTML",".json":"JSON",".md":"Markdown",".py":"Python",".java":"Java",".cpp":"C++",".cc":"C++",".cxx":"C++",".c":"C",".go":"Go",".rs":"Rust",".php":"PHP",".rb":"Ruby",".swift":"Swift",".kt":"Kotlin",".yaml":"YAML",".yml":"YAML",".xml":"XML",".sh":"Shell",".bash":"Shell",".zsh":"Shell",".fish":"Shell",".ps1":"PowerShell",".psm1":"PowerShell",".psd1":"PowerShell",".bat":"Batch",".cmd":"Batch",".dockerfile":"Dockerfile",".makefile":"Makefile",".mk":"Makefile",".gitignore":"Git",".gitattributes":"Git",".toml":"TOML",".ini":"INI",".cfg":"Config",".conf":"Config",".properties":"Properties",".env":"Environment",".sql":"SQL",".r":"R",".R":"R",".scala":"Scala",".gradle":"Gradle",".lua":"Lua",".vim":"VimScript",".pl":"Perl",".pm":"Perl"},"binaryExtensions":[".jpg",".jpeg",".png",".gif",".bmp",".ico",".svg",".webp",".pdf",".doc",".docx",".xls",".xlsx",".ppt",".pptx",".zip",".tar",".gz",".bz2",".7z",".rar",".exe",".dll",".so",".dylib",".lib",".a",".class",".jar",".war",".ear",".pyc",".pyo",".ttf",".otf",".woff",".woff2",".eot",".mp3",".mp4",".avi",".mov",".wmv",".flv",".db",".sqlite",".sqlite3",".bin",".dat",".img",".iso"]}};
+      
+      // Initialize when DOM is ready  
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+          window.renderAllCharts(chartData);
+        });
+      } else {
+        window.renderAllCharts(chartData);
+      }
+    </script>
+  
+</body>
+</html>

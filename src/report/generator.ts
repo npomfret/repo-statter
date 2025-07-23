@@ -26,6 +26,7 @@ import type { CommitData } from '../git/parser.js'
 import type { ProgressReporter } from '../utils/progress-reporter.js'
 import type { RepoStatterConfig } from '../config/schema.js'
 import { DEFAULT_CONFIG } from '../config/defaults.js'
+import { isFileExcluded } from '../utils/exclusions.js'
 
 export interface AnalysisContext {
   repoPath: string
@@ -37,10 +38,41 @@ export interface AnalysisContext {
   config: RepoStatterConfig
 }
 
+/**
+ * Filter excluded files from commits based on exclusion patterns
+ */
+function filterExcludedFiles(commits: CommitData[], patterns: string[]): CommitData[] {
+  return commits.map(commit => {
+    const filteredFiles = commit.filesChanged.filter(file => !isFileExcluded(file.fileName, patterns));
+    
+    // Recalculate totals based on filtered files
+    const linesAdded = filteredFiles.reduce((sum, file) => sum + file.linesAdded, 0);
+    const linesDeleted = filteredFiles.reduce((sum, file) => sum + file.linesDeleted, 0);
+    const bytesAdded = filteredFiles.reduce((sum, file) => sum + (file.bytesAdded ?? 0), 0);
+    const bytesDeleted = filteredFiles.reduce((sum, file) => sum + (file.bytesDeleted ?? 0), 0);
+    
+    return {
+      ...commit,
+      filesChanged: filteredFiles,
+      linesAdded,
+      linesDeleted,
+      // Only include bytesAdded/bytesDeleted if they exist in the original commit or have non-zero values
+      ...(commit.bytesAdded !== undefined || bytesAdded > 0 ? { bytesAdded } : {}),
+      ...(commit.bytesDeleted !== undefined || bytesDeleted > 0 ? { bytesDeleted } : {})
+    };
+  })
+  // Filter out empty commits (commits with no files after exclusions)
+  .filter(commit => commit.filesChanged.length > 0);
+}
+
 export async function generateReport(repoPath: string, outputMode: 'dist' | 'analysis' = 'dist', progressReporter?: ProgressReporter, maxCommits?: number, customFilename?: string, cacheOptions?: CacheOptions, config?: RepoStatterConfig): Promise<string> {
   // Use provided config or fall back to defaults
   const finalConfig = config || DEFAULT_CONFIG
-  const commits = await parseCommitHistory(repoPath, progressReporter, maxCommits, cacheOptions || {}, finalConfig)
+  const rawCommits = await parseCommitHistory(repoPath, progressReporter, maxCommits, cacheOptions || {}, finalConfig)
+  
+  // Apply exclusion filters at runtime
+  progressReporter?.report('Applying exclusion filters')
+  const commits = filterExcludedFiles(rawCommits, finalConfig.exclusions.patterns)
   
   // Try to get repository name from git remote, fallback to directory name
   let repoName = await getRepositoryName(repoPath)

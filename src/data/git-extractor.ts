@@ -1,6 +1,5 @@
 import { extname } from 'path'
 import type { FileChange } from '../git/parser.js'
-import { isFileExcluded } from '../utils/exclusions.js'
 import { assert, assertDefined } from '../utils/errors.js'
 import type { RepoStatterConfig } from '../config/schema.js'
 
@@ -52,18 +51,17 @@ export function parseCommitDiff(
   assert(!!byteChanges.fileChanges, 'byteChanges must have fileChanges property')
   
   const filesChanged: FileChange[] = diffSummary.files
-    .filter(file => {
+    .map(file => {
       assertDefined(file.file, 'file.file')
-      return !isFileExcluded(file.file, config.exclusions.patterns)
-    })
-    .map(file => ({
+      return {
       fileName: file.file,
       linesAdded: 'insertions' in file ? file.insertions : 0,
       linesDeleted: 'deletions' in file ? file.deletions : 0,
       fileType: getFileType(file.file, config),
       bytesAdded: byteChanges.fileChanges[file.file]?.bytesAdded ?? 0,
       bytesDeleted: byteChanges.fileChanges[file.file]?.bytesDeleted ?? 0
-    }))
+      }
+    })
   
   const linesAdded = filesChanged.reduce((sum, file) => sum + file.linesAdded, 0)
   const linesDeleted = filesChanged.reduce((sum, file) => sum + file.linesDeleted, 0)
@@ -114,15 +112,13 @@ export function parseByteChanges(gitNumstatOutput: string, config: RepoStatterCo
       const fileName = parts.slice(2).join('\t')
       assertDefined(fileName, 'file name in numstat output')
       
-      if (!isFileExcluded(fileName)) {
-        // Rough estimate: 1 line ≈ configured bytes (average line length)
-        const bytesAdded = added * bytesPerLineEstimate
-        const bytesDeleted = deleted * bytesPerLineEstimate
-        
-        fileChanges[fileName] = { bytesAdded, bytesDeleted }
-        totalBytesAdded += bytesAdded
-        totalBytesDeleted += bytesDeleted
-      }
+      // Rough estimate: 1 line ≈ configured bytes (average line length)
+      const bytesAdded = added * bytesPerLineEstimate
+      const bytesDeleted = deleted * bytesPerLineEstimate
+      
+      fileChanges[fileName] = { bytesAdded, bytesDeleted }
+      totalBytesAdded += bytesAdded
+      totalBytesDeleted += bytesDeleted
     }
   }
   
