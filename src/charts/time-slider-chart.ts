@@ -172,15 +172,30 @@ export class TimeSliderChart {
 
   private updateTargetCharts(min: number, max: number): void {
     if ((window as any).ApexCharts) {
+      console.log('[TimeSlider] Updating charts with range:', new Date(min), 'to', new Date(max))
+      
       // Zoom the commit activity chart (always date-based)
       const commitChart = (window as any).ApexCharts.getChartByID('commit-activity-chart')
       if (commitChart) {
+        console.log('[TimeSlider] Found commit-activity-chart, zooming...')
         commitChart.zoomX(min, max)
+      } else {
+        console.log('[TimeSlider] commit-activity-chart NOT FOUND')
+      }
+      
+      // Zoom the category lines chart (always date-based)
+      const categoryChart = (window as any).ApexCharts.getChartByID('category-lines-chart')
+      if (categoryChart) {
+        console.log('[TimeSlider] Found category-lines-chart, zooming...')
+        categoryChart.zoomX(min, max)
+      } else {
+        console.log('[TimeSlider] category-lines-chart NOT FOUND')
       }
       
       // Zoom the growth chart
       const growthChart = (window as any).ApexCharts.getChartByID('growth-chart')
       if (growthChart) {
+        console.log('[TimeSlider] Found growth-chart')
         // Check if growth chart is in date or commit mode
         const xAxisType = growthChart.opts?.xaxis?.type
         

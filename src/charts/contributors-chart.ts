@@ -1,6 +1,5 @@
 import type { ContributorStats } from '../data/contributor-calculator.js'
 import { assert } from '../utils/errors.js'
-import { clearChartPlaceholder } from '../utils/chart-helpers.js'
 
 export class ContributorsChart {
   private containerId: string
@@ -14,8 +13,9 @@ export class ContributorsChart {
     assert(contributors !== undefined, 'Contributors data is required')
     assert(Array.isArray(contributors), 'Contributors must be an array')
     
-    // Clear loading placeholder and get container
-    const container = clearChartPlaceholder(this.containerId)
+    // Get container
+    const container = document.querySelector('#' + this.containerId) as HTMLElement
+    assert(container !== null, `Container with id ${this.containerId} not found`)
     
     const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark'
     

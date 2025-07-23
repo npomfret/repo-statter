@@ -21,7 +21,7 @@ import { getLinearSeriesData } from '../chart/data-transformer.js'
 import { getTimeSeriesData } from '../data/time-series-transformer.js'
 import { processCommitMessages } from '../text/processor.js'
 import { replaceTemplateVariables, injectIntoBody } from '../utils/template-engine.js'
-import { bundlePageScript } from '../build/bundle-page-script.js'
+import { bundleCharts } from '../build/bundle-charts.js'
 import type { CommitData } from '../git/parser.js'
 import type { ProgressReporter } from '../utils/progress-reporter.js'
 import type { RepoStatterConfig } from '../config/schema.js'
@@ -259,68 +259,47 @@ async function injectDataIntoTemplate(template: string, chartData: ChartData, co
     highestAverage: getHighestAverageLinesChanged(context)
   }
   
-  // Bundle the TypeScript page script
-  const bundledScript = await bundlePageScript()
+  // Bundle the simplified charts script
+  const bundledScript = await bundleCharts()
   
-  // Separate data script for better parsing performance
-  const dataScript = `
-    <script type="application/json" id="repo-data">
-      {
-        "commits": ${JSON.stringify(commits)},
-        "contributors": ${JSON.stringify(contributors)},
-        "fileTypes": ${JSON.stringify(fileTypes)},
-        "timeSeries": ${JSON.stringify(timeSeries)},
-        "linearSeries": ${JSON.stringify(linearSeries)},
-        "wordCloudData": ${JSON.stringify(wordCloudData)},
-        "fileHeatData": ${JSON.stringify(fileHeatData)},
-        "topFilesData": ${JSON.stringify(topFilesData)},
-        "awards": ${JSON.stringify(awards)},
-        "trophySvgs": ${JSON.stringify(chartData.trophySvgs)},
-        "githubUrl": ${JSON.stringify(await getGitHubUrl(repoPath))},
-        "isLizardInstalled": ${JSON.stringify(chartData.isLizardInstalled)},
-        "chartsConfig": ${JSON.stringify(config.charts)},
-        "fileTypesConfig": ${JSON.stringify(config.fileTypes)}
-      }
-    </script>
-  `
+  // Prepare all chart data
+  const allChartData = {
+    commits,
+    contributors,
+    fileTypes,
+    timeSeries,
+    linearSeries,
+    wordCloudData,
+    fileHeatData,
+    topFilesData,
+    awards,
+    trophySvgs: chartData.trophySvgs,
+    githubUrl: await getGitHubUrl(repoPath),
+    isLizardInstalled: chartData.isLizardInstalled,
+    chartsConfig: config.charts,
+    fileTypesConfig: config.fileTypes
+  }
   
-  // Main script that loads the bundled code and initializes with data
+  // Main script that loads the bundled code and renders charts
   const mainScript = `
     <script>
       ${bundledScript}
       
-      // Load data from separate script tag
-      function loadPageData() {
-        const dataElement = document.getElementById('repo-data');
-        if (!dataElement) {
-          console.error('Failed to find repo data');
-          return null;
-        }
-        try {
-          return JSON.parse(dataElement.textContent || '{}');
-        } catch (error) {
-          console.error('Failed to parse repo data:', error);
-          return null;
-        }
-      }
+      // Chart data
+      const chartData = ${JSON.stringify(allChartData)};
       
-      // Initialize when DOM is ready
-      function initializePage() {
-        const pageData = loadPageData();
-        if (pageData) {
-          window.initializePageScript(pageData);
-        }
-      }
-      
+      // Initialize when DOM is ready  
       if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initializePage);
+        document.addEventListener('DOMContentLoaded', () => {
+          window.renderAllCharts(chartData);
+        });
       } else {
-        initializePage();
+        window.renderAllCharts(chartData);
       }
     </script>
   `
   
-  const chartScript = dataScript + mainScript
+  const chartScript = mainScript
   
   const latestCommit = commits[commits.length - 1]
 

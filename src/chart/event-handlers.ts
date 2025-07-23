@@ -1,5 +1,5 @@
 import type { PageScriptData } from './page-script.js'
-import type { ChartRenderers } from './chart-renderers.js'
+// import type { ChartRenderers } from './chart-renderers.js'
 import { 
   applyFilters, 
   recalculateData, 
@@ -14,7 +14,7 @@ export class EventHandlers {
 
   constructor(
     private data: PageScriptData,
-    private renderers: ChartRenderers
+    private renderers: any // ChartRenderers
   ) {}
 
   public setupEventListeners(): void {

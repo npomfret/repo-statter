@@ -12,6 +12,16 @@ export function renderWithErrorBoundary(
     // Client-side error logging - this is acceptable for debugging UI issues
     console.error(`Failed to render ${chartName}:`, formatError(error))
     
+    // Also log the raw error for better debugging
+    console.error('Raw error:', error)
+    
+    // Add visible error indicator
+    const debugDiv = document.createElement('div')
+    debugDiv.textContent = `[ERROR] ${chartName} failed: ${error}`
+    debugDiv.style.cssText = 'position: fixed; bottom: 10px; left: 10px; background: red; color: white; padding: 10px; z-index: 9999; max-width: 500px;'
+    document.body.appendChild(debugDiv)
+    setTimeout(() => debugDiv.remove(), 10000)
+    
     const container = document.querySelector(`#${containerId}`)
     if (container) {
       container.innerHTML = `

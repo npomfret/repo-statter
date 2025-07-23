@@ -15,8 +15,25 @@ export class CategoryLinesChart {
   }
 
   render(timeSeries: TimeSeriesPoint[]): void {
+    // Add visible indicator that render was called
+    const debugDiv = document.createElement('div')
+    debugDiv.textContent = '[DEBUG] CategoryLinesChart.render() called'
+    debugDiv.style.cssText = 'position: fixed; top: 10px; right: 10px; background: yellow; padding: 10px; z-index: 9999;'
+    document.body.appendChild(debugDiv)
+    setTimeout(() => debugDiv.remove(), 3000)
+    
     assert(timeSeries !== undefined, 'Time series data is required')
     assert(Array.isArray(timeSeries), 'Time series must be an array')
+    
+    // Debug: Check if we have category data
+    if (timeSeries.length > 0 && !timeSeries[0]!.cumulativeLines) {
+      const errorDiv = document.createElement('div')
+      errorDiv.textContent = '[ERROR] No cumulativeLines data in timeSeries!'
+      errorDiv.style.cssText = 'position: fixed; top: 60px; right: 10px; background: red; color: white; padding: 10px; z-index: 9999;'
+      document.body.appendChild(errorDiv)
+      setTimeout(() => errorDiv.remove(), 5000)
+      return
+    }
     
     const container = document.querySelector('#' + this.containerId)
     assert(container !== null, `Container with id ${this.containerId} not found`)
@@ -139,8 +156,16 @@ export class CategoryLinesChart {
     }
     
     // ApexCharts will be available globally in the browser
+    console.log('[CategoryLinesChart] Creating chart with ID:', options.chart.id)
     this.chart = new (window as any).ApexCharts(container, options)
     this.chart.render()
+    console.log('[CategoryLinesChart] Chart rendered successfully')
+    
+    // Verify it's registered
+    setTimeout(() => {
+      const registered = (window as any).ApexCharts.getChartByID('category-lines-chart')
+      console.log('[CategoryLinesChart] Chart registered?', registered ? 'YES' : 'NO')
+    }, 100)
   }
 
   destroy(): void {

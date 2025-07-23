@@ -1,15 +1,12 @@
 import type { PageScriptData } from './page-script.js'
-import type { ChartRenderers } from './chart-renderers.js'
+// import type { ChartRenderers } from './chart-renderers.js'
 import type { EventHandlers } from './event-handlers.js'
-import { ViewportChartLoader } from './viewport-chart-loader.js'
 import { formatError } from '../utils/errors.js'
 
 export class ChartInitializer {
-  private viewportLoader?: ViewportChartLoader
-
   constructor(
     private data: PageScriptData,
-    private renderers: ChartRenderers,
+    private renderers: any, // ChartRenderers,
     private eventHandlers: EventHandlers
   ) {}
 
@@ -25,9 +22,8 @@ export class ChartInitializer {
   private initializeCharts(): void {
     // Wait for chart libraries to load before rendering
     this.waitForChartLibraries().then(() => {
-      // Initialize viewport-based chart loading
-      this.viewportLoader = new ViewportChartLoader(this.renderers)
-      this.viewportLoader.initialize()
+      // Render all charts in the correct order
+      this.renderers.renderAllCharts()
       
       // Render user charts for top contributors (always render these)
       const limit = this.data.chartsConfig?.topContributorsLimit ?? 10

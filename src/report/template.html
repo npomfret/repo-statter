@@ -491,44 +491,6 @@
             filter: invert(1);
         }
         
-        /* Chart loading placeholders */
-        .chart-placeholder {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: var(--bs-secondary-bg);
-            border-radius: 0.375rem;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        /* Skeleton loader animation */
-        @keyframes skeleton-loading {
-            0% {
-                background-position: -200% 0;
-            }
-            100% {
-                background-position: 200% 0;
-            }
-        }
-        
-        .chart-placeholder.skeleton-loader {
-            background: linear-gradient(
-                90deg,
-                var(--bs-secondary-bg) 25%,
-                var(--bs-border-color) 50%,
-                var(--bs-secondary-bg) 75%
-            );
-            background-size: 200% 100%;
-            animation: skeleton-loading 1.5s ease-in-out infinite;
-        }
-        
-        .chart-placeholder .spinner-border {
-            width: 2rem;
-            height: 2rem;
-            border-width: 0.2rem;
-        }
-        
         /* Loading text for accessibility */
         .chart-loading-text {
             position: absolute;
@@ -958,8 +920,7 @@
                     <div id="timeRangeCollapse" class="accordion-collapse collapse show" aria-labelledby="timeRangeHeading" data-bs-parent="#overviewAccordion">
                         <div class="accordion-body">
                             <p class="text-muted mb-3">Adjust the time range for all time series charts using the slider below:</p>
-                            <div id="timeSliderChart" class="chart-placeholder skeleton-loader" style="width: 100%; min-height: 150px;" data-chart-type="timeSlider" aria-label="Time range slider chart" aria-describedby="time-slider-desc">
-                                <span class="chart-loading-text">Loading time slider chart...</span>
+                            <div id="timeSliderChart" style="width: 100%; min-height: 150px;" data-chart-type="timeSlider" aria-label="Time range slider chart" aria-describedby="time-slider-desc">
                                 <div class="visually-hidden" id="time-slider-desc">Interactive timeline showing repository activity. Drag the handles to filter data by date range across all charts.</div>
                             </div>
                         </div>
@@ -994,8 +955,7 @@
                                 <input type="radio" class="btn-check" name="growthXAxis" id="growthXAxisCommit" value="commit" checked>
                                 <label class="btn btn-outline-primary" for="growthXAxisCommit">By Commit</label>
                             </div>
-                            <div id="growthChart" class="chart-placeholder skeleton-loader" style="min-height: 350px;" data-chart-type="growth" aria-label="Repository growth chart" aria-describedby="growth-desc">
-                                <span class="chart-loading-text">Loading growth chart...</span>
+                            <div id="growthChart" style="min-height: 350px;" data-chart-type="growth" aria-label="Repository growth chart" aria-describedby="growth-desc">
                                 <div class="visually-hidden" id="growth-desc">Line chart showing cumulative growth of lines of code, commits, and contributors over time. Switch between date-based and commit-based x-axis views.</div>
                             </div>
                         </div>
@@ -1009,8 +969,7 @@
                             <h5 class="card-title mb-0">Lines of Code by Category</h5>
                         </div>
                         <div class="card-body">
-                            <div id="categoryLinesChart" class="chart-placeholder skeleton-loader" style="min-height: 350px;" data-chart-type="categoryLines" aria-label="Lines of code by category chart">
-                                <span class="chart-loading-text">Loading lines by category chart...</span>
+                            <div id="categoryLinesChart" style="min-height: 350px;" data-chart-type="categoryLines" aria-label="Lines of code by category chart">
                             </div>
                         </div>
                     </div>
@@ -1023,8 +982,7 @@
                             <h5 class="card-title mb-0">Commit Activity Over Time</h5>
                         </div>
                         <div class="card-body">
-                            <div id="commitActivityChart" class="chart-placeholder skeleton-loader" style="min-height: 350px;" data-chart-type="commitActivity" aria-label="Commit activity chart">
-                                <span class="chart-loading-text">Loading commit activity chart...</span>
+                            <div id="commitActivityChart" style="min-height: 350px;" data-chart-type="commitActivity" aria-label="Commit activity chart">
                             </div>
                         </div>
                     </div>
@@ -1057,8 +1015,7 @@
                                             <h5 class="card-title mb-0">File Types</h5>
                                         </div>
                                         <div class="card-body">
-                                            <div id="fileTypesChart" class="chart-placeholder skeleton-loader" style="min-height: 350px;" data-chart-type="fileTypes" aria-label="File types distribution chart" aria-describedby="file-types-desc">
-                                                <span class="chart-loading-text">Loading file types chart...</span>
+                                            <div id="fileTypesChart" style="min-height: 350px;" data-chart-type="fileTypes" aria-label="File types distribution chart" aria-describedby="file-types-desc">
                                                 <div class="visually-hidden" id="file-types-desc">Pie chart showing distribution of code across different file types. Click segments to filter other charts by file type.</div>
                                             </div>
                                         </div>
@@ -1103,8 +1060,7 @@
                                                     </p>
                                                 </div>
                                             </div>
-                                            <div id="topFilesChart" class="chart-placeholder skeleton-loader" style="min-height: 350px;" data-chart-type="topFiles" aria-label="Top files by size chart" aria-describedby="top-files-desc">
-                                                <span class="chart-loading-text">Loading top files chart...</span>
+                                            <div id="topFilesChart" style="min-height: 350px;" data-chart-type="topFiles" aria-label="Top files by size chart" aria-describedby="top-files-desc">
                                                 <div class="visually-hidden" id="top-files-desc">Horizontal bar chart showing top 5 files by selected metric. Use tabs to switch between largest files, most churned files, and most complex files.</div>
                                             </div>
                                         </div>
@@ -1119,8 +1075,7 @@
                                         </div>
                                         <div class="card-body" style="min-height: 400px;">
                                             <p class="card-text">Interactive treemap showing file activity based on commit frequency and recency. Larger rectangles represent files with more lines of code, while color intensity indicates higher activity.</p>
-                                            <div id="fileHeatmapChart" class="chart-placeholder skeleton-loader" style="width: 100%; height: 400px;" data-chart-type="fileHeatmap" aria-label="File activity heatmap">
-                                                <span class="chart-loading-text">Loading file activity heatmap...</span>
+                                            <div id="fileHeatmapChart" style="width: 100%; height: 400px;" data-chart-type="fileHeatmap" aria-label="File activity heatmap">
                                             </div>
                                         </div>
                                     </div>
@@ -1190,8 +1145,7 @@
                             <h5 class="card-title mb-0">Top Contributors</h5>
                         </div>
                         <div class="card-body">
-                            <div id="contributorsChart" class="chart-placeholder skeleton-loader" style="min-height: 350px;" data-chart-type="contributors" aria-label="Contributors activity chart" aria-describedby="contributors-chart-desc">
-                                <span class="chart-loading-text">Loading contributors chart...</span>
+                            <div id="contributorsChart" style="min-height: 350px;" data-chart-type="contributors" aria-label="Contributors activity chart" aria-describedby="contributors-chart-desc">
                                 <div class="visually-hidden" id="contributors-chart-desc">Horizontal bar chart ranking top contributors by their total lines of code contributions to the repository.</div>
                             </div>
                         </div>
@@ -1205,8 +1159,7 @@
                             <h5 class="card-title mb-0">Commit Message Word Cloud</h5>
                         </div>
                         <div class="card-body" style="min-height: 400px;">
-                            <div id="wordCloudChart" class="chart-placeholder skeleton-loader" style="width: 100%; height: 400px;" data-chart-type="wordCloud" aria-label="Commit message word cloud" aria-describedby="word-cloud-desc">
-                                <span class="chart-loading-text">Loading commit message word cloud...</span>
+                            <div id="wordCloudChart" style="width: 100%; height: 400px;" data-chart-type="wordCloud" aria-label="Commit message word cloud" aria-describedby="word-cloud-desc">
                                 <div class="visually-hidden" id="word-cloud-desc">Visual word cloud of most frequently used words in commit messages. Larger words appear more often across commits.</div>
                             </div>
                         </div>
