@@ -1,5 +1,4 @@
 import { CoreInitializer } from './core-initializer.js'
-// import { ChartLoader } from './chart-loader.js'
 import type { CommitData } from '../git/parser.js'
 import type { ContributorStats, ContributorAward } from '../data/contributor-calculator.js'
 import type { CommitAward } from '../data/award-calculator.js'
@@ -54,20 +53,14 @@ export interface PageScriptData {
 
 export class PageScript {
   private coreInitializer: CoreInitializer
-  // private chartLoader: ChartLoader
 
   constructor(_data: PageScriptData) {
     this.coreInitializer = new CoreInitializer()
-    // this.chartLoader = new ChartLoader(data)
   }
 
   public initialize(): void {
     // Initialize core functionality immediately (theme, navigation, etc.)
     this.coreInitializer.initialize()
-    
-    // Charts are now loaded via the new simplified architecture
-    // The old chart loading code is disabled
-    console.log('PageScript initialized with simplified architecture')
   }
 }
 
