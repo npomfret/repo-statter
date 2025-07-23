@@ -79,6 +79,7 @@ export const DEFAULT_CONFIG: RepoStatterConfig = {
       '**/out/**/*',
       '**/bin/**/*',
       '**/obj/**/*',
+      '**/data/**/*',
       
       // Git files
       '.git/**/*',
