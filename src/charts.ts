@@ -1397,22 +1397,21 @@ function buildTopFilesChartOptions(view: string, data: TopFilesData, isDark: boo
       type: 'bar',
       height: 350,
       toolbar: { show: false },
-      background: isDark ? '#161b22' : '#ffffff'
+      background: isDark ? '#161b22' : '#ffffff',
+      margin: {
+        left: 80
+      }
     },
     series: series,
     plotOptions: {
       bar: {
-        horizontal: true,
-        dataLabels: {
-          position: 'left'
-        }
+        horizontal: true
       }
     },
     dataLabels: {
       enabled: true,
-      offsetX: 0,
       textAnchor: 'start',
-      distributed: false,
+      offsetX: -80,
       style: {
         fontSize: '12px',
         colors: ['#000000']
