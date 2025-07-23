@@ -95,7 +95,7 @@ export function renderAllCharts(data: ChartData): void {
   }
 
   try {
-    renderCategoryLinesChart(data.timeSeries)
+    renderCategoryLinesChart(data.timeSeries, data.commits)
   } catch (error) {
     console.error('Failed to render category lines chart:', error)
     showChartError('categoryLinesChart', 'Category lines chart failed to load')
@@ -708,7 +708,7 @@ function createCommitActivityBuckets(timeSeries: TimeSeriesPoint[]): BucketedDat
   return { data, bucketType }
 }
 
-function renderCategoryLinesChart(timeSeries: TimeSeriesPoint[]): void {
+function renderCategoryLinesChart(timeSeries: TimeSeriesPoint[], commits: CommitData[]): void {
   const container = document.getElementById('categoryLinesChart')
   if (!container) return
 
@@ -809,13 +809,70 @@ function renderCategoryLinesChart(timeSeries: TimeSeriesPoint[]): void {
       enabled: true,
       shared: true,
       intersect: false,
-      x: {
-        format: 'dd MMM yyyy'
-      },
-      y: {
-        formatter: function(val: number) {
-          return val.toLocaleString() + ' lines'
+      custom: function({ dataPointIndex }: any) {
+        const point = timeSeries[dataPointIndex]
+        if (!point) return ''
+        
+        const date = new Date(point.date)
+        const dateStr = date.toLocaleDateString('en-US', { 
+          weekday: 'short', 
+          year: 'numeric', 
+          month: 'short', 
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        })
+        
+        let html = '<div class="custom-tooltip"><div class="tooltip-title">' + dateStr + '</div>'
+        html += '<div class="tooltip-content">'
+        
+        // Show commit info
+        if (point.commits > 0) {
+          html += '<div><strong>Commits:</strong> ' + point.commits + '</div>'
+          if (point.commitShas && point.commitShas.length > 0) {
+            html += '<div class="mt-1"><strong>Commit hashes:</strong></div>'
+            html += '<div class="tooltip-commit-list">'
+            const maxCommits = 5
+            const commitsToShow = point.commitShas.slice(0, maxCommits)
+            commitsToShow.forEach(sha => {
+              const commit = commits.find(c => c.sha === sha)
+              if (commit) {
+                html += '<div class="tooltip-commit-item">'
+                html += '<code>' + sha.substring(0, 7) + '</code> - '
+                html += commit.authorName + ': '
+                html += (commit.message.length > 50 ? commit.message.substring(0, 50) + '...' : commit.message)
+                html += '</div>'
+              }
+            })
+            if (point.commitShas.length > maxCommits) {
+              html += '<div class="tooltip-commit-item text-muted">... and ' + (point.commitShas.length - maxCommits) + ' more</div>'
+            }
+            html += '</div>'
+          }
         }
+        
+        // Show category breakdown
+        html += '<div class="mt-2"><strong>Cumulative Lines by Category:</strong></div>'
+        const categories = ['application', 'test', 'build', 'documentation', 'other'] as const
+        const categoryNames = {
+          application: 'Application',
+          test: 'Test',
+          build: 'Build',
+          documentation: 'Documentation',
+          other: 'Other'
+        }
+        
+        categories.forEach(cat => {
+          const value = point.cumulativeLines[cat]
+          if (value > 0) {
+            html += '<div>' + categoryNames[cat] + ': ' + value.toLocaleString() + ' lines</div>'
+          }
+        })
+        
+        html += '<div class="mt-1"><strong>Total:</strong> ' + point.cumulativeLines.total.toLocaleString() + ' lines</div>'
+        html += '</div></div>'
+        
+        return html
       }
     },
     grid: {

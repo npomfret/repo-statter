@@ -226,6 +226,7 @@ export class TimeSeriesPointBuilder {
   private point: TimeSeriesPoint = {
     date: '2024-01-01',
     commits: 0,
+    commitShas: [],
     linesAdded: createEmptyBreakdown(),
     linesDeleted: createEmptyBreakdown(),
     cumulativeLines: createEmptyBreakdown(),
@@ -241,6 +242,11 @@ export class TimeSeriesPointBuilder {
 
   withCommits(count: number): this {
     this.point.commits = count
+    return this
+  }
+
+  withCommitShas(shas: string[]): this {
+    this.point.commitShas = shas
     return this
   }
 

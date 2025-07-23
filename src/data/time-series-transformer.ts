@@ -58,6 +58,7 @@ export interface CategoryBreakdown {
 export interface TimeSeriesPoint {
   date: string
   commits: number
+  commitShas: string[]
   linesAdded: CategoryBreakdown
   linesDeleted: CategoryBreakdown
   cumulativeLines: CategoryBreakdown
@@ -86,6 +87,7 @@ export function getTimeSeriesData(context: AnalysisContext): TimeSeriesPoint[] {
   timeSeriesMap.set(startDateKey, {
     date: startDateKey,
     commits: 0,
+    commitShas: [],
     linesAdded: createEmptyBreakdown(),
     linesDeleted: createEmptyBreakdown(),
     cumulativeLines: createEmptyBreakdown(),
@@ -104,6 +106,7 @@ export function getTimeSeriesData(context: AnalysisContext): TimeSeriesPoint[] {
       timeSeriesMap.set(dateKey, {
         date: dateKey,
         commits: 0,
+        commitShas: [],
         linesAdded: createEmptyBreakdown(),
         linesDeleted: createEmptyBreakdown(),
         cumulativeLines: createEmptyBreakdown(),
@@ -115,6 +118,7 @@ export function getTimeSeriesData(context: AnalysisContext): TimeSeriesPoint[] {
     
     const existing = timeSeriesMap.get(dateKey)!
     existing.commits += 1
+    existing.commitShas.push(commit.sha)
     
     // Aggregate by file category
     for (const fileChange of commit.filesChanged) {
