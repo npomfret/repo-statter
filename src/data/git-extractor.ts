@@ -54,7 +54,7 @@ export function parseCommitDiff(
   const filesChanged: FileChange[] = diffSummary.files
     .filter(file => {
       assertDefined(file.file, 'file.file')
-      return !isFileExcluded(file.file)
+      return !isFileExcluded(file.file, config.exclusions.patterns)
     })
     .map(file => ({
       fileName: file.file,

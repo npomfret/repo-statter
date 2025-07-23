@@ -158,6 +158,46 @@ describe('parseCommitDiff', () => {
     expect(() => parseCommitDiff({ files: null as any }, {} as any, TEST_CONFIG)).toThrow('diffSummary must have files property')
     expect(() => parseCommitDiff({ files: [] }, null as any, TEST_CONFIG)).toThrow('byteChanges must exist')
   })
+
+  it('excludes files in data directories', () => {
+    const diffSummary: DiffSummary = {
+      files: [
+        { file: 'src/index.ts', insertions: 10, deletions: 5 },
+        { file: 'packages/core/data/solsan/file.json', insertions: 1000, deletions: 0 },
+        { file: 'data/test.csv', insertions: 5000, deletions: 0 },
+        { file: 'src/data/models.ts', insertions: 20, deletions: 10 },
+        { file: 'src/utils/helpers.ts', insertions: 15, deletions: 3 }
+      ]
+    }
+
+    const byteChanges: ByteChanges = {
+      totalBytesAdded: 306250,
+      totalBytesDeleted: 900,
+      fileChanges: {
+        'src/index.ts': { bytesAdded: 500, bytesDeleted: 250 },
+        'packages/core/data/solsan/file.json': { bytesAdded: 50000, bytesDeleted: 0 },
+        'data/test.csv': { bytesAdded: 250000, bytesDeleted: 0 },
+        'src/data/models.ts': { bytesAdded: 1000, bytesDeleted: 500 },
+        'src/utils/helpers.ts': { bytesAdded: 750, bytesDeleted: 150 }
+      }
+    }
+
+    const result = parseCommitDiff(diffSummary, byteChanges, TEST_CONFIG)
+
+    // Should only include files NOT in data directories
+    expect(result.filesChanged).toHaveLength(2)
+    expect(result.filesChanged[0]!.fileName).toBe('src/index.ts')
+    expect(result.filesChanged[1]!.fileName).toBe('src/utils/helpers.ts')
+    
+    // Should exclude ALL files with /data/ in the path
+    expect(result.filesChanged.find(f => f.fileName.includes('/data/'))).toBeUndefined()
+    
+    // Totals should exclude all data directory files
+    expect(result.linesAdded).toBe(25) // 10 + 15
+    expect(result.linesDeleted).toBe(8) // 5 + 3
+    expect(result.bytesAdded).toBe(1250) // 500 + 750
+    expect(result.bytesDeleted).toBe(400) // 250 + 150
+  })
 })
 
 describe('parseByteChanges', () => {
