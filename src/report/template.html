@@ -721,6 +721,48 @@
             margin-bottom: 0;
         }
         
+        /* Collapsible chart headers */
+        .card-header-collapsible {
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            padding-right: 2rem;
+            transition: background-color 0.2s ease;
+        }
+        
+        .card-header-collapsible:hover {
+            background-color: var(--bs-secondary-bg);
+        }
+        
+        .card-header-collapsible::after {
+            content: '\25BC';
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            transition: transform 0.3s ease;
+        }
+        
+        .card-header-collapsible.collapsed::after {
+            transform: translateY(-50%) rotate(-90deg);
+        }
+        
+        .card-body-collapsible {
+            overflow: hidden;
+        }
+        
+        .card-body-collapsible.collapsed {
+            height: 0 !important;
+            min-height: 0 !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            border: none !important;
+            overflow: hidden !important;
+            visibility: hidden;
+        }
+        
         /* Skip link accessibility */
         .visually-hidden-focusable {
             position: absolute !important;
@@ -945,10 +987,10 @@
                 <!-- Growth Over Time Chart -->
                 <div class="chart-full">
                     <div class="card">
-                        <div class="card-header">
+                        <div class="card-header card-header-collapsible" data-chart-toggle="growthChart">
                             <h5 class="card-title mb-0">Growth Over Time</h5>
                         </div>
-                        <div class="card-body">
+                        <div class="card-body card-body-collapsible" id="growthChartBody">
                             <div class="btn-group btn-group-sm mb-3" role="group">
                                 <input type="radio" class="btn-check" name="growthXAxis" id="growthXAxisDate" value="date">
                                 <label class="btn btn-outline-primary" for="growthXAxisDate">By Date</label>
@@ -965,10 +1007,10 @@
                 <!-- Lines of Code by Category Chart -->
                 <div class="chart-full">
                     <div class="card">
-                        <div class="card-header">
+                        <div class="card-header card-header-collapsible" data-chart-toggle="categoryLinesChart">
                             <h5 class="card-title mb-0">Lines of Code by Category</h5>
                         </div>
-                        <div class="card-body">
+                        <div class="card-body card-body-collapsible" id="categoryLinesChartBody">
                             <div id="categoryLinesChart" style="min-height: 350px;" data-chart-type="categoryLines" aria-label="Lines of code by category chart">
                             </div>
                         </div>
@@ -978,10 +1020,10 @@
                 <!-- Commit Activity Chart -->
                 <div class="chart-full">
                     <div class="card">
-                        <div class="card-header">
+                        <div class="card-header card-header-collapsible" data-chart-toggle="commitActivityChart">
                             <h5 class="card-title mb-0">Commit Activity Over Time</h5>
                         </div>
-                        <div class="card-body">
+                        <div class="card-body card-body-collapsible" id="commitActivityChartBody">
                             <div id="commitActivityChart" style="min-height: 350px;" data-chart-type="commitActivity" aria-label="Commit activity chart">
                             </div>
                         </div>
@@ -1011,10 +1053,10 @@
                                 <!-- File Types Chart -->
                                 <div class="chart-half">
                                     <div class="card">
-                                        <div class="card-header">
+                                        <div class="card-header card-header-collapsible" data-chart-toggle="fileTypesChart">
                                             <h5 class="card-title mb-0">File Types</h5>
                                         </div>
-                                        <div class="card-body">
+                                        <div class="card-body card-body-collapsible" id="fileTypesChartBody">
                                             <div id="fileTypesChart" style="min-height: 350px;" data-chart-type="fileTypes" aria-label="File types distribution chart" aria-describedby="file-types-desc">
                                                 <div class="visually-hidden" id="file-types-desc">Pie chart showing distribution of code across different file types. Click segments to filter other charts by file type.</div>
                                             </div>
@@ -1025,7 +1067,7 @@
                                 <!-- Top 5 Files Chart -->
                                 <div class="chart-half">
                                     <div class="card">
-                                        <div class="card-header">
+                                        <div class="card-header card-header-collapsible" data-chart-toggle="topFilesChart">
                                             <ul class="nav nav-tabs card-header-tabs" role="tablist">
                                                 <li class="nav-item">
                                                     <button class="nav-link active" id="largest-tab" data-bs-toggle="tab" data-bs-target="#largest-pane" type="button" role="tab" aria-controls="largest-pane" aria-selected="true">Largest</button>
@@ -1038,7 +1080,7 @@
                                                 </li>
                                             </ul>
                                         </div>
-                                        <div class="card-body">
+                                        <div class="card-body card-body-collapsible" id="topFilesChartBody">
                                             <div id="fileTypeFilterIndicator" class="alert alert-info mb-3 d-none" role="alert">
                                                 <i class="bi bi-funnel"></i> Showing only <strong id="selectedFileType"></strong> files
                                                 <button type="button" class="btn-close btn-sm float-end" aria-label="Clear filter" id="clearFileTypeFilter"></button>
@@ -1070,10 +1112,10 @@
                                 <!-- File Heatmap -->
                                 <div class="chart-full">
                                     <div class="card">
-                                        <div class="card-header">
+                                        <div class="card-header card-header-collapsible" data-chart-toggle="fileHeatmapChart">
                                             <h5 class="card-title mb-0">File Activity Heatmap</h5>
                                         </div>
-                                        <div class="card-body" style="min-height: 400px;">
+                                        <div class="card-body card-body-collapsible" id="fileHeatmapChartBody" style="min-height: 400px;">
                                             <p class="card-text">Interactive treemap showing file activity based on commit frequency and recency. Larger rectangles represent files with more lines of code, while color intensity indicates higher activity.</p>
                                             <div id="fileHeatmapChart" style="width: 100%; height: 400px;" data-chart-type="fileHeatmap" aria-label="File activity heatmap">
                                             </div>
@@ -1104,10 +1146,10 @@
             <div class="dashboard-grid">
                 <div class="chart-full">
                     <div class="card">
-                        <div class="card-header">
+                        <div class="card-header card-header-collapsible" data-chart-toggle="awardsContainer">
                             <h5 class="card-title mb-0">Commit Awards</h5>
                         </div>
-                        <div class="card-body">
+                        <div class="card-body card-body-collapsible" id="awardsContainerBody">
                             <div class="dashboard-grid" id="awardsContainer">
                                 <!-- Awards will be populated dynamically -->
                             </div>
@@ -1118,10 +1160,10 @@
                 <!-- User-Specific Time Series Charts -->
                 <div class="chart-full">
                     <div class="card">
-                        <div class="card-header">
+                        <div class="card-header card-header-collapsible" data-chart-toggle="userChartsContainer">
                             <h5 class="card-title mb-0">Per-User Activity Charts</h5>
                         </div>
-                        <div class="card-body">
+                        <div class="card-body card-body-collapsible" id="userChartsContainerBody">
                             <div class="dashboard-grid" id="userChartsContainer">
                                 <!-- User charts will be populated dynamically -->
                             </div>
@@ -1141,10 +1183,10 @@
                 <!-- Contributors Chart -->
                 <div class="chart-half">
                     <div class="card">
-                        <div class="card-header">
+                        <div class="card-header card-header-collapsible" data-chart-toggle="contributorsChart">
                             <h5 class="card-title mb-0">Top Contributors</h5>
                         </div>
-                        <div class="card-body">
+                        <div class="card-body card-body-collapsible" id="contributorsChartBody">
                             <div id="contributorsChart" style="min-height: 350px;" data-chart-type="contributors" aria-label="Contributors activity chart" aria-describedby="contributors-chart-desc">
                                 <div class="visually-hidden" id="contributors-chart-desc">Horizontal bar chart ranking top contributors by their total lines of code contributions to the repository.</div>
                             </div>
@@ -1155,10 +1197,10 @@
                 <!-- Word Cloud -->
                 <div class="chart-half">
                     <div class="card">
-                        <div class="card-header">
+                        <div class="card-header card-header-collapsible" data-chart-toggle="wordCloudChart">
                             <h5 class="card-title mb-0">Commit Message Word Cloud</h5>
                         </div>
-                        <div class="card-body" style="min-height: 400px;">
+                        <div class="card-body card-body-collapsible" id="wordCloudChartBody" style="min-height: 400px;">
                             <div id="wordCloudChart" style="width: 100%; height: 400px;" data-chart-type="wordCloud" aria-label="Commit message word cloud" aria-describedby="word-cloud-desc">
                                 <div class="visually-hidden" id="word-cloud-desc">Visual word cloud of most frequently used words in commit messages. Larger words appear more often across commits.</div>
                             </div>
@@ -1284,11 +1326,135 @@
             });
         }
 
+        // Initialize chart collapse functionality
+        function initChartCollapse() {
+            const collapsibleHeaders = document.querySelectorAll('.card-header-collapsible');
+            
+            collapsibleHeaders.forEach(header => {
+                // Skip if already initialized
+                if (header.hasAttribute('data-collapse-initialized')) return;
+                header.setAttribute('data-collapse-initialized', 'true');
+                
+                const chartId = header.getAttribute('data-chart-toggle');
+                const bodyId = chartId + 'Body';
+                const body = document.getElementById(bodyId);
+                
+                if (!body) return;
+                
+                // Remove any inline height style to start fresh
+                body.style.height = '';
+                
+                // Load saved state from localStorage
+                const savedState = localStorage.getItem('chart-collapsed-' + chartId);
+                if (savedState === 'true') {
+                    header.classList.add('collapsed');
+                    body.classList.add('collapsed');
+                }
+                
+                header.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const isCollapsed = this.classList.contains('collapsed');
+                    
+                    if (isCollapsed) {
+                        // Expand
+                        this.classList.remove('collapsed');
+                        
+                        // Restore original min-height if it was saved
+                        const originalMinHeight = body.getAttribute('data-original-min-height') || body.style.minHeight;
+                        
+                        // Remove collapsed class and temporarily clear min-height to measure
+                        body.classList.remove('collapsed');
+                        body.style.minHeight = '';
+                        body.style.height = '';
+                        const naturalHeight = body.scrollHeight;
+                        
+                        // Set to 0 then animate to natural height
+                        body.style.height = '0px';
+                        body.offsetHeight; // Force reflow
+                        body.style.transition = 'height 0.3s ease';
+                        body.style.height = naturalHeight + 'px';
+                        
+                        // After animation, restore original state
+                        setTimeout(() => {
+                            body.style.height = '';
+                            body.style.transition = '';
+                            body.style.minHeight = originalMinHeight;
+                        }, 300);
+                        
+                        localStorage.setItem('chart-collapsed-' + chartId, 'false');
+                        this.setAttribute('aria-expanded', 'true');
+                        
+                        // Announce state change for screen readers
+                        const announcement = 'Expanded ' + this.querySelector('.card-title').textContent;
+                        announceToScreenReader(announcement);
+                    } else {
+                        // Collapse
+                        // Store original min-height
+                        const originalMinHeight = body.style.minHeight;
+                        body.setAttribute('data-original-min-height', originalMinHeight);
+                        
+                        // Clear min-height and get current height
+                        body.style.minHeight = '';
+                        const currentHeight = body.scrollHeight;
+                        body.style.height = currentHeight + 'px';
+                        body.offsetHeight; // Force reflow
+                        
+                        // Add transition and collapse
+                        body.style.transition = 'height 0.3s ease';
+                        body.style.height = '0px';
+                        
+                        this.classList.add('collapsed');
+                        
+                        // Add collapsed class after transition
+                        setTimeout(() => {
+                            body.classList.add('collapsed');
+                            body.style.transition = '';
+                        }, 300);
+                        
+                        localStorage.setItem('chart-collapsed-' + chartId, 'true');
+                        this.setAttribute('aria-expanded', 'false');
+                        
+                        // Announce state change for screen readers
+                        const announcement = 'Collapsed ' + this.querySelector('.card-title').textContent;
+                        announceToScreenReader(announcement);
+                    }
+                });
+                
+                // Add keyboard support
+                header.setAttribute('tabindex', '0');
+                header.setAttribute('role', 'button');
+                header.setAttribute('aria-expanded', !header.classList.contains('collapsed'));
+                header.setAttribute('aria-controls', bodyId);
+                
+                header.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        this.click();
+                    }
+                });
+            });
+        }
+        
+        // Helper function to announce changes to screen readers
+        function announceToScreenReader(message) {
+            const liveRegion = document.getElementById('live-region');
+            if (liveRegion) {
+                liveRegion.textContent = message;
+                // Clear after announcement
+                setTimeout(() => {
+                    liveRegion.textContent = '';
+                }, 1000);
+            }
+        }
+
         // Initialize mobile optimizations when DOM is ready
         document.addEventListener('DOMContentLoaded', function() {
             initMobileAccordions();
             initTouchFeedback();
             initSwipeNavigation();
+            initChartCollapse();
             
             // Reinitialize on window resize
             window.addEventListener('resize', function() {

@@ -324,9 +324,21 @@ async function injectDataIntoTemplate(template: string, chartData: ChartData, co
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
           window.renderAllCharts(chartData);
+          // Re-initialize collapse functionality after charts are rendered
+          setTimeout(() => {
+            if (typeof initChartCollapse === 'function') {
+              initChartCollapse();
+            }
+          }, 500);
         });
       } else {
         window.renderAllCharts(chartData);
+        // Re-initialize collapse functionality after charts are rendered
+        setTimeout(() => {
+          if (typeof initChartCollapse === 'function') {
+            initChartCollapse();
+          }
+        }, 500);
       }
     </script>
   `
