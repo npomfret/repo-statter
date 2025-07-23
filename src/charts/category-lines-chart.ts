@@ -156,15 +156,12 @@ export class CategoryLinesChart {
     }
     
     // ApexCharts will be available globally in the browser
-    console.log('[CategoryLinesChart] Creating chart with ID:', options.chart.id)
     this.chart = new (window as any).ApexCharts(container, options)
     this.chart.render()
-    console.log('[CategoryLinesChart] Chart rendered successfully')
     
     // Verify it's registered
     setTimeout(() => {
-      const registered = (window as any).ApexCharts.getChartByID('category-lines-chart')
-      console.log('[CategoryLinesChart] Chart registered?', registered ? 'YES' : 'NO')
+      (window as any).ApexCharts.getChartByID('category-lines-chart')
     }, 100)
   }
 

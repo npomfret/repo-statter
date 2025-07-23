@@ -14,9 +14,6 @@ export interface CacheData {
   commits: CommitData[]
 }
 
-// These will be provided via config parameter
-// const CACHE_VERSION = '1.0'
-// const CACHE_DIR_NAME = 'repo-statter-cache'
 
 export async function generateRepositoryHash(repoPath: string): Promise<string> {
   const inputs: string[] = []

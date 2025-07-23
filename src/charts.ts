@@ -35,6 +35,15 @@ function formatBytes(bytes: number): string {
   }
 }
 
+interface WordCloudData {
+  text: string
+  size: number
+  frequency: number
+  x?: number
+  y?: number
+  rotate?: number
+}
+
 export interface ChartData {
   commits: CommitData[]
   contributors: ContributorStats[]
@@ -145,11 +154,9 @@ export function renderAllCharts(data: ChartData): void {
 }
 
 function setupEventHandlers(): void {
-  console.log('Setting up event handlers...')
   
   // Growth chart axis toggle
   const growthRadios = document.querySelectorAll('input[name="growthXAxis"]')
-  console.log('Found growth radios:', growthRadios.length)
   growthRadios.forEach(radio => {
     radio.addEventListener('change', (e) => {
       const target = e.target as HTMLInputElement
@@ -172,29 +179,21 @@ function setupEventHandlers(): void {
   const churnTab = document.getElementById('churn-tab')
   const complexTab = document.getElementById('complex-tab')
   
-  console.log('Top Files tabs found:', JSON.stringify({
-    largest: !!largestTab,
-    churn: !!churnTab, 
-    complex: !!complexTab
-  }))
   
   if (largestTab) {
     largestTab.addEventListener('shown.bs.tab', () => {
-      console.log('Largest tab shown')
       updateTopFilesChart('size')
     })
   }
   
   if (churnTab) {
     churnTab.addEventListener('shown.bs.tab', () => {
-      console.log('Most Churn tab shown')
       updateTopFilesChart('changes')
     })  
   }
   
   if (complexTab) {
     complexTab.addEventListener('shown.bs.tab', () => {
-      console.log('Most Complex tab shown')
       updateTopFilesChart('complexity')
     })
   }
@@ -218,8 +217,6 @@ function renderContributorsChart(contributors: ContributorStats[], limit: number
   const container = document.getElementById('contributorsChart')
   if (!container) return
   
-  console.log('Contributors data:', JSON.stringify(contributors.slice(0, 3)))
-  console.log('Contributors limit:', limit)
   
   const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark'
   const topContributors = contributors.slice(0, limit)
@@ -315,18 +312,12 @@ function renderFileTypesChart(fileTypes: FileTypeStats[]): void {
       background: isDark ? '#161b22' : '#ffffff',
       events: {
         dataPointSelection: function(_event: any, _chartContext: any, config: any) {
-          console.log('File type chart clicked! Config keys:', JSON.stringify(Object.keys(config)))
           const selectedType = config.w.config.labels[config.dataPointIndex]
-          console.log('Selected file type:', selectedType)
-          console.log('Data point index:', config.dataPointIndex)
-          console.log('Current selectedFileType:', selectedFileType)
           
           // Instead of using ApexCharts selection state, use our own selectedFileType
           if (selectedFileType === selectedType) {
-            console.log('Clearing filter - same type clicked')
             clearFileTypeFilter()
           } else {
-            console.log('Setting filter to:', selectedType)
             setFileTypeFilter(selectedType)
           }
         }
@@ -882,12 +873,12 @@ function renderWordCloudChart(wordCloudData: WordFrequency[], height: number): v
     .padding(5)
     .rotate(() => (Math.random() - 0.5) * 60)
     .font('Arial')
-    .fontSize((d: any) => d.size)
+    .fontSize((d: WordCloudData) => d.size)
     .on('end', draw)
   
   layout.start()
   
-  function draw(words: any[]) {
+  function draw(words: WordCloudData[]) {
     const colorScale = isDark
       ? ['#f85149', '#f0883e', '#ffd33d', '#a5a5ff', '#7ce38b', '#2ea043', '#58a6ff', '#79c0ff', '#c69026']
       : ['#ea5545', '#f46a9b', '#ffd33d', '#b33dc6', '#27aeef', '#2ea043', '#0366d6', '#79c0ff', '#e27300']
@@ -902,14 +893,14 @@ function renderWordCloudChart(wordCloudData: WordFrequency[], height: number): v
     svg.selectAll('text')
       .data(words)
       .enter().append('text')
-      .style('font-size', (d: any) => `${d.size}px`)
+      .style('font-size', (d: WordCloudData) => `${d.size}px`)
       .style('font-family', 'Arial')
-      .style('fill', (_: any, i: number) => colorScale[i % colorScale.length])
+      .style('fill', (_: WordCloudData, i: number) => colorScale[i % colorScale.length])
       .attr('text-anchor', 'middle')
-      .attr('transform', (d: any) => `translate(${d.x},${d.y})rotate(${d.rotate})`)
-      .text((d: any) => d.text)
+      .attr('transform', (d: WordCloudData) => `translate(${d.x},${d.y})rotate(${d.rotate})`)
+      .text((d: WordCloudData) => d.text)
       .append('title')
-      .text((d: any) => `${d.text}: ${d.frequency} occurrences`)
+      .text((d: WordCloudData) => `${d.text}: ${d.frequency} occurrences`)
   }
 }
 
@@ -925,10 +916,7 @@ function renderFileHeatmapChart(fileHeatData: FileHeatData[], height: number, ma
   // Apply file type filter if active
   let filteredData = fileHeatData
   if (selectedFileType) {
-    console.log('Filtering heatmap for file type:', selectedFileType)
-    console.log('Available file types:', JSON.stringify([...new Set(fileHeatData.map(f => f.fileType))]))
     filteredData = fileHeatData.filter(file => file.fileType === selectedFileType)
-    console.log('Filtered heatmap files:', filteredData.length)
     
     if (filteredData.length === 0) {
       // Destroy existing chart if it exists
@@ -1072,7 +1060,7 @@ function buildTopFilesChartOptions(view: string, data: TopFilesData, isDark: boo
   if (view === 'size') {
     series = [{
       name: 'Lines of Code',
-      data: data.largest.map((f: any) => ({
+      data: data.largest.map(f => ({
         x: f.fileName,
         y: f.value
       }))
@@ -1084,7 +1072,7 @@ function buildTopFilesChartOptions(view: string, data: TopFilesData, isDark: boo
   } else if (view === 'changes') {
     series = [{
       name: 'Number of Changes',
-      data: data.mostChurn.map((f: any) => ({
+      data: data.mostChurn.map(f => ({
         x: f.fileName,
         y: f.value
       }))
@@ -1096,7 +1084,7 @@ function buildTopFilesChartOptions(view: string, data: TopFilesData, isDark: boo
   } else {
     series = [{
       name: 'Cyclomatic Complexity',
-      data: data.mostComplex.map((f: any) => ({
+      data: data.mostComplex.map(f => ({
         x: f.fileName,
         y: f.value
       }))
@@ -1162,12 +1150,10 @@ function buildTopFilesChartOptions(view: string, data: TopFilesData, isDark: boo
 }
 
 function updateTopFilesChart(view: string): void {
-  console.log('Updating top files chart to view:', view)
   
   // Get stored chart data
   const storedData = chartData['topFilesChart']
   if (!storedData || !storedData.data) {
-    console.log('No top files data available for update')
     return
   }
   
@@ -1398,18 +1384,14 @@ function updateTargetCharts(min: number, max: number, minDate: number, maxDate: 
 function renderUserCharts(topContributors: ContributorStats[], commits: CommitData[]): void {
   const container = document.getElementById('userChartsContainer')
   if (!container) {
-    console.log('User charts container not found')
     return
   }
   
-  console.log('Rendering user charts for contributors:', topContributors.length)
   
   topContributors.forEach((contributor, index) => {
     const userCommits = commits.filter(c => c.authorName === contributor.name)
-    console.log(`User ${contributor.name}: ${userCommits.length} commits found`)
     
     const chartData = buildUserTimeSeriesData(userCommits)
-    console.log(`User ${contributor.name} chart data:`, JSON.stringify(chartData).substring(0, 200))
     
     const chartId = `userChart${index}`
     
@@ -1435,15 +1417,12 @@ function renderUserCharts(topContributors: ContributorStats[], commits: CommitDa
 }
 
 async function renderUserChart(chartId: string, data: ReturnType<typeof buildUserTimeSeriesData>): Promise<void> {
-  console.log(`Rendering user chart ${chartId} with data points:`, data?.length || 0)
   
   const container = document.getElementById(chartId)
   if (!container) {
-    console.log(`Container not found for ${chartId}`)
     return
   }
   if (chartRefs[chartId]) {
-    console.log(`Chart ${chartId} already rendered`)
     return
   }
   
@@ -1501,17 +1480,11 @@ async function renderUserChart(chartId: string, data: ReturnType<typeof buildUse
     }
   }
   
-  console.log(`Creating chart ${chartId} with options:`, JSON.stringify({
-    seriesDataLength: options.series[0]?.data?.length || 0,
-    firstDataPoint: options.series[0]?.data?.[0],
-    lastDataPoint: options.series[0]?.data?.[options.series[0].data.length - 1]
-  }))
   
   try {
     const chart = new (window as any).ApexCharts(container, options)
     await chart.render()
     chartRefs[chartId] = chart
-    console.log(`Chart ${chartId} rendered successfully`)
   } catch (error) {
     console.error(`Failed to render chart ${chartId}:`, error)
   }
@@ -1696,12 +1669,10 @@ export function updateTopFilesView(view: 'size' | 'changes' | 'complexity'): voi
 export function updateChartsTheme(): void {
   // In the simplified version, we'd need to re-render all charts
   // This is a limitation of the simpler approach
-  console.log('Theme changed - charts would need to be re-rendered')
 }
 
 // File type filtering functions
 function setFileTypeFilter(fileType: string): void {
-  console.log('Setting file type filter to:', fileType)
   selectedFileType = fileType
   updateFileTypeIndicator()
   updateChartsWithFileTypeFilter()
@@ -1728,19 +1699,15 @@ function updateFileTypeIndicator(): void {
 }
 
 function updateChartsWithFileTypeFilter(): void {
-  console.log('Updating charts with file type filter:', selectedFileType)
   
   // Update file heatmap chart
   const heatmapData = chartData['fileHeatmapChart']
-  console.log('Heatmap data available:', !!heatmapData)
   if (heatmapData) {
-    console.log('Original heatmap files:', heatmapData.fileHeatData.length)
     renderFileHeatmapChart(heatmapData.fileHeatData, heatmapData.height, heatmapData.maxFiles)
   }
   
   // Update top files chart if it exists and has data
   const topFilesData = chartData['topFilesChart']
-  console.log('Top files data available:', !!topFilesData)
   if (topFilesData) {
     renderTopFilesChartWithFilter(topFilesData.data, topFilesData.currentView)
   }
@@ -1766,9 +1733,6 @@ function renderTopFilesChartWithFilter(topFilesData: TopFilesData, currentView: 
   // Filter data by selected file type if active
   let filteredData = topFilesData
   if (selectedFileType && fileTypeMap.size > 0) {
-    console.log('Filtering top files for file type:', selectedFileType)
-    console.log('File type map size:', fileTypeMap.size)
-    console.log('Sample file type mappings:', JSON.stringify(Array.from(fileTypeMap.entries()).slice(0, 5)))
     
     filteredData = {
       largest: topFilesData.largest.filter(f => fileTypeMap.get(f.fileName) === selectedFileType),
@@ -1776,8 +1740,6 @@ function renderTopFilesChartWithFilter(topFilesData: TopFilesData, currentView: 
       mostComplex: topFilesData.mostComplex.filter(f => fileTypeMap.get(f.fileName) === selectedFileType)
     }
     
-    console.log('Original largest files:', topFilesData.largest.length)
-    console.log('Filtered largest files:', filteredData.largest.length)
     
     // Check if current view has no data after filtering
     const currentData = currentView === 'size' ? filteredData.largest : 
