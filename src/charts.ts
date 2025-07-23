@@ -10,7 +10,7 @@ import type { FileTypeStats, FileHeatData } from './data/file-calculator.js'
 import type { TimeSeriesPoint } from './data/time-series-transformer.js'
 import type { LinearSeriesPoint } from './data/linear-transformer.js'
 import type { WordFrequency } from './text/processor.js'
-import type { TopFilesData } from './data/top-files-calculator.js'
+import type { TopFilesData, TopFileStats } from './data/top-files-calculator.js'
 import type { ChartsConfig } from './config/schema.js'
 // Remove getFileCategory import to avoid Node.js dependencies in browser bundle
 
@@ -1341,46 +1341,61 @@ function renderTopFilesChart(topFilesData: TopFilesData): void {
   }
 }
 
+// Helper function to extract filename from path (global scope for data labels)
+function getFileNameFromPath(filePath: string): string {
+  return filePath.split('/').pop() || filePath
+}
+
 function buildTopFilesChartOptions(view: string, data: TopFilesData, isDark: boolean): any {
   let series: any
   let yaxisTitle: string
   let tooltipFormatter: any
+  let fullPaths: string[] = []
 
   if (view === 'size') {
+    fullPaths = data.largest.map(f => f.fileName)
     series = [{
       name: 'Lines of Code',
       data: data.largest.map(f => ({
-        x: f.fileName,
+        x: getFileNameFromPath(f.fileName), // Show only filename on axis
         y: f.value
       }))
     }]
     yaxisTitle = 'Lines of Code'
-    tooltipFormatter = function(val: number) {
-      return val.toLocaleString() + ' lines'
+    tooltipFormatter = function(val: number, opts: any) {
+      const dataIndex = opts.dataPointIndex
+      const fullPath = fullPaths[dataIndex] || ''
+      return `<div><strong>${fullPath}</strong></div><div>${val.toLocaleString()} lines</div>`
     }
   } else if (view === 'changes') {
+    fullPaths = data.mostChurn.map(f => f.fileName)
     series = [{
       name: 'Number of Changes',
       data: data.mostChurn.map(f => ({
-        x: f.fileName,
+        x: getFileNameFromPath(f.fileName), // Show only filename on axis
         y: f.value
       }))
     }]
     yaxisTitle = 'Number of Changes'
-    tooltipFormatter = function(val: number) {
-      return val.toLocaleString() + ' commits'
+    tooltipFormatter = function(val: number, opts: any) {
+      const dataIndex = opts.dataPointIndex
+      const fullPath = fullPaths[dataIndex] || ''
+      return `<div><strong>${fullPath}</strong></div><div>${val.toLocaleString()} commits</div>`
     }
   } else {
+    fullPaths = data.mostComplex.map(f => f.fileName)
     series = [{
       name: 'Cyclomatic Complexity',
       data: data.mostComplex.map(f => ({
-        x: f.fileName,
+        x: getFileNameFromPath(f.fileName), // Show only filename on axis
         y: f.value
       }))
     }]
     yaxisTitle = 'Cyclomatic Complexity'
-    tooltipFormatter = function(val: number) {
-      return 'Complexity: ' + val
+    tooltipFormatter = function(val: number, opts: any) {
+      const dataIndex = opts.dataPointIndex
+      const fullPath = fullPaths[dataIndex] || ''
+      return `<div><strong>${fullPath}</strong></div><div>Complexity: ${val}</div>`
     }
   }
 
@@ -1402,10 +1417,17 @@ function buildTopFilesChartOptions(view: string, data: TopFilesData, isDark: boo
     },
     dataLabels: {
       enabled: true,
-      offsetX: -6,
+      offsetX: 10,
+      textAnchor: 'start',
       style: {
         fontSize: '12px',
-        colors: [isDark ? '#f0f6fc' : '#ffffff']
+        colors: ['#000000']
+      },
+      formatter: function(_val: number, opts: any) {
+        // Show filename on the bar
+        const dataIndex = opts.dataPointIndex
+        const seriesData = opts.w.config.series[0].data[dataIndex]
+        return getFileNameFromPath(seriesData.x)
       }
     },
     colors: [isDark ? '#58a6ff' : '#0366d6'],
@@ -1423,7 +1445,7 @@ function buildTopFilesChartOptions(view: string, data: TopFilesData, isDark: boo
     },
     yaxis: {
       labels: {
-        style: { colors: isDark ? '#f0f6fc' : '#24292f' }
+        show: false
       }
     },
     grid: {
@@ -1431,8 +1453,10 @@ function buildTopFilesChartOptions(view: string, data: TopFilesData, isDark: boo
     },
     tooltip: {
       theme: isDark ? 'dark' : 'light',
-      y: {
-        formatter: tooltipFormatter
+      custom: function(opts: any) {
+        const dataIndex = opts.dataPointIndex
+        const value = opts.series[0][dataIndex]
+        return '<div class="custom-tooltip">' + tooltipFormatter(value, opts) + '</div>'
       }
     }
   }
@@ -2014,7 +2038,6 @@ function updateFileTypeIndicator(): void {
 }
 
 function updateChartsWithFileTypeFilter(): void {
-
   // Update file heatmap chart
   const heatmapData = chartData['fileHeatmapChart']
   if (heatmapData) {
@@ -2026,6 +2049,71 @@ function updateChartsWithFileTypeFilter(): void {
   if (topFilesData) {
     renderTopFilesChartWithFilter(topFilesData.data, topFilesData.currentView)
   }
+}
+
+// Helper function to calculate top files for a specific file type
+function calculateTopFilesByType(commits: CommitData[], selectedFileType: string, fileTypeMap: Map<string, string>, calculationType: 'size' | 'churn' | 'complex'): TopFileStats[] {
+  if (calculationType === 'size') {
+    const fileSizeMap = new Map<string, number>()
+    
+    for (const commit of commits) {
+      for (const fileChange of commit.filesChanged) {
+        // Only include files of the selected type
+        if (fileTypeMap.get(fileChange.fileName) !== selectedFileType) {
+          continue
+        }
+        
+        const currentSize = fileSizeMap.get(fileChange.fileName) ?? 0
+        const sizeChange = fileChange.linesAdded - fileChange.linesDeleted
+        fileSizeMap.set(fileChange.fileName, currentSize + sizeChange)
+      }
+    }
+    
+    // Filter out files with negative or zero size and get top 5
+    const files = Array.from(fileSizeMap.entries())
+      .filter(([_, size]) => size > 0)
+      .sort(([_, a], [__, b]) => b - a)
+      .slice(0, 5)
+    
+    const totalSize = files.reduce((sum, [_, size]) => sum + size, 0)
+    return files.map(([fileName, size]) => ({ 
+      fileName, 
+      value: size, 
+      percentage: totalSize > 0 ? (size / totalSize) * 100 : 0 
+    }))
+  } 
+  
+  if (calculationType === 'churn') {
+    const fileChurnMap = new Map<string, number>()
+    
+    for (const commit of commits) {
+      for (const fileChange of commit.filesChanged) {
+        // Only include files of the selected type
+        if (fileTypeMap.get(fileChange.fileName) !== selectedFileType) {
+          continue
+        }
+        
+        const currentChurn = fileChurnMap.get(fileChange.fileName) ?? 0
+        fileChurnMap.set(fileChange.fileName, currentChurn + 1)
+      }
+    }
+    
+    // Get top 5 by churn count
+    const files = Array.from(fileChurnMap.entries())
+      .sort(([_, a], [__, b]) => b - a)
+      .slice(0, 5)
+    
+    const totalChurn = files.reduce((sum, [_, churn]) => sum + churn, 0)
+    return files.map(([fileName, churn]) => ({ 
+      fileName, 
+      value: churn, 
+      percentage: totalChurn > 0 ? (churn / totalChurn) * 100 : 0 
+    }))
+  }
+  
+  // For complexity, we can't recalculate without running lizard, so return empty
+  // This would need to be implemented with access to the complexity calculation
+  return []
 }
 
 function renderTopFilesChartWithFilter(topFilesData: TopFilesData, currentView: string): void {
@@ -2047,31 +2135,30 @@ function renderTopFilesChartWithFilter(topFilesData: TopFilesData, currentView: 
 
   // Filter data by selected file type if active
   let filteredData = topFilesData
-  if (selectedFileType && fileTypeMap.size > 0) {
-
+  if (selectedFileType && fileTypeMap.size > 0 && originalChartData && originalChartData.commits) {
+    // Recalculate top files for the selected file type
     filteredData = {
-      largest: topFilesData.largest.filter(f => fileTypeMap.get(f.fileName) === selectedFileType),
-      mostChurn: topFilesData.mostChurn.filter(f => fileTypeMap.get(f.fileName) === selectedFileType),
-      mostComplex: topFilesData.mostComplex.filter(f => fileTypeMap.get(f.fileName) === selectedFileType)
+      largest: calculateTopFilesByType(originalChartData.commits, selectedFileType, fileTypeMap, 'size'),
+      mostChurn: calculateTopFilesByType(originalChartData.commits, selectedFileType, fileTypeMap, 'churn'),
+      mostComplex: calculateTopFilesByType(originalChartData.commits, selectedFileType, fileTypeMap, 'complex')
     }
+  }
 
+  // Check if current view has no data after filtering
+  const currentData = currentView === 'size' ? filteredData.largest :
+      currentView === 'changes' ? filteredData.mostChurn :
+          filteredData.mostComplex
 
-    // Check if current view has no data after filtering
-    const currentData = currentView === 'size' ? filteredData.largest :
-        currentView === 'changes' ? filteredData.mostChurn :
-            filteredData.mostComplex
-
-    if (currentData.length === 0) {
-      container.innerHTML = `
-        <div class="d-flex align-items-center justify-content-center h-100 text-muted" style="height: 350px;">
-          <div class="text-center">
-            <i class="bi bi-funnel fs-1 mb-3"></i>
-            <p class="mb-0">No files with type "${selectedFileType}" found in ${currentView} view</p>
-          </div>
+  if (selectedFileType && currentData.length === 0) {
+    container.innerHTML = `
+      <div class="d-flex align-items-center justify-content-center h-100 text-muted" style="height: 350px;">
+        <div class="text-center">
+          <i class="bi bi-funnel fs-1 mb-3"></i>
+          <p class="mb-0">No files with type "${selectedFileType}" found in ${currentView} view</p>
         </div>
-      `
-      return
-    }
+      </div>
+    `
+    return
   }
 
   const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark'
