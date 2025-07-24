@@ -312,7 +312,7 @@ The test report is always generated at `dist/test-repo-analysis.html` for consis
 ## Output Examples
 
 ### HTML Report
-The HTML report is a beautiful, dark-themed dashboard that works entirely offline. It includes:
+The HTML report is a beautiful dashboard that works entirely offline. It includes:
 - Responsive design that works on desktop and mobile
 - Interactive charts with hover tooltips
 - Professional styling with smooth animations

@@ -21,7 +21,6 @@ export class FileTypesChart {
     const container = document.querySelector('#' + this.containerId)
     assert(container !== null, `Container with id ${this.containerId} not found`)
     
-    const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark'
     
     // Destroy existing chart if it exists
     if (this.chart) {
@@ -33,7 +32,7 @@ export class FileTypesChart {
       chart: { 
         type: 'donut', 
         height: 350,
-        background: isDark ? '#161b22' : '#ffffff',
+        background: '#ffffff',
         selection: {
           enabled: true
         },
@@ -53,13 +52,11 @@ export class FileTypesChart {
       },
       series: fileTypes.slice(0, 8).map(ft => ft.lines),
       labels: fileTypes.slice(0, 8).map(ft => ft.type),
-      colors: isDark ? 
-        ['#58a6ff', '#3fb950', '#f85149', '#d29922', '#a5a5ff', '#56d4dd', '#db6d28', '#8b949e'] :
-        ['#27aeef', '#87bc45', '#ea5545', '#ef9b20', '#b33dc6', '#f46a9b', '#ede15b', '#bdcf32'],
+      colors: ['#27aeef', '#87bc45', '#ea5545', '#ef9b20', '#b33dc6', '#f46a9b', '#ede15b', '#bdcf32'],
       legend: {
-        labels: { colors: isDark ? '#f0f6fc' : '#24292f' }
+        labels: { colors: '#24292f' }
       },
-      tooltip: { theme: isDark ? 'dark' : 'light' },
+      tooltip: { theme: 'light' },
       states: {
         active: {
           filter: {
@@ -86,7 +83,7 @@ export class FileTypesChart {
       },
       stroke: {
         width: 2,
-        colors: [isDark ? '#0d1117' : '#ffffff']
+        colors: ['#ffffff']
       }
     }
     

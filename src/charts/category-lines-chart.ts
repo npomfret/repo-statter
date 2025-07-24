@@ -38,7 +38,6 @@ export class CategoryLinesChart {
     const container = document.querySelector('#' + this.containerId)
     assert(container !== null, `Container with id ${this.containerId} not found`)
     
-    const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark'
     
     // Create separate series for each category
     const categories = ['application', 'test', 'build', 'documentation', 'other'] as const
@@ -50,11 +49,11 @@ export class CategoryLinesChart {
       other: 'Other'
     }
     const categoryColors = {
-      application: isDark ? '#f85149' : '#ea5545',
-      test: isDark ? '#a5a5ff' : '#b33dc6',
-      build: isDark ? '#f0883e' : '#f27036',
-      documentation: isDark ? '#7ce38b' : '#27ae60',
-      other: isDark ? '#c69026' : '#f39c12'
+      application: '#ea5545',
+      test: '#b33dc6',
+      build: '#f27036',
+      documentation: '#27ae60',
+      other: '#f39c12'
     }
     
     const series: any[] = []
@@ -78,7 +77,7 @@ export class CategoryLinesChart {
         type: 'line', 
         height: 350, 
         toolbar: { show: false },
-        background: isDark ? '#161b22' : '#ffffff',
+        background: '#ffffff',
         zoom: {
           enabled: true,
           allowMouseWheelZoom: false,
@@ -97,7 +96,7 @@ export class CategoryLinesChart {
         type: 'datetime',
         title: { 
           text: 'Date',
-          style: { color: isDark ? '#f0f6fc' : '#24292f' }
+          style: { color: '#24292f' }
         },
         labels: {
           datetimeFormatter: {
@@ -107,17 +106,17 @@ export class CategoryLinesChart {
             hour: 'HH:mm'
           },
           datetimeUTC: false,
-          style: { colors: isDark ? '#f0f6fc' : '#24292f' }
+          style: { colors: '#24292f' }
         }
       },
       yaxis: {
         title: { 
           text: 'Lines of Code',
-          style: { color: isDark ? '#f0f6fc' : '#24292f' }
+          style: { color: '#24292f' }
         },
         min: 0,
         labels: { 
-          style: { colors: isDark ? '#f0f6fc' : '#24292f' },
+          style: { colors: '#24292f' },
           formatter: function(val: number) {
             return val.toLocaleString()
           }
@@ -127,11 +126,11 @@ export class CategoryLinesChart {
         position: 'top',
         horizontalAlign: 'left',
         labels: {
-          colors: isDark ? '#f0f6fc' : '#24292f'
+          colors: '#24292f'
         }
       },
       tooltip: {
-        theme: isDark ? 'dark' : 'light',
+        theme: 'light',
         enabled: true,
         shared: true,
         intersect: false,
@@ -145,7 +144,7 @@ export class CategoryLinesChart {
         }
       },
       grid: {
-        borderColor: isDark ? '#30363d' : '#e1e4e8'
+        borderColor: '#e1e4e8'
       }
     }
     

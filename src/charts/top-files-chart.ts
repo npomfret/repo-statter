@@ -34,7 +34,6 @@ export class TopFilesChart {
     assert(container !== null, `Container with id ${this.containerId} not found`)
     
     this.currentData = topFilesData
-    const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark'
     
     // Destroy existing chart if it exists
     if (this.chart) {
@@ -51,17 +50,17 @@ export class TopFilesChart {
       case 'largest':
         data = topFilesData.largest
         xAxisTitle = 'Lines of Code'
-        color = isDark ? '#58a6ff' : '#27aeef' // Primary color
+        color = '#27aeef' // Primary color
         break
       case 'churn':
         data = topFilesData.mostChurn
         xAxisTitle = 'Total Lines Changed'
-        color = isDark ? '#3fb950' : '#87bc45' // Success color
+        color = '#87bc45' // Success color
         break
       case 'complex':
         data = topFilesData.mostComplex
         xAxisTitle = 'Complexity Score'
-        color = isDark ? '#a5a5ff' : '#b33dc6' // Info color
+        color = '#b33dc6' // Info color
         break
     }
     
@@ -136,7 +135,7 @@ export class TopFilesChart {
         type: 'bar', 
         height: height,
         toolbar: { show: false },
-        background: isDark ? '#161b22' : '#ffffff'
+        background: '#ffffff'
       },
       plotOptions: {
         bar: {
@@ -155,10 +154,10 @@ export class TopFilesChart {
       xaxis: {
         title: { 
           text: xAxisTitle,
-          style: { color: isDark ? '#f0f6fc' : '#24292f' }
+          style: { color: '#24292f' }
         },
         labels: { 
-          style: { colors: isDark ? '#f0f6fc' : '#24292f' },
+          style: { colors: '#24292f' },
           formatter: (value: number) => {
             return value.toLocaleString()
           }
@@ -171,7 +170,7 @@ export class TopFilesChart {
       },
       colors: [color],
       grid: { 
-        borderColor: isDark ? '#30363d' : '#e1e4e8',
+        borderColor: '#e1e4e8',
         xaxis: {
           lines: { show: true }
         },
@@ -189,7 +188,7 @@ export class TopFilesChart {
         style: {
           fontSize: '13px',
           fontWeight: 600,
-          colors: [isDark ? '#f0f6fc' : '#24292f']
+          colors: ['#24292f']
         },
         offsetX: 10,
         formatter: (_val: number, opts: any) => {
@@ -199,13 +198,13 @@ export class TopFilesChart {
         },
         dropShadow: {
           enabled: true,
-          color: isDark ? '#0d1117' : '#ffffff',
+          color: '#ffffff',
           blur: 3,
           opacity: 0.8
         }
       },
       tooltip: { 
-        theme: isDark ? 'dark' : 'light',
+        theme: 'light',
         y: {
           formatter: (value: number) => {
             return value.toLocaleString()

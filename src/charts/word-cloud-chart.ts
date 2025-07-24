@@ -23,10 +23,7 @@ export class WordCloudChart {
     const width = (container as HTMLElement).offsetWidth
     
     // Theme-aware colors
-    const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark'
-    const colors = isDark ? 
-      ['#58a6ff', '#3fb950', '#f85149', '#d29922', '#a5a5ff', '#56d4dd', '#db6d28', '#8b949e'] :
-      ['#27aeef', '#87bc45', '#ea5545', '#ef9b20', '#b33dc6', '#f46a9b', '#ede15b', '#bdcf32']
+    const colors = ['#27aeef', '#87bc45', '#ea5545', '#ef9b20', '#b33dc6', '#f46a9b', '#ede15b', '#bdcf32']
     const color = (window as any).d3.scaleOrdinal().range(colors)
     
     const draw = (words: any[]) => {

@@ -45,7 +45,6 @@ export class GrowthChart {
     const container = document.querySelector('#' + this.containerId)
     assert(container !== null, `Container with id ${this.containerId} not found`)
     
-    const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark'
     
     // Build chart data based on x-axis selection
     const linesData: ChartDataPoint[] = xAxis === 'date' 
@@ -74,7 +73,7 @@ export class GrowthChart {
         type: 'area', 
         height: 350, 
         toolbar: { show: false },
-        background: isDark ? '#161b22' : '#ffffff',
+        background: '#ffffff',
         zoom: {
           enabled: true,
           allowMouseWheelZoom: false,
@@ -104,7 +103,7 @@ export class GrowthChart {
         type: xAxis === 'date' ? 'datetime' : 'numeric', 
         title: { 
           text: xAxis === 'date' ? 'Date' : 'Commit Number',
-          style: { color: isDark ? '#f0f6fc' : '#24292f' }
+          style: { color: '#24292f' }
         },
         labels: {
           datetimeFormatter: {
@@ -116,7 +115,7 @@ export class GrowthChart {
             second: 'HH:mm:ss'
           },
           datetimeUTC: false,
-          style: { colors: isDark ? '#f0f6fc' : '#24292f' },
+          style: { colors: '#24292f' },
           formatter: xAxis === 'commit' ? 
             function(val: any) { return Math.floor(val).toString() } : 
             undefined
@@ -126,11 +125,11 @@ export class GrowthChart {
         {
           title: { 
             text: 'Lines of Code',
-            style: { color: isDark ? '#f0f6fc' : '#24292f' }
+            style: { color: '#24292f' }
           },
           min: 0,
           labels: { 
-            style: { colors: isDark ? '#f0f6fc' : '#24292f' },
+            style: { colors: '#24292f' },
             formatter: function(val: number) {
               return val.toLocaleString()
             }
@@ -140,12 +139,12 @@ export class GrowthChart {
           opposite: true,
           title: { 
             text: 'Repository Size',
-            style: { color: isDark ? '#f0f6fc' : '#24292f' }
+            style: { color: '#24292f' }
           },
           min: 0,
           labels: {
             formatter: formatBytes,
-            style: { colors: isDark ? '#f0f6fc' : '#24292f' }
+            style: { colors: '#24292f' }
           }
         }
       ],
@@ -158,18 +157,18 @@ export class GrowthChart {
         } 
       },
       colors: [
-        isDark ? '#f85149' : '#ea5545',  // Lines of Code color
-        isDark ? '#a5a5ff' : '#b33dc6'   // Repository Size color
+        '#ea5545',  // Lines of Code color
+        '#b33dc6'   // Repository Size color
       ],
       legend: {
         position: 'top',
         horizontalAlign: 'left',
         labels: {
-          colors: isDark ? '#f0f6fc' : '#24292f'
+          colors: '#24292f'
         }
       },
       tooltip: xAxis === 'date' ? {
-        theme: isDark ? 'dark' : 'light',
+        theme: 'light',
         enabled: true,
         shared: true,
         intersect: false,
@@ -187,11 +186,11 @@ export class GrowthChart {
           }
         ]
       } : {
-        theme: isDark ? 'dark' : 'light',
+        theme: 'light',
         custom: this.createCommitTooltip(xAxis, linearSeries, commits)
       },
       grid: {
-        borderColor: isDark ? '#30363d' : '#e1e4e8'
+        borderColor: '#e1e4e8'
       }
     }
     

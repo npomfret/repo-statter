@@ -16,7 +16,6 @@ export class FileHeatmapChart {
     const container = document.querySelector('#' + this.containerId)
     assert(container !== null, `Container with id ${this.containerId} not found`)
     
-    const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark'
     
     // Transform data for ApexCharts treemap
     const data = fileHeatData.slice(0, maxFiles).map(file => ({
@@ -28,19 +27,11 @@ export class FileHeatmapChart {
     const maxHeatScore = Math.max(...fileHeatData.slice(0, maxFiles).map(f => f.heatScore))
     const colors = fileHeatData.slice(0, maxFiles).map(file => {
       const intensity = file.heatScore / maxHeatScore
-      if (isDark) {
-        // Dark theme - from dark blue to bright red
-        const r = Math.floor(70 + intensity * 185)
-        const g = Math.floor(70 - intensity * 50)
-        const b = Math.floor(150 - intensity * 100)
-        return `rgb(${r}, ${g}, ${b})`
-      } else {
-        // Light theme - from light blue to deep red
-        const r = Math.floor(100 + intensity * 155)
-        const g = Math.floor(150 - intensity * 100)
-        const b = Math.floor(255 - intensity * 155)
-        return `rgb(${r}, ${g}, ${b})`
-      }
+      // Light theme - from light blue to deep red
+      const r = Math.floor(100 + intensity * 155)
+      const g = Math.floor(150 - intensity * 100)
+      const b = Math.floor(255 - intensity * 155)
+      return `rgb(${r}, ${g}, ${b})`
     })
     
     const options = {
@@ -51,14 +42,14 @@ export class FileHeatmapChart {
         type: 'treemap',
         height: height,
         toolbar: { show: false },
-        background: isDark ? '#161b22' : '#ffffff'
+        background: '#ffffff'
       },
       colors: colors,
       dataLabels: {
         enabled: true,
         style: {
           fontSize: '12px',
-          colors: [isDark ? '#f0f6fc' : '#24292f']
+          colors: ['#24292f']
         },
         formatter: function(text: string, op: any) {
           const index = op.dataPointIndex
@@ -76,7 +67,7 @@ export class FileHeatmapChart {
         }
       },
       tooltip: {
-        theme: isDark ? 'dark' : 'light',
+        theme: 'light',
         custom: ({ dataPointIndex }: any) => {
           const file = fileHeatData[dataPointIndex]
           if (file) {

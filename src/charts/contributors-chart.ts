@@ -17,7 +17,6 @@ export class ContributorsChart {
     const container = document.querySelector('#' + this.containerId) as HTMLElement
     assert(container !== null, `Container with id ${this.containerId} not found`)
     
-    const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark'
     
     // Destroy existing chart if it exists
     if (this.chart) {
@@ -30,27 +29,27 @@ export class ContributorsChart {
         type: 'bar', 
         height: 350, 
         toolbar: { show: false },
-        background: isDark ? '#161b22' : '#ffffff'
+        background: '#ffffff'
       },
       series: [{ name: 'Commits', data: contributors.slice(0, topContributorsLimit).map(c => c.commits) }],
       xaxis: { 
         categories: contributors.slice(0, topContributorsLimit).map(c => c.name), 
         title: { 
           text: 'Contributors',
-          style: { color: isDark ? '#f0f6fc' : '#24292f' }
+          style: { color: '#24292f' }
         },
-        labels: { style: { colors: isDark ? '#f0f6fc' : '#24292f' } }
+        labels: { style: { colors: '#24292f' } }
       },
       yaxis: { 
         title: { 
           text: 'Commits',
-          style: { color: isDark ? '#f0f6fc' : '#24292f' }
+          style: { color: '#24292f' }
         },
-        labels: { style: { colors: isDark ? '#f0f6fc' : '#24292f' } }
+        labels: { style: { colors: '#24292f' } }
       },
-      colors: [isDark ? '#3fb950' : '#87bc45'],
-      grid: { borderColor: isDark ? '#30363d' : '#e1e4e8' },
-      tooltip: { theme: isDark ? 'dark' : 'light' }
+      colors: ['#87bc45'],
+      grid: { borderColor: '#e1e4e8' },
+      tooltip: { theme: 'light' }
     }
     
     // ApexCharts will be available globally in the browser

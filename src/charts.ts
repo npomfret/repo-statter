@@ -235,7 +235,6 @@ function renderContributorsChart(contributors: ContributorStats[], limit: number
   if (!container) return
 
 
-  const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark'
   const topContributors = contributors.slice(0, limit)
 
   const options = {
@@ -243,7 +242,7 @@ function renderContributorsChart(contributors: ContributorStats[], limit: number
       type: 'bar',
       height: 350,
       toolbar: { show: false },
-      background: isDark ? '#161b22' : '#ffffff'
+      background: '#ffffff'
     },
     series: [{
       data: topContributors.map(c => ({
@@ -260,32 +259,31 @@ function renderContributorsChart(contributors: ContributorStats[], limit: number
         }
       }
     },
-    colors: isDark ? ['#f85149', '#f0883e', '#ffd33d', '#a5a5ff', '#7ce38b', '#2ea043', '#58a6ff', '#79c0ff', '#c69026', '#8b949e'] :
-        ['#ea5545', '#f46a9b', '#ffd33d', '#b33dc6', '#27aeef', '#2ea043', '#0366d6', '#79c0ff', '#e27300', '#666666'],
+    colors: ['#ea5545', '#f46a9b', '#ffd33d', '#b33dc6', '#27aeef', '#2ea043', '#0366d6', '#79c0ff', '#e27300', '#666666'],
     dataLabels: {
       enabled: true,
       formatter: function(val: number) {
         return val.toString()
       },
       style: {
-        colors: [isDark ? '#f0f6fc' : '#24292f']
+        colors: ['#24292f']
       }
     },
     xaxis: {
       title: {
         text: 'Number of Commits',
-        style: { color: isDark ? '#f0f6fc' : '#24292f' }
+        style: { color: '#24292f' }
       },
-      labels: { style: { colors: isDark ? '#f0f6fc' : '#24292f' } }
+      labels: { style: { colors: '#24292f' } }
     },
     yaxis: {
-      labels: { style: { colors: isDark ? '#f0f6fc' : '#24292f' } }
+      labels: { style: { colors: '#24292f' } }
     },
     grid: {
-      borderColor: isDark ? '#30363d' : '#e1e4e8'
+      borderColor: '#e1e4e8'
     },
     tooltip: {
-      theme: isDark ? 'dark' : 'light',
+      theme: 'light',
       y: {
         title: {
           formatter: function() { return 'Commits:' }
@@ -316,7 +314,6 @@ function renderFileTypesChart(fileTypes: FileTypeStats[]): void {
   const container = document.getElementById('fileTypesChart')
   if (!container) return
 
-  const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark'
   const topFileTypes = fileTypes.slice(0, 10)
 
   // Store data for filtering
@@ -326,7 +323,7 @@ function renderFileTypesChart(fileTypes: FileTypeStats[]): void {
     chart: {
       type: 'donut',
       height: 350,
-      background: isDark ? '#161b22' : '#ffffff',
+      background: '#ffffff',
       events: {
         dataPointSelection: function(_event: any, _chartContext: any, config: any) {
           const selectedType = config.w.config.labels[config.dataPointIndex]
@@ -342,8 +339,7 @@ function renderFileTypesChart(fileTypes: FileTypeStats[]): void {
     },
     series: topFileTypes.map(ft => ft.lines),
     labels: topFileTypes.map(ft => ft.type),
-    colors: isDark ? ['#f85149', '#f0883e', '#ffd33d', '#a5a5ff', '#7ce38b', '#2ea043', '#58a6ff', '#79c0ff', '#c69026', '#8b949e'] :
-        ['#ea5545', '#f46a9b', '#ffd33d', '#b33dc6', '#27aeef', '#2ea043', '#0366d6', '#79c0ff', '#e27300', '#666666'],
+    colors: ['#ea5545', '#f46a9b', '#ffd33d', '#b33dc6', '#27aeef', '#2ea043', '#0366d6', '#79c0ff', '#e27300', '#666666'],
     dataLabels: {
       enabled: true,
       formatter: function(val: number, opts: any) {
@@ -354,15 +350,15 @@ function renderFileTypesChart(fileTypes: FileTypeStats[]): void {
         fontSize: '12px',
         fontFamily: 'inherit',
         fontWeight: '600',
-        colors: [isDark ? '#f0f6fc' : '#24292f']
+        colors: ['#24292f']
       }
     },
     legend: {
       position: 'bottom',
-      labels: { colors: isDark ? '#f0f6fc' : '#24292f' }
+      labels: { colors: '#24292f' }
     },
     tooltip: {
-      theme: isDark ? 'dark' : 'light',
+      theme: 'light',
       y: {
         formatter: function(val: number) {
           return val.toLocaleString() + ' lines'
@@ -380,8 +376,6 @@ function renderGrowthChart(linearSeries: LinearSeriesPoint[], timeSeries: TimeSe
   const container = document.getElementById('growthChart')
   if (!container) return
 
-  const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark'
-
   // Store data for rebuilding
   chartData['growthChart'] = { linearSeries, timeSeries, commits }
 
@@ -392,7 +386,7 @@ function renderGrowthChart(linearSeries: LinearSeriesPoint[], timeSeries: TimeSe
     xAxisMode = savedMode
   }
 
-  const options = buildGrowthChartOptions(xAxisMode, linearSeries, timeSeries, commits, isDark)
+  const options = buildGrowthChartOptions(xAxisMode, linearSeries, timeSeries, commits)
 
   const chart = new (window as any).ApexCharts(container, options)
   chart.render()
@@ -407,7 +401,7 @@ function renderGrowthChart(linearSeries: LinearSeriesPoint[], timeSeries: TimeSe
   }
 }
 
-function buildGrowthChartOptions(xAxisMode: string, linearSeries: LinearSeriesPoint[], timeSeries: TimeSeriesPoint[], commits: CommitData[], isDark: boolean): any {
+function buildGrowthChartOptions(xAxisMode: string, linearSeries: LinearSeriesPoint[], timeSeries: TimeSeriesPoint[], commits: CommitData[]): any {
   if (xAxisMode === 'date') {
     // Date-based series using time series data
     return {
@@ -416,7 +410,7 @@ function buildGrowthChartOptions(xAxisMode: string, linearSeries: LinearSeriesPo
         type: 'area',
         height: 350,
         toolbar: { show: false },
-        background: isDark ? '#161b22' : '#ffffff',
+        background: '#ffffff',
         zoom: {
           enabled: true,
           allowMouseWheelZoom: false
@@ -444,22 +438,22 @@ function buildGrowthChartOptions(xAxisMode: string, linearSeries: LinearSeriesPo
         type: 'datetime',
         title: {
           text: 'Date',
-          style: { color: isDark ? '#f0f6fc' : '#24292f' }
+          style: { color: '#24292f' }
         },
         labels: {
           datetimeUTC: false,
-          style: { colors: isDark ? '#f0f6fc' : '#24292f' }
+          style: { colors: '#24292f' }
         }
       },
       yaxis: [
         {
           title: {
             text: 'Lines of Code',
-            style: { color: isDark ? '#f0f6fc' : '#24292f' }
+            style: { color: '#24292f' }
           },
           min: 0,
           labels: {
-            style: { colors: isDark ? '#f0f6fc' : '#24292f' },
+            style: { colors: '#24292f' },
             formatter: function(val: number) {
               return val.toLocaleString()
             }
@@ -469,18 +463,18 @@ function buildGrowthChartOptions(xAxisMode: string, linearSeries: LinearSeriesPo
           opposite: true,
           title: {
             text: 'Repository Size',
-            style: { color: isDark ? '#f0f6fc' : '#24292f' }
+            style: { color: '#24292f' }
           },
           min: 0,
           labels: {
             formatter: formatBytes,
-            style: { colors: isDark ? '#f0f6fc' : '#24292f' }
+            style: { colors: '#24292f' }
           }
         }
       ],
       colors: [
-        isDark ? '#f85149' : '#ea5545',  // Lines of Code color
-        isDark ? '#a5a5ff' : '#b33dc6'   // Repository Size color
+        '#ea5545',  // Lines of Code color
+        '#b33dc6'   // Repository Size color
       ],
       stroke: { curve: 'smooth', width: 2 },
       fill: {
@@ -493,12 +487,12 @@ function buildGrowthChartOptions(xAxisMode: string, linearSeries: LinearSeriesPo
       legend: {
         position: 'top',
         horizontalAlign: 'left',
-        labels: { colors: isDark ? '#f0f6fc' : '#24292f' }
+        labels: { colors: '#24292f' }
       },
-      grid: { borderColor: isDark ? '#30363d' : '#e1e4e8' },
+      grid: { borderColor: '#e1e4e8' },
       dataLabels: { enabled: false },
       tooltip: {
-        theme: isDark ? 'dark' : 'light',
+        theme: 'light',
         x: { format: 'dd MMM yyyy' }
       }
     }
@@ -510,7 +504,7 @@ function buildGrowthChartOptions(xAxisMode: string, linearSeries: LinearSeriesPo
         type: 'area',
         height: 350,
         toolbar: { show: false },
-        background: isDark ? '#161b22' : '#ffffff',
+        background: '#ffffff',
         zoom: {
           enabled: true,
           allowMouseWheelZoom: false
@@ -538,10 +532,10 @@ function buildGrowthChartOptions(xAxisMode: string, linearSeries: LinearSeriesPo
         type: 'numeric',
         title: {
           text: 'Commit Number',
-          style: { color: isDark ? '#f0f6fc' : '#24292f' }
+          style: { color: '#24292f' }
         },
         labels: {
-          style: { colors: isDark ? '#f0f6fc' : '#24292f' },
+          style: { colors: '#24292f' },
           formatter: function(val: number) {
             return Math.round(val).toString()
           }
@@ -553,11 +547,11 @@ function buildGrowthChartOptions(xAxisMode: string, linearSeries: LinearSeriesPo
         {
           title: {
             text: 'Lines of Code',
-            style: { color: isDark ? '#f0f6fc' : '#24292f' }
+            style: { color: '#24292f' }
           },
           min: 0,
           labels: {
-            style: { colors: isDark ? '#f0f6fc' : '#24292f' },
+            style: { colors: '#24292f' },
             formatter: function(val: number) {
               return val.toLocaleString()
             }
@@ -567,18 +561,18 @@ function buildGrowthChartOptions(xAxisMode: string, linearSeries: LinearSeriesPo
           opposite: true,
           title: {
             text: 'Repository Size',
-            style: { color: isDark ? '#f0f6fc' : '#24292f' }
+            style: { color: '#24292f' }
           },
           min: 0,
           labels: {
             formatter: formatBytes,
-            style: { colors: isDark ? '#f0f6fc' : '#24292f' }
+            style: { colors: '#24292f' }
           }
         }
       ],
       colors: [
-        isDark ? '#f85149' : '#ea5545',  // Lines of Code color
-        isDark ? '#a5a5ff' : '#b33dc6'   // Repository Size color
+        '#ea5545',  // Lines of Code color
+        '#b33dc6'   // Repository Size color
       ],
       stroke: { curve: 'smooth', width: 2 },
       fill: {
@@ -591,12 +585,12 @@ function buildGrowthChartOptions(xAxisMode: string, linearSeries: LinearSeriesPo
       legend: {
         position: 'top',
         horizontalAlign: 'left',
-        labels: { colors: isDark ? '#f0f6fc' : '#24292f' }
+        labels: { colors: '#24292f' }
       },
-      grid: { borderColor: isDark ? '#30363d' : '#e1e4e8' },
+      grid: { borderColor: '#e1e4e8' },
       dataLabels: { enabled: false },
       tooltip: {
-        theme: isDark ? 'dark' : 'light',
+        theme: 'light',
         custom: function({dataPointIndex}: any) {
           const point = linearSeries[dataPointIndex]
           if (!point || point.sha === 'start') return ''
@@ -729,7 +723,6 @@ function renderCategoryLinesChart(timeSeries: TimeSeriesPoint[], commits: Commit
   const container = document.getElementById('categoryLinesChart')
   if (!container) return
 
-  const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark'
   
   // Get saved axis mode or default to 'commit'
   const xAxisMode = localStorage.getItem('categoryChartXAxis') || 'commit'
@@ -747,11 +740,11 @@ function renderCategoryLinesChart(timeSeries: TimeSeriesPoint[], commits: Commit
     other: 'Other'
   }
   const categoryColors = {
-    application: isDark ? '#f85149' : '#ea5545',
-    test: isDark ? '#a5a5ff' : '#b33dc6',
-    build: isDark ? '#f0883e' : '#f27036',
-    documentation: isDark ? '#7ce38b' : '#27ae60',
-    other: isDark ? '#c69026' : '#f39c12'
+    application: '#ea5545',
+    test: '#b33dc6',
+    build: '#f27036',
+    documentation: '#27ae60',
+    other: '#f39c12'
   }
 
   const series: any[] = []
@@ -822,7 +815,7 @@ function renderCategoryLinesChart(timeSeries: TimeSeriesPoint[], commits: Commit
       type: 'line',
       height: 350,
       toolbar: { show: false },
-      background: isDark ? '#161b22' : '#ffffff',
+      background: '#ffffff',
       zoom: {
         enabled: true,
         allowMouseWheelZoom: false,
@@ -841,7 +834,7 @@ function renderCategoryLinesChart(timeSeries: TimeSeriesPoint[], commits: Commit
       type: 'datetime',
       title: {
         text: 'Date',
-        style: { color: isDark ? '#f0f6fc' : '#24292f' }
+        style: { color: '#24292f' }
       },
       labels: {
         datetimeFormatter: {
@@ -851,16 +844,16 @@ function renderCategoryLinesChart(timeSeries: TimeSeriesPoint[], commits: Commit
           hour: 'HH:mm'
         },
         datetimeUTC: false,
-        style: { colors: isDark ? '#f0f6fc' : '#24292f' }
+        style: { colors: '#24292f' }
       }
     } : {
       type: 'numeric',
       title: {
         text: 'Commit Index',
-        style: { color: isDark ? '#f0f6fc' : '#24292f' }
+        style: { color: '#24292f' }
       },
       labels: {
-        style: { colors: isDark ? '#f0f6fc' : '#24292f' },
+        style: { colors: '#24292f' },
         formatter: function(val: number) {
           return Math.round(val).toString()
         }
@@ -870,11 +863,11 @@ function renderCategoryLinesChart(timeSeries: TimeSeriesPoint[], commits: Commit
     yaxis: {
       title: {
         text: 'Lines of Code',
-        style: { color: isDark ? '#f0f6fc' : '#24292f' }
+        style: { color: '#24292f' }
       },
       min: 0,
       labels: {
-        style: { colors: isDark ? '#f0f6fc' : '#24292f' },
+        style: { colors: '#24292f' },
         formatter: function(val: number) {
           return val.toLocaleString()
         }
@@ -884,11 +877,11 @@ function renderCategoryLinesChart(timeSeries: TimeSeriesPoint[], commits: Commit
       position: 'top',
       horizontalAlign: 'left',
       labels: {
-        colors: isDark ? '#f0f6fc' : '#24292f'
+        colors: '#24292f'
       }
     },
     tooltip: {
-      theme: isDark ? 'dark' : 'light',
+      theme: 'light',
       enabled: true,
       shared: true,
       intersect: false,
@@ -995,7 +988,7 @@ function renderCategoryLinesChart(timeSeries: TimeSeriesPoint[], commits: Commit
       }
     },
     grid: {
-      borderColor: isDark ? '#30363d' : '#e1e4e8'
+      borderColor: '#e1e4e8'
     }
   }
 
@@ -1019,7 +1012,6 @@ function renderCommitActivityChart(timeSeries: TimeSeriesPoint[]): void {
   const container = document.getElementById('commitActivityChart')
   if (!container) return
 
-  const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark'
 
   const bucketedData = createCommitActivityBuckets(timeSeries)
 
@@ -1029,7 +1021,7 @@ function renderCommitActivityChart(timeSeries: TimeSeriesPoint[]): void {
       type: 'bar',
       height: 350,
       toolbar: { show: false },
-      background: isDark ? '#161b22' : '#ffffff',
+      background: '#ffffff',
       zoom: {
         enabled: true,
         allowMouseWheelZoom: false
@@ -1049,11 +1041,11 @@ function renderCommitActivityChart(timeSeries: TimeSeriesPoint[]): void {
       type: 'datetime',
       title: {
         text: `${bucketedData.bucketType} (${bucketedData.data.length} ${bucketedData.bucketType.toLowerCase()}s)`,
-        style: { color: isDark ? '#f0f6fc' : '#24292f' }
+        style: { color: '#24292f' }
       },
       labels: {
         datetimeUTC: false,
-        style: { colors: isDark ? '#f0f6fc' : '#24292f' },
+        style: { colors: '#24292f' },
         datetimeFormatter: bucketedData.bucketType === 'Day' ? {
           day: 'dd MMM',
           month: 'MMM yyyy'
@@ -1069,20 +1061,20 @@ function renderCommitActivityChart(timeSeries: TimeSeriesPoint[]): void {
     yaxis: {
       title: {
         text: 'Number of Commits',
-        style: { color: isDark ? '#f0f6fc' : '#24292f' }
+        style: { color: '#24292f' }
       },
       min: 0,
-      labels: { style: { colors: isDark ? '#f0f6fc' : '#24292f' } }
+      labels: { style: { colors: '#24292f' } }
     },
-    colors: [isDark ? '#58a6ff' : '#0366d6'],
+    colors: ['#0366d6'],
     dataLabels: {
       enabled: false
     },
     grid: {
-      borderColor: isDark ? '#30363d' : '#e1e4e8'
+      borderColor: '#e1e4e8'
     },
     tooltip: {
-      theme: isDark ? 'dark' : 'light',
+      theme: 'light',
       x: {
         formatter: function(val: number) {
           const date = new Date(val)
@@ -1109,7 +1101,6 @@ function renderWordCloudChart(wordCloudData: WordFrequency[], height: number): v
   const container = document.getElementById('wordCloudChart')
   if (!container) return
 
-  const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark'
 
   // D3 word cloud implementation
   const width = container.offsetWidth
@@ -1139,9 +1130,7 @@ function renderWordCloudChart(wordCloudData: WordFrequency[], height: number): v
   layout.start()
 
   function draw(words: WordCloudData[]) {
-    const colorScale = isDark
-        ? ['#f85149', '#f0883e', '#ffd33d', '#a5a5ff', '#7ce38b', '#2ea043', '#58a6ff', '#79c0ff', '#c69026']
-        : ['#ea5545', '#f46a9b', '#ffd33d', '#b33dc6', '#27aeef', '#2ea043', '#0366d6', '#79c0ff', '#e27300']
+    const colorScale = ['#ea5545', '#f46a9b', '#ffd33d', '#b33dc6', '#27aeef', '#2ea043', '#0366d6', '#79c0ff', '#e27300']
 
     const svg = (window as any).d3.select(container)
         .append('svg')
@@ -1168,7 +1157,6 @@ function renderFileHeatmapChart(fileHeatData: FileHeatData[], height: number, ma
   const container = document.getElementById('fileHeatmapChart')
   if (!container) return
 
-  const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark'
 
   // Store original data for filtering
   chartData['fileHeatmapChart'] = { fileHeatData, height, maxFiles }
@@ -1210,7 +1198,7 @@ function renderFileHeatmapChart(fileHeatData: FileHeatData[], height: number, ma
       type: 'treemap',
       height: height,
       toolbar: { show: false },
-      background: isDark ? '#161b22' : '#ffffff'
+      background: '#ffffff'
     },
     series: [{
       data: data
@@ -1219,7 +1207,7 @@ function renderFileHeatmapChart(fileHeatData: FileHeatData[], height: number, ma
       enabled: true,
       style: {
         fontSize: '12px',
-        colors: [isDark ? '#f0f6fc' : '#24292f']
+        colors: ['#24292f']
       },
       formatter: function(val: string, opts: any) {
         return [val, opts.value.toLocaleString() + ' lines'].join('\n')
@@ -1234,25 +1222,25 @@ function renderFileHeatmapChart(fileHeatData: FileHeatData[], height: number, ma
           ranges: [{
             from: 0,
             to: 50,
-            color: isDark ? '#0e4429' : '#9be9a8'
+            color: '#9be9a8'
           }, {
             from: 51,
             to: 200,
-            color: isDark ? '#006d32' : '#40c463'
+            color: '#40c463'
           }, {
             from: 201,
             to: 500,
-            color: isDark ? '#26a641' : '#30a14e'
+            color: '#30a14e'
           }, {
             from: 501,
             to: 99999,
-            color: isDark ? '#39d353' : '#216e39'
+            color: '#216e39'
           }]
         }
       }
     },
     tooltip: {
-      theme: isDark ? 'dark' : 'light',
+      theme: 'light',
       custom: function({dataPointIndex}: any) {
         const file = limitedData[dataPointIndex]
         if (!file) return ''
@@ -1296,7 +1284,7 @@ function getFileNameFromPath(filePath: string): string {
   return filePath.split('/').pop() || filePath
 }
 
-function buildTopFilesChartOptions(view: string, data: TopFilesData, isDark: boolean): any {
+function buildTopFilesChartOptions(view: string, data: TopFilesData): any {
   let series: any
   let yaxisTitle: string
   let tooltipFormatter: any
@@ -1354,7 +1342,7 @@ function buildTopFilesChartOptions(view: string, data: TopFilesData, isDark: boo
       type: 'bar',
       height: 350,
       toolbar: { show: false },
-      background: isDark ? '#161b22' : '#ffffff',
+      background: '#ffffff',
       margin: {
         left: 80
       }
@@ -1380,14 +1368,14 @@ function buildTopFilesChartOptions(view: string, data: TopFilesData, isDark: boo
         return getFileNameFromPath(seriesData.x)
       }
     },
-    colors: [isDark ? '#58a6ff' : '#0366d6'],
+    colors: ['#0366d6'],
     xaxis: {
       title: {
         text: yaxisTitle,
-        style: { color: isDark ? '#f0f6fc' : '#24292f' }
+        style: { color: '#24292f' }
       },
       labels: {
-        style: { colors: isDark ? '#f0f6fc' : '#24292f' },
+        style: { colors: '#24292f' },
         formatter: function(val: number) {
           return val.toLocaleString()
         }
@@ -1399,10 +1387,10 @@ function buildTopFilesChartOptions(view: string, data: TopFilesData, isDark: boo
       }
     },
     grid: {
-      borderColor: isDark ? '#30363d' : '#e1e4e8'
+      borderColor: '#e1e4e8'
     },
     tooltip: {
-      theme: isDark ? 'dark' : 'light',
+      theme: 'light',
       custom: function(opts: any) {
         const dataIndex = opts.dataPointIndex
         const value = opts.series[0][dataIndex]
@@ -1449,7 +1437,6 @@ function renderTimeSliderChart(timeSeries: TimeSeriesPoint[], linearSeries: Line
   const container = document.getElementById('timeSliderChart')
   if (!container) return
 
-  const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark'
 
   // Get date range from the data
   const dates = timeSeries.map(point => new Date(point.date).getTime())
@@ -1488,8 +1475,8 @@ function renderTimeSliderChart(timeSeries: TimeSeriesPoint[], linearSeries: Line
             <input type="range" class="form-range" id="endRange" 
               min="0" max="100" value="100" 
               style="position: absolute; pointer-events: none; background: transparent;">
-            <div class="slider-track" style="position: absolute; top: 18px; left: 0; right: 0; height: 4px; background: ${isDark ? '#30363d' : '#e1e4e8'}; border-radius: 2px;"></div>
-            <div class="slider-range" id="sliderRange" style="position: absolute; top: 18px; height: 4px; background: ${isDark ? '#58a6ff' : '#27aeef'}; border-radius: 2px;"></div>
+            <div class="slider-track" style="position: absolute; top: 18px; left: 0; right: 0; height: 4px; background: #e1e4e8; border-radius: 2px;"></div>
+            <div class="slider-range" id="sliderRange" style="position: absolute; top: 18px; height: 4px; background: #27aeef; border-radius: 2px;"></div>
           </div>
         </div>
         <div class="col-auto">
@@ -1512,7 +1499,7 @@ function renderTimeSliderChart(timeSeries: TimeSeriesPoint[], linearSeries: Line
         appearance: none;
         width: 16px;
         height: 16px;
-        background: ${isDark ? '#58a6ff' : '#27aeef'};
+        background: #27aeef;
         border-radius: 50%;
         cursor: pointer;
         pointer-events: all;
@@ -1524,7 +1511,7 @@ function renderTimeSliderChart(timeSeries: TimeSeriesPoint[], linearSeries: Line
       .range-slider-container input[type="range"]::-moz-range-thumb {
         width: 16px;
         height: 16px;
-        background: ${isDark ? '#58a6ff' : '#27aeef'};
+        background: #27aeef;
         border-radius: 50%;
         cursor: pointer;
         pointer-events: all;
@@ -1691,14 +1678,13 @@ async function renderUserChart(chartId: string, data: ReturnType<typeof buildUse
     return
   }
 
-  const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark'
 
   const options = {
     chart: {
       type: 'line',
       height: 250,
       toolbar: { show: false },
-      background: isDark ? '#161b22' : '#ffffff',
+      background: '#ffffff',
       zoom: {
         enabled: false,
         allowMouseWheelZoom: false
@@ -1712,7 +1698,7 @@ async function renderUserChart(chartId: string, data: ReturnType<typeof buildUse
       type: 'datetime',
       labels: {
         datetimeUTC: false,
-        style: { colors: isDark ? '#f0f6fc' : '#24292f' },
+        style: { colors: '#24292f' },
         formatter: function(val: number) {
           return new Date(val).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
         }
@@ -1721,10 +1707,10 @@ async function renderUserChart(chartId: string, data: ReturnType<typeof buildUse
     yaxis: {
       title: {
         text: 'Commits',
-        style: { color: isDark ? '#f0f6fc' : '#24292f' }
+        style: { color: '#24292f' }
       },
       labels: {
-        style: { colors: isDark ? '#f0f6fc' : '#24292f' },
+        style: { colors: '#24292f' },
         formatter: function(val: number) {
           return Math.round(val).toString()
         }
@@ -1732,15 +1718,15 @@ async function renderUserChart(chartId: string, data: ReturnType<typeof buildUse
       min: 0,
       forceNiceScale: true
     },
-    colors: [isDark ? '#58a6ff' : '#0366d6'],
+    colors: ['#0366d6'],
     stroke: { curve: 'smooth', width: 2 },
     markers: {
       size: 4,
       hover: { size: 6 }
     },
-    grid: { borderColor: isDark ? '#30363d' : '#e1e4e8' },
+    grid: { borderColor: '#e1e4e8' },
     tooltip: {
-      theme: isDark ? 'dark' : 'light',
+      theme: 'light',
       x: { format: 'dd MMM yyyy' }
     }
   }
@@ -1897,8 +1883,7 @@ export function updateGrowthChartAxis(mode: 'date' | 'commit'): void {
   const container = document.getElementById('growthChart')
   if (!container) return
 
-  const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark'
-  const options = buildGrowthChartOptions(mode, data.linearSeries, data.timeSeries, data.commits, isDark)
+  const options = buildGrowthChartOptions(mode, data.linearSeries, data.timeSeries, data.commits)
 
   const newChart = new (window as any).ApexCharts(container, options)
   newChart.render()
@@ -2100,8 +2085,7 @@ function renderTopFilesChartWithFilter(topFilesData: TopFilesData, currentView: 
     return
   }
 
-  const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark'
-  const options = buildTopFilesChartOptions(currentView, filteredData, isDark)
+  const options = buildTopFilesChartOptions(currentView, filteredData)
 
   // Update existing chart or create new one
   const chartRefKey = `topFilesChart_${containerId}`

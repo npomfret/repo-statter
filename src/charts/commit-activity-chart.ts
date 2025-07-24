@@ -23,7 +23,6 @@ export class CommitActivityChart {
     const container = document.querySelector('#' + this.containerId)
     assert(container !== null, `Container with id ${this.containerId} not found`)
     
-    const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark'
     
     // Destroy existing chart if it exists
     if (this.chart) {
@@ -43,7 +42,7 @@ export class CommitActivityChart {
         type: 'area', 
         height: 350, 
         toolbar: { show: false },
-        background: isDark ? '#161b22' : '#ffffff',
+        background: '#ffffff',
         zoom: {
           enabled: true,
           allowMouseWheelZoom: false
@@ -57,24 +56,24 @@ export class CommitActivityChart {
         type: 'datetime', 
         title: { 
           text: 'Date',
-          style: { color: isDark ? '#f0f6fc' : '#24292f' }
+          style: { color: '#24292f' }
         },
         labels: { 
-          style: { colors: isDark ? '#f0f6fc' : '#24292f' }
+          style: { colors: '#24292f' }
         }
       },
       yaxis: { 
         title: { 
           text: 'Commits',
-          style: { color: isDark ? '#f0f6fc' : '#24292f' }
+          style: { color: '#24292f' }
         },
-        labels: { style: { colors: isDark ? '#f0f6fc' : '#24292f' } }
+        labels: { style: { colors: '#24292f' } }
       },
       fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.9 } },
-      colors: [isDark ? '#58a6ff' : '#27aeef'],
-      grid: { borderColor: isDark ? '#30363d' : '#e1e4e8' },
+      colors: ['#27aeef'],
+      grid: { borderColor: '#e1e4e8' },
       tooltip: {
-        theme: isDark ? 'dark' : 'light',
+        theme: 'light',
         enabled: true,
         shared: false,
         intersect: false,

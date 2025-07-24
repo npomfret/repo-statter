@@ -24,7 +24,6 @@ export class TimeSliderChart {
     const container = document.querySelector('#' + this.containerId)
     assert(container !== null, `Container with id ${this.containerId} not found`)
     
-    const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark'
     
     // Get date range from the data
     const dates = timeSeries.map(point => new Date(point.date).getTime())
@@ -71,8 +70,8 @@ export class TimeSliderChart {
               <input type="range" class="form-range" id="endRange" 
                 min="0" max="100" value="100" 
                 style="position: absolute; pointer-events: none; background: transparent;">
-              <div class="slider-track" style="position: absolute; top: 18px; left: 0; right: 0; height: 4px; background: ${isDark ? '#30363d' : '#e1e4e8'}; border-radius: 2px;"></div>
-              <div class="slider-range" id="sliderRange" style="position: absolute; top: 18px; height: 4px; background: ${isDark ? '#58a6ff' : '#27aeef'}; border-radius: 2px;"></div>
+              <div class="slider-track" style="position: absolute; top: 18px; left: 0; right: 0; height: 4px; background: #e1e4e8; border-radius: 2px;"></div>
+              <div class="slider-range" id="sliderRange" style="position: absolute; top: 18px; height: 4px; background: #27aeef; border-radius: 2px;"></div>
             </div>
           </div>
           <div class="col-auto">
@@ -95,7 +94,7 @@ export class TimeSliderChart {
           appearance: none;
           width: 16px;
           height: 16px;
-          background: ${isDark ? '#58a6ff' : '#27aeef'};
+          background: #27aeef;
           border-radius: 50%;
           cursor: pointer;
           pointer-events: all;
@@ -107,7 +106,7 @@ export class TimeSliderChart {
         .range-slider-container input[type="range"]::-moz-range-thumb {
           width: 16px;
           height: 16px;
-          background: ${isDark ? '#58a6ff' : '#27aeef'};
+          background: #27aeef;
           border-radius: 50%;
           cursor: pointer;
           pointer-events: all;
