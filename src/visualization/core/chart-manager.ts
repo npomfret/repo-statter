@@ -1,4 +1,4 @@
-import type { ChartData } from '../../charts.js'
+import type { ChartData } from '../charts.js'
 
 /**
  * Simple chart manager that coordinates with the existing consolidated charts system

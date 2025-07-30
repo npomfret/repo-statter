@@ -11,7 +11,7 @@ const distDir = join(__dirname, '../dist')
 
 try {
   const result = await build({
-    entryPoints: [join(srcDir, 'chart/page-script.ts')],
+    entryPoints: [join(srcDir, 'visualization/core/page-script.ts')],
     bundle: true,
     format: 'iife',
     globalName: 'PageScript',

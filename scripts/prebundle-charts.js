@@ -11,7 +11,7 @@ const distDir = join(__dirname, '../dist')
 
 try {
   const result = await build({
-    entryPoints: [join(srcDir, 'charts.ts')],
+    entryPoints: [join(srcDir, 'visualization/charts.ts')],
     bundle: true,
     format: 'iife',
     globalName: 'Charts',
