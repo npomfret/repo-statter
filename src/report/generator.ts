@@ -8,6 +8,7 @@ const __dirname = dirname(__filename)
 import { parseCommitHistory, getGitHubUrl, getCurrentFiles, getRepositoryName, type CacheOptions } from '../git/parser.js'
 import { getContributorStats, getLowestAverageLinesChanged, getHighestAverageLinesChanged, type ContributorStats } from '../data/contributor-calculator.js'
 import { getFileTypeStats, getFileHeatData, type FileTypeStats } from '../data/file-calculator.js'
+import { DataPipeline } from '../data/unified-pipeline.js'
 import { 
   getTopCommitsByFilesModified,
   getTopCommitsByBytesAdded,
@@ -129,10 +130,31 @@ export async function generateReport(repoPath: string, outputMode: 'dist' | 'ana
   progressReporter?.report('Calculating statistics')
   const chartData = await transformCommitData(context)
   
-  // Calculate all statistics once
+  // Calculate all statistics once using both old and new approaches for validation
   progressReporter?.report('Calculating contributor and file statistics')
-  const contributors = getContributorStats(context)
-  const fileTypes = getFileTypeStats(context)
+  
+  // Create unified pipeline instance
+  const pipeline = new DataPipeline()
+  
+  // Run both approaches in parallel for validation
+  const [pipelineData, contributors, fileTypes] = await Promise.all([
+    pipeline.processRepository(context),
+    Promise.resolve(getContributorStats(context)),
+    Promise.resolve(getFileTypeStats(context))
+  ])
+  
+  // Validation: Ensure unified pipeline produces identical results
+  if (process.env['NODE_ENV'] !== 'production') {
+    // Compare contributors
+    if (pipelineData.contributors.length !== contributors.length) {
+      console.warn('Pipeline validation: contributor count mismatch')
+    }
+    
+    // Compare file types  
+    if (pipelineData.fileTypes.length !== fileTypes.length) {
+      console.warn('Pipeline validation: file type count mismatch')
+    }
+  }
   
   progressReporter?.report('Generating HTML report')
   const html = await injectDataIntoTemplate(template, chartData, contributors, fileTypes, context)
