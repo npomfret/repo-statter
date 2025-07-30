@@ -1681,19 +1681,44 @@ async function renderUserChart(chartId: string, data: ReturnType<typeof buildUse
 
   const options = {
     chart: {
-      type: 'line',
+      type: 'area',
       height: 250,
       toolbar: { show: false },
       background: '#ffffff',
       zoom: {
-        enabled: false,
+        enabled: true,
         allowMouseWheelZoom: false
       }
     },
-    series: [{
-      name: 'Daily Commits',
-      data: data.map(d => ({ x: new Date(d.date), y: d.value }))
-    }],
+    series: [
+      {
+        name: 'Lines Added',
+        data: data.addedData
+      },
+      {
+        name: 'Lines Removed',
+        data: data.removedData
+      },
+      {
+        name: 'Net Lines',
+        data: data.netData
+      }
+    ],
+    dataLabels: {
+      enabled: false
+    },
+    stroke: {
+      curve: 'smooth',
+      width: 2
+    },
+    fill: {
+      type: 'gradient',
+      gradient: {
+        shadeIntensity: 1,
+        opacityFrom: 0.5,
+        opacityTo: 0.1
+      }
+    },
     xaxis: {
       type: 'datetime',
       labels: {
@@ -1706,28 +1731,35 @@ async function renderUserChart(chartId: string, data: ReturnType<typeof buildUse
     },
     yaxis: {
       title: {
-        text: 'Commits',
+        text: 'Lines of Code (Cumulative)',
         style: { color: '#24292f' }
       },
       labels: {
         style: { colors: '#24292f' },
         formatter: function(val: number) {
-          return Math.round(val).toString()
+          return Math.abs(val).toLocaleString()
         }
-      },
-      min: 0,
-      forceNiceScale: true
+      }
     },
-    colors: ['#0366d6'],
-    stroke: { curve: 'smooth', width: 2 },
-    markers: {
-      size: 4,
-      hover: { size: 6 }
+    colors: ['#2ea043', '#da3633', '#0366d6'], // Green for added, red for removed, blue for net
+    legend: {
+      position: 'top',
+      horizontalAlign: 'left',
+      labels: {
+        colors: '#24292f'
+      }
     },
     grid: { borderColor: '#e1e4e8' },
     tooltip: {
       theme: 'light',
-      x: { format: 'dd MMM yyyy' }
+      shared: true,
+      intersect: false,
+      x: { format: 'dd MMM yyyy' },
+      y: {
+        formatter: function(val: number) {
+          return Math.abs(val).toLocaleString() + ' lines'
+        }
+      }
     }
   }
 
@@ -1741,18 +1773,57 @@ async function renderUserChart(chartId: string, data: ReturnType<typeof buildUse
   }
 }
 
-function buildUserTimeSeriesData(commits: CommitData[]): Array<{date: string, value: number}> {
-  const dailyCommits = new Map<string, number>()
+interface UserChartData {
+  addedData: Array<{x: number, y: number}>
+  removedData: Array<{x: number, y: number}>
+  netData: Array<{x: number, y: number}>
+}
 
-  commits.forEach(commit => {
-    const date = new Date(commit.date)
-    const dateKey = date.toISOString().split('T')[0]!
-    dailyCommits.set(dateKey, (dailyCommits.get(dateKey) || 0) + 1)
+function buildUserTimeSeriesData(commits: CommitData[]): UserChartData {
+  // Sort commits by date
+  const sortedCommits = [...commits].sort((a, b) => 
+    new Date(a.date).getTime() - new Date(b.date).getTime()
+  )
+  
+  const addedData: Array<{x: number, y: number}> = []
+  const removedData: Array<{x: number, y: number}> = []
+  const netData: Array<{x: number, y: number}> = []
+  
+  let cumulativeAdded = 0
+  let cumulativeRemoved = 0
+  
+  // Group commits by date
+  const commitsByDate = new Map<string, CommitData[]>()
+  sortedCommits.forEach(commit => {
+    const dateKey = new Date(commit.date).toISOString().split('T')[0]!
+    if (!commitsByDate.has(dateKey)) {
+      commitsByDate.set(dateKey, [])
+    }
+    commitsByDate.get(dateKey)!.push(commit)
   })
-
-  return Array.from(dailyCommits.entries())
-      .map(([date, value]) => ({ date, value }))
-      .sort((a, b) => a.date.localeCompare(b.date))
+  
+  // Process each date in order
+  const sortedDates = Array.from(commitsByDate.keys()).sort()
+  
+  sortedDates.forEach(dateKey => {
+    const dayCommits = commitsByDate.get(dateKey)!
+    
+    // Sum lines for this day
+    const dayAdded = dayCommits.reduce((sum, c) => sum + c.linesAdded, 0)
+    const dayRemoved = dayCommits.reduce((sum, c) => sum + c.linesDeleted, 0)
+    
+    // Update cumulative totals
+    cumulativeAdded += dayAdded
+    cumulativeRemoved += dayRemoved
+    
+    // Add data points
+    const timestamp = new Date(dateKey).getTime()
+    addedData.push({ x: timestamp, y: cumulativeAdded })
+    removedData.push({ x: timestamp, y: -cumulativeRemoved }) // Negative for visual effect
+    netData.push({ x: timestamp, y: cumulativeAdded - cumulativeRemoved })
+  })
+  
+  return { addedData, removedData, netData }
 }
 
 function renderAwards(awards: NonNullable<ChartData['awards']>, githubUrl?: string): void {
