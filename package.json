@@ -12,6 +12,7 @@
     "clean": "rm -rf dist",
     "start": "tsx src/cli.ts",
     "analyse": "tsx src/cli.ts",
+    "dev:watch": "tsx watch scripts/dev-build.js src/",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:report": "npm run test:clean && TEST_REPO_PATH=$(./scripts/create-test-repo.sh --reuse | grep TEST_REPO_PATH | cut -d'=' -f2) && npm run analyse \"$TEST_REPO_PATH\" -- --output-file test-repo-analysis",

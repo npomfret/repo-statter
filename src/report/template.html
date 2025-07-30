@@ -816,63 +816,23 @@
                     </h3>
                     <div id="filterCollapse" class="accordion-collapse collapse show" aria-labelledby="filterHeading" data-bs-parent="#overviewAccordion">
                         <div class="accordion-body">
-                            <div class="dashboard-grid">
-                                <div class="chart-third">
-                                    <label class="form-label" for="authorFilter">Author</label>
-                                    <select class="form-select" id="authorFilter">
-                                        <option value="">All Authors</option>
-                                    </select>
+                            <!-- Time Range Slider Section -->
+                            <div>
+                                <div id="timeSliderChart" style="width: 100%; min-height: 150px;" data-chart-type="timeSlider" aria-label="Time range slider chart" aria-describedby="time-slider-desc">
+                                    <div class="visually-hidden" id="time-slider-desc">Interactive timeline showing repository activity. Drag the handles to filter data by date range across all charts.</div>
                                 </div>
-                                <div class="chart-third">
-                                    <label class="form-label">Date Range</label>
-                                    <div class="input-group">
-                                        <input type="date" class="form-control" id="dateFromFilter" aria-label="Start date">
-                                        <span class="input-group-text">to</span>
-                                        <input type="date" class="form-control" id="dateToFilter" aria-label="End date">
-                                    </div>
-                                </div>
-                                <div class="chart-third">
-                                    <label class="form-label">File Types</label>
-                                    <div class="border rounded p-2" style="max-height: 200px; overflow-y: auto;">
-                                        <div class="form-check mb-2">
-                                            <input class="form-check-input" type="checkbox" id="fileTypeSelectAll">
-                                            <label class="form-check-label fw-bold" for="fileTypeSelectAll">
-                                                Select All
-                                            </label>
-                                        </div>
-                                        <hr class="my-1">
-                                        <div id="fileTypeFilterContainer">
-                                            <!-- File type checkboxes will be populated here -->
-                                        </div>
-                                    </div>
+                                <div class="text-center mt-2">
+                                    <small class="text-muted" id="filterStatus" role="status" aria-live="polite">Showing {{totalCommits}}/{{totalCommits}} commits</small>
                                 </div>
                             </div>
+
                             <div class="mt-3">
-                                <button class="btn btn-primary btn-sm" id="applyFilters" aria-describedby="filter-help">Apply Filters</button>
-                                <button class="btn btn-outline-secondary btn-sm ms-2" id="clearFilters" aria-describedby="filter-help">Clear Filters</button>
-                                <small class="text-muted ms-3" id="filterStatus" role="status" aria-live="polite">Showing all commits</small>
-                                <div class="visually-hidden" id="filter-help">Use filters to focus on specific authors, date ranges, or file types. Changes will update all charts in real-time.</div>
+                                <button class="btn btn-outline-secondary btn-sm" id="clearFilters">Clear Filters</button>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Time Range and Contributors Accordion -->
-                <div class="accordion-item">
-                    <h3 class="accordion-header" id="timeRangeHeading">
-                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#timeRangeCollapse" aria-expanded="true" aria-controls="timeRangeCollapse">
-                            <i class="bi bi-clock-history me-2"></i> Time Range Selector
-                        </button>
-                    </h3>
-                    <div id="timeRangeCollapse" class="accordion-collapse collapse show" aria-labelledby="timeRangeHeading" data-bs-parent="#overviewAccordion">
-                        <div class="accordion-body">
-                            <p class="text-muted mb-3">Adjust the time range for all time series charts using the slider below:</p>
-                            <div id="timeSliderChart" style="width: 100%; min-height: 150px;" data-chart-type="timeSlider" aria-label="Time range slider chart" aria-describedby="time-slider-desc">
-                                <div class="visually-hidden" id="time-slider-desc">Interactive timeline showing repository activity. Drag the handles to filter data by date range across all charts.</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </section>
 

@@ -212,6 +212,23 @@ function setupEventHandlers(): void {
     })
   })
 
+  // Clear Filters button
+  const clearFiltersBtn = document.getElementById('clearFilters')
+  if (clearFiltersBtn) {
+    clearFiltersBtn.addEventListener('click', () => {
+      // Reset time slider to full range
+      const startSlider = document.getElementById('startRange') as HTMLInputElement
+      const endSlider = document.getElementById('endRange') as HTMLInputElement
+      
+      if (startSlider && endSlider) {
+        startSlider.value = '0'
+        endSlider.value = '100'
+        
+        // Trigger the slider update to reset all charts and status
+        startSlider.dispatchEvent(new Event('input'))
+      }
+    })
+  }
 
   // No need for tab switching event listeners anymore since all charts are rendered
 }
@@ -1433,6 +1450,11 @@ function updateTopFilesChart(view: string): void {
 }
 */
 
+function getTimezoneAbbreviation(date: Date): string {
+  const timeZoneName = date.toLocaleDateString(undefined, { timeZoneName: 'short' }).split(', ')[1]
+  return timeZoneName || 'Local'
+}
+
 function renderTimeSliderChart(timeSeries: TimeSeriesPoint[], linearSeries: LinearSeriesPoint[]): void {
   const container = document.getElementById('timeSliderChart')
   if (!container) return
@@ -1445,6 +1467,27 @@ function renderTimeSliderChart(timeSeries: TimeSeriesPoint[], linearSeries: Line
 
   // Store total commits for commit mode calculations
   const totalCommits = linearSeries.length
+  
+  // Get user's timezone information
+  const timezoneAbbr = getTimezoneAbbreviation(new Date())
+  
+  // Helper function to format date with timezone
+  const formatDateWithTimezone = (date: Date): string => {
+    return `${formatShortDateTime(date)} <span style="font-weight: 300; opacity: 0.7; font-size: 0.85em;">${timezoneAbbr}</span>`
+  }
+  
+  // Helper function to format UTC date
+  const formatUTCDate = (date: Date): string => {
+    const utcOptions: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: 'short', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'UTC'
+    }
+    return `UTC: ${date.toLocaleString('en-US', utcOptions)}`
+  }
 
   // Create HTML for the range slider
   container.innerHTML = `
@@ -1453,13 +1496,17 @@ function renderTimeSliderChart(timeSeries: TimeSeriesPoint[], linearSeries: Line
         <div class="col-6">
           <div class="text-start">
             <span class="text-muted me-2">Start:</span>
-            <span class="fw-semibold text-primary" id="selectedStartLabel" style="font-size: 0.95rem;">${formatShortDateTime(new Date(minDate))}</span>
+            <span class="fw-semibold text-primary" id="selectedStartLabel" style="font-size: 0.95rem;">${formatDateWithTimezone(new Date(minDate))}</span>
+            <br>
+            <small class="text-muted" id="selectedStartUTC" style="font-size: 0.75rem; font-weight: 300;">${formatUTCDate(new Date(minDate))}</small>
           </div>
         </div>
         <div class="col-6">
           <div class="text-end">
             <span class="text-muted me-2">End:</span>
-            <span class="fw-semibold text-primary" id="selectedEndLabel" style="font-size: 0.95rem;">${formatShortDateTime(new Date(maxDate))}</span>
+            <span class="fw-semibold text-primary" id="selectedEndLabel" style="font-size: 0.95rem;">${formatDateWithTimezone(new Date(maxDate))}</span>
+            <br>
+            <small class="text-muted" id="selectedEndUTC" style="font-size: 0.75rem; font-weight: 300;">${formatUTCDate(new Date(maxDate))}</small>
           </div>
         </div>
       </div>
@@ -1548,16 +1595,23 @@ function renderTimeSliderChart(timeSeries: TimeSeriesPoint[], linearSeries: Line
   const updateDateRange = () => {
     const selectedStartLabel = document.querySelector('#selectedStartLabel') as HTMLElement
     const selectedEndLabel = document.querySelector('#selectedEndLabel') as HTMLElement
+    const selectedStartUTC = document.querySelector('#selectedStartUTC') as HTMLElement
+    const selectedEndUTC = document.querySelector('#selectedEndUTC') as HTMLElement
 
-    if (startSlider && endSlider && selectedStartLabel && selectedEndLabel) {
+    if (startSlider && endSlider && selectedStartLabel && selectedEndLabel && selectedStartUTC && selectedEndUTC) {
       const startPercent = parseFloat(startSlider.value) / 100
       const endPercent = parseFloat(endSlider.value) / 100
 
       const startDate = minDate + (maxDate - minDate) * startPercent
       const endDate = minDate + (maxDate - minDate) * endPercent
+      
+      const startDateObj = new Date(startDate)
+      const endDateObj = new Date(endDate)
 
-      selectedStartLabel.textContent = formatShortDateTime(new Date(startDate))
-      selectedEndLabel.textContent = formatShortDateTime(new Date(endDate))
+      selectedStartLabel.innerHTML = formatDateWithTimezone(startDateObj)
+      selectedEndLabel.innerHTML = formatDateWithTimezone(endDateObj)
+      selectedStartUTC.textContent = formatUTCDate(startDateObj)
+      selectedEndUTC.textContent = formatUTCDate(endDateObj)
 
       updateTargetCharts(startDate, endDate, minDate, maxDate, totalCommits)
     }
@@ -1596,6 +1650,24 @@ function formatShortDateTime(date: Date): string {
 }
 
 function updateTargetCharts(min: number, max: number, minDate: number, maxDate: number, totalCommits: number): void {
+  // Calculate filtered commit count
+  const allData = chartData['allData']
+  let filteredCommitCount = totalCommits
+  
+  if (allData && allData.commits) {
+    // Count commits within the selected date range
+    filteredCommitCount = allData.commits.filter((commit: any) => {
+      const commitTime = new Date(commit.date).getTime()
+      return commitTime >= min && commitTime <= max
+    }).length
+  }
+  
+  // Update filter status display
+  const filterStatus = document.getElementById('filterStatus')
+  if (filterStatus) {
+    filterStatus.textContent = `Showing ${filteredCommitCount}/${totalCommits} commits`
+  }
+
   if ((window as any).ApexCharts) {
     // Zoom the commit activity chart (always date-based)
     const commitChart = chartRefs['commit-activity-chart']
