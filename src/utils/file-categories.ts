@@ -1,9 +1,9 @@
 import { getFileType, isBinaryFile } from '../data/git-extractor.js'
-import type { RepoStatterConfig } from '../config/schema.js'
+import type { SimplifiedConfig } from '../config/simplified-schema.js'
 
 export type FileCategory = 'Application' | 'Test' | 'Build' | 'Documentation' | 'Other'
 
-export function getFileCategory(filePath: string, config: RepoStatterConfig): FileCategory {
+export function getFileCategory(filePath: string, config: SimplifiedConfig): FileCategory {
   // Binary files don't have meaningful line counts
   if (isBinaryFile(filePath, config)) {
     return 'Other' // Binary files will be excluded from line counts

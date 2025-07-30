@@ -1,16 +1,16 @@
 import { extname } from 'path'
 import type { FileChange } from '../git/parser.js'
 import { assert, assertDefined } from '../utils/errors.js'
-import type { RepoStatterConfig } from '../config/schema.js'
+import type { SimplifiedConfig } from '../config/simplified-schema.js'
 
-export function getFileType(fileName: string, config: RepoStatterConfig): string {
+export function getFileType(fileName: string, config: SimplifiedConfig): string {
   const ext = extname(fileName).toLowerCase()
   if (!ext) return 'Other'
   if (config.fileTypes.binaryExtensions.includes(ext)) return 'Binary'
   return config.fileTypes.mappings[ext] ?? 'Other'
 }
 
-export function isBinaryFile(fileName: string, config: RepoStatterConfig): boolean {
+export function isBinaryFile(fileName: string, config: SimplifiedConfig): boolean {
   const ext = extname(fileName).toLowerCase()
   return config.fileTypes.binaryExtensions.includes(ext)
 }
@@ -42,7 +42,7 @@ export interface ByteChanges {
 export function parseCommitDiff(
   diffSummary: DiffSummary,
   byteChanges: ByteChanges,
-  config: RepoStatterConfig
+  config: SimplifiedConfig
 ): ParsedCommitDiff {
   assert(!!diffSummary, 'diffSummary must exist')
   assert(!!diffSummary.files, 'diffSummary must have files property')
@@ -78,7 +78,7 @@ export function parseCommitDiff(
   }
 }
 
-export function parseByteChanges(gitNumstatOutput: string, config: RepoStatterConfig): ByteChanges {
+export function parseByteChanges(gitNumstatOutput: string, config: SimplifiedConfig): ByteChanges {
   assert(typeof gitNumstatOutput === 'string', 'gitNumstatOutput must be a string')
   
   const bytesPerLineEstimate = config.analysis.bytesPerLineEstimate

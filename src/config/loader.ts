@@ -7,7 +7,7 @@ import {
   exportConfiguration as unifiedExportConfiguration,
   type ConfigOverrides
 } from './unified-loader.js';
-import type { RepoStatterConfig } from './schema.js';
+import type { SimplifiedConfig } from './simplified-schema.js';
 
 // Re-export ConfigOverrides for compatibility
 export type { ConfigOverrides } from './unified-loader.js';
@@ -18,12 +18,12 @@ export async function exportConfiguration(filePath: string, force: boolean = fal
 }
 
 // Legacy load configuration - delegates to unified loader
-export function loadConfiguration(repoPath: string, overrides: ConfigOverrides = {}): RepoStatterConfig {
+export function loadConfiguration(repoPath: string, overrides: ConfigOverrides = {}): SimplifiedConfig {
   return unifiedLoadConfiguration(overrides, repoPath);
 }
 
 // Legacy validation - delegates to internal validation
-export function validateConfiguration(config: RepoStatterConfig): void {
+export function validateConfiguration(config: SimplifiedConfig): void {
   // Perform actual validation for backward compatibility
   if (config.analysis.bytesPerLineEstimate <= 0) {
     throw new Error('bytesPerLineEstimate must be positive')

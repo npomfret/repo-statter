@@ -1,13 +1,11 @@
 import { assert } from '../utils/errors.js'
-import type { RepoStatterConfig, WordCloudConfig } from '../config/schema.js'
+import type { SimplifiedConfig } from '../config/simplified-schema.js'
 
 export interface WordFrequency {
   text: string
   size: number
 }
 
-// Re-export for backward compatibility
-export type { WordCloudConfig } from '../config/schema.js'
 
 export function extractWords(messages: string[]): string[] {
   const words: string[] = []
@@ -26,7 +24,7 @@ export function extractWords(messages: string[]): string[] {
   return words
 }
 
-export function filterStopWords(words: string[], config: RepoStatterConfig): string[] {
+export function filterStopWords(words: string[], config: SimplifiedConfig): string[] {
   const stopWordsSet = new Set(config.textAnalysis.stopWords)
   return words.filter(word => 
     word.length >= config.wordCloud.minWordLength && 
@@ -35,7 +33,7 @@ export function filterStopWords(words: string[], config: RepoStatterConfig): str
   )
 }
 
-export function getWordFrequencies(words: string[], config: WordCloudConfig): WordFrequency[] {
+export function getWordFrequencies(words: string[], config: SimplifiedConfig['wordCloud']): WordFrequency[] {
   const frequencyMap = new Map<string, number>()
   
   for (const word of words) {
@@ -63,7 +61,7 @@ export function getWordFrequencies(words: string[], config: WordCloudConfig): Wo
   }))
 }
 
-export function processCommitMessages(messages: string[], config: RepoStatterConfig): WordFrequency[] {
+export function processCommitMessages(messages: string[], config: SimplifiedConfig): WordFrequency[] {
   assert(messages.length > 0, 'Cannot process empty messages array')
   const words = extractWords(messages)
   const filteredWords = filterStopWords(words, config)

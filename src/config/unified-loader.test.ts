@@ -4,7 +4,6 @@ import { join } from 'path'
 import { tmpdir } from 'os'
 import { loadConfigFile, exportConfiguration, loadConfiguration } from './unified-loader.js'
 import { DEFAULT_CONFIG } from './defaults.js'
-import type { SimplifiedConfig } from './simplified-schema.js'
 
 describe('Unified Config Loader', () => {
   let testDir: string
@@ -20,7 +19,7 @@ describe('Unified Config Loader', () => {
   
   describe('loadConfigFile', () => {
     it('should load simplified config', () => {
-      const simplifiedConfig: SimplifiedConfig = {
+      const simplifiedConfig = {
         analysis: {
           maxCommits: 500,
           bytesPerLineEstimate: 60
@@ -55,12 +54,16 @@ describe('Unified Config Loader', () => {
       const loaded = loadConfigFile(configPath)
       
       expect(loaded.analysis.maxCommits).toBe(1000)
-      expect(loaded.version).toBe(DEFAULT_CONFIG.version)
+      expect(loaded.analysis.bytesPerLineEstimate).toBe(50) // Should use default
     })
     
     it('should detect simplified config without version field', () => {
       const config = {
-        analysis: { maxCommits: 100 }
+        analysis: { 
+          maxCommits: 100,
+          bytesPerLineEstimate: 60,
+          timeSeriesHourlyThresholdHours: 24
+        }
       }
       
       const configPath = join(testDir, 'config.json')
@@ -70,19 +73,22 @@ describe('Unified Config Loader', () => {
       expect(loaded.analysis.maxCommits).toBe(100)
     })
     
-    it('should detect full config by version and structure', () => {
+    it('should load config with custom values', () => {
       const config = {
-        version: '1.0',
-        wordCloud: DEFAULT_CONFIG.wordCloud,
-        fileHeat: DEFAULT_CONFIG.fileHeat,
-        analysis: DEFAULT_CONFIG.analysis
+        wordCloud: {
+          maxWords: 150
+        },
+        analysis: {
+          maxCommits: 200
+        }
       }
       
       const configPath = join(testDir, 'config.json')
       writeFileSync(configPath, JSON.stringify(config))
       
       const loaded = loadConfigFile(configPath)
-      expect(loaded.version).toBe('1.0')
+      expect(loaded.analysis.maxCommits).toBe(200)
+      expect(loaded.wordCloud.maxWords).toBe(150)
     })
     
     it('should throw error for non-existent file', () => {
@@ -165,14 +171,14 @@ describe('Unified Config Loader', () => {
     })
     
     it('should load and merge config file', () => {
-      const simplifiedConfig: SimplifiedConfig = {
+      const partialConfig = {
         analysis: {
           bytesPerLineEstimate: 75
         }
       }
       
       const configPath = join(testDir, 'config.json')
-      writeFileSync(configPath, JSON.stringify(simplifiedConfig))
+      writeFileSync(configPath, JSON.stringify(partialConfig))
       
       const config = loadConfiguration({
         configPath,

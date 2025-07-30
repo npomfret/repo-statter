@@ -1,7 +1,7 @@
 import type { CommitData } from '../git/parser.js'
-import type { RepoStatterConfig } from '../config/schema.js'
+import type { SimplifiedConfig } from '../config/simplified-schema.js'
 
-export function isRealCommit(commit: CommitData, config: RepoStatterConfig): boolean {
+export function isRealCommit(commit: CommitData, config: SimplifiedConfig): boolean {
   const message = commit.message.toLowerCase()
   
   // Check merge patterns

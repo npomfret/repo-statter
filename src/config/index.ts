@@ -11,20 +11,6 @@ export {
   DEFAULT_CONFIG 
 } from './defaults.js'
 
-export type { 
-  RepoStatterConfig,
-  AnalysisConfig,
-  WordCloudConfig,
-  FileHeatConfig,
-  ChartsConfig,
-  PerformanceConfig,
-  ExclusionsConfig,
-  FileTypesConfig,
-  TextAnalysisConfig,
-  FileCategoriesConfig,
-  CommitFiltersConfig
-} from './schema.js'
-
 export type {
   SimplifiedConfig
 } from './simplified-schema.js'

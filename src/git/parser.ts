@@ -4,7 +4,7 @@ import { parseCommitDiff as parseCommitDiffData } from '../data/git-extractor.js
 import type { ProgressReporter } from '../utils/progress-reporter.js'
 import { GitParseError, formatError } from '../utils/errors.js'
 import { generateRepositoryHash, loadCache, saveCache, clearCache } from '../cache/git-cache.js'
-import type { RepoStatterConfig } from '../config/schema.js'
+import type { SimplifiedConfig } from '../config/simplified-schema.js'
 import { isFileExcluded } from '../utils/exclusions.js'
 
 // Assert utilities for fail-fast error handling
@@ -41,7 +41,7 @@ export interface CacheOptions {
   clearCache?: boolean
 }
 
-export async function parseCommitHistory(repoPath: string, progressReporter: ProgressReporter | undefined, maxCommits: number | undefined, cacheOptions: CacheOptions, config: RepoStatterConfig): Promise<CommitData[]> {
+export async function parseCommitHistory(repoPath: string, progressReporter: ProgressReporter | undefined, maxCommits: number | undefined, cacheOptions: CacheOptions, config: SimplifiedConfig): Promise<CommitData[]> {
   // Validate input
   assert(repoPath.length > 0, 'Repository path cannot be empty')
   
@@ -287,7 +287,7 @@ export async function getRepositoryName(repoPath: string): Promise<string | null
   return null
 }
 
-async function parseCommitDiff(repoPath: string, commitHash: string, config: RepoStatterConfig): Promise<{ linesAdded: number; linesDeleted: number; bytesAdded: number; bytesDeleted: number; filesChanged: FileChange[] }> {
+async function parseCommitDiff(repoPath: string, commitHash: string, config: SimplifiedConfig): Promise<{ linesAdded: number; linesDeleted: number; bytesAdded: number; bytesDeleted: number; filesChanged: FileChange[] }> {
   const git = simpleGit(repoPath)
   
   // Check if this is the first commit
@@ -317,7 +317,7 @@ async function parseCommitDiff(repoPath: string, commitHash: string, config: Rep
 
 
 
-async function getByteChanges(repoPath: string, commitHash: string, config: RepoStatterConfig): Promise<{ 
+async function getByteChanges(repoPath: string, commitHash: string, config: SimplifiedConfig): Promise<{ 
   totalBytesAdded: number; 
   totalBytesDeleted: number; 
   fileChanges: Record<string, { bytesAdded: number; bytesDeleted: number }> 

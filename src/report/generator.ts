@@ -12,7 +12,7 @@ import { replaceTemplateVariables, injectIntoBody } from '../utils/template-engi
 import { bundleCharts } from '../build/bundle-charts.js'
 import type { CommitData } from '../git/parser.js'
 import type { ProgressReporter } from '../utils/progress-reporter.js'
-import type { RepoStatterConfig } from '../config/schema.js'
+import type { SimplifiedConfig } from '../config/simplified-schema.js'
 import { DEFAULT_CONFIG } from '../config/defaults.js'
 import { isFileExcluded } from '../utils/exclusions.js'
 
@@ -23,7 +23,7 @@ export interface AnalysisContext {
   currentFiles: Set<string>
   commits: CommitData[]
   progressReporter?: ProgressReporter
-  config: RepoStatterConfig
+  config: SimplifiedConfig
 }
 
 /**
@@ -53,7 +53,7 @@ function filterExcludedFiles(commits: CommitData[], patterns: string[]): CommitD
   .filter(commit => commit.filesChanged.length > 0);
 }
 
-export async function generateReport(repoPath: string, outputMode: 'dist' | 'analysis' = 'dist', progressReporter?: ProgressReporter, maxCommits?: number, customFilename?: string, cacheOptions?: CacheOptions, config?: RepoStatterConfig): Promise<string> {
+export async function generateReport(repoPath: string, outputMode: 'dist' | 'analysis' = 'dist', progressReporter?: ProgressReporter, maxCommits?: number, customFilename?: string, cacheOptions?: CacheOptions, config?: SimplifiedConfig): Promise<string> {
   // Use provided config or fall back to defaults
   const finalConfig = config || DEFAULT_CONFIG
   const rawCommits = await parseCommitHistory(repoPath, progressReporter, maxCommits, cacheOptions || {}, finalConfig)

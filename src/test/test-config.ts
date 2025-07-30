@@ -1,5 +1,5 @@
 import { DEFAULT_CONFIG } from '../config/defaults.js'
-import type { RepoStatterConfig } from '../config/schema.js'
+import type { SimplifiedConfig } from '../config/simplified-schema.js'
 
 // Re-export the default config for tests
-export const TEST_CONFIG: RepoStatterConfig = DEFAULT_CONFIG
+export const TEST_CONFIG: SimplifiedConfig = DEFAULT_CONFIG

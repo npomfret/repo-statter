@@ -5,71 +5,71 @@
 
 export interface SimplifiedConfig {
   // Core analysis settings
-  analysis?: {
-    maxCommits?: number | null // null means no limit
-    bytesPerLineEstimate?: number // Default: 50
-    timeSeriesHourlyThresholdHours?: number // Keep original property for compatibility
+  analysis: {
+    maxCommits: number | null // null means no limit
+    bytesPerLineEstimate: number // Default: 50
+    timeSeriesHourlyThresholdHours: number // Keep original property for compatibility
   }
   
   // File filtering (essential for correctness)
-  exclusions?: {
-    patterns?: string[] // Keep nested structure for compatibility
+  exclusions: {
+    patterns: string[] // Keep nested structure for compatibility
   }
   
   // Performance settings
-  performance?: {
-    cacheDirName?: string // Keep original property name
-    progressThrottleMs?: number // Keep original property name
-    cacheEnabled?: boolean
-    cacheVersion?: string
+  performance: {
+    cacheDirName: string // Keep original property name
+    progressThrottleMs: number // Keep original property name
+    cacheEnabled: boolean
+    cacheVersion: string
   }
   
   // Word cloud configuration
-  wordCloud?: {
-    minWordLength?: number
-    maxWords?: number
-    minSize?: number
-    maxSize?: number
+  wordCloud: {
+    minWordLength: number
+    maxWords: number
+    minSize: number
+    maxSize: number
   }
   
   // File heat map configuration
-  fileHeat?: {
-    recencyDecayDays?: number
-    frequencyWeight?: number
-    recencyWeight?: number
-    maxFilesDisplayed?: number
+  fileHeat: {
+    recencyDecayDays: number
+    frequencyWeight: number
+    recencyWeight: number
+    maxFilesDisplayed: number
   }
   
   // Chart configuration
-  charts?: {
-    wordCloudHeight?: number
-    topContributorsLimit?: number
-    fileHeatmapHeight?: number
-    fileHeatmapMaxFiles?: number
-    topFilesChartHeight?: number
+  charts: {
+    wordCloudHeight: number
+    topContributorsLimit: number
+    fileHeatmapHeight: number
+    fileHeatmapMaxFiles: number
+    topFilesChartHeight: number
   }
   
   // File type mappings
-  fileTypes?: {
-    mappings?: Record<string, string>
-    binaryExtensions?: string[]
+  fileTypes: {
+    mappings: Record<string, string>
+    binaryExtensions: string[]
   }
   
   // Text analysis settings
-  textAnalysis?: {
-    stopWords?: string[]
+  textAnalysis: {
+    stopWords: string[]
   }
   
   // File categorization
-  fileCategories?: {
-    testPatterns?: string[]
-    categoryMappings?: Record<string, 'Application' | 'Test' | 'Build' | 'Documentation' | 'Other'>
+  fileCategories: {
+    testPatterns: string[]
+    categoryMappings: Record<string, 'Application' | 'Test' | 'Build' | 'Documentation' | 'Other'>
   }
   
   // Commit filtering
-  commitFilters?: {
-    mergePatterns?: string[]
-    automatedPatterns?: string[]
+  commitFilters: {
+    mergePatterns: string[]
+    automatedPatterns: string[]
   }
 }
 

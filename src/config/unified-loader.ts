@@ -1,7 +1,6 @@
 import { readFileSync, existsSync } from 'fs'
 import { writeFile, mkdir } from 'fs/promises'
 import { resolve, dirname, extname } from 'path'
-import type { RepoStatterConfig } from './schema.js'
 import type { SimplifiedConfig } from './simplified-schema.js'
 import { DEFAULT_CONFIG } from './defaults.js'
 import { SIMPLIFIED_DEFAULTS } from './simplified-schema.js'
@@ -18,7 +17,7 @@ export interface ConfigOverrides {
 /**
  * Loads configuration from file - now only supports simplified schema
  */
-export function loadConfigFile(configPath: string): RepoStatterConfig {
+export function loadConfigFile(configPath: string): SimplifiedConfig {
   if (!existsSync(configPath)) {
     throw new Error(`Configuration file not found: ${configPath}`)
   }
@@ -37,7 +36,7 @@ export function loadConfigFile(configPath: string): RepoStatterConfig {
   }
   
   console.log('Loading configuration...')
-  return deepMerge(DEFAULT_CONFIG, rawConfig) as RepoStatterConfig
+  return deepMerge(DEFAULT_CONFIG, rawConfig) as SimplifiedConfig
 }
 
 /**
@@ -90,8 +89,8 @@ function findConfigFiles(repoPath?: string): string[] {
 /**
  * Main configuration loader with override support
  */
-export function loadConfiguration(overrides: ConfigOverrides = {}, repoPath?: string): RepoStatterConfig {
-  let config: RepoStatterConfig = structuredClone(DEFAULT_CONFIG)
+export function loadConfiguration(overrides: ConfigOverrides = {}, repoPath?: string): SimplifiedConfig {
+  let config: SimplifiedConfig = structuredClone(DEFAULT_CONFIG)
   
   // If custom config path is specified, use only that
   if (overrides.configPath) {
@@ -148,7 +147,7 @@ function deepMerge<T extends Record<string, any>>(target: T, source: Partial<T>)
 /**
  * Validates configuration
  */
-function validateConfiguration(config: RepoStatterConfig): void {
+function validateConfiguration(config: SimplifiedConfig): void {
   if (config.analysis.bytesPerLineEstimate <= 0) {
     throw new Error('bytesPerLineEstimate must be positive')
   }
@@ -171,4 +170,4 @@ function validateConfiguration(config: RepoStatterConfig): void {
 }
 
 // Export types for compatibility
-export type { RepoStatterConfig, SimplifiedConfig }
+export type { SimplifiedConfig }
