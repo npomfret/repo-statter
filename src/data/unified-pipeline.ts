@@ -1,19 +1,27 @@
 import type { CommitData } from '../git/parser.js'
 import type { AnalysisContext } from '../report/generator.js'
-import { getContributorStats, getLowestAverageLinesChanged, getHighestAverageLinesChanged, type ContributorStats } from './contributor-calculator.js'
-import { getFileTypeStats, getFileHeatData, type FileTypeStats, type FileHeatData } from './file-calculator.js'
-import { getTimeSeriesData, type TimeSeriesPoint } from './time-series-transformer.js'
-import { getLinearSeriesData, type LinearSeriesPoint } from './linear-transformer.js'
+import { getContributorStats, getLowestAverageLinesChanged, getHighestAverageLinesChanged } from './contributor-calculator.js'
+import { getFileTypeStats, getFileHeatData } from './file-calculator.js'
+import { getTimeSeriesData } from './time-series-transformer.js'
+import { getLinearSeriesData } from './linear-transformer.js'
 import { processCommitMessages, type WordFrequency } from '../text/processor.js'
-import { getTopFilesStats, type TopFilesData } from './top-files-calculator.js'
+import { getTopFilesStats } from './top-files-calculator.js'
 import {
   getTopCommitsByFilesModified,
   getTopCommitsByBytesAdded,
   getTopCommitsByBytesRemoved,
   getTopCommitsByLinesAdded,
-  getTopCommitsByLinesRemoved,
-  type CommitAward
+  getTopCommitsByLinesRemoved
 } from './award-calculator.js'
+import type {
+  ContributorStats,
+  FileTypeStats,
+  FileHeatData,
+  TimeSeriesPoint,
+  LinearSeriesPoint,
+  CommitAward,
+  TopFilesData
+} from './types.js'
 
 export interface ProcessedData {
   commits: CommitData[]

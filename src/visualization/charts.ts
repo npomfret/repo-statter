@@ -4,14 +4,19 @@
  */
 
 import type { CommitData } from '../git/parser.js'
-import type { ContributorStats, ContributorAward } from '../data/contributor-calculator.js'
-import type { CommitAward } from '../data/award-calculator.js'
-import type { FileTypeStats, FileHeatData } from '../data/file-calculator.js'
-import type { TimeSeriesPoint } from '../data/time-series-transformer.js'
-import type { LinearSeriesPoint } from '../data/linear-transformer.js'
 import type { WordFrequency } from '../text/processor.js'
-import type { TopFilesData, TopFileStats } from '../data/top-files-calculator.js'
 import type { ChartsConfig } from '../config/schema.js'
+import type {
+  ContributorStats,
+  ContributorAward,
+  CommitAward,
+  FileTypeStats,
+  FileHeatData,
+  TimeSeriesPoint,
+  LinearSeriesPoint,
+  TopFilesData,
+  TopFileStats
+} from '../data/types.js'
 // Remove getFileCategory import to avoid Node.js dependencies in browser bundle
 
 // Simple inline file categorization for browser

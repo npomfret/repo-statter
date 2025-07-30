@@ -28,7 +28,3 @@ export function isFileExcluded(filePath: string, patterns: string[] = DEFAULT_EX
     return compiled.match(filePath)
   })
 }
-
-export function getDefaultExclusionPatterns(): string[] {
-  return [...DEFAULT_EXCLUSION_PATTERNS]
-}

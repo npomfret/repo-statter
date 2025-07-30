@@ -1,7 +1,10 @@
 import type { CommitData, FileChange } from '../git/parser.js'
-import type { ContributorStats } from '../data/contributor-calculator.js'
-import type { TimeSeriesPoint, CategoryBreakdown } from '../data/time-series-transformer.js'
-import type { LinearSeriesPoint } from '../data/linear-transformer.js'
+import type {
+  ContributorStats,
+  TimeSeriesPoint,
+  CategoryBreakdown,
+  LinearSeriesPoint
+} from '../data/types.js'
 
 function createEmptyBreakdown(): CategoryBreakdown {
   return {

@@ -11,12 +11,6 @@ export class GitParseError extends RepoStatError {
   }
 }
 
-export class CLIError extends RepoStatError {
-  constructor(message: string, cause?: Error) {
-    super(message, 'CLI_ERROR', cause)
-  }
-}
-
 export class BuildError extends RepoStatError {
   constructor(message: string, cause?: Error) {
     super(message, 'BUILD_ERROR', cause)

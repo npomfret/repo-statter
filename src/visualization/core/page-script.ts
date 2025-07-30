@@ -1,14 +1,18 @@
 import { CoreInitializer } from './core-initializer.js'
 import { ChartManager } from './chart-manager.js'
 import type { CommitData } from '../../git/parser.js'
-import type { ContributorStats, ContributorAward } from '../../data/contributor-calculator.js'
-import type { CommitAward } from '../../data/award-calculator.js'
-import type { FileTypeStats, FileHeatData } from '../../data/file-calculator.js'
-import type { TimeSeriesPoint } from '../../data/time-series-transformer.js'
-import type { LinearSeriesPoint } from '../../data/linear-transformer.js'
 import type { WordFrequency } from '../../text/processor.js'
-import type { TopFilesData } from '../../data/top-files-calculator.js'
 import type { ChartsConfig } from '../../config/schema.js'
+import type {
+  ContributorStats,
+  ContributorAward,
+  CommitAward,
+  FileTypeStats,
+  FileHeatData,
+  TimeSeriesPoint,
+  LinearSeriesPoint,
+  TopFilesData
+} from '../../data/types.js'
 
 interface TrophySvgs {
   contributors: string

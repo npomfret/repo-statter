@@ -6,21 +6,8 @@ import { fileURLToPath } from 'url'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 import { parseCommitHistory, getGitHubUrl, getCurrentFiles, getRepositoryName, type CacheOptions } from '../git/parser.js'
-import { getContributorStats, getLowestAverageLinesChanged, getHighestAverageLinesChanged, type ContributorStats } from '../data/contributor-calculator.js'
-import { getFileTypeStats, getFileHeatData, type FileTypeStats } from '../data/file-calculator.js'
-import { DataPipeline } from '../data/unified-pipeline.js'
-import { 
-  getTopCommitsByFilesModified,
-  getTopCommitsByBytesAdded,
-  getTopCommitsByBytesRemoved,
-  getTopCommitsByLinesAdded,
-  getTopCommitsByLinesRemoved
-} from '../data/award-calculator.js'
-import { getTopFilesStats } from '../data/top-files-calculator.js'
+import { DataPipeline, type ProcessedData } from '../data/unified-pipeline.js'
 import { checkLizardInstalled } from '../data/lizard-complexity-analyzer.js'
-import { getLinearSeriesData } from '../data/linear-transformer.js'
-import { getTimeSeriesData } from '../data/time-series-transformer.js'
-import { processCommitMessages } from '../text/processor.js'
 import { replaceTemplateVariables, injectIntoBody } from '../utils/template-engine.js'
 import { bundleCharts } from '../build/bundle-charts.js'
 import type { CommitData } from '../git/parser.js'
@@ -130,34 +117,15 @@ export async function generateReport(repoPath: string, outputMode: 'dist' | 'ana
   progressReporter?.report('Calculating statistics')
   const chartData = await transformCommitData(context)
   
-  // Calculate all statistics once using both old and new approaches for validation
-  progressReporter?.report('Calculating contributor and file statistics')
+  // Calculate all statistics using unified pipeline
+  progressReporter?.report('Processing repository data')
   
-  // Create unified pipeline instance
+  // Create unified pipeline instance and process all data
   const pipeline = new DataPipeline()
-  
-  // Run both approaches in parallel for validation
-  const [pipelineData, contributors, fileTypes] = await Promise.all([
-    pipeline.processRepository(context),
-    Promise.resolve(getContributorStats(context)),
-    Promise.resolve(getFileTypeStats(context))
-  ])
-  
-  // Validation: Ensure unified pipeline produces identical results
-  if (process.env['NODE_ENV'] !== 'production') {
-    // Compare contributors
-    if (pipelineData.contributors.length !== contributors.length) {
-      console.warn('Pipeline validation: contributor count mismatch')
-    }
-    
-    // Compare file types  
-    if (pipelineData.fileTypes.length !== fileTypes.length) {
-      console.warn('Pipeline validation: file type count mismatch')
-    }
-  }
+  const pipelineData = await pipeline.processRepository(context)
   
   progressReporter?.report('Generating HTML report')
-  const html = await injectDataIntoTemplate(template, chartData, contributors, fileTypes, context)
+  const html = await injectDataIntoTemplate(template, chartData, pipelineData, context)
   
   progressReporter?.report('Writing report file')
   await writeFile(reportPath, html)
@@ -170,8 +138,8 @@ export async function generateReport(repoPath: string, outputMode: 'dist' | 'ana
       totalCommits: commits.length,
       totalLinesAdded: commits.reduce((sum, c) => sum + c.linesAdded, 0),
       totalLinesDeleted: commits.reduce((sum, c) => sum + c.linesDeleted, 0),
-      contributors: contributors,
-      fileTypes: fileTypes,
+      contributors: pipelineData.contributors,
+      fileTypes: pipelineData.fileTypes,
       commits: commits
     }
     await writeFile(statsPath, JSON.stringify(stats, null, 2))
@@ -227,12 +195,12 @@ async function transformCommitData(context: AnalysisContext): Promise<ChartData>
   let totalLinesOfCode = 0
   
   if (commits.length > 0) {
-    // Use the time series data to get the final cumulative total
-    const timeSeries = getTimeSeriesData(context)
-    if (timeSeries.length > 0) {
-      const lastPoint = timeSeries[timeSeries.length - 1]
-      totalLinesOfCode = lastPoint?.cumulativeLines.total ?? 0
-    }
+    // Calculate cumulative lines of code directly from commits
+    totalLinesOfCode = commits.reduce((total, commit) => {
+      return total + commit.linesAdded - commit.linesDeleted
+    }, 0)
+    // Ensure non-negative
+    totalLinesOfCode = Math.max(0, totalLinesOfCode)
   }
   
   // Fallback to current file calculation if time series fails
@@ -291,27 +259,13 @@ async function transformCommitData(context: AnalysisContext): Promise<ChartData>
   }
 }
 
-async function injectDataIntoTemplate(template: string, chartData: ChartData, contributors: ContributorStats[], fileTypes: FileTypeStats[], context: AnalysisContext): Promise<string> {
+async function injectDataIntoTemplate(template: string, chartData: ChartData, pipelineData: ProcessedData, context: AnalysisContext): Promise<string> {
   const { commits, repoPath, progressReporter, config } = context
   
-  progressReporter?.report('Generating chart data')
-  const timeSeries = getTimeSeriesData(context)
-  const linearSeries = getLinearSeriesData(commits)
-  const wordCloudData = processCommitMessages(commits.map(c => c.message), config)
-  const fileHeatData = getFileHeatData(context)
-  const topFilesData = await getTopFilesStats(context)
+  progressReporter?.report('Using unified pipeline data for template injection')
   
-  progressReporter?.report('Calculating awards')
-  // Calculate awards
-  const awards = {
-    filesModified: getTopCommitsByFilesModified(context),
-    bytesAdded: getTopCommitsByBytesAdded(context),
-    bytesRemoved: getTopCommitsByBytesRemoved(context),
-    linesAdded: getTopCommitsByLinesAdded(context),
-    linesRemoved: getTopCommitsByLinesRemoved(context),
-    lowestAverage: getLowestAverageLinesChanged(context),
-    highestAverage: getHighestAverageLinesChanged(context)
-  }
+  // All data processing is now handled by the unified pipeline
+  const { contributors, fileTypes, timeSeries, linearSeries, wordCloudData, fileHeatData, topFilesData, awards } = pipelineData
   
   // Bundle the simplified charts script
   const bundledScript = await bundleCharts()
