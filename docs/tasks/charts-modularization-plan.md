@@ -14,115 +14,93 @@ The `src/visualization/charts.ts` file is a 2,336-line monolith that violates co
 
 Split the monolithic charts file into individual, focused chart modules with a lightweight coordinator to manage shared state and interactions.
 
-## Implementation Plan
+## Detailed Implementation Plan
 
-### Phase 1: Extract Individual Chart Modules
+### Phase 1: Extract Shared Utilities
 
-Create separate files for each chart type:
+Create foundation files first:
+- `src/visualization/charts/chart-utils.ts` - formatBytes, showChartError, common utilities
+- `src/visualization/charts/chart-state.ts` - chartRefs, chartData, selectedFileType globals
+
+### Phase 2: Extract Individual Chart Functions (Minimal Approach)
+
+Keep existing function signature pattern but split into focused files:
 
 ```
 src/visualization/charts/
-├── base-chart.ts           # Common chart utilities and interfaces
-├── contributors-chart.ts   # renderContributorsChart()
+├── chart-utils.ts          # formatBytes, showChartError, etc.
+├── chart-state.ts          # chartRefs, chartData, selectedFileType
+├── contributors-chart.ts   # renderContributorsChart() 
 ├── file-types-chart.ts     # renderFileTypesChart()
 ├── growth-chart.ts         # renderGrowthChart()
 ├── category-lines-chart.ts # renderCategoryLinesChart()
 ├── commit-activity-chart.ts # renderCommitActivityChart()
 ├── word-cloud-chart.ts     # renderWordCloudChart()
 ├── file-heatmap-chart.ts   # renderFileHeatmapChart()
-├── top-files-chart.ts      # renderTopFilesChart()
-├── time-slider-chart.ts    # renderTimeSliderChart()
-├── user-charts.ts          # renderUserCharts() + related functions
-├── awards-renderer.ts      # renderAwards() - not a chart but awards display
-└── chart-coordinator.ts    # Manages chartRefs, chartData, and interactions
+├── top-files-chart.ts      # renderTopFilesChart() + renderTopFilesChartWithFilter()
+├── time-slider-chart.ts    # renderTimeSliderChart() + updateTargetCharts()
+├── user-charts.ts          # renderUserCharts() + renderUserChart() + renderUserActivityChart()
+├── awards-renderer.ts      # renderAwards()
+└── index.ts                # Export all functions + renderAllCharts()
 ```
 
-### Phase 2: Create Chart Coordinator
+### Phase 3: Maintain Current API
 
-Replace global `chartRefs` and `chartData` with a proper coordinator:
-
-```typescript
-// chart-coordinator.ts
-export class ChartCoordinator {
-  private chartRefs: Map<string, any> = new Map()
-  private chartData: Map<string, any> = new Map()
-  
-  registerChart(id: string, chartInstance: any): void
-  getChart(id: string): any | undefined
-  updateTargetCharts(min: number, max: number): void
-  // ... other coordination methods
-}
-```
-
-### Phase 3: Standardize Chart Interface
-
-Each chart module follows a consistent pattern:
-
-```typescript
-// base-chart.ts
-export interface ChartModule {
-  render(containerId: string, data: any, config?: any): Promise<any>
-  update?(data: any): void
-  destroy?(): void
-}
-
-export abstract class BaseChart implements ChartModule {
-  // Common utilities like formatBytes, showChartError, etc.
-}
-```
+Keep exact same function signatures and behavior:
+- Each chart file exports its render function(s)
+- All functions use shared chartRefs/chartData from chart-state.ts
+- Main index.ts re-exports everything to maintain API compatibility
+- renderAllCharts() function works exactly as before
 
 ### Phase 4: Update Build System
 
-- Remove special `prebundle-charts.js` script
-- Use standard TypeScript module resolution
-- Update `chart-manager.ts` to work with new modular system
-- Ensure browser bundling works with standard imports
+Current bundling approach works fine - just point to new index.ts:
+- Update `scripts/prebundle-charts.js` entryPoint to `src/visualization/charts/index.ts`
+- Keep IIFE bundling for browser compatibility
+- No changes to chart-manager.ts needed
 
-### Phase 5: Update Main Entry Point
+## Migration Strategy (Small Commits)
 
-Replace `renderAllCharts()` with coordinator-based approach:
+### Commit 1: Create Foundation
+- Create `src/visualization/charts/` directory
+- Extract `chart-utils.ts` with formatBytes, showChartError utilities
+- Extract `chart-state.ts` with chartRefs, chartData, selectedFileType globals
+- Create empty `index.ts` that imports from ../charts.ts (no-op change)
 
-```typescript
-// charts/index.ts
-export { ChartCoordinator } from './chart-coordinator.js'
-export * from './contributors-chart.js'
-export * from './growth-chart.js'
-// ... other exports
+### Commit 2: Extract Simple Charts (Low Risk)
+- `contributors-chart.ts` - renderContributorsChart() (~80 lines)
+- `file-types-chart.ts` - renderFileTypesChart() (~60 lines) 
+- Update index.ts to re-export these functions
+- Test functionality
 
-// Main render function
-export async function renderAllCharts(data: ChartData): Promise<void> {
-  const coordinator = new ChartCoordinator()
-  
-  // Render each chart independently
-  await Promise.allSettled([
-    new ContributorsChart(coordinator).render('contributorsChart', data.contributors),
-    new GrowthChart(coordinator).render('growthChart', { linearSeries: data.linearSeries, timeSeries: data.timeSeries }),
-    // ... etc
-  ])
-}
-```
+### Commit 3: Extract Independent Charts
+- `word-cloud-chart.ts` - renderWordCloudChart() (~56 lines)
+- `file-heatmap-chart.ts` - renderFileHeatmapChart() (~115 lines)
+- `commit-activity-chart.ts` - renderCommitActivityChart() (~89 lines)
+- Test functionality
 
-## Migration Strategy
+### Commit 4: Extract Complex Charts
+- `growth-chart.ts` - renderGrowthChart() (~347 lines)
+- `category-lines-chart.ts` - renderCategoryLinesChart() (~319 lines)
+- Test chart interactions
 
-### Step 1: Extract One Chart Module
-- Start with `contributors-chart.ts` (simplest, ~80 lines)
-- Create base infrastructure (BaseChart, ChartCoordinator skeleton)
-- Update tests to verify functionality
+### Commit 5: Extract Time-Critical Components
+- `time-slider-chart.ts` - renderTimeSliderChart() + updateTargetCharts() (~275 lines)
+- This is critical - test time slider interactions thoroughly
 
-### Step 2: Extract Time-Critical Charts
-- `time-slider-chart.ts` (controls other charts)
-- `growth-chart.ts` (frequently modified)
-- Ensure time slider interactions still work
+### Commit 6: Extract Remaining Components
+- `top-files-chart.ts` - renderTopFilesChart() + renderTopFilesChartWithFilter() (~170 lines)
+- `user-charts.ts` - renderUserCharts() + helpers (~289 lines)
+- `awards-renderer.ts` - renderAwards() (~254 lines)
 
-### Step 3: Extract Remaining Charts
-- Move remaining chart functions one by one
-- Test each extraction thoroughly
-
-### Step 4: Clean Up
+### Commit 7: Update Build System
+- Update `scripts/prebundle-charts.js` to point to new index.ts
 - Remove original `charts.ts` file
-- Update build scripts
-- Remove special bundling requirements
-- Update documentation
+- Verify bundling works correctly
+
+### Commit 8: Add Tests
+- Create individual test files for each chart module
+- Test chart interactions and functionality
 
 ## Testing Strategy
 
