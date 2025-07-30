@@ -5,7 +5,6 @@ import type { RepoStatterConfig } from './schema.js'
 import type { SimplifiedConfig } from './simplified-schema.js'
 import { DEFAULT_CONFIG } from './defaults.js'
 import { SIMPLIFIED_DEFAULTS } from './simplified-schema.js'
-import { expandSimplifiedConfig } from './migration.js'
 
 export interface ConfigOverrides {
   maxCommits?: number | null
@@ -17,47 +16,7 @@ export interface ConfigOverrides {
 }
 
 /**
- * Detects if a config file uses the simplified schema
- */
-function isSimplifiedConfig(config: any): config is SimplifiedConfig {
-  // Check for full config fields (any of these indicate full schema)
-  const fullConfigFields = [
-    'version', 'wordCloud', 'fileHeat', 'charts', 'textAnalysis', 
-    'fileCategories', 'commitFilters', 'fileTypes'
-  ]
-  
-  const hasFullConfigField = fullConfigFields.some(field => config.hasOwnProperty(field))
-  
-  if (hasFullConfigField) {
-    // Check if it's using full config structure
-    if (config.wordCloud && typeof config.wordCloud.maxWords === 'number') {
-      return false // Full config
-    }
-    if (config.charts && typeof config.charts.topContributorsLimit === 'number') {
-      return false // Full config
-    }
-    if (config.fileHeat && typeof config.fileHeat.recencyDecayDays === 'number') {
-      return false // Full config
-    }
-  }
-  
-  // Check for simplified-specific structure
-  if (config.analysis || config.exclusions || config.performance || config.advanced) {
-    // These fields exist in simplified but have different structure
-    return true
-  }
-  
-  // If it has version field, it's likely full config
-  if (config.version) {
-    return false
-  }
-  
-  // Default to full config for backward compatibility with partial configs
-  return !hasFullConfigField
-}
-
-/**
- * Loads configuration from file, supporting both full and simplified schemas
+ * Loads configuration from file - now only supports simplified schema
  */
 export function loadConfigFile(configPath: string): RepoStatterConfig {
   if (!existsSync(configPath)) {
@@ -77,23 +36,16 @@ export function loadConfigFile(configPath: string): RepoStatterConfig {
     throw new Error('Configuration file must contain a JSON object')
   }
   
-  // Detect schema type and convert if needed
-  if (isSimplifiedConfig(rawConfig)) {
-    console.log('Loading simplified configuration...')
-    return expandSimplifiedConfig(rawConfig)
-  } else {
-    console.log('Loading full configuration...')
-    return deepMerge(DEFAULT_CONFIG, rawConfig) as RepoStatterConfig
-  }
+  console.log('Loading configuration...')
+  return deepMerge(DEFAULT_CONFIG, rawConfig) as RepoStatterConfig
 }
 
 /**
- * Exports configuration in simplified format by default
+ * Exports configuration in simplified format
  */
 export async function exportConfiguration(
   filePath: string, 
-  force: boolean = false,
-  format: 'simplified' | 'full' = 'simplified'
+  force: boolean = false
 ): Promise<void> {
   // Add .json extension if not provided
   const finalPath = extname(filePath) ? filePath : `${filePath}.json`
@@ -107,18 +59,8 @@ export async function exportConfiguration(
   const dir = dirname(finalPath)
   await mkdir(dir, { recursive: true }).catch(() => {})
   
-  // Export configuration
-  let configToExport: any
-  
-  if (format === 'simplified') {
-    // Export minimal simplified config (empty object with comments)
-    configToExport = SIMPLIFIED_DEFAULTS
-  } else {
-    // Export full config for backward compatibility (no comments for JSON parsing)
-    configToExport = DEFAULT_CONFIG
-  }
-  
-  const configJson = JSON.stringify(configToExport, null, 2)
+  // Export simplified configuration
+  const configJson = JSON.stringify(SIMPLIFIED_DEFAULTS, null, 2)
   await writeFile(finalPath, configJson, 'utf-8')
 }
 

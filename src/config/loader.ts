@@ -14,7 +14,7 @@ export type { ConfigOverrides } from './unified-loader.js';
 
 // Legacy export configuration - delegates to unified loader
 export async function exportConfiguration(filePath: string, force: boolean = false): Promise<void> {
-  return unifiedExportConfiguration(filePath, force, 'full'); // Use full format for backward compatibility
+  return unifiedExportConfiguration(filePath, force);
 }
 
 // Legacy load configuration - delegates to unified loader

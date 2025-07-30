@@ -25,7 +25,9 @@ describe('Unified Config Loader', () => {
           maxCommits: 500,
           bytesPerLineEstimate: 60
         },
-        exclusions: ['**/temp/**']
+        exclusions: {
+          patterns: ['**/temp/**']
+        }
       }
       
       const configPath = join(testDir, 'simplified.json')
@@ -100,13 +102,13 @@ describe('Unified Config Loader', () => {
       expect(parsed.version).toBeUndefined()
     })
     
-    it('should export full config when requested', async () => {
+    it('should export simplified config', async () => {
       const exportPath = join(testDir, 'exported.json')
-      await exportConfiguration(exportPath, false, 'full')
+      await exportConfiguration(exportPath, false)
       
       const content = readFileSync(exportPath, 'utf-8')
       const parsed = JSON.parse(content)
-      expect(parsed.version).toBe('1.0')
+      expect(parsed.analysis).toBeDefined()
       expect(parsed.wordCloud).toBeDefined()
       expect(parsed.fileHeat).toBeDefined()
     })

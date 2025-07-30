@@ -1,5 +1,4 @@
 import type { RepoStatterConfig } from './schema.js';
-import type { SimplifiedConfig } from './simplified-schema.js';
 import { SIMPLIFIED_DEFAULTS } from './simplified-schema.js';
 
 // Type cast for temporary compatibility
