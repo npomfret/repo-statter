@@ -1646,6 +1646,7 @@ function renderUserCharts(topContributors: ContributorStats[], commits: CommitDa
     const chartData = buildUserTimeSeriesData(userCommits)
 
     const chartId = `userChart${index}`
+    const activityChartId = `userActivityChart${index}`
 
     const chartCard = document.createElement('div')
     chartCard.className = 'chart-full'
@@ -1657,14 +1658,16 @@ function renderUserCharts(topContributors: ContributorStats[], commits: CommitDa
         </div>
         <div class="card-body">
           <div id="${chartId}" style="min-height: 250px;"></div>
+          <div id="${activityChartId}" style="min-height: 200px; margin-top: 20px;"></div>
         </div>
       </div>
     `
 
     container.appendChild(chartCard)
 
-    // Render chart immediately
+    // Render charts immediately
     renderUserChart(chartId, chartData)
+    renderUserActivityChart(activityChartId, userCommits)
   })
 }
 
@@ -1824,6 +1827,99 @@ function buildUserTimeSeriesData(commits: CommitData[]): UserChartData {
   })
   
   return { addedData, removedData, netData }
+}
+
+async function renderUserActivityChart(chartId: string, commits: CommitData[]): Promise<void> {
+  const container = document.getElementById(chartId)
+  if (!container) {
+    return
+  }
+  if (chartRefs[chartId]) {
+    return
+  }
+
+  // Group commits by date and count
+  const commitsByDate = new Map<string, number>()
+  commits.forEach(commit => {
+    const dateKey = new Date(commit.date).toISOString().split('T')[0]!
+    commitsByDate.set(dateKey, (commitsByDate.get(dateKey) || 0) + 1)
+  })
+
+  // Convert to chart data
+  const data = Array.from(commitsByDate.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([date, count]) => ({
+      x: new Date(date).getTime(),
+      y: count
+    }))
+
+  const options = {
+    chart: {
+      type: 'bar',
+      height: 200,
+      toolbar: { show: false },
+      background: '#ffffff',
+      zoom: {
+        enabled: true,
+        allowMouseWheelZoom: false
+      }
+    },
+    series: [{
+      name: 'Daily Commits',
+      data: data
+    }],
+    plotOptions: {
+      bar: {
+        columnWidth: '80%',
+        borderRadius: 2
+      }
+    },
+    dataLabels: {
+      enabled: false
+    },
+    xaxis: {
+      type: 'datetime',
+      labels: {
+        datetimeUTC: false,
+        style: { colors: '#24292f' },
+        formatter: function(val: number) {
+          return new Date(val).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        }
+      },
+      title: {
+        text: 'Date',
+        style: { color: '#24292f' }
+      }
+    },
+    yaxis: {
+      title: {
+        text: 'Commits',
+        style: { color: '#24292f' }
+      },
+      labels: {
+        style: { colors: '#24292f' }
+      }
+    },
+    colors: ['#27aeef'],
+    grid: { borderColor: '#e1e4e8' },
+    tooltip: {
+      theme: 'light',
+      x: { format: 'dd MMM yyyy' },
+      y: {
+        formatter: function(val: number) {
+          return val + ' commit' + (val !== 1 ? 's' : '')
+        }
+      }
+    }
+  }
+
+  try {
+    const chart = new (window as any).ApexCharts(container, options)
+    await chart.render()
+    chartRefs[chartId] = chart
+  } catch (error) {
+    console.error(`Failed to render chart ${chartId}:`, error)
+  }
 }
 
 function renderAwards(awards: NonNullable<ChartData['awards']>, githubUrl?: string): void {
