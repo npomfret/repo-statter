@@ -21,7 +21,7 @@ export async function handleCLI(args: string[]): Promise<void> {
     .option('-r, --repo <path>', 'Repository path (alternative to positional argument)')
     .option('-o, --output <dir>', 'Output directory', 'dist')
     .option('--output-file <filename>', 'Custom output filename (overrides default naming)')
-    .option('--max-commits <number>', 'Maximum number of recent commits to analyze')
+    .option('--max-commits <number>', 'Analyze only the N most recent commits (improves performance for large repos)')
     .option('--no-cache', 'Disable caching (always do full scan)')
     .option('--clear-cache', 'Clear existing cache before running')
     .option('--config-file <path>', 'Path to configuration file')

@@ -70,45 +70,108 @@ export async function parseCommitHistory(repoPath: string, progressReporter: Pro
   let cachedCommits: CommitData[] = []
   let lastCachedSha: string | null = null
   
-  if (cacheOptions.useCache !== false && !cacheOptions.clearCache && !maxCommits) {
+  if (cacheOptions.useCache !== false && !cacheOptions.clearCache) {
     progressReporter?.report('Checking for cached data')
-    const cache = await loadCache(repoHash, config.performance.cacheVersion, config.performance.cacheDirName)
+    const cache = await loadCache(repoHash, config.performance.cacheVersion, config.performance.cacheDirName, maxCommits)
     if (cache && cache.commits.length > 0) {
-      cachedCommits = cache.commits
-      lastCachedSha = cache.lastCommitSha
-      progressReporter?.report(`Found cached data with ${cachedCommits.length} commits`)
+      // Only use cache if it's a full cache or has enough commits for the request
+      if (!cache.isPartialCache || (cache.maxCommitsUsed && maxCommits && cache.maxCommitsUsed >= maxCommits)) {
+        cachedCommits = cache.commits
+        lastCachedSha = cache.lastCommitSha
+        progressReporter?.report(`Found cached data with ${cachedCommits.length} commits`)
+      }
     }
   }
   
   progressReporter?.report('Fetching commit history')
   
-  const logOptions: any = {
-    format: {
-      hash: '%H',
-      author_name: '%an',
-      author_email: '%ae',
-      date: '%ai',
-      message: '%s'
-    },
-    strictDate: true,
-    '--reverse': null
-  }
+  let log: any
   
-  // If we have cached data, only fetch commits after the last cached commit
-  if (lastCachedSha) {
-    logOptions.from = lastCachedSha
-    progressReporter?.report('Fetching new commits since last cache')
+  // Two-phase commit reading when maxCommits is specified without cache
+  if (maxCommits && !lastCachedSha) {
+    // Phase 1: Get the SHAs of the most recent N commits (newest first)
+    const recentCommitsLog = await git.log({
+      maxCount: maxCommits,
+      format: { hash: '%H' },
+      // No --reverse, so we get newest first
+    })
+    
+    if (recentCommitsLog.all.length > 0) {
+      // Phase 2: Get full commit data in chronological order
+      const oldestCommit = recentCommitsLog.all[recentCommitsLog.all.length - 1]
+      const newestCommit = recentCommitsLog.all[0]
+      
+      // These commits should always exist if length > 0, but TypeScript needs assurance
+      assert(oldestCommit !== undefined, 'Oldest commit not found')
+      assert(newestCommit !== undefined, 'Newest commit not found')
+      
+      const oldestSha = oldestCommit.hash
+      const newestSha = newestCommit.hash
+      
+      // Get the parent of the oldest commit to include it in the range
+      let fromCommit: string
+      try {
+        const parentResult = await git.raw(['rev-parse', `${oldestSha}^`])
+        fromCommit = parentResult.trim()
+      } catch {
+        // If there's no parent (first commit), we'll handle it differently
+        fromCommit = ''
+      }
+      
+      const logOptions: any = {
+        format: {
+          hash: '%H',
+          author_name: '%an',
+          author_email: '%ae',
+          date: '%ai',
+          message: '%s'
+        },
+        strictDate: true,
+        '--reverse': null  // Process in chronological order
+      }
+      
+      // If we have a parent commit, use range syntax
+      if (fromCommit) {
+        logOptions.from = fromCommit
+        logOptions.to = newestSha
+      } else {
+        // If no parent (includes first commit), use a different approach
+        // Get all commits up to and including the newest SHA
+        logOptions[`${newestSha}`] = null
+      }
+      
+      log = await git.log(logOptions)
+      progressReporter?.report(`Fetching ${maxCommits} most recent commits`)
+    } else {
+      // Empty repository or no commits
+      log = { all: [] }
+    }
+  } else {
+    // Standard log fetching (full history or with cache)
+    const logOptions: any = {
+      format: {
+        hash: '%H',
+        author_name: '%an',
+        author_email: '%ae',
+        date: '%ai',
+        message: '%s'
+      },
+      strictDate: true,
+      '--reverse': null
+    }
+    
+    // If we have cached data, only fetch commits after the last cached commit
+    if (lastCachedSha) {
+      logOptions.from = lastCachedSha
+      progressReporter?.report('Fetching new commits since last cache')
+    }
+    
+    log = await git.log(logOptions)
   }
-  
-  if (maxCommits) {
-    logOptions.maxCount = maxCommits
-  }
-  
-  const log = await git.log(logOptions)
   
   // Filter out the lastCachedSha commit if it's included (git log includes the 'from' commit)
   const newCommits = lastCachedSha 
-    ? log.all.filter(commit => commit.hash !== lastCachedSha)
+    ? log.all.filter((commit: any) => commit.hash !== lastCachedSha)
     : log.all
   
   // Start with cached commits
@@ -161,9 +224,9 @@ export async function parseCommitHistory(repoPath: string, progressReporter: Pro
   }
   
   // Save to cache if caching is enabled and we processed new commits
-  if (cacheOptions.useCache !== false && !maxCommits && (totalNewCommits > 0 || cachedCommits.length === 0)) {
+  if (cacheOptions.useCache !== false && (totalNewCommits > 0 || cachedCommits.length === 0)) {
     try {
-      await saveCache(repoHash, commits, config.performance.cacheVersion, config.performance.cacheDirName)
+      await saveCache(repoHash, commits, config.performance.cacheVersion, config.performance.cacheDirName, maxCommits)
       progressReporter?.report(`Cached ${commits.length} commits for future runs`)
     } catch (error) {
       // Don't fail the entire operation if caching fails

@@ -140,10 +140,34 @@ When analyzing only recent commits, cumulative values won't reflect the full rep
 
 ## Implementation Plan
 
-1. **Fix the immediate bug**: Update git log options to get recent commits when `--max-commits` is specified
-2. **Enhance cache metadata**: Add fields to track partial cache state
-3. **Update cache validation**: Invalidate cache when requesting more commits than previously cached
-4. **Update documentation**: Clarify that cumulative values are relative to the analyzed period
+### Phase 1: Fix the immediate bug (Two-phase commit reading)
+1. **Modify parseCommitHistory in src/git/parser.ts**:
+   - When `maxCommits` is specified and no cache exists, implement two-phase reading:
+     - Phase 1: Get SHAs of most recent N commits (without --reverse)
+     - Phase 2: Get full commit data in chronological order using commit range
+   - Ensure proper handling of edge cases (empty repos, single commit, etc.)
+
+### Phase 2: Enhance cache system
+1. **Update cache interfaces in src/cache/git-cache.ts**:
+   - Add `isPartialCache` and `maxCommitsUsed` fields to CacheData interface
+   - Modify `saveCache` to accept and store maxCommits parameter
+   - Update `loadCache` to validate against requested commit count
+
+2. **Update parseCommitHistory cache logic**:
+   - Pass maxCommits to saveCache when saving partial history
+   - Skip cache loading when maxCommits is specified (for now)
+   - Add logic to invalidate cache if requesting more commits than cached
+
+### Phase 3: Testing and Documentation
+1. **Write comprehensive tests**:
+   - Test two-phase commit reading with various repository sizes
+   - Test edge cases (empty repo, single commit, more commits requested than exist)
+   - Test cache invalidation scenarios
+
+2. **Update documentation**:
+   - Update CLI help text to clarify behavior
+   - Document that cumulative values are relative to analyzed period
+   - Update README with performance benefits
 
 ## Benefits
 

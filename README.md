@@ -73,7 +73,7 @@ repo-statter [repo-path] [options]
 - `-r, --repo <path>` - Repository path (alternative to positional argument)
 - `-o, --output <dir>` - Output directory for the report (default: `"dist"`)
 - `--output-file <filename>` - Custom output filename (overrides default naming)
-- `--max-commits <number>` - Maximum number of recent commits to analyze
+- `--max-commits <number>` - Analyze only the N most recent commits (improves performance for large repos)
 - `--no-cache` - Disable caching (always do full scan)
 - `--clear-cache` - Clear existing cache before running
 - `--config-file <path>` - Path to custom configuration file
@@ -125,7 +125,7 @@ repo-statter --repo /path/to/repo --output custom-dir --max-commits 2000
 
 #### Notes
 
-- The `--max-commits` option analyzes the most recent N commits, which can significantly improve performance for large repositories
+- The `--max-commits` option analyzes the most recent N commits, which can significantly improve performance for large repositories. Note that cumulative statistics (like total lines of code) will be relative to the analyzed period, not the full repository history
 - The `--output-file` option allows you to specify a custom filename, automatically adding `.html` extension if not provided
 - When using npm scripts, remember to use `--` before passing options to separate npm arguments from script arguments
 - Output paths are relative to the current working directory

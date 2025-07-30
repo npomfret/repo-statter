@@ -12,6 +12,8 @@ export interface CacheData {
   lastCommitSha: string
   cachedAt: string
   commits: CommitData[]
+  isPartialCache?: boolean
+  maxCommitsUsed?: number
 }
 
 
@@ -58,7 +60,7 @@ export async function ensureCacheDirectory(cacheDirName: string): Promise<void> 
   }
 }
 
-export async function loadCache(repositoryHash: string, cacheVersion: string, cacheDirName: string): Promise<CacheData | null> {
+export async function loadCache(repositoryHash: string, cacheVersion: string, cacheDirName: string, maxCommits?: number): Promise<CacheData | null> {
   const cachePath = getCachePath(repositoryHash, cacheDirName)
   
   try {
@@ -74,13 +76,25 @@ export async function loadCache(repositoryHash: string, cacheVersion: string, ca
       return null
     }
     
+    // If cache is partial, only use it if it matches the requested commit count
+    if (cacheData.isPartialCache) {
+      if (!maxCommits || maxCommits !== cacheData.maxCommitsUsed) {
+        return null  // Force fresh analysis
+      }
+    }
+    
+    // If cache is full but user wants partial, don't use cache
+    if (!cacheData.isPartialCache && maxCommits) {
+      return null  // Force fresh analysis
+    }
+    
     return cacheData
   } catch {
     return null
   }
 }
 
-export async function saveCache(repositoryHash: string, commits: CommitData[], cacheVersion: string, cacheDirName: string): Promise<void> {
+export async function saveCache(repositoryHash: string, commits: CommitData[], cacheVersion: string, cacheDirName: string, maxCommits?: number): Promise<void> {
   await ensureCacheDirectory(cacheDirName)
   
   const lastCommit = commits[commits.length - 1]
@@ -89,7 +103,11 @@ export async function saveCache(repositoryHash: string, commits: CommitData[], c
     repositoryHash,
     lastCommitSha: lastCommit?.sha || '',
     cachedAt: new Date().toISOString(),
-    commits
+    commits,
+    ...(maxCommits && {
+      isPartialCache: true,
+      maxCommitsUsed: maxCommits
+    })
   }
   
   const cachePath = getCachePath(repositoryHash, cacheDirName)
@@ -105,7 +123,7 @@ export async function clearCache(repositoryHash: string, cacheDirName: string): 
   }
 }
 
-export async function isCacheValid(repositoryHash: string, cacheVersion: string, cacheDirName: string): Promise<boolean> {
-  const cache = await loadCache(repositoryHash, cacheVersion, cacheDirName)
+export async function isCacheValid(repositoryHash: string, cacheVersion: string, cacheDirName: string, maxCommits?: number): Promise<boolean> {
+  const cache = await loadCache(repositoryHash, cacheVersion, cacheDirName, maxCommits)
   return cache !== null && cache.commits.length > 0
 }
