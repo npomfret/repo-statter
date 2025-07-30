@@ -4,7 +4,7 @@
 
 Repo Statter is a Git repository analysis tool designed to generate insightful, interactive HTML reports. It provides detailed statistics about your codebase, helping you understand its evolution and characteristics.
 
-**Note:** This tool is currently designed for small to medium-sized projects and may not scale efficiently for very large repositories (yet).
+**Note:** This tool is designed for projects of all sizes with intelligent caching for performance. Use `--max-commits` to limit analysis for very large repositories.
 
 ## Installation
 
@@ -22,7 +22,6 @@ Alternatively, you can clone the repository and run it directly:
 
 - Node.js (version 18 or higher)
 - Git
-- Lizard (for code complexity analysis): `pip install lizard`
 
 ### Setup (from source)
 
@@ -40,21 +39,18 @@ Alternatively, you can clone the repository and run it directly:
 
 You can generate reports in two modes:
 
-#### To run analysis
-
-This generates both an interactive HTML report and a raw JSON data file with detailed statistics. The output will be placed in an `analysis/` directory, structured by repository name.
+#### Basic Usage
 
 ```bash
 # If installed globally
 repo-statter /path/to/your/repo
 
 # If running from source
-npm run analyse -- --repo /path/to/your/repo
+npm run analyse -- /path/to/your/repo
 ```
 
 Output:
-- `analysis/<repository-name>/report.html` - Interactive HTML report
-- `analysis/<repository-name>/repo-stats.json` - Raw statistics data
+- `dist/repo-statter.html` - Interactive HTML report (default location)
 
 ### CLI Reference
 
@@ -85,42 +81,39 @@ repo-statter [repo-path] [options]
 #### Examples
 
 ```bash
-# If installed globally:
+# Basic usage
+repo-statter                           # Analyze current directory
+repo-statter /path/to/repo             # Analyze specific repository
 
-# Analyze current directory with default settings
-repo-statter
+# Custom output
+repo-statter . --output reports        # Custom output directory
+repo-statter . --output-file my-report # Custom filename (adds .html)
 
-# Analyze specific repository
-repo-statter /path/to/repo
+# Performance tuning
+repo-statter . --max-commits 500       # Analyze only recent commits
+repo-statter . --no-cache              # Disable caching
+repo-statter . --clear-cache           # Clear cache first
 
-# Analyze with custom output directory
-repo-statter . --output reports
+# Configuration
+repo-statter --export-config config.json    # Export default config
+repo-statter --config-file config.json      # Use custom config
+repo-statter --export-config config.json --force  # Overwrite existing
 
-# Analyze with custom filename
-repo-statter . --output-file my-project-report
+# Real-world examples
+# Large repository with performance optimization
+repo-statter ~/projects/linux-kernel --max-commits 10000 --output kernel-analysis
 
-# Analyze only the last 500 commits
-repo-statter . --max-commits 500
+# Team project with custom settings
+repo-statter . --config-file team-config.json --output weekly-report
 
-# Force full scan (disable cache)
-repo-statter . --no-cache
+# CI/CD integration
+repo-statter $REPO_PATH --output-file build-$BUILD_NUMBER --no-cache
 
-# Clear cache and regenerate
-repo-statter . --clear-cache
+# Quick analysis of recent changes
+repo-statter . --max-commits 100 --output-file recent-changes
 
-# Export default configuration for editing
-repo-statter --export-config my-config.json
-
-# Use custom configuration file
-repo-statter --config-file my-config.json
-
-# Force overwrite existing config file
-repo-statter --export-config my-config.json --force
-
-# Combine options
-repo-statter --repo /path/to/repo --output custom-dir --max-commits 2000
-
-# If running from source, prefix with npm run analyse --
+# If running from source, use npm:
+npm run analyse -- /path/to/repo --output reports
 ```
 
 #### Notes
@@ -240,13 +233,12 @@ The generated report includes:
 3. **Lines of Code Growth** - Cumulative lines of code over project lifetime
 4. **File Type Distribution** - Donut chart showing code distribution by language
 
-### Detailed Data
-The JSON output (`repo-stats.json`) contains:
-- Complete commit history with messages, authors, and timestamps
-- Line-by-line additions and deletions per commit
-- File change details for each commit
-- Aggregated contributor statistics
-- File type analysis
+### Advanced Features
+- **Word Cloud**: Visual representation of commit messages and code content
+- **File Heat Map**: Shows most frequently changed files with recency weighting
+- **Top Files**: Charts showing largest and most active files
+- **Award System**: Recognizes contributors with various achievement badges
+- **Time Series Analysis**: Detailed commit activity patterns over time
 
 ## Development
 
@@ -318,20 +310,17 @@ The HTML report is a beautiful dashboard that works entirely offline. It include
 - Professional styling with smooth animations
 - Zero external dependencies - everything is embedded
 
-### JSON Statistics
-The JSON file provides raw data for further analysis, including:
-```json
-{
-  "repository": "repo-statter",
-  "generatedAt": "2024-01-15T10:30:00.000Z",
-  "totalCommits": 150,
-  "totalLinesAdded": 12500,
-  "totalLinesDeleted": 3200,
-  "contributors": [...],
-  "fileTypes": [...],
-  "commits": [...]
-}
-```
+### Report Features
+
+The generated HTML report includes:
+
+- **Repository Overview**: Total commits, lines of code, contributors, and key metrics
+- **Interactive Charts**: Zoomable time series, filterable contributor data
+- **Word Clouds**: From commit messages and file content
+- **File Analytics**: Heat maps, top files by size and activity
+- **Contributor Awards**: Achievement badges for various contributions
+- **Responsive Design**: Works on desktop, tablet, and mobile devices
+- **Offline Ready**: No external dependencies, works without internet
 
 ## Future Enhancements
 
