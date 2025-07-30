@@ -713,6 +713,19 @@ function renderCategoryLinesChart(timeSeries: TimeSeriesPoint[], commits: Commit
   const container = document.getElementById('categoryLinesChart')
   if (!container) return
 
+  // Debug logging to understand the data
+  console.log('=== Category Chart Debug ===')
+  console.log('TimeSeries length:', timeSeries.length)
+  console.log('Commits length:', commits.length)
+  
+  if (timeSeries.length > 0) {
+    const firstPoint = timeSeries[0]
+    console.log('Sample timeSeries point:', firstPoint)
+    if (firstPoint && firstPoint.cumulativeLines) {
+      console.log('Categories in first point:', Object.keys(firstPoint.cumulativeLines))
+      console.log('Values:', firstPoint.cumulativeLines)
+    }
+  }
   
   // Get saved axis mode or default to 'commit'
   const xAxisMode = localStorage.getItem('categoryChartXAxis') || 'commit'
