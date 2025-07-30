@@ -1,56 +1,103 @@
-# Architecture Refactoring Plan
+# Minimal Architecture Refactoring Plan
 
-This document outlines a plan to refactor the architecture of the repo-statter project to improve readability, maintainability, and testability.
+This document outlines a targeted refactoring plan for the repo-statter project based on the engineering principle of "do exactly what's needed, nothing more."
 
-## Current Architecture Pain Points
+## Current Architecture Assessment
 
-The current architecture has the following pain points:
+After deep analysis, the current architecture is **actually quite good**:
 
-*   **Tight Coupling:** The data processing logic is tightly coupled with the HTML rendering logic. This makes it difficult to test the individual components and to reuse the data processing logic for other purposes.
-*   **Lack of a Clear Data Flow:** The data flows through a series of functions, but there is no clear, unified data pipeline. This makes it difficult to understand how the data is being transformed at each step of the process.
-*   **Limited Testability:** Because the data processing and rendering logic are so tightly coupled, it is difficult to write unit tests for the individual components.
-*   **Potential for "God" Objects:** The `AnalysisContext` object has the potential to become a "god object" that contains all of the data for the report.
+**Strengths:**
+- Clean separation between git parsing (`git/parser.ts`) and data processing
+- Modular calculator approach with good test coverage
+- Efficient caching and performance characteristics
+- Well-structured configuration system
 
-## Proposed Architecture
+**Real Pain Points (not theoretical):**
+- `report/generator.ts` mixes orchestration, data processing, AND HTML generation (264 lines doing too much)
+- Duplicate chart rendering systems: legacy `charts/` directory + new `charts.ts`
+- `AnalysisContext` contains both immutable data and mutable state
+- Build-time bundling coupled to runtime report generation
 
-I propose a new architecture that separates the data processing from the rendering and uses a clear data pipeline. This architecture will be more modular, testable, and maintainable.
+## Targeted Refactoring Plan
 
-Here is a high-level overview of the proposed architecture:
+Following the "minimalist approach" and "small commits" principles:
 
-1.  **Data Extraction:**
-    *   A new `GitExtractor` class will be responsible for extracting the raw commit data from the git repository. This class will use the `simple-git` library to interact with git.
-    *   The `GitExtractor` will produce a stream of `Commit` objects, where each `Commit` object represents a single commit in the repository.
+### Phase 1: Extract HTML Generation (1-2 commits)
+**Goal:** Separate HTML generation from data orchestration
 
-2.  **Data Transformation Pipeline:**
-    *   A new `DataPipeline` class will be responsible for transforming the raw commit data into a format that is suitable for rendering.
-    *   The `DataPipeline` will consist of a series of "stages," where each stage is a function that takes a stream of `Commit` objects and returns a transformed stream of objects.
-    *   The stages in the pipeline will include:
-        *   **Contributor Calculator:** Calculates statistics about the contributors to the repository.
-        *   **File Calculator:** Calculates statistics about the files in the repository.
-        *   **Award Calculator:** Calculates awards for the top commits.
-        *   **Time Series Transformer:** Transforms the commit data into a time series format.
-        *   **Word Cloud Processor:** Processes the commit messages to generate data for a word cloud.
+1. Create `report/html-generator.ts`
+   - Move `injectDataIntoTemplate()` and related HTML logic from `report/generator.ts`
+   - Keep simple template replacement (no new templating engines)
+   - Move chart bundling logic here
 
-3.  **HTML Generation:**
-    *   A new `ReportGenerator` class will be responsible for generating the final HTML report.
-    *   The `ReportGenerator` will take the transformed data from the `DataPipeline` and inject it into an HTML template.
-    *   The HTML template will be a simple HTML file with placeholders for the data.
+2. Update `report/generator.ts`
+   - Remove HTML generation code
+   - Focus purely on data orchestration
+   - Call HTML generator with processed data
 
-## HTML Generation Improvements
+**Result:** Single responsibility for each module, easier testing
 
-To improve the HTML generation process, I recommend the following:
+### Phase 2: Clean Up Duplicate Systems (1 commit)
+**Goal:** Remove legacy chart rendering
 
-*   **Use a Templating Engine:** Instead of using a simple string replacement, use a dedicated templating engine like **Handlebars.js** or **Pug**. This will make the templates more readable and maintainable.
-*   **Component-Based Architecture:** Break the report down into smaller, reusable components. For example, you could have a separate component for each chart. This will make the code more modular and easier to test.
-*   **Separate CSS and JavaScript:** Instead of inlining the CSS and JavaScript in the HTML, separate them into their own files. This will make the code more organized and easier to maintain.
-*   **Use a Modern CSS Framework:** Use a modern CSS framework like **Tailwind CSS** or **Bootstrap 5** to style the report. This will make the report more visually appealing and easier to style.
-*   **Optimize for Performance:** Optimize the report for performance by minifying the CSS and JavaScript and by using a content delivery network (CDN) to serve the static assets.
+1. Delete entire `charts/` directory (legacy individual chart classes)
+2. Keep unified `charts.ts` approach (it works well)
+3. Update any remaining references
 
-By implementing these changes, we can create a more robust and flexible HTML generation process that is easier to maintain and extend.
+**Result:** Eliminate maintenance burden of duplicate systems
 
-## Benefits of the Proposed Architecture
+### Phase 3: Improve AnalysisContext (1 commit)
+**Goal:** Split immutable data from mutable concerns
 
-*   **Improved Readability:** The code will be more readable because it will be organized into smaller, more focused modules.
-*   **Improved Maintainability:** The code will be easier to maintain because the data processing and rendering logic will be decoupled.
-*   **Improved Testability:** The code will be easier to test because the individual components can be tested in isolation.
-*   **Improved Flexibility:** The data pipeline can be easily extended to support new data transformations and new output formats.
+1. Create separate interfaces:
+   ```typescript
+   interface RepoData {
+     repoPath: string
+     repoName: string
+     commits: CommitData[]
+     currentFiles: Set<string>
+     config: RepoStatterConfig
+   }
+   
+   interface ProcessingContext {
+     data: RepoData
+     progressReporter?: ProgressReporter
+     isLizardInstalled: boolean
+   }
+   ```
+
+2. Update processors to accept `RepoData` instead of full context
+3. Keep progress reporting separate
+
+**Result:** Clearer data dependencies, easier testing
+
+## What We're NOT Doing
+
+**Avoiding Overengineering:**
+- No streams or complex pipeline abstractions
+- No templating engines (Handlebars, Pug)
+- No CSS frameworks beyond current Bootstrap
+- No CDNs or performance optimizations (not needed)
+- No component-based architecture (current approach works)
+
+**Keeping What Works:**
+- Current modular calculator design
+- Simple template replacement system
+- Existing git parsing and caching
+- Current test structure with builders
+
+## Implementation Order
+
+1. **Extract HTML Generation** - addresses biggest coupling issue
+2. **Remove Duplicate Charts** - immediate complexity reduction  
+3. **Improve AnalysisContext** - cleaner data flow
+
+Each phase can be completed, tested, and committed independently.
+
+## Success Metrics
+
+- `report/generator.ts` reduced from 264 to ~150 lines
+- Remove ~400 lines of duplicate chart code
+- Maintain all existing functionality
+- All tests continue passing
+- No new external dependencies
