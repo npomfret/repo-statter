@@ -1,6 +1,12 @@
 import type { RepoStatterConfig } from './schema.js';
+import type { SimplifiedConfig } from './simplified-schema.js';
+import { SIMPLIFIED_DEFAULTS } from './simplified-schema.js';
 
-export const DEFAULT_CONFIG: RepoStatterConfig = {
+// Type cast for temporary compatibility
+export const DEFAULT_CONFIG: RepoStatterConfig = SIMPLIFIED_DEFAULTS as any;
+
+// Keep legacy config for migration tests temporarily
+export const LEGACY_CONFIG: RepoStatterConfig = {
   version: '1.0',
   
   analysis: {
