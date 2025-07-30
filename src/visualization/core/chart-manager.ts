@@ -33,16 +33,6 @@ export class ChartManager {
   }
 
   /**
-   * Update chart axis mode (for charts that support it)
-   */
-  public updateGrowthChartAxis(mode: 'date' | 'commit'): void {
-    const updateFunction = (window as any).updateGrowthChartAxis
-    if (typeof updateFunction === 'function') {
-      updateFunction(mode)
-    }
-  }
-
-  /**
    * Update category chart axis mode
    */
   public updateCategoryChartAxis(mode: 'date' | 'commit'): void {

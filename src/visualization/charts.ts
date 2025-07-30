@@ -20,38 +20,6 @@ import type {
 // Remove getFileCategory import to avoid Node.js dependencies in browser bundle
 
 // Simple inline file categorization for browser
-function getSimpleFileCategory(fileName: string): string {
-  const lowerPath = fileName.toLowerCase()
-  
-  // Test files
-  if (lowerPath.includes('test') || lowerPath.includes('spec') || 
-      lowerPath.includes('__tests__') || lowerPath.includes('__mocks__')) {
-    return 'test'
-  }
-  
-  // Build files
-  if (lowerPath.includes('webpack') || lowerPath.includes('rollup') || 
-      lowerPath.includes('gulpfile') || lowerPath.includes('gruntfile') ||
-      lowerPath.includes('.config.') || lowerPath.includes('tsconfig') ||
-      lowerPath.includes('package.json') || lowerPath.includes('yarn.lock') ||
-      lowerPath.includes('package-lock.json')) {
-    return 'build'
-  }
-  
-  // Documentation files
-  if (lowerPath.endsWith('.md') || lowerPath.endsWith('.txt') || 
-      lowerPath.endsWith('.rst') || lowerPath.endsWith('.adoc')) {
-    return 'documentation'
-  }
-  
-  // Application files by extension
-  const ext = lowerPath.split('.').pop() || ''
-  if (['js', 'ts', 'jsx', 'tsx', 'py', 'java', 'cpp', 'c', 'cs', 'go', 'rs', 'rb', 'php'].includes(ext)) {
-    return 'application'
-  }
-  
-  return 'other'
-}
 
 // Global references to charts that need to be controlled by other charts
 const chartRefs: { [key: string]: any } = {}
@@ -786,41 +754,58 @@ function renderCategoryLinesChart(timeSeries: TimeSeriesPoint[], commits: Commit
       })
     }
   } else {
-    // Commit-based series - calculate cumulative lines per commit
-    const commitCumulatives: { [category: string]: number[] } = {
-      application: [],
-      test: [],
-      build: [],
-      documentation: [],
-      other: []
+    // Commit-based series - map time series data to commit indices
+    // Build a map of commit SHA to index
+    const commitIndexMap = new Map<string, number>()
+    commits.forEach((commit, index) => {
+      commitIndexMap.set(commit.sha, index)
+    })
+    
+    // Create arrays for each category indexed by commit
+    const commitCumulatives: { [category: string]: (number | null)[] } = {
+      application: new Array(commits.length).fill(null),
+      test: new Array(commits.length).fill(null),
+      build: new Array(commits.length).fill(null),
+      documentation: new Array(commits.length).fill(null),
+      other: new Array(commits.length).fill(null)
     }
     
-    let cumulative = {
-      application: 0,
-      test: 0,
-      build: 0,
-      documentation: 0,
-      other: 0
-    }
-    
-    commits.forEach((commit) => {
-      // Calculate lines for this commit by category
-      commit.filesChanged.forEach(file => {
-        const category = getSimpleFileCategory(file.fileName) as keyof typeof cumulative
-        cumulative[category] += file.linesAdded - file.linesDeleted
+    // Map time series points to commit indices
+    timeSeries.forEach(point => {
+      // Find the latest commit index for this time point
+      let latestIndex = -1
+      point.commitShas.forEach(sha => {
+        const index = commitIndexMap.get(sha)
+        if (index !== undefined && index > latestIndex) {
+          latestIndex = index
+        }
       })
       
-      // Store cumulative values for each category
-      for (const category of categories) {
-        commitCumulatives[category]!.push(Math.max(0, cumulative[category]))
+      if (latestIndex >= 0) {
+        // Update cumulative values for this commit index
+        for (const category of categories) {
+          commitCumulatives[category]![latestIndex] = point.cumulativeLines[category]
+        }
       }
     })
+    
+    // Fill in gaps by carrying forward the last known value
+    for (const category of categories) {
+      let lastValue = 0
+      for (let i = 0; i < commits.length; i++) {
+        if (commitCumulatives[category]![i] === null) {
+          commitCumulatives[category]![i] = lastValue
+        } else {
+          lastValue = commitCumulatives[category]![i]!
+        }
+      }
+    }
     
     // Create series for each category
     for (const category of categories) {
       const data = commitCumulatives[category]!.map((value, index) => ({
         x: index,
-        y: value
+        y: value ?? 0
       }))
 
       series.push({
@@ -2158,37 +2143,6 @@ export function updateCategoryChartAxis(mode: 'date' | 'commit'): void {
 
   // Rebuild with new axis mode
   renderCategoryLinesChart(data.timeSeries, data.commits)
-}
-
-export function updateTopFilesView(view: 'size' | 'changes' | 'complexity'): void {
-  const topFilesData = chartData['topFilesChart']
-  if (!topFilesData) return
-
-  localStorage.setItem('topFilesView', view)
-
-  // Update stored current view
-  topFilesData.currentView = view
-
-  // Update button states
-  const sizeBtn = document.getElementById('largest-tab')
-  const changesBtn = document.getElementById('churn-tab')
-  const complexityBtn = document.getElementById('complex-tab')
-
-  sizeBtn?.classList.remove('active')
-  changesBtn?.classList.remove('active')
-  complexityBtn?.classList.remove('active')
-
-  if (view === 'size') sizeBtn?.classList.add('active')
-  else if (view === 'changes') changesBtn?.classList.add('active')
-  else if (view === 'complexity') complexityBtn?.classList.add('active')
-
-  // Re-render chart with new view and current filter
-  renderTopFilesChartWithFilter(topFilesData.data, view)
-}
-
-export function updateChartsTheme(): void {
-  // In the simplified version, we'd need to re-render all charts
-  // This is a limitation of the simpler approach
 }
 
 // File type filtering functions

@@ -1,0 +1,11 @@
+{
+  "analysis": {
+    "maxCommits": 1000,
+    "timeSeriesGranularity": "hourly"
+  },
+  "exclusions": [
+    "**/vendor/**",
+    "**/third_party/**",
+    "**/*.generated.ts"
+  ]
+}

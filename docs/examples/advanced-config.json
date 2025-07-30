@@ -1,0 +1,38 @@
+{
+  "analysis": {
+    "maxCommits": 5000,
+    "bytesPerLineEstimate": 60,
+    "timeSeriesGranularity": "daily"
+  },
+  "exclusions": [
+    "**/vendor/**",
+    "**/*.min.js",
+    "**/generated/**"
+  ],
+  "performance": {
+    "cacheDir": "my-custom-cache",
+    "progressThrottle": 100
+  },
+  "advanced": {
+    "fileTypes": {
+      "custom": {
+        ".vue": "Vue",
+        ".svelte": "Svelte"
+      }
+    },
+    "textProcessing": {
+      "minWordLength": 4,
+      "stopWords": ["foo", "bar", "baz"]
+    },
+    "commitFilters": {
+      "excludeMerges": false
+    },
+    "fileHeat": {
+      "recencyDays": 60,
+      "weights": {
+        "frequency": 0.3,
+        "recency": 0.7
+      }
+    }
+  }
+}

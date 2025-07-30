@@ -4,11 +4,11 @@ import { validateGitRepository } from '../utils/git-validation.js'
 import { ConsoleProgressReporter } from '../utils/progress-reporter.js'
 import { ThrottledProgressReporter } from '../utils/throttled-progress-reporter.js'
 import { isRepoStatError, formatError } from '../utils/errors.js'
-import { loadConfiguration, validateConfiguration } from '../config/loader.js'
+import { loadConfiguration, exportConfiguration } from '../config/unified-loader.js'
 import { getGitHubUrl, getRepositoryName } from '../git/parser.js'
 import { basename, resolve, join } from 'path'
 import { tmpdir } from 'os'
-import type { ConfigOverrides } from '../config/loader.js'
+import type { ConfigOverrides } from '../config/unified-loader.js'
 
 export async function handleCLI(args: string[]): Promise<void> {
   program
@@ -37,7 +37,6 @@ export async function handleCLI(args: string[]): Promise<void> {
         
         // Handle config export first
         if (options.exportConfig) {
-          const { exportConfiguration } = await import('../config/loader.js');
           await exportConfiguration(options.exportConfig, options.force || false);
           console.log(`Configuration exported to: ${options.exportConfig}`);
           console.log(`\nNext steps:`);
@@ -56,8 +55,7 @@ export async function handleCLI(args: string[]): Promise<void> {
           configPath: options.configFile
         }
         
-        const config = loadConfiguration(finalRepoPath, configOverrides)
-        validateConfiguration(config)
+        const config = loadConfiguration(configOverrides)
         
         // Display repository information
         let repoName = await getRepositoryName(finalRepoPath)
