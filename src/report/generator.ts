@@ -17,7 +17,7 @@ import {
 } from '../data/award-calculator.js'
 import { getTopFilesStats } from '../data/top-files-calculator.js'
 import { checkLizardInstalled } from '../data/lizard-complexity-analyzer.js'
-import { getLinearSeriesData } from '../chart/data-transformer.js'
+import { getLinearSeriesData } from '../data/linear-transformer.js'
 import { getTimeSeriesData } from '../data/time-series-transformer.js'
 import { processCommitMessages } from '../text/processor.js'
 import { replaceTemplateVariables, injectIntoBody } from '../utils/template-engine.js'

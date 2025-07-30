@@ -1,4 +1,4 @@
-import { performanceMonitor } from '../utils/performance-monitor.js'
+import { performanceMonitor } from '../../utils/performance-monitor.js'
 
 /**
  * Core initializer for non-chart functionality

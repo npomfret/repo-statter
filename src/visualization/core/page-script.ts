@@ -1,4 +1,4 @@
-import { CoreInitializer } from '../../chart/core-initializer.js'
+import { CoreInitializer } from './core-initializer.js'
 import { ChartManager } from './chart-manager.js'
 import type { CommitData } from '../../git/parser.js'
 import type { ContributorStats, ContributorAward } from '../../data/contributor-calculator.js'

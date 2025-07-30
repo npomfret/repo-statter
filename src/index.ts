@@ -2,5 +2,6 @@ export { parseCommitHistory, type CommitData, type FileChange } from './git/pars
 export { generateReport } from './report/generator.js'
 export { getContributorStats } from './data/contributor-calculator.js'
 export { getFileTypeStats } from './data/file-calculator.js'
-export { getTimeSeriesData, getLinearSeriesData } from './chart/data-transformer.js'
+export { getTimeSeriesData } from './data/time-series-transformer.js'
+export { getLinearSeriesData } from './data/linear-transformer.js'
 export { processCommitMessages, type WordFrequency } from './text/processor.js'
