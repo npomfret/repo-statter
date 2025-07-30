@@ -1,4 +1,5 @@
 import { CoreInitializer } from '../../chart/core-initializer.js'
+import { ChartManager } from './chart-manager.js'
 import type { CommitData } from '../../git/parser.js'
 import type { ContributorStats, ContributorAward } from '../../data/contributor-calculator.js'
 import type { CommitAward } from '../../data/award-calculator.js'
@@ -53,14 +54,25 @@ export interface PageScriptData {
 
 export class PageScript {
   private coreInitializer: CoreInitializer
+  private chartManager: ChartManager
 
-  constructor(_data: PageScriptData) {
+  constructor(private data: PageScriptData) {
     this.coreInitializer = new CoreInitializer()
+    this.chartManager = new ChartManager()
   }
 
   public initialize(): void {
     // Initialize core functionality immediately (theme, navigation, etc.)
     this.coreInitializer.initialize()
+  }
+
+  public renderCharts(): void {
+    // Render all charts using the chart manager
+    this.chartManager.renderAllCharts(this.data)
+  }
+
+  public get charts(): ChartManager {
+    return this.chartManager
   }
 }
 
