@@ -1678,10 +1678,25 @@ function updateTargetCharts(min: number, max: number, minDate: number, maxDate: 
       commitChart.zoomX(min, max)
     }
 
-    // Zoom the category lines chart (always date-based)
+    // Zoom the category lines chart (check if it's in date or commit mode)
     const categoryChart = chartRefs['category-lines-chart']
     if (categoryChart) {
-      categoryChart.zoomX(min, max)
+      const xAxisType = categoryChart.opts?.xaxis?.type
+      
+      if (xAxisType === 'datetime') {
+        // Date mode - use same date range
+        categoryChart.zoomX(min, max)
+      } else {
+        // Commit mode - need to convert date range to commit indices
+        const dateRange = maxDate - minDate
+        const startPercent = (min - minDate) / dateRange
+        const endPercent = (max - minDate) / dateRange
+
+        const startIndex = Math.max(0, Math.round(startPercent * (totalCommits - 1)))
+        const endIndex = Math.min(totalCommits - 1, Math.round(endPercent * (totalCommits - 1)))
+
+        categoryChart.zoomX(startIndex, endIndex)
+      }
     }
 
     // Zoom the growth chart
@@ -1705,6 +1720,16 @@ function updateTargetCharts(min: number, max: number, minDate: number, maxDate: 
         growthChart.zoomX(startIndex, endIndex)
       }
     }
+
+    // Zoom user charts (they are always date-based)
+    Object.keys(chartRefs).forEach(key => {
+      if (key.startsWith('userChart') || key.startsWith('userActivityChart')) {
+        const userChart = chartRefs[key]
+        if (userChart) {
+          userChart.zoomX(min, max)
+        }
+      }
+    })
   }
 }
 
