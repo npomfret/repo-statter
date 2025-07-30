@@ -5,7 +5,7 @@
 
 import type { CommitData } from '../git/parser.js'
 import type { WordFrequency } from '../text/processor.js'
-import type { ChartsConfig } from '../config/schema.js'
+import type { SimplifiedConfig } from '../config/simplified-schema.js'
 import type {
   ContributorStats,
   ContributorAward,
@@ -71,7 +71,7 @@ export interface ChartData {
     highestAverage: ContributorAward[]
   }
   githubUrl?: string
-  chartsConfig?: ChartsConfig
+  chartsConfig?: SimplifiedConfig['charts']
 }
 
 export function renderAllCharts(data: ChartData): void {

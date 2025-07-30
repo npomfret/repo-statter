@@ -1,11 +1,18 @@
 {
   "analysis": {
     "maxCommits": 1000,
-    "timeSeriesGranularity": "hourly"
+    "bytesPerLineEstimate": 50,
+    "timeSeriesHourlyThresholdHours": 24
   },
-  "exclusions": [
-    "**/vendor/**",
-    "**/third_party/**",
-    "**/*.generated.ts"
-  ]
+  "exclusions": {
+    "patterns": [
+      "**/vendor/**",
+      "**/third_party/**",
+      "**/*.generated.ts"
+    ]
+  },
+  "wordCloud": {
+    "maxWords": 100,
+    "minWordLength": 3
+  }
 }

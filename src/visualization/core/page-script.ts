@@ -2,7 +2,7 @@ import { CoreInitializer } from './core-initializer.js'
 import { ChartManager } from './chart-manager.js'
 import type { CommitData } from '../../git/parser.js'
 import type { WordFrequency } from '../../text/processor.js'
-import type { ChartsConfig } from '../../config/schema.js'
+import type { SimplifiedConfig } from '../../config/simplified-schema.js'
 import type {
   ContributorStats,
   ContributorAward,
@@ -53,7 +53,7 @@ export interface PageScriptData {
   trophySvgs: TrophySvgs
   githubUrl?: string
   isLizardInstalled?: boolean
-  chartsConfig?: ChartsConfig
+  chartsConfig?: SimplifiedConfig['charts']
 }
 
 export class PageScript {

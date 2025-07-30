@@ -2,37 +2,40 @@
   "analysis": {
     "maxCommits": 5000,
     "bytesPerLineEstimate": 60,
-    "timeSeriesGranularity": "daily"
+    "timeSeriesHourlyThresholdHours": 24
   },
-  "exclusions": [
-    "**/vendor/**",
-    "**/*.min.js",
-    "**/generated/**"
-  ],
+  "exclusions": {
+    "patterns": [
+      "**/vendor/**",
+      "**/*.min.js",
+      "**/generated/**"
+    ]
+  },
   "performance": {
-    "cacheDir": "my-custom-cache",
-    "progressThrottle": 100
+    "cacheDirName": "my-custom-cache",
+    "progressThrottleMs": 100,
+    "cacheEnabled": true,
+    "cacheVersion": "1.0"
   },
-  "advanced": {
-    "fileTypes": {
-      "custom": {
-        ".vue": "Vue",
-        ".svelte": "Svelte"
-      }
-    },
-    "textProcessing": {
-      "minWordLength": 4,
-      "stopWords": ["foo", "bar", "baz"]
-    },
-    "commitFilters": {
-      "excludeMerges": false
-    },
-    "fileHeat": {
-      "recencyDays": 60,
-      "weights": {
-        "frequency": 0.3,
-        "recency": 0.7
-      }
+  "fileTypes": {
+    "mappings": {
+      ".vue": "Vue",
+      ".svelte": "Svelte"
     }
+  },
+  "textAnalysis": {
+    "stopWords": ["foo", "bar", "baz", "the", "is", "are"]
+  },
+  "fileHeat": {
+    "recencyDecayDays": 60,
+    "frequencyWeight": 0.3,
+    "recencyWeight": 0.7,
+    "maxFilesDisplayed": 100
+  },
+  "wordCloud": {
+    "minWordLength": 4,
+    "maxWords": 100,
+    "minSize": 10,
+    "maxSize": 80
   }
 }
