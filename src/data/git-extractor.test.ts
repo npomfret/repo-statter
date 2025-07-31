@@ -107,7 +107,7 @@ describe('parseCommitDiff', () => {
     expect(result.filesChanged[1]!.linesDeleted).toBe(100)
   })
 
-  it('includes all files without filtering', () => {
+  it('excludes files based on exclusion patterns', () => {
     const diffSummary: DiffSummary = {
       files: [
         { file: 'src/app.ts', insertions: 10, deletions: 5 },
@@ -128,13 +128,11 @@ describe('parseCommitDiff', () => {
     
     const result = parseCommitDiff(diffSummary, byteChanges, TEST_CONFIG)
     
-    // Now includes all files since filtering happens at runtime
-    expect(result.filesChanged).toHaveLength(3)
+    // Only src/app.ts should be included, node_modules and .git files are excluded
+    expect(result.filesChanged).toHaveLength(1)
     expect(result.filesChanged[0]!.fileName).toBe('src/app.ts')
-    expect(result.filesChanged[1]!.fileName).toBe('node_modules/lib.js')
-    expect(result.filesChanged[2]!.fileName).toBe('.git/config')
-    expect(result.linesAdded).toBe(111) // 10 + 100 + 1
-    expect(result.linesDeleted).toBe(55) // 5 + 50 + 0
+    expect(result.linesAdded).toBe(10) // Only src/app.ts
+    expect(result.linesDeleted).toBe(5) // Only src/app.ts
   })
 
   it('handles missing byte changes data', () => {
@@ -164,7 +162,7 @@ describe('parseCommitDiff', () => {
     expect(() => parseCommitDiff({ files: [] }, null as any, TEST_CONFIG)).toThrow('byteChanges must exist')
   })
 
-  it('includes files in data directories (filtering happens at runtime)', () => {
+  it('excludes files in data directories based on exclusion patterns', () => {
     const diffSummary: DiffSummary = {
       files: [
         { file: 'src/index.ts', insertions: 10, deletions: 5 },
@@ -189,19 +187,17 @@ describe('parseCommitDiff', () => {
 
     const result = parseCommitDiff(diffSummary, byteChanges, TEST_CONFIG)
 
-    // Now includes ALL files since filtering happens at runtime
-    expect(result.filesChanged).toHaveLength(5)
+    // Only includes non-excluded files: src/index.ts and src/utils/helpers.ts
+    // Note: src/data/models.ts IS excluded because **/data/**/* matches src/data/
+    expect(result.filesChanged).toHaveLength(2)
     expect(result.filesChanged[0]!.fileName).toBe('src/index.ts')
-    expect(result.filesChanged[1]!.fileName).toBe('packages/core/data/solsan/file.json')
-    expect(result.filesChanged[2]!.fileName).toBe('data/test.csv')
-    expect(result.filesChanged[3]!.fileName).toBe('src/data/models.ts')
-    expect(result.filesChanged[4]!.fileName).toBe('src/utils/helpers.ts')
+    expect(result.filesChanged[1]!.fileName).toBe('src/utils/helpers.ts')
     
-    // Totals now include all files
-    expect(result.linesAdded).toBe(6045) // 10 + 1000 + 5000 + 20 + 15
-    expect(result.linesDeleted).toBe(18) // 5 + 0 + 0 + 10 + 3
-    expect(result.bytesAdded).toBe(302250) // 500 + 50000 + 250000 + 1000 + 750
-    expect(result.bytesDeleted).toBe(900) // 250 + 0 + 0 + 500 + 150
+    // Totals exclude all data directories
+    expect(result.linesAdded).toBe(25) // 10 + 15
+    expect(result.linesDeleted).toBe(8) // 5 + 3
+    expect(result.bytesAdded).toBe(1250) // 500 + 750
+    expect(result.bytesDeleted).toBe(400) // 250 + 150
   })
 })
 

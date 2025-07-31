@@ -6,6 +6,7 @@ import { GitParseError, formatError } from '../utils/errors.js'
 import { generateRepositoryHash, loadCache, saveCache, clearCache } from '../cache/git-cache.js'
 import type { SimplifiedConfig } from '../config/simplified-schema.js'
 import { isFileExcluded } from '../utils/exclusions.js'
+import { applyCumulativeExclusions } from './cumulative-exclusion.js'
 
 // Assert utilities for fail-fast error handling
 function assert(condition: boolean, message: string): asserts condition {
@@ -223,18 +224,22 @@ export async function parseCommitHistory(repoPath: string, progressReporter: Pro
     }
   }
   
+  // Apply cumulative exclusions to handle file moves to excluded directories
+  progressReporter?.report('Applying cumulative exclusions for moved files')
+  const adjustedCommits = await applyCumulativeExclusions(repoPath, commits, config)
+  
   // Save to cache if caching is enabled and we processed new commits
   if (cacheOptions.useCache !== false && (totalNewCommits > 0 || cachedCommits.length === 0)) {
     try {
-      await saveCache(repoHash, commits, config.performance.cacheVersion, config.performance.cacheDirName, maxCommits)
-      progressReporter?.report(`Cached ${commits.length} commits for future runs`)
+      await saveCache(repoHash, adjustedCommits, config.performance.cacheVersion, config.performance.cacheDirName, maxCommits)
+      progressReporter?.report(`Cached ${adjustedCommits.length} commits for future runs`)
     } catch (error) {
       // Don't fail the entire operation if caching fails
       progressReporter?.report('Warning: Failed to save cache data')
     }
   }
   
-  return commits
+  return adjustedCommits
 }
 
 export async function getCurrentFiles(repoPath: string): Promise<Set<string>> {

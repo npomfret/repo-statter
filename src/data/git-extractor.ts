@@ -2,6 +2,7 @@ import { extname } from 'path'
 import type { FileChange } from '../git/parser.js'
 import { assert, assertDefined } from '../utils/errors.js'
 import type { SimplifiedConfig } from '../config/simplified-schema.js'
+import { isFileExcluded } from '../utils/exclusions.js'
 
 export function getFileType(fileName: string, config: SimplifiedConfig): string {
   const ext = extname(fileName).toLowerCase()
@@ -51,6 +52,16 @@ export function parseCommitDiff(
   assert(!!byteChanges.fileChanges, 'byteChanges must have fileChanges property')
   
   const filesChanged: FileChange[] = diffSummary.files
+    .filter(file => {
+      assertDefined(file.file, 'file.file')
+      
+      // For renames, we need to let them through so cumulative-exclusion can handle them
+      if (file.file.includes(' => ')) {
+        return true
+      }
+      
+      return !isFileExcluded(file.file, config.exclusions.patterns)
+    })
     .map(file => {
       assertDefined(file.file, 'file.file')
       return {
