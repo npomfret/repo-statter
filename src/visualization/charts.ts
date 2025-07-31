@@ -21,36 +21,11 @@ import type {
 
 // Simple inline file categorization for browser
 
-// Global references to charts that need to be controlled by other charts
-const chartRefs: { [key: string]: any } = {}
+// Import shared utilities and state
+import { formatBytes, showChartError, type WordCloudData } from './charts/chart-utils.js'
+import { chartRefs, chartData, getSelectedFileType, setSelectedFileType } from './charts/chart-state.js'
 
-// Store chart data for rebuilding charts when options change
-const chartData: { [key: string]: any } = {}
-
-// Global state for file type filtering
-let selectedFileType: string | null = null
-
-// Utility function for formatting bytes
-function formatBytes(bytes: number): string {
-  if (bytes >= 1000000000) {
-    return (bytes / 1000000000).toFixed(2) + ' GB'
-  } else if (bytes >= 1000000) {
-    return (bytes / 1000000).toFixed(2) + ' MB'
-  } else if (bytes >= 1000) {
-    return (bytes / 1000).toFixed(2) + ' KB'
-  } else {
-    return bytes.toFixed(0) + ' bytes'
-  }
-}
-
-interface WordCloudData {
-  text: string
-  size: number
-  frequency: number
-  x?: number
-  y?: number
-  rotate?: number
-}
+// Access selectedFileType through getter/setter functions for consistency
 
 export interface ChartData {
   commits: CommitData[]
@@ -206,19 +181,6 @@ function setupEventHandlers(): void {
   // No need for tab switching event listeners anymore since all charts are rendered
 }
 
-function showChartError(containerId: string, message: string): void {
-  const container = document.getElementById(containerId)
-  if (container) {
-    container.innerHTML = `
-      <div class="d-flex align-items-center justify-content-center h-100 text-muted">
-        <div class="text-center">
-          <i class="bi bi-exclamation-circle fs-4 mb-2"></i>
-          <p class="mb-0">${message}</p>
-        </div>
-      </div>
-    `
-  }
-}
 
 function renderContributorsChart(contributors: ContributorStats[], limit: number): void {
   const container = document.getElementById('contributorsChart')
@@ -319,7 +281,7 @@ function renderFileTypesChart(fileTypes: FileTypeStats[]): void {
           const selectedType = config.w.config.labels[config.dataPointIndex]
 
           // Instead of using ApexCharts selection state, use our own selectedFileType
-          if (selectedFileType === selectedType) {
+          if (getSelectedFileType() === selectedType) {
             clearFileTypeFilter()
           } else {
             setFileTypeFilter(selectedType)
@@ -1183,8 +1145,9 @@ function renderFileHeatmapChart(fileHeatData: FileHeatData[], height: number, ma
 
   // Apply file type filter if active
   let filteredData = fileHeatData
-  if (selectedFileType) {
-    filteredData = fileHeatData.filter(file => file.fileType === selectedFileType)
+  const currentFileType = getSelectedFileType()
+  if (currentFileType) {
+    filteredData = fileHeatData.filter(file => file.fileType === currentFileType)
 
     if (filteredData.length === 0) {
       // Destroy existing chart if it exists
@@ -1197,7 +1160,7 @@ function renderFileHeatmapChart(fileHeatData: FileHeatData[], height: number, ma
         <div class="d-flex align-items-center justify-content-center h-100 text-muted" style="height: ${height}px;">
           <div class="text-center">
             <i class="bi bi-funnel fs-1 mb-3"></i>
-            <p class="mb-0">No files with type "${selectedFileType}" found</p>
+            <p class="mb-0">No files with type "${currentFileType}" found</p>
           </div>
         </div>
       `
@@ -2185,12 +2148,12 @@ export function updateCategoryChartAxis(mode: 'date' | 'commit'): void {
 
 // File type filtering functions
 function setFileTypeFilter(fileType: string): void {
-  selectedFileType = fileType
+  setSelectedFileType(fileType)
   updateChartsWithFileTypeFilter()
 }
 
 function clearFileTypeFilter(): void {
-  selectedFileType = null
+  setSelectedFileType(null)
   updateChartsWithFileTypeFilter()
 }
 
@@ -2212,14 +2175,14 @@ function updateChartsWithFileTypeFilter(): void {
 }
 
 // Helper function to calculate top files for a specific file type
-function calculateTopFilesByType(commits: CommitData[], selectedFileType: string, fileTypeMap: Map<string, string>, calculationType: 'size' | 'churn' | 'complex'): TopFileStats[] {
+function calculateTopFilesByType(commits: CommitData[], filterFileType: string, fileTypeMap: Map<string, string>, calculationType: 'size' | 'churn' | 'complex'): TopFileStats[] {
   if (calculationType === 'size') {
     const fileSizeMap = new Map<string, number>()
     
     for (const commit of commits) {
       for (const fileChange of commit.filesChanged) {
         // Only include files of the selected type
-        if (fileTypeMap.get(fileChange.fileName) !== selectedFileType) {
+        if (fileTypeMap.get(fileChange.fileName) !== filterFileType) {
           continue
         }
         
@@ -2249,7 +2212,7 @@ function calculateTopFilesByType(commits: CommitData[], selectedFileType: string
     for (const commit of commits) {
       for (const fileChange of commit.filesChanged) {
         // Only include files of the selected type
-        if (fileTypeMap.get(fileChange.fileName) !== selectedFileType) {
+        if (fileTypeMap.get(fileChange.fileName) !== filterFileType) {
           continue
         }
         
@@ -2295,12 +2258,13 @@ function renderTopFilesChartWithFilter(topFilesData: TopFilesData, currentView: 
 
   // Filter data by selected file type if active
   let filteredData = topFilesData
-  if (selectedFileType && fileTypeMap.size > 0 && originalChartData && originalChartData.commits) {
+  const currentFileType = getSelectedFileType()
+  if (currentFileType && fileTypeMap.size > 0 && originalChartData && originalChartData.commits) {
     // Recalculate top files for the selected file type
     filteredData = {
-      largest: calculateTopFilesByType(originalChartData.commits, selectedFileType, fileTypeMap, 'size'),
-      mostChurn: calculateTopFilesByType(originalChartData.commits, selectedFileType, fileTypeMap, 'churn'),
-      mostComplex: calculateTopFilesByType(originalChartData.commits, selectedFileType, fileTypeMap, 'complex')
+      largest: calculateTopFilesByType(originalChartData.commits, currentFileType, fileTypeMap, 'size'),
+      mostChurn: calculateTopFilesByType(originalChartData.commits, currentFileType, fileTypeMap, 'churn'),
+      mostComplex: calculateTopFilesByType(originalChartData.commits, currentFileType, fileTypeMap, 'complex')
     }
   }
 
@@ -2309,12 +2273,12 @@ function renderTopFilesChartWithFilter(topFilesData: TopFilesData, currentView: 
       currentView === 'changes' ? filteredData.mostChurn :
           filteredData.mostComplex
 
-  if (selectedFileType && currentData.length === 0) {
+  if (currentFileType && currentData.length === 0) {
     container.innerHTML = `
       <div class="d-flex align-items-center justify-content-center h-100 text-muted" style="height: 350px;">
         <div class="text-center">
           <i class="bi bi-funnel fs-1 mb-3"></i>
-          <p class="mb-0">No files with type "${selectedFileType}" found in ${currentView} view</p>
+          <p class="mb-0">No files with type "${currentFileType}" found in ${currentView} view</p>
         </div>
       </div>
     `
