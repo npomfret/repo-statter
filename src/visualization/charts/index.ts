@@ -9,11 +9,11 @@ export { renderFileTypesChart } from './file-types-chart.js'
 export { renderWordCloudChart } from './word-cloud-chart.js'
 export { renderFileHeatmapChart } from './file-heatmap-chart.js'
 export { renderCommitActivityChart } from './commit-activity-chart.js'
+export { renderGrowthChart, updateGrowthChartAxis } from './growth-chart.js'
+export { renderCategoryLinesChart, updateCategoryChartAxis } from './category-lines-chart.js'
 
 // Export remaining functions from the original charts.ts (for now)
 export { 
   renderAllCharts,
-  updateGrowthChartAxis,
-  updateCategoryChartAxis,
   type ChartData
 } from '../charts.js'
