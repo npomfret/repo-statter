@@ -19,3 +19,22 @@ export function setSelectedFileType(fileType: string | null): void {
 export function getSelectedFileType(): string | null {
   return selectedFileType
 }
+
+// File type filtering functions that update all charts
+export function setFileTypeFilter(fileType: string): void {
+  setSelectedFileType(fileType)
+  // Import the update function dynamically to avoid circular deps for now
+  const updateFunction = (globalThis as any).updateChartsWithFileTypeFilter
+  if (typeof updateFunction === 'function') {
+    updateFunction()
+  }
+}
+
+export function clearFileTypeFilter(): void {
+  setSelectedFileType(null)
+  // Import the update function dynamically to avoid circular deps for now
+  const updateFunction = (globalThis as any).updateChartsWithFileTypeFilter
+  if (typeof updateFunction === 'function') {
+    updateFunction()
+  }
+}

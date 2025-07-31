@@ -23,7 +23,11 @@ import type {
 
 // Import shared utilities and state
 import { formatBytes, showChartError, type WordCloudData } from './charts/chart-utils.js'
-import { chartRefs, chartData, getSelectedFileType, setSelectedFileType } from './charts/chart-state.js'
+import { chartRefs, chartData, getSelectedFileType } from './charts/chart-state.js'
+
+// Import extracted chart functions
+import { renderContributorsChart } from './charts/contributors-chart.js'
+import { renderFileTypesChart } from './charts/file-types-chart.js'
 
 // Access selectedFileType through getter/setter functions for consistency
 
@@ -52,6 +56,9 @@ export interface ChartData {
 export function renderAllCharts(data: ChartData): void {
   // Store all data globally for filtering access
   chartData['allData'] = data
+
+  // Make updateChartsWithFileTypeFilter globally available for chart modules
+  ;(globalThis as any).updateChartsWithFileTypeFilter = updateChartsWithFileTypeFilter
 
   // Render all charts in the correct order
   // Time slider must be last so it can reference other charts
@@ -182,147 +189,9 @@ function setupEventHandlers(): void {
 }
 
 
-function renderContributorsChart(contributors: ContributorStats[], limit: number): void {
-  const container = document.getElementById('contributorsChart')
-  if (!container) return
+// renderContributorsChart moved to ./charts/contributors-chart.js
 
-
-  const topContributors = contributors.slice(0, limit)
-
-  const options = {
-    chart: {
-      type: 'bar',
-      height: 350,
-      toolbar: { show: false },
-      background: '#ffffff'
-    },
-    series: [{
-      data: topContributors.map(c => ({
-        x: c.name,
-        y: c.commits
-      }))
-    }],
-    plotOptions: {
-      bar: {
-        horizontal: true,
-        distributed: true,
-        dataLabels: {
-          position: 'top'
-        }
-      }
-    },
-    colors: ['#ea5545', '#f46a9b', '#ffd33d', '#b33dc6', '#27aeef', '#2ea043', '#0366d6', '#79c0ff', '#e27300', '#666666'],
-    dataLabels: {
-      enabled: true,
-      formatter: function(val: number) {
-        return val.toString()
-      },
-      style: {
-        colors: ['#24292f']
-      }
-    },
-    xaxis: {
-      title: {
-        text: 'Number of Commits',
-        style: { color: '#24292f' }
-      },
-      labels: { style: { colors: '#24292f' } }
-    },
-    yaxis: {
-      labels: { style: { colors: '#24292f' } }
-    },
-    grid: {
-      borderColor: '#e1e4e8'
-    },
-    tooltip: {
-      theme: 'light',
-      y: {
-        title: {
-          formatter: function() { return 'Commits:' }
-        }
-      },
-      marker: { show: false },
-      custom: function({dataPointIndex}: any) {
-        const contributor = topContributors[dataPointIndex]
-        if (!contributor) return ''
-        return `
-          <div class="p-2">
-            <strong>${contributor.name}</strong><br/>
-            Commits: ${contributor.commits}<br/>
-            Lines changed: ${(contributor.linesAdded + contributor.linesDeleted).toLocaleString()}<br/>
-            Avg lines/commit: ${((contributor.linesAdded + contributor.linesDeleted) / contributor.commits).toFixed(1)}
-          </div>
-        `
-      }
-    }
-  }
-
-  const chart = new (window as any).ApexCharts(container, options)
-  chart.render()
-  chartRefs['contributorsChart'] = chart
-}
-
-function renderFileTypesChart(fileTypes: FileTypeStats[]): void {
-  const container = document.getElementById('fileTypesChart')
-  if (!container) return
-
-  const topFileTypes = fileTypes.slice(0, 10)
-
-  // Store data for filtering
-  chartData['fileTypesChart'] = { fileTypes: topFileTypes }
-
-  const options = {
-    chart: {
-      type: 'donut',
-      height: 350,
-      background: '#ffffff',
-      events: {
-        dataPointSelection: function(_event: any, _chartContext: any, config: any) {
-          const selectedType = config.w.config.labels[config.dataPointIndex]
-
-          // Instead of using ApexCharts selection state, use our own selectedFileType
-          if (getSelectedFileType() === selectedType) {
-            clearFileTypeFilter()
-          } else {
-            setFileTypeFilter(selectedType)
-          }
-        }
-      }
-    },
-    series: topFileTypes.map(ft => ft.lines),
-    labels: topFileTypes.map(ft => ft.type),
-    colors: ['#ea5545', '#f46a9b', '#ffd33d', '#b33dc6', '#27aeef', '#2ea043', '#0366d6', '#79c0ff', '#e27300', '#666666'],
-    dataLabels: {
-      enabled: true,
-      formatter: function(val: number, opts: any) {
-        const name = opts.w.globals.labels[opts.seriesIndex]
-        return name + ': ' + val.toFixed(1) + '%'
-      },
-      style: {
-        fontSize: '12px',
-        fontFamily: 'inherit',
-        fontWeight: '600',
-        colors: ['#24292f']
-      }
-    },
-    legend: {
-      position: 'bottom',
-      labels: { colors: '#24292f' }
-    },
-    tooltip: {
-      theme: 'light',
-      y: {
-        formatter: function(val: number) {
-          return val.toLocaleString() + ' lines'
-        }
-      }
-    }
-  }
-
-  const chart = new (window as any).ApexCharts(container, options)
-  chart.render()
-  chartRefs['fileTypesChart'] = chart
-}
+// renderFileTypesChart moved to ./charts/file-types-chart.js
 
 function renderGrowthChart(linearSeries: LinearSeriesPoint[], timeSeries: TimeSeriesPoint[], commits: CommitData[]): void {
   const container = document.getElementById('growthChart')
@@ -2146,16 +2015,7 @@ export function updateCategoryChartAxis(mode: 'date' | 'commit'): void {
   renderCategoryLinesChart(data.timeSeries, data.commits)
 }
 
-// File type filtering functions
-function setFileTypeFilter(fileType: string): void {
-  setSelectedFileType(fileType)
-  updateChartsWithFileTypeFilter()
-}
-
-function clearFileTypeFilter(): void {
-  setSelectedFileType(null)
-  updateChartsWithFileTypeFilter()
-}
+// File type filtering functions now in chart-state.ts
 
 
 function updateChartsWithFileTypeFilter(): void {

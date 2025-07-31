@@ -1,8 +1,16 @@
 /**
  * Charts module index - maintains backward compatibility
- * Re-exports all chart functions from the monolithic charts.ts
+ * Re-exports all chart functions from both extracted modules and original charts.ts
  */
 
-// For now, re-export everything from the original charts.ts
-// This will be gradually replaced as we extract individual chart modules
-export * from '../charts.js'
+// Export extracted chart functions
+export { renderContributorsChart } from './contributors-chart.js'
+export { renderFileTypesChart } from './file-types-chart.js'
+
+// Export remaining functions from the original charts.ts (for now)
+export { 
+  renderAllCharts,
+  updateGrowthChartAxis,
+  updateCategoryChartAxis,
+  type ChartData
+} from '../charts.js'
