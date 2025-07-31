@@ -155,7 +155,8 @@ export const SIMPLIFIED_DEFAULTS: SimplifiedConfig = {
       '**/bin/**/*',
       '**/obj/**/*',
       '**/data/**/*',
-      
+      '**/docs/**/*',
+
       // Git files
       '.git/**/*',
       '**/.gitignore',
