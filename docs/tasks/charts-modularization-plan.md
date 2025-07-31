@@ -103,9 +103,40 @@ Current bundling approach works fine - just point to new index.ts:
    - File heatmap stores data in chartData for filtering
 
 ### Commit 4: Extract Complex Charts
-- `growth-chart.ts` - renderGrowthChart() (~347 lines)
-- `category-lines-chart.ts` - renderCategoryLinesChart() (~319 lines)
+- `growth-chart.ts` - renderGrowthChart() + buildGrowthChartOptions() + updateGrowthChartAxis() (~347 lines total)
+- `category-lines-chart.ts` - renderCategoryLinesChart() + updateCategoryChartAxis() (~319 lines total)
 - Test chart interactions
+
+**Implementation Details for Phase 4:**
+
+1. **Growth Chart Structure:**
+   - Main function: `renderGrowthChart()` (lines 199-226)
+   - Helper function: `buildGrowthChartOptions()` (lines 228-484)
+   - Export function: `updateGrowthChartAxis()` (lines 1643-1674)
+   - Features: Toggle between date/commit x-axis, localStorage for preferences
+   - Dependencies: ApexCharts, chartRefs, chartData
+
+2. **Category Lines Chart Structure:**
+   - Main function: `renderCategoryLinesChart()` (lines 488-806)
+   - Export function: `updateCategoryChartAxis()` (lines 1676-1705)
+   - Features: 
+     - Shows 5 categories: application, test, build, documentation, other
+     - Toggle between date/commit x-axis
+     - Complex data transformation for commit-based view
+     - Debug logging (should be removed in production)
+   - Dependencies: ApexCharts, chartRefs, chartData
+
+3. **Shared Patterns:**
+   - Both charts support date/commit axis switching
+   - Both store data in chartData for rebuilding
+   - Both use localStorage for persisting axis preferences
+   - Both have external update functions that need to be exported
+
+4. **Extraction Strategy:**
+   - Each chart module will export both render and update functions
+   - Remove debug console.log statements from category chart
+   - Maintain exact functionality including localStorage usage
+   - Keep the complex data transformation logic intact
 
 ### Commit 5: Extract Time-Critical Components
 - `time-slider-chart.ts` - renderTimeSliderChart() + updateTargetCharts() (~275 lines)
