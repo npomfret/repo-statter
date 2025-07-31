@@ -350,8 +350,12 @@ async function getByteChanges(repoPath: string, commitHash: string, config: Simp
     
     if (!oldBlob || !newBlob || !fileName) continue
     
-    // Skip excluded files
-    if (isFileExcluded(fileName, config.exclusions.patterns)) continue
+    // Skip excluded files, but allow renames through so cumulative-exclusion can handle them
+    if (fileName.includes(' => ')) {
+      // This is a rename, let it through for cumulative exclusion processing
+    } else if (isFileExcluded(fileName, config.exclusions.patterns)) {
+      continue
+    }
     
     // For deletions, oldBlob exists but newBlob is 0000000
     // For additions, oldBlob is 0000000 but newBlob exists
