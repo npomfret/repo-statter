@@ -6,6 +6,9 @@
 // Export extracted chart functions
 export { renderContributorsChart } from './contributors-chart.js'
 export { renderFileTypesChart } from './file-types-chart.js'
+export { renderWordCloudChart } from './word-cloud-chart.js'
+export { renderFileHeatmapChart } from './file-heatmap-chart.js'
+export { renderCommitActivityChart } from './commit-activity-chart.js'
 
 // Export remaining functions from the original charts.ts (for now)
 export { 
