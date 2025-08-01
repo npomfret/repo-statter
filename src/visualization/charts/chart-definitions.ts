@@ -23,8 +23,26 @@ export const CHART_DEFINITIONS: Record<string, ChartDefinition> = {
     height: 350,
     elementId: 'contributorsChart',
     dataFormatter: (contributors: ContributorStats[], options?: { limit?: number }) => {
+      if (!Array.isArray(contributors)) {
+        throw new Error(`contributors: Expected array of ContributorStats, got ${typeof contributors}`)
+      }
+      
       const limit = options?.limit ?? 10
       const topContributors = contributors.slice(0, limit)
+      
+      // Validate each contributor
+      topContributors.forEach((c, index) => {
+        if (!c) {
+          throw new Error(`contributors: Contributor at index ${index} is null/undefined`)
+        }
+        if (!c.name || typeof c.name !== 'string') {
+          throw new Error(`contributors: Contributor at index ${index} has invalid name: ${c.name}`)
+        }
+        if (typeof c.commits !== 'number' || c.commits < 0) {
+          throw new Error(`contributors: Contributor '${c.name}' has invalid commits count: ${c.commits}`)
+        }
+      })
+      
       return [{
         data: topContributors.map(c => ({
           x: c.name,
@@ -103,7 +121,29 @@ export const CHART_DEFINITIONS: Record<string, ChartDefinition> = {
     height: 350,
     elementId: 'fileTypesChart',
     dataFormatter: (fileTypes: FileTypeStats[]) => {
+      if (!Array.isArray(fileTypes)) {
+        throw new Error(`fileTypes: Expected array of FileTypeStats, got ${typeof fileTypes}`)
+      }
+      
       const topFileTypes = fileTypes.slice(0, 10)
+      
+      // Validate each file type
+      topFileTypes.forEach((ft, index) => {
+        if (!ft) {
+          throw new Error(`fileTypes: FileType at index ${index} is null/undefined`)
+        }
+        if (!ft.type || typeof ft.type !== 'string') {
+          throw new Error(`fileTypes: FileType at index ${index} has invalid type: ${ft.type}`)
+        }
+        if (typeof ft.lines !== 'number' || ft.lines < 0) {
+          throw new Error(`fileTypes: FileType '${ft.type}' has invalid lines count: ${ft.lines}`)
+        }
+      })
+      
+      if (topFileTypes.length === 0) {
+        throw new Error('fileTypes: No file type data available')
+      }
+      
       return {
         series: topFileTypes.map(ft => ft.lines),
         labels: topFileTypes.map(ft => ft.type),
@@ -165,17 +205,41 @@ export const CHART_DEFINITIONS: Record<string, ChartDefinition> = {
     height: 400,
     elementId: 'wordCloudChart',
     dataFormatter: (wordFrequency: WordFrequency[]) => {
-      const topWords = wordFrequency
-        .filter(w => w && w.word && w.count !== undefined && w.count !== null)
-        .slice(0, 50)
+      if (!Array.isArray(wordFrequency)) {
+        throw new Error(`wordCloud: Expected array of WordFrequency, got ${typeof wordFrequency}`)
+      }
+      
+      // Validate data early and show what's wrong
+      const invalidEntries: any[] = []
+      wordFrequency.forEach((w, index) => {
+        if (!w) {
+          invalidEntries.push({ index, entry: w, reason: 'null/undefined' })
+        } else if (typeof w.word !== 'string' || !w.word) {
+          invalidEntries.push({ index, entry: w, reason: `invalid word: ${w.word}` })
+        } else if (typeof w.count !== 'number' || w.count < 0) {
+          invalidEntries.push({ index, entry: w, reason: `invalid count: ${w.count}` })
+        }
+      })
+      
+      if (invalidEntries.length > 0) {
+        console.error('Invalid word frequency entries:', invalidEntries.slice(0, 5)) // Show first 5
+        // Don't throw - filter them out instead
+        console.warn(`wordCloud: Filtering out ${invalidEntries.length} invalid entries`)
+      }
+      
+      // Filter out invalid entries and take top 50 valid ones
+      const validWords = wordFrequency.filter(w => 
+        w && 
+        typeof w.word === 'string' && 
+        w.word.trim() !== '' && 
+        typeof w.count === 'number' && 
+        w.count >= 0
+      )
+      
+      const topWords = validWords.slice(0, 50)
       
       if (topWords.length === 0) {
-        return [{
-          data: [{
-            x: 'No data',
-            y: 1
-          }]
-        }]
+        throw new Error('wordCloud: No valid word frequency data after filtering')
       }
       
       return [{
@@ -236,6 +300,10 @@ export const CHART_DEFINITIONS: Record<string, ChartDefinition> = {
     height: 400,
     elementId: 'fileHeatmapChart',
     dataFormatter: (fileHeatData: FileHeatData[], options?: { maxFiles?: number, manager?: any }) => {
+      if (!Array.isArray(fileHeatData)) {
+        throw new Error(`fileHeatmap: Expected array of FileHeatData, got ${typeof fileHeatData}`)
+      }
+      
       const maxFiles = options?.maxFiles ?? 100
       
       // Apply file type filter if active
@@ -247,6 +315,19 @@ export const CHART_DEFINITIONS: Record<string, ChartDefinition> = {
       
       // Limit files and prepare data
       const limitedData = filteredData.slice(0, maxFiles)
+      
+      // Validate each file
+      limitedData.forEach((file, index) => {
+        if (!file) {
+          throw new Error(`fileHeatmap: File at index ${index} is null/undefined`)
+        }
+        if (!file.fileName || typeof file.fileName !== 'string') {
+          throw new Error(`fileHeatmap: File at index ${index} has invalid fileName: ${file.fileName}`)
+        }
+        if (typeof file.totalLines !== 'number' || file.totalLines < 0) {
+          throw new Error(`fileHeatmap: File '${file.fileName}' has invalid totalLines: ${file.totalLines}`)
+        }
+      })
       
       return [{
         data: limitedData.map(file => ({
@@ -325,9 +406,26 @@ export const CHART_DEFINITIONS: Record<string, ChartDefinition> = {
     height: 350,
     elementId: 'commitActivityChart',
     dataFormatter: (timeSeries: TimeSeriesPoint[]) => {
-      if (timeSeries.length === 0) {
-        return { series: [{ name: 'Commits', data: [] }], bucketType: 'Day' }
+      if (!Array.isArray(timeSeries)) {
+        throw new Error(`commitActivity: Expected array of TimeSeriesPoint, got ${typeof timeSeries}`)
       }
+      
+      if (timeSeries.length === 0) {
+        throw new Error('commitActivity: No time series data provided')
+      }
+      
+      // Validate each time series point
+      timeSeries.forEach((point, index) => {
+        if (!point) {
+          throw new Error(`commitActivity: TimeSeriesPoint at index ${index} is null/undefined`)
+        }
+        if (!point.date || typeof point.date !== 'string') {
+          throw new Error(`commitActivity: TimeSeriesPoint at index ${index} has invalid date: ${point.date}`)
+        }
+        if (typeof point.commits !== 'number' || point.commits < 0) {
+          throw new Error(`commitActivity: TimeSeriesPoint at ${point.date} has invalid commits count: ${point.commits}`)
+        }
+      })
 
       const dates = timeSeries.map(point => new Date(point.date).getTime())
       const minDate = Math.min(...dates)

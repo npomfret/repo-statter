@@ -25,7 +25,15 @@ export function createChart(
   }
   
   try {
-    const series = definition.dataFormatter(data, options)
+    let series
+    try {
+      series = definition.dataFormatter(data, options)
+    } catch (dataError: any) {
+      console.error(`Chart ${chartType} data validation failed:`, dataError.message)
+      console.error('Input data:', data)
+      console.error('Options:', options)
+      throw dataError
+    }
     
     // Special handling for charts with empty data
     if (chartType === 'fileHeatmap' && series[0]?.data?.length === 0) {
