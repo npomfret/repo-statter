@@ -2,6 +2,7 @@ import type { CommitData } from '../../git/parser.js'
 import type { TimeSeriesPoint, LinearSeriesPoint } from '../../data/types.js'
 import { formatBytes } from './chart-utils.js'
 import { chartRefs, chartData } from './chart-state.js'
+import { updateChartAxis, type ChartToggleConfig } from './chart-toggle-utils.js'
 
 export function renderGrowthChart(linearSeries: LinearSeriesPoint[], timeSeries: TimeSeriesPoint[], commits: CommitData[]): void {
   const container = document.getElementById('growthChart')
@@ -291,34 +292,25 @@ function buildGrowthChartOptions(xAxisMode: string, linearSeries: LinearSeriesPo
 }
 
 export function updateGrowthChartAxis(mode: 'date' | 'commit'): void {
-  const chart = chartRefs['growthChart']
   const data = chartData['growthChart']
-  if (!chart || !data) return
+  if (!data) return
 
-  localStorage.setItem('growthChartXAxis', mode)
+  const config: ChartToggleConfig = {
+    chartId: 'growthChart',
+    storageKey: 'growthChartXAxis',
+    elementPrefix: 'growthXAxis',
+    renderFunction: () => {
+      const container = document.getElementById('growthChart')
+      if (!container) return
 
-  // Update button states
-  const dateBtn = document.getElementById('growthXAxisDate')
-  const commitBtn = document.getElementById('growthXAxisCommit')
-
-  if (mode === 'date') {
-    dateBtn?.classList.add('active')
-    commitBtn?.classList.remove('active')
-  } else {
-    commitBtn?.classList.add('active')
-    dateBtn?.classList.remove('active')
+      const options = buildGrowthChartOptions(mode, data.linearSeries, data.timeSeries, data.commits)
+      const newChart = new (window as any).ApexCharts(container, options)
+      newChart.render()
+      chartRefs['growthChart'] = newChart
+    },
+    renderArgs: [],
+    updateButtonMethod: 'classList'
   }
 
-  // Destroy old chart
-  chart.destroy()
-
-  // Rebuild with new options
-  const container = document.getElementById('growthChart')
-  if (!container) return
-
-  const options = buildGrowthChartOptions(mode, data.linearSeries, data.timeSeries, data.commits)
-
-  const newChart = new (window as any).ApexCharts(container, options)
-  newChart.render()
-  chartRefs['growthChart'] = newChart
+  updateChartAxis(config, mode, chartRefs, chartData)
 }

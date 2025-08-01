@@ -17,6 +17,7 @@ import type {
   TopFilesData,
   TopFileStats
 } from '../data/types.js'
+import { updateChartAxis, createChartToggleHTML, type ChartToggleConfig } from './charts/chart-toggle-utils.js'
 // Remove getFileCategory import to avoid Node.js dependencies in browser bundle
 
 // Simple inline file categorization for browser
@@ -667,12 +668,7 @@ function renderUserCharts(topContributors: ContributorStats[], commits: CommitDa
           <p class="card-text small text-muted mb-0">${contributor.commits} commits • ${contributor.linesAdded + contributor.linesDeleted} lines changed</p>
         </div>
         <div class="card-body">
-          <div class="btn-group btn-group-sm mb-3" role="group">
-            <input type="radio" class="btn-check" name="userXAxis${index}" id="userXAxisDate${index}" value="date">
-            <label class="btn btn-outline-primary" for="userXAxisDate${index}">By Date</label>
-            <input type="radio" class="btn-check" name="userXAxis${index}" id="userXAxisCommit${index}" value="commit" checked>
-            <label class="btn btn-outline-primary" for="userXAxisCommit${index}">By Commit</label>
-          </div>
+          ${createChartToggleHTML(`userXAxis${index}`)}
           <div id="${chartId}" style="min-height: 250px;"></div>
           <div id="${activityChartId}" style="min-height: 200px; margin-top: 20px;"></div>
         </div>
@@ -686,8 +682,8 @@ function renderUserCharts(topContributors: ContributorStats[], commits: CommitDa
     renderUserActivityChart(activityChartId, userCommits)
     
     // Add event listeners for toggle buttons
-    const dateBtn = document.getElementById(`userXAxisDate${index}`)
-    const commitBtn = document.getElementById(`userXAxisCommit${index}`)
+    const dateBtn = document.getElementById(`userXAxis${index}Date`)
+    const commitBtn = document.getElementById(`userXAxis${index}Commit`)
     
     dateBtn?.addEventListener('change', () => {
       if ((dateBtn as HTMLInputElement).checked) {
@@ -822,8 +818,8 @@ async function renderUserChart(chartId: string, userCommits: CommitData[], timeS
     chartRefs[chartId] = chart
     
     // Set initial button state
-    const dateBtn = document.getElementById(`userXAxisDate${userIndex}`) as HTMLInputElement
-    const commitBtn = document.getElementById(`userXAxisCommit${userIndex}`) as HTMLInputElement
+    const dateBtn = document.getElementById(`userXAxis${userIndex}Date`) as HTMLInputElement
+    const commitBtn = document.getElementById(`userXAxis${userIndex}Commit`) as HTMLInputElement
     if (xAxisMode === 'date' && dateBtn && commitBtn) {
       dateBtn.checked = true
       commitBtn.checked = false
@@ -837,30 +833,18 @@ async function renderUserChart(chartId: string, userCommits: CommitData[], timeS
 }
 
 function updateUserChartAxis(chartId: string, mode: 'date' | 'commit', userIndex: number): void {
-  const chart = chartRefs[chartId]
   const data = chartData[chartId]
-  if (!chart || !data) return
+  if (!data) return
 
-  localStorage.setItem(`userChartXAxis${userIndex}`, mode)
-
-  // Update button states
-  const dateBtn = document.getElementById(`userXAxisDate${userIndex}`) as HTMLInputElement
-  const commitBtn = document.getElementById(`userXAxisCommit${userIndex}`) as HTMLInputElement
-
-  if (mode === 'date' && dateBtn && commitBtn) {
-    dateBtn.checked = true
-    commitBtn.checked = false
-  } else if (dateBtn && commitBtn) {
-    dateBtn.checked = false
-    commitBtn.checked = true
+  const config: ChartToggleConfig = {
+    chartId: chartId,
+    storageKey: `userChartXAxis${userIndex}`,
+    elementPrefix: `userXAxis${userIndex}`,
+    renderFunction: renderUserChart,
+    renderArgs: [chartId, data.userCommits, data.timeSeries, userIndex]
   }
 
-  // Destroy old chart
-  chart.destroy()
-  delete chartRefs[chartId]
-
-  // Rebuild with new axis mode
-  renderUserChart(chartId, data.userCommits, data.timeSeries, userIndex)
+  updateChartAxis(config, mode, chartRefs, chartData)
 }
 
 

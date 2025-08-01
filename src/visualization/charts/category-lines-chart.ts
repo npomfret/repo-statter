@@ -1,6 +1,7 @@
 import type { CommitData } from '../../git/parser.js'
 import type { TimeSeriesPoint } from '../../data/types.js'
 import { chartRefs, chartData } from './chart-state.js'
+import { updateChartAxis, type ChartToggleConfig } from './chart-toggle-utils.js'
 
 export function renderCategoryLinesChart(timeSeries: TimeSeriesPoint[], commits: CommitData[]): void {
   const container = document.getElementById('categoryLinesChart')
@@ -308,27 +309,17 @@ export function renderCategoryLinesChart(timeSeries: TimeSeriesPoint[], commits:
 }
 
 export function updateCategoryChartAxis(mode: 'date' | 'commit'): void {
-  const chart = chartRefs['category-lines-chart']
   const data = chartData['categoryChart']
-  if (!chart || !data) return
+  if (!data) return
 
-  localStorage.setItem('categoryChartXAxis', mode)
-
-  // Update button states
-  const dateBtn = document.getElementById('categoryXAxisDate') as HTMLInputElement
-  const commitBtn = document.getElementById('categoryXAxisCommit') as HTMLInputElement
-
-  if (mode === 'date' && dateBtn && commitBtn) {
-    dateBtn.checked = true
-    commitBtn.checked = false
-  } else if (dateBtn && commitBtn) {
-    dateBtn.checked = false
-    commitBtn.checked = true
+  const config: ChartToggleConfig = {
+    chartId: 'categoryChart',
+    storageKey: 'categoryChartXAxis',
+    elementPrefix: 'categoryXAxis',
+    renderFunction: renderCategoryLinesChart,
+    renderArgs: [data.timeSeries, data.commits],
+    chartRefKey: 'category-lines-chart'
   }
 
-  // Destroy old chart
-  chart.destroy()
-
-  // Rebuild with new axis mode
-  renderCategoryLinesChart(data.timeSeries, data.commits)
+  updateChartAxis(config, mode, chartRefs, chartData)
 }

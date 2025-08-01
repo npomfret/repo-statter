@@ -39,6 +39,7 @@ export async function bundleCharts(): Promise<string> {
   
   // Export the render function to global scope
   window.renderAllCharts = Charts.renderAllCharts;
+  window.updateGrowthChartAxis = Charts.updateGrowthChartAxis;
   window.updateCategoryChartAxis = Charts.updateCategoryChartAxis;
   window.updateUserChartAxis = Charts.updateUserChartAxis;
 })();
