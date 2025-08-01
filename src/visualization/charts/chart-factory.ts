@@ -8,7 +8,7 @@ export interface ChartInstance {
 }
 
 export function createChart(
-  chartType: keyof typeof CHART_DEFINITIONS,
+  chartType: string,
   data: any,
   options?: any
 ): ApexCharts | null {
