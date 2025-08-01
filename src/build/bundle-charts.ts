@@ -1,5 +1,4 @@
-import { readFile } from 'fs/promises'
-import { existsSync } from 'fs'
+import { build } from 'esbuild'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 import { BuildError } from '../utils/errors.js'
@@ -8,16 +7,30 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 export async function bundleCharts(): Promise<string> {
-  // Use pre-bundled charts script from build process
-  const projectRoot = join(__dirname, '../../')
-  const bundleFile = join(projectRoot, 'dist/charts-bundle.js')
-  
-  if (!existsSync(bundleFile)) {
-    throw new BuildError(`Pre-bundled charts script not found: ${bundleFile}. Run 'npm run build' first.`)
-  }
-  
   try {
-    const bundledCode = await readFile(bundleFile, 'utf-8')
+    const result = await build({
+      entryPoints: [join(__dirname, '../visualization/charts.ts')],
+      bundle: true,
+      format: 'iife',
+      globalName: 'Charts',
+      platform: 'browser',
+      target: 'es2020',
+      minify: false,
+      write: false,
+      external: ['ApexCharts', 'd3'],
+      define: {
+        'process.env.NODE_ENV': '"production"'
+      }
+    })
+
+    if (result.errors.length > 0) {
+      throw new BuildError(`Failed to bundle charts: ${result.errors[0]?.text || 'Unknown error'}`)
+    }
+
+    const bundledCode = result.outputFiles?.[0]?.text
+    if (!bundledCode) {
+      throw new BuildError('No output from chart bundling')
+    }
     
     // Wrap the bundle to make it work with our template injection
     const wrappedCode = `
@@ -32,6 +45,9 @@ export async function bundleCharts(): Promise<string> {
     
     return wrappedCode
   } catch (error) {
-    throw new BuildError('Failed to load pre-bundled charts script', error instanceof Error ? error : undefined)
+    if (error instanceof BuildError) {
+      throw error
+    }
+    throw new BuildError('Failed to bundle charts script', error instanceof Error ? error : undefined)
   }
 }
