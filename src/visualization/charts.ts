@@ -27,11 +27,6 @@ import { showChartError } from './charts/chart-utils.js'
 import { chartRefs, chartData, getSelectedFileType } from './charts/chart-state.js'
 
 // Import extracted chart functions
-import { renderContributorsChart } from './charts/contributors-chart.js'
-import { renderFileTypesChart } from './charts/file-types-chart.js'
-import { renderWordCloudChart } from './charts/word-cloud-chart.js'
-import { renderFileHeatmapChart } from './charts/file-heatmap-chart.js'
-import { renderCommitActivityChart } from './charts/commit-activity-chart.js'
 import { renderGrowthChart, updateGrowthChartAxis } from './charts/growth-chart.js'
 import { renderCategoryLinesChart, updateCategoryChartAxis } from './charts/category-lines-chart.js'
 
@@ -39,6 +34,9 @@ import { renderCategoryLinesChart, updateCategoryChartAxis } from './charts/cate
 import { ChartManager } from './charts/chart-manager.js'
 
 // Access selectedFileType through getter/setter functions for consistency
+
+// Store manager reference for file type filtering
+let globalManager: ChartManager | null = null
 
 export interface ChartData {
   commits: CommitData[]
@@ -71,6 +69,7 @@ export function renderAllCharts(data: ChartData): void {
 
   // Create chart manager for new system
   const manager = new ChartManager()
+  globalManager = manager
 
   // Render all charts in the correct order
   // Time slider must be last so it can reference other charts
@@ -1088,10 +1087,16 @@ function renderAwards(awards: NonNullable<ChartData['awards']>, githubUrl?: stri
 
 
 function updateChartsWithFileTypeFilter(): void {
-  // Update file heatmap chart
+  if (!globalManager) return
+  
+  // Update file heatmap chart using new system
   const heatmapData = chartData['fileHeatmapChart']
   if (heatmapData) {
-    renderFileHeatmapChart(heatmapData.fileHeatData, heatmapData.height, heatmapData.maxFiles)
+    globalManager.recreate('fileHeatmap', {
+      height: heatmapData.height,
+      maxFiles: heatmapData.maxFiles,
+      manager: globalManager
+    })
   }
 
   // Update all three top files charts if they exist and have data
