@@ -12,7 +12,10 @@ export function setupChartToggle(
   config: ToggleConfig
 ): void {
   const { chartId, togglePrefix, defaultMode = 'commit' } = config
-  const definition = CHART_DEFINITIONS[chartId]
+  
+  // For user charts, we need to check the base chart type
+  const chartType = chartId.startsWith('userChart') ? 'userChart' : chartId
+  const definition = CHART_DEFINITIONS[chartType]
   
   if (!definition?.hasAxisToggle) {
     console.warn(`Chart ${chartId} does not support axis toggle`)
@@ -29,7 +32,11 @@ export function setupChartToggle(
   }
   
   // Load saved preference or use default
-  const savedMode = localStorage.getItem(`${chartId}XAxis`) as 'date' | 'commit' | null
+  // For user charts, use the old localStorage key format for backwards compatibility
+  const storageKey = chartId.startsWith('userChart') 
+    ? `userChartXAxis${chartId.replace('userChart', '')}`
+    : `${chartId}XAxis`
+  const savedMode = localStorage.getItem(storageKey) as 'date' | 'commit' | null
   const initialMode = savedMode || defaultMode
   
   // Set initial button state
@@ -44,7 +51,7 @@ export function setupChartToggle(
   // Handler for axis change
   const handleAxisChange = (mode: 'date' | 'commit') => {
     // Save preference
-    localStorage.setItem(`${chartId}XAxis`, mode)
+    localStorage.setItem(storageKey, mode)
     
     // Get current chart data
     const chartData = manager.get(chartId)
@@ -53,11 +60,26 @@ export function setupChartToggle(
       return
     }
     
-    // Recreate chart with new axis mode
-    manager.recreate(chartId, { 
-      ...chartData.options,
-      axisMode: mode 
-    })
+    // For user charts, we need to update the data object with xAxisMode
+    if (chartId.startsWith('userChart')) {
+      // Update the xAxisMode in the data object
+      const updatedData = {
+        ...chartData.data,
+        xAxisMode: mode
+      }
+      // Destroy and recreate with new data
+      manager.destroy(chartId)
+      manager.create(chartType, updatedData, {
+        ...chartData.options,
+        xAxisMode: mode
+      })
+    } else {
+      // For other charts, use the standard recreate method
+      manager.recreate(chartId, { 
+        ...chartData.options,
+        axisMode: mode 
+      })
+    }
   }
   
   // Add event listeners
@@ -74,6 +96,27 @@ export function setupChartToggle(
   })
 }
 
+export function setupUserChartToggles(manager: ChartManager): void {
+  // Find all user chart divs (not activity charts)
+  const userCharts = document.querySelectorAll('[id^="userChart"]:not([id*="Activity"])')
+  
+  userCharts.forEach((chartElement) => {
+    const match = chartElement.id.match(/userChart(\d+)/)
+    if (match) {
+      const index = match[1]
+      const chartId = `userChart${index}`
+      const togglePrefix = `userXAxis${index}`
+      
+      // Set up toggle for this user chart
+      setupChartToggle(manager, {
+        chartId,
+        togglePrefix,
+        defaultMode: 'commit'
+      })
+    }
+  })
+}
+
 export function setupAllChartToggles(manager: ChartManager): void {
   // Setup toggles for charts that support them
   const toggleConfigs: ToggleConfig[] = [
@@ -84,4 +127,7 @@ export function setupAllChartToggles(manager: ChartManager): void {
   toggleConfigs.forEach(config => {
     setupChartToggle(manager, config)
   })
+  
+  // Setup user chart toggles
+  setupUserChartToggles(manager)
 }

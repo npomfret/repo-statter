@@ -42,13 +42,11 @@ function getSelectedFileType(): string | null {
 // Helper function for creating chart toggle HTML
 function createChartToggleHTML(toggleId: string): string {
   return `
-    <div class="d-flex justify-content-end mb-2">
-      <div class="btn-group btn-group-sm chart-toggle" role="group">
-        <input type="radio" class="btn-check" name="${toggleId}" id="${toggleId}Date" autocomplete="off">
-        <label class="btn btn-outline-secondary" for="${toggleId}Date">Date</label>
-        <input type="radio" class="btn-check" name="${toggleId}" id="${toggleId}Commit" autocomplete="off" checked>
-        <label class="btn btn-outline-secondary" for="${toggleId}Commit">Commit</label>
-      </div>
+    <div class="btn-group btn-group-sm mb-3" role="group">
+      <input type="radio" class="btn-check" name="${toggleId}" id="${toggleId}Date" value="date" autocomplete="off">
+      <label class="btn btn-outline-primary" for="${toggleId}Date">By Date</label>
+      <input type="radio" class="btn-check" name="${toggleId}" id="${toggleId}Commit" value="commit" autocomplete="off" checked>
+      <label class="btn btn-outline-primary" for="${toggleId}Commit">By Commit</label>
     </div>
   `
 }
@@ -777,33 +775,7 @@ function renderUserCharts(topContributors: ContributorStats[], commits: CommitDa
       chartId: activityChartId
     })
     
-    // Add event listeners for toggle buttons
-    const dateBtn = document.getElementById(`userXAxis${index}Date`)
-    const commitBtn = document.getElementById(`userXAxis${index}Commit`)
-    
-    dateBtn?.addEventListener('change', () => {
-      if ((dateBtn as HTMLInputElement).checked) {
-        localStorage.setItem(`userChartXAxis${index}`, 'date')
-        globalManager?.destroy(chartId)
-        globalManager?.create('userChart', { userCommits, xAxisMode: 'date', timeSeries }, { 
-          elementId: chartId, 
-          chartId: chartId,
-          xAxisMode: 'date' 
-        })
-      }
-    })
-    
-    commitBtn?.addEventListener('change', () => {
-      if ((commitBtn as HTMLInputElement).checked) {
-        localStorage.setItem(`userChartXAxis${index}`, 'commit')
-        globalManager?.destroy(chartId)
-        globalManager?.create('userChart', { userCommits, xAxisMode: 'commit', timeSeries }, { 
-          elementId: chartId, 
-          chartId: chartId,
-          xAxisMode: 'commit' 
-        })
-      }
-    })
+    // Toggle handling is now done by setupUserChartToggles in chart-toggles.ts
   })
 }
 

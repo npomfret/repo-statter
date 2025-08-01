@@ -7,6 +7,7 @@ export interface ManagedChart {
   definition: ChartDefinition
   data: any
   options?: any
+  chartType: string
 }
 
 export class ChartManager {
@@ -27,7 +28,8 @@ export class ChartManager {
       instance, 
       definition,
       data,
-      options
+      options,
+      chartType: definitionKey
     })
   }
 
@@ -196,6 +198,7 @@ export class ChartManager {
     
     // Create new instance with merged options
     const mergedOptions = { ...chart.options, ...newOptions }
-    return this.create(id, chart.data, mergedOptions)
+    // Use the stored chartType, not the id
+    return this.create(chart.chartType, chart.data, mergedOptions)
   }
 }

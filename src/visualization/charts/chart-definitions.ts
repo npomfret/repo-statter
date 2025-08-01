@@ -1380,7 +1380,8 @@ export const CHART_DEFINITIONS: Record<string, ChartDefinition> = {
           .map(([date, data]) => ({
             date: new Date(date).getTime(),
             added: data.added,
-            deleted: data.deleted
+            deleted: data.deleted,
+            net: data.added - data.deleted
           }))
 
         return [
@@ -1391,6 +1392,10 @@ export const CHART_DEFINITIONS: Record<string, ChartDefinition> = {
           {
             name: 'Lines Deleted',
             data: dateData.map(d => ({ x: d.date, y: -d.deleted }))
+          },
+          {
+            name: 'Net Lines',
+            data: dateData.map(d => ({ x: d.date, y: d.net }))
           }
         ]
       } else {
@@ -1404,7 +1409,8 @@ export const CHART_DEFINITIONS: Record<string, ChartDefinition> = {
           return {
             index: index + 1,
             added: cumulativeAdded,
-            deleted: -cumulativeDeleted
+            deleted: -cumulativeDeleted,
+            net: cumulativeAdded - cumulativeDeleted
           }
         })
 
@@ -1416,6 +1422,10 @@ export const CHART_DEFINITIONS: Record<string, ChartDefinition> = {
           {
             name: 'Lines Deleted', 
             data: commitData.map((d: any) => ({ x: d.index, y: d.deleted }))
+          },
+          {
+            name: 'Net Lines',
+            data: commitData.map((d: any) => ({ x: d.index, y: d.net }))
           }
         ]
       }
@@ -1445,7 +1455,7 @@ export const CHART_DEFINITIONS: Record<string, ChartDefinition> = {
           opacityTo: 0.3
         }
       },
-      colors: ['#90EE90', '#FFB6C1'],
+      colors: ['#90EE90', '#FFB6C1', '#87CEEB'],
       xaxis: config.xAxisMode === 'date' ? {
         type: 'datetime',
         title: {
@@ -1498,7 +1508,8 @@ export const CHART_DEFINITIONS: Record<string, ChartDefinition> = {
         horizontalAlign: 'right',
         fontSize: '12px',
         labels: { colors: '#24292f' }
-      }
+      },
+      dataLabels: { enabled: false }
     })
   },
 
@@ -1546,7 +1557,10 @@ export const CHART_DEFINITIONS: Record<string, ChartDefinition> = {
         type: 'bar',
         height: 200,
         toolbar: { show: false },
-        background: '#ffffff'
+        background: '#ffffff',
+        zoom: {
+          enabled: false
+        }
       },
       series,
       plotOptions: {
