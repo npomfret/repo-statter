@@ -26,7 +26,8 @@ export function createChart(
   
   try {
     const series = definition.dataFormatter(data, options)
-    const chartOptions = definition.optionsBuilder(series, options)
+    // Pass manager if provided in options for charts that need it (e.g., fileTypes)
+    const chartOptions = definition.optionsBuilder(series, options?.manager || options)
     
     const chart = new (window as any).ApexCharts(container, chartOptions)
     chart.render()

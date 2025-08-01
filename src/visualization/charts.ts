@@ -35,6 +35,9 @@ import { renderCommitActivityChart } from './charts/commit-activity-chart.js'
 import { renderGrowthChart, updateGrowthChartAxis } from './charts/growth-chart.js'
 import { renderCategoryLinesChart, updateCategoryChartAxis } from './charts/category-lines-chart.js'
 
+// New chart system imports
+import { ChartManager } from './charts/chart-manager.js'
+
 // Access selectedFileType through getter/setter functions for consistency
 
 export interface ChartData {
@@ -66,18 +69,33 @@ export function renderAllCharts(data: ChartData): void {
   // Make updateChartsWithFileTypeFilter globally available for chart modules
   ;(globalThis as any).updateChartsWithFileTypeFilter = updateChartsWithFileTypeFilter
 
+  // Create chart manager for new system
+  const manager = new ChartManager()
+
   // Render all charts in the correct order
   // Time slider must be last so it can reference other charts
 
+  // NEW SYSTEM: Contributors chart
   try {
-    renderContributorsChart(data.contributors, data.chartsConfig?.topContributorsLimit ?? 10)
+    const chart = manager.create('contributors', data.contributors, { 
+      limit: data.chartsConfig?.topContributorsLimit ?? 10 
+    })
+    if (chart) {
+      // Maintain backward compatibility
+      chartRefs['contributorsChart'] = chart
+    }
   } catch (error) {
     console.error('Failed to render contributors chart:', error)
     showChartError('contributorsChart', 'Contributors chart failed to load')
   }
 
+  // NEW SYSTEM: File types chart
   try {
-    renderFileTypesChart(data.fileTypes)
+    const chart = manager.create('fileTypes', data.fileTypes, { manager })
+    if (chart) {
+      chartRefs['fileTypesChart'] = chart
+      chartData['fileTypesChart'] = { fileTypes: data.fileTypes.slice(0, 10) }
+    }
   } catch (error) {
     console.error('Failed to render file types chart:', error)
     showChartError('fileTypesChart', 'File types chart failed to load')
@@ -97,22 +115,45 @@ export function renderAllCharts(data: ChartData): void {
     showChartError('categoryLinesChart', 'Category lines chart failed to load')
   }
 
+  // NEW SYSTEM: Commit activity chart
   try {
-    renderCommitActivityChart(data.timeSeries)
+    const chart = manager.create('commitActivity', data.timeSeries)
+    if (chart) {
+      chartRefs['commit-activity-chart'] = chart
+    }
   } catch (error) {
     console.error('Failed to render commit activity chart:', error)
     showChartError('commitActivityChart', 'Commit activity chart failed to load')
   }
 
+  // NEW SYSTEM: Word cloud chart
   try {
-    renderWordCloudChart(data.wordCloudData, data.chartsConfig?.wordCloudHeight ?? 400)
+    const chart = manager.create('wordCloud', data.wordCloudData, {
+      height: data.chartsConfig?.wordCloudHeight ?? 400
+    })
+    if (chart) {
+      chartRefs['wordCloudChart'] = chart
+    }
   } catch (error) {
     console.error('Failed to render word cloud:', error)
     showChartError('wordCloudChart', 'Word cloud failed to load')
   }
 
+  // NEW SYSTEM: File heatmap chart
   try {
-    renderFileHeatmapChart(data.fileHeatData, data.chartsConfig?.fileHeatmapHeight ?? 400, data.chartsConfig?.fileHeatmapMaxFiles ?? 100)
+    const chart = manager.create('fileHeatmap', data.fileHeatData, {
+      height: data.chartsConfig?.fileHeatmapHeight ?? 400,
+      maxFiles: data.chartsConfig?.fileHeatmapMaxFiles ?? 100,
+      manager
+    })
+    if (chart) {
+      chartRefs['fileHeatmapChart'] = chart
+      chartData['fileHeatmapChart'] = { 
+        fileHeatData: data.fileHeatData, 
+        height: data.chartsConfig?.fileHeatmapHeight ?? 400,
+        maxFiles: data.chartsConfig?.fileHeatmapMaxFiles ?? 100
+      }
+    }
   } catch (error) {
     console.error('Failed to render file heatmap:', error)
     showChartError('fileHeatmapChart', 'File heatmap failed to load')
