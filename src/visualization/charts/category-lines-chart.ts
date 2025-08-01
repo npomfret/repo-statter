@@ -126,7 +126,7 @@ export function renderCategoryLinesChart(timeSeries: TimeSeriesPoint[], commits:
       enabled: false
     },
     stroke: {
-      curve: 'smooth',
+      curve: 'straight',
       width: 2
     },
     xaxis: xAxisMode === 'date' ? {

@@ -107,7 +107,7 @@ function buildGrowthChartOptions(xAxisMode: string, linearSeries: LinearSeriesPo
         '#FFB6C1',  // Pastel pink for Lines of Code
         '#D8BFD8'   // Pastel lavender for Repository Size
       ],
-      stroke: { curve: 'smooth', width: 2 },
+      stroke: { curve: 'straight', width: 2 },
       fill: {
         type: 'gradient',
         gradient: {
@@ -205,7 +205,7 @@ function buildGrowthChartOptions(xAxisMode: string, linearSeries: LinearSeriesPo
         '#FFB6C1',  // Pastel pink for Lines of Code
         '#D8BFD8'   // Pastel lavender for Repository Size
       ],
-      stroke: { curve: 'smooth', width: 2 },
+      stroke: { curve: 'straight', width: 2 },
       fill: {
         type: 'gradient',
         gradient: {

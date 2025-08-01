@@ -137,7 +137,7 @@ export function renderAllCharts(data: ChartData): void {
   // Render user charts for top contributors
   const limit = data.chartsConfig?.topContributorsLimit ?? 10
   const topContributors = data.contributors.slice(0, limit)
-  renderUserCharts(topContributors, data.commits)
+  renderUserCharts(topContributors, data.commits, data.linearSeries, data.timeSeries)
 
   // Render awards if available
   if (data.awards) {
@@ -645,7 +645,7 @@ function updateTargetCharts(min: number, max: number, minDate: number, maxDate: 
   }
 }
 
-function renderUserCharts(topContributors: ContributorStats[], commits: CommitData[]): void {
+function renderUserCharts(topContributors: ContributorStats[], commits: CommitData[], _linearSeries: LinearSeriesPoint[], timeSeries: TimeSeriesPoint[]): void {
   const container = document.getElementById('userChartsContainer')
   if (!container) {
     return
@@ -654,8 +654,6 @@ function renderUserCharts(topContributors: ContributorStats[], commits: CommitDa
 
   topContributors.forEach((contributor, index) => {
     const userCommits = commits.filter(c => c.authorName === contributor.name)
-
-    const chartData = buildUserTimeSeriesData(userCommits)
 
     const chartId = `userChart${index}`
     const activityChartId = `userActivityChart${index}`
@@ -669,6 +667,12 @@ function renderUserCharts(topContributors: ContributorStats[], commits: CommitDa
           <p class="card-text small text-muted mb-0">${contributor.commits} commits • ${contributor.linesAdded + contributor.linesDeleted} lines changed</p>
         </div>
         <div class="card-body">
+          <div class="btn-group btn-group-sm mb-3" role="group">
+            <input type="radio" class="btn-check" name="userXAxis${index}" id="userXAxisDate${index}" value="date">
+            <label class="btn btn-outline-primary" for="userXAxisDate${index}">By Date</label>
+            <input type="radio" class="btn-check" name="userXAxis${index}" id="userXAxisCommit${index}" value="commit" checked>
+            <label class="btn btn-outline-primary" for="userXAxisCommit${index}">By Commit</label>
+          </div>
           <div id="${chartId}" style="min-height: 250px;"></div>
           <div id="${activityChartId}" style="min-height: 200px; margin-top: 20px;"></div>
         </div>
@@ -678,12 +682,28 @@ function renderUserCharts(topContributors: ContributorStats[], commits: CommitDa
     container.appendChild(chartCard)
 
     // Render charts immediately
-    renderUserChart(chartId, chartData)
+    renderUserChart(chartId, userCommits, timeSeries, index)
     renderUserActivityChart(activityChartId, userCommits)
+    
+    // Add event listeners for toggle buttons
+    const dateBtn = document.getElementById(`userXAxisDate${index}`)
+    const commitBtn = document.getElementById(`userXAxisCommit${index}`)
+    
+    dateBtn?.addEventListener('change', () => {
+      if ((dateBtn as HTMLInputElement).checked) {
+        updateUserChartAxis(chartId, 'date', index)
+      }
+    })
+    
+    commitBtn?.addEventListener('change', () => {
+      if ((commitBtn as HTMLInputElement).checked) {
+        updateUserChartAxis(chartId, 'commit', index)
+      }
+    })
   })
 }
 
-async function renderUserChart(chartId: string, data: ReturnType<typeof buildUserTimeSeriesData>): Promise<void> {
+async function renderUserChart(chartId: string, userCommits: CommitData[], timeSeries: TimeSeriesPoint[], userIndex: number): Promise<void> {
 
   const container = document.getElementById(chartId)
   if (!container) {
@@ -693,9 +713,21 @@ async function renderUserChart(chartId: string, data: ReturnType<typeof buildUse
     return
   }
 
+  // Import the utility function
+  const { buildUserTimeSeriesData } = await import('../utils/chart-data-builders.js')
+
+  // Store data for rebuilding
+  chartData[chartId] = { userCommits, timeSeries }
+  
+  // Get saved axis mode or default to 'commit'
+  const xAxisMode = localStorage.getItem(`userChartXAxis${userIndex}`) || 'commit'
+  
+  // Build data using the utility
+  const userChartData = buildUserTimeSeriesData(userCommits, xAxisMode, 'lines', timeSeries)
 
   const options = {
     chart: {
+      id: chartId,
       type: 'area',
       height: 250,
       toolbar: { show: false },
@@ -708,39 +740,33 @@ async function renderUserChart(chartId: string, data: ReturnType<typeof buildUse
     series: [
       {
         name: 'Lines Added',
-        data: data.addedData
+        data: userChartData.addedData
       },
       {
         name: 'Lines Removed',
-        data: data.removedData
+        data: userChartData.removedData
       },
       {
         name: 'Net Lines',
-        data: data.netData
+        data: userChartData.netData
       }
     ],
-    dataLabels: {
-      enabled: false
-    },
-    stroke: {
-      curve: 'smooth',
-      width: 2
-    },
-    fill: {
-      type: 'gradient',
-      gradient: {
-        shadeIntensity: 1,
-        opacityFrom: 0.5,
-        opacityTo: 0.1
-      }
-    },
-    xaxis: {
+    xaxis: xAxisMode === 'date' ? {
       type: 'datetime',
       labels: {
         datetimeUTC: false,
+        style: { colors: '#24292f' }
+      }
+    } : {
+      type: 'numeric',
+      title: {
+        text: 'Commit Index',
+        style: { color: '#24292f' }
+      },
+      labels: {
         style: { colors: '#24292f' },
         formatter: function(val: number) {
-          return new Date(val).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+          return Math.round(val).toString()
         }
       }
     },
@@ -756,20 +782,31 @@ async function renderUserChart(chartId: string, data: ReturnType<typeof buildUse
         }
       }
     },
-    colors: ['#98D8C8', '#FFB6C1', '#87CEEB'], // Pastel green for added, pastel pink for removed, pastel blue for net
+    colors: ['#98D8C8', '#FFB6C1', '#87CEEB'],
+    stroke: { curve: 'straight', width: 2 },
+    fill: {
+      type: 'gradient',
+      gradient: {
+        opacityFrom: 0.6,
+        opacityTo: 0.1
+      }
+    },
     legend: {
       position: 'top',
       horizontalAlign: 'left',
-      labels: {
-        colors: '#24292f'
-      }
+      labels: { colors: '#24292f' }
     },
     grid: { borderColor: '#e1e4e8' },
+    dataLabels: { enabled: false },
     tooltip: {
       theme: 'light',
       shared: true,
       intersect: false,
-      x: { format: 'dd MMM yyyy' },
+      x: xAxisMode === 'date' ? { format: 'dd MMM yyyy' } : {
+        formatter: function(val: number) {
+          return `Commit #${Math.round(val) + 1}`
+        }
+      },
       y: {
         formatter: function(val: number) {
           return Math.abs(val).toLocaleString() + ' lines'
@@ -783,63 +820,49 @@ async function renderUserChart(chartId: string, data: ReturnType<typeof buildUse
     const chart = new (window as any).ApexCharts(container, options)
     await chart.render()
     chartRefs[chartId] = chart
+    
+    // Set initial button state
+    const dateBtn = document.getElementById(`userXAxisDate${userIndex}`) as HTMLInputElement
+    const commitBtn = document.getElementById(`userXAxisCommit${userIndex}`) as HTMLInputElement
+    if (xAxisMode === 'date' && dateBtn && commitBtn) {
+      dateBtn.checked = true
+      commitBtn.checked = false
+    } else if (dateBtn && commitBtn) {
+      dateBtn.checked = false
+      commitBtn.checked = true
+    }
   } catch (error) {
     console.error(`Failed to render chart ${chartId}:`, error)
   }
 }
 
-interface UserChartData {
-  addedData: Array<{x: number, y: number}>
-  removedData: Array<{x: number, y: number}>
-  netData: Array<{x: number, y: number}>
+function updateUserChartAxis(chartId: string, mode: 'date' | 'commit', userIndex: number): void {
+  const chart = chartRefs[chartId]
+  const data = chartData[chartId]
+  if (!chart || !data) return
+
+  localStorage.setItem(`userChartXAxis${userIndex}`, mode)
+
+  // Update button states
+  const dateBtn = document.getElementById(`userXAxisDate${userIndex}`) as HTMLInputElement
+  const commitBtn = document.getElementById(`userXAxisCommit${userIndex}`) as HTMLInputElement
+
+  if (mode === 'date' && dateBtn && commitBtn) {
+    dateBtn.checked = true
+    commitBtn.checked = false
+  } else if (dateBtn && commitBtn) {
+    dateBtn.checked = false
+    commitBtn.checked = true
+  }
+
+  // Destroy old chart
+  chart.destroy()
+  delete chartRefs[chartId]
+
+  // Rebuild with new axis mode
+  renderUserChart(chartId, data.userCommits, data.timeSeries, userIndex)
 }
 
-function buildUserTimeSeriesData(commits: CommitData[]): UserChartData {
-  // Sort commits by date
-  const sortedCommits = [...commits].sort((a, b) => 
-    new Date(a.date).getTime() - new Date(b.date).getTime()
-  )
-  
-  const addedData: Array<{x: number, y: number}> = []
-  const removedData: Array<{x: number, y: number}> = []
-  const netData: Array<{x: number, y: number}> = []
-  
-  let cumulativeAdded = 0
-  let cumulativeRemoved = 0
-  
-  // Group commits by date
-  const commitsByDate = new Map<string, CommitData[]>()
-  sortedCommits.forEach(commit => {
-    const dateKey = new Date(commit.date).toISOString().split('T')[0]!
-    if (!commitsByDate.has(dateKey)) {
-      commitsByDate.set(dateKey, [])
-    }
-    commitsByDate.get(dateKey)!.push(commit)
-  })
-  
-  // Process each date in order
-  const sortedDates = Array.from(commitsByDate.keys()).sort()
-  
-  sortedDates.forEach(dateKey => {
-    const dayCommits = commitsByDate.get(dateKey)!
-    
-    // Sum lines for this day
-    const dayAdded = dayCommits.reduce((sum, c) => sum + c.linesAdded, 0)
-    const dayRemoved = dayCommits.reduce((sum, c) => sum + c.linesDeleted, 0)
-    
-    // Update cumulative totals
-    cumulativeAdded += dayAdded
-    cumulativeRemoved += dayRemoved
-    
-    // Add data points
-    const timestamp = new Date(dateKey).getTime()
-    addedData.push({ x: timestamp, y: cumulativeAdded })
-    removedData.push({ x: timestamp, y: -cumulativeRemoved }) // Negative for visual effect
-    netData.push({ x: timestamp, y: cumulativeAdded - cumulativeRemoved })
-  })
-  
-  return { addedData, removedData, netData }
-}
 
 async function renderUserActivityChart(chartId: string, commits: CommitData[]): Promise<void> {
   const container = document.getElementById(chartId)
@@ -1182,3 +1205,5 @@ function renderTopFilesChartWithFilter(topFilesData: TopFilesData, currentView: 
 }
 // Re-export update functions from extracted modules
 export { updateGrowthChartAxis, updateCategoryChartAxis } from './charts/index.js'
+// Export local update function
+export { updateUserChartAxis }
