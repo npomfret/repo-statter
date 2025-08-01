@@ -1,5 +1,5 @@
 import type { ApexOptions } from 'apexcharts'
-import type { ContributorStats, FileTypeStats, WordFrequency, FileHeatData, TimeSeriesPoint, LinearSeriesPoint } from '../../data/types.js'
+import type { ContributorStats, FileTypeStats, FileHeatData, TimeSeriesPoint, LinearSeriesPoint } from '../../data/types.js'
 import type { CommitData } from '../../git/parser.js'
 import { formatBytes } from './chart-utils.js'
 
@@ -206,49 +206,48 @@ export const CHART_DEFINITIONS: Record<string, ChartDefinition> = {
     hasAxisToggle: false,
     height: 400,
     elementId: 'wordCloudChart',
-    dataFormatter: (wordFrequency: WordFrequency[]) => {
+    dataFormatter: (wordFrequency: any[]) => {
       if (!Array.isArray(wordFrequency)) {
         throw new Error(`wordCloud: Expected array of WordFrequency, got ${typeof wordFrequency}`)
       }
       
-      // Validate data early and show what's wrong
-      const invalidEntries: any[] = []
-      wordFrequency.forEach((w, index) => {
+      // The data can come in two formats:
+      // 1. { text: string, size: number } from text/processor.ts
+      // 2. { word: string, count: number } from data/types.ts
+      // We need to handle both
+      
+      // Normalize the data to a consistent format
+      const normalizedData = wordFrequency.map((w, index) => {
         if (!w) {
-          invalidEntries.push({ index, entry: w, reason: 'null/undefined' })
-        } else if (typeof w.word !== 'string' || !w.word) {
-          invalidEntries.push({ index, entry: w, reason: `invalid word: ${w.word}` })
-        } else if (typeof w.count !== 'number' || w.count < 0) {
-          invalidEntries.push({ index, entry: w, reason: `invalid count: ${w.count}` })
+          console.warn(`wordCloud: Entry at index ${index} is null/undefined`)
+          return null
         }
-      })
+        
+        const text = w.text || w.word
+        const count = w.size !== undefined ? w.size : w.count
+        
+        if (typeof text !== 'string' || !text.trim()) {
+          console.warn(`wordCloud: Entry at index ${index} has invalid text: ${text}`)
+          return null
+        }
+        
+        if (typeof count !== 'number' || count < 0) {
+          console.warn(`wordCloud: Entry at index ${index} has invalid count: ${count}`)
+          return null
+        }
+        
+        return { x: text, y: count }
+      }).filter(w => w !== null)
       
-      if (invalidEntries.length > 0) {
-        console.error('Invalid word frequency entries:', invalidEntries.slice(0, 5)) // Show first 5
-        // Don't throw - filter them out instead
-        console.warn(`wordCloud: Filtering out ${invalidEntries.length} invalid entries`)
+      if (normalizedData.length === 0) {
+        throw new Error('wordCloud: No valid word frequency data after normalization')
       }
       
-      // Filter out invalid entries and take top 50 valid ones
-      const validWords = wordFrequency.filter(w => 
-        w && 
-        typeof w.word === 'string' && 
-        w.word.trim() !== '' && 
-        typeof w.count === 'number' && 
-        w.count >= 0
-      )
-      
-      const topWords = validWords.slice(0, 50)
-      
-      if (topWords.length === 0) {
-        throw new Error('wordCloud: No valid word frequency data after filtering')
-      }
+      // Take top 50 words
+      const topWords = normalizedData.slice(0, 50)
       
       return [{
-        data: topWords.map(w => ({
-          x: w.word,
-          y: w.count
-        }))
+        data: topWords
       }]
     },
     optionsBuilder: (series) => ({
