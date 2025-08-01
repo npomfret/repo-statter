@@ -1105,6 +1105,19 @@ function renderAwards(awards: NonNullable<ChartData['awards']>, githubUrl?: stri
 // Export functions for event handlers
 // File type filtering functions now in chart-state.ts
 
+function showFilterNotSupported(container: HTMLElement, chartName: string): void {
+  const currentFileType = getSelectedFileType()
+  container.innerHTML = `
+    <div class="d-flex align-items-center justify-content-center h-100 text-muted" style="height: 350px;">
+      <div class="text-center">
+        <i class="bi bi-funnel-fill fs-1 mb-3"></i>
+        <p class="mb-0">${chartName} filtering by "${currentFileType}" is not yet supported</p>
+        <p class="small">Clear the filter to see all data</p>
+      </div>
+    </div>
+  `
+}
+
 
 function updateChartsWithFileTypeFilter(): void {
   if (!globalManager) return
@@ -1112,6 +1125,70 @@ function updateChartsWithFileTypeFilter(): void {
   // Update manager's file type filter
   const currentFileType = getSelectedFileType()
   globalManager.setFileTypeFilter(currentFileType)
+  
+  const allData = chartData['allData']
+  if (!allData) return
+  
+  // For now, we can only properly filter charts that work with raw data
+  // Charts that use pre-calculated time series and linear series data
+  // would need the data to be recalculated with the filter applied
+  
+  // Show a message on charts that can't be filtered yet
+  if (currentFileType) {
+    // Growth chart - needs filtered time/linear series data
+    const growthContainer = document.getElementById('growthChart')
+    if (growthContainer && globalManager.get('growth')) {
+      showFilterNotSupported(growthContainer, 'Growth chart')
+    }
+    
+    // Category lines chart - needs filtered time series data  
+    const categoryContainer = document.getElementById('categoryLinesChart')
+    if (categoryContainer && globalManager.get('categoryLines')) {
+      showFilterNotSupported(categoryContainer, 'Category lines chart')
+    }
+    
+    // Commit activity chart - needs filtered time series data
+    const commitActivityContainer = document.getElementById('commitActivityChart')
+    if (commitActivityContainer && globalManager.get('commitActivity')) {
+      showFilterNotSupported(commitActivityContainer, 'Commit activity chart')
+    }
+  } else {
+    // Clear filter - destroy and recreate charts with original data
+    if (globalManager.get('growth')) {
+      globalManager.destroy('growth')
+      const savedMode = localStorage.getItem('growthChartXAxis') as 'date' | 'commit' | null
+      const axisMode = savedMode || 'commit'
+      const chart = globalManager.create('growth', { 
+        linearSeries: allData.linearSeries, 
+        timeSeries: allData.timeSeries, 
+        commits: allData.commits 
+      }, { axisMode })
+      if (chart) {
+        chartRefs['growthChart'] = chart
+      }
+    }
+    
+    if (globalManager.get('categoryLines')) {
+      globalManager.destroy('categoryLines')
+      const savedMode = localStorage.getItem('categoryChartXAxis') as 'date' | 'commit' | null
+      const axisMode = savedMode || 'commit'
+      const chart = globalManager.create('categoryLines', { 
+        timeSeries: allData.timeSeries, 
+        commits: allData.commits 
+      }, { axisMode })
+      if (chart) {
+        chartRefs['category-lines-chart'] = chart
+      }
+    }
+    
+    if (globalManager.get('commitActivity')) {
+      globalManager.destroy('commitActivity')
+      const chart = globalManager.create('commitActivity', allData.timeSeries)
+      if (chart) {
+        chartRefs['commit-activity-chart'] = chart
+      }
+    }
+  }
   
   // Update file heatmap chart using new system
   const heatmapData = chartData['fileHeatmapChart']
