@@ -1,5 +1,7 @@
 import type { ApexOptions } from 'apexcharts'
-import type { ContributorStats, FileTypeStats, WordFrequency, FileHeatData, TimeSeriesPoint } from '../../data/types.js'
+import type { ContributorStats, FileTypeStats, WordFrequency, FileHeatData, TimeSeriesPoint, LinearSeriesPoint } from '../../data/types.js'
+import type { CommitData } from '../../git/parser.js'
+import { formatBytes } from './chart-utils.js'
 
 export interface ChartDefinition {
   type: 'line' | 'area' | 'bar' | 'donut' | 'heatmap' | 'treemap' | 'radialBar' | 'rangeBar'
@@ -552,5 +554,572 @@ export const CHART_DEFINITIONS: Record<string, ChartDefinition> = {
         }
       }
     })
+  },
+
+  growth: {
+    type: 'area',
+    hasAxisToggle: true,
+    defaultAxis: 'commit',
+    height: 350,
+    elementId: 'growthChart',
+    dataFormatter: (data: { linearSeries: LinearSeriesPoint[], timeSeries: TimeSeriesPoint[], commits: CommitData[] }, options?: { axisMode?: 'date' | 'commit' }) => {
+      const mode = options?.axisMode || 'commit'
+      
+      if (!data.linearSeries || !Array.isArray(data.linearSeries)) {
+        throw new Error('growth: linearSeries must be an array')
+      }
+      if (!data.timeSeries || !Array.isArray(data.timeSeries)) {
+        throw new Error('growth: timeSeries must be an array')
+      }
+      if (!data.commits || !Array.isArray(data.commits)) {
+        throw new Error('growth: commits must be an array')
+      }
+      
+      if (mode === 'date') {
+        // Validate time series data
+        data.timeSeries.forEach((point, index) => {
+          if (!point) {
+            throw new Error(`growth: TimeSeriesPoint at index ${index} is null/undefined`)
+          }
+          if (!point.date || typeof point.date !== 'string') {
+            throw new Error(`growth: TimeSeriesPoint at index ${index} has invalid date: ${point.date}`)
+          }
+          if (!point.cumulativeLines || typeof point.cumulativeLines.total !== 'number') {
+            throw new Error(`growth: TimeSeriesPoint at ${point.date} has invalid cumulativeLines`)
+          }
+          if (!point.cumulativeBytes || typeof point.cumulativeBytes.total !== 'number') {
+            throw new Error(`growth: TimeSeriesPoint at ${point.date} has invalid cumulativeBytes`)
+          }
+        })
+        
+        return {
+          series: [
+            {
+              name: 'Lines of Code',
+              data: data.timeSeries.map(point => ({
+                x: new Date(point.date).getTime(),
+                y: point.cumulativeLines.total
+              })),
+              yAxisIndex: 0
+            },
+            {
+              name: 'Repository Size',
+              data: data.timeSeries.map(point => ({
+                x: new Date(point.date).getTime(),
+                y: point.cumulativeBytes.total
+              })),
+              yAxisIndex: 1
+            }
+          ],
+          mode,
+          linearSeries: data.linearSeries,
+          commits: data.commits
+        }
+      } else {
+        // Validate linear series data
+        data.linearSeries.forEach((point, index) => {
+          if (!point) {
+            throw new Error(`growth: LinearSeriesPoint at index ${index} is null/undefined`)
+          }
+          if (typeof point.commitIndex !== 'number' || point.commitIndex < 0) {
+            throw new Error(`growth: LinearSeriesPoint at index ${index} has invalid commitIndex: ${point.commitIndex}`)
+          }
+          if (typeof point.cumulativeLines !== 'number' || point.cumulativeLines < 0) {
+            throw new Error(`growth: LinearSeriesPoint at index ${index} has invalid cumulativeLines: ${point.cumulativeLines}`)
+          }
+          if (typeof point.cumulativeBytes !== 'number' || point.cumulativeBytes < 0) {
+            throw new Error(`growth: LinearSeriesPoint at index ${index} has invalid cumulativeBytes: ${point.cumulativeBytes}`)
+          }
+        })
+        
+        return {
+          series: [
+            {
+              name: 'Lines of Code',
+              data: data.linearSeries.map(point => ({
+                x: point.commitIndex + 1,
+                y: point.cumulativeLines
+              })),
+              yAxisIndex: 0
+            },
+            {
+              name: 'Repository Size',
+              data: data.linearSeries.map(point => ({
+                x: point.commitIndex + 1,
+                y: point.cumulativeBytes
+              })),
+              yAxisIndex: 1
+            }
+          ],
+          mode,
+          linearSeries: data.linearSeries,
+          commits: data.commits
+        }
+      }
+    },
+    optionsBuilder: (data) => {
+      const baseOptions = {
+        chart: {
+          id: 'growth-chart',
+          type: 'area' as const,
+          height: 350,
+          toolbar: { show: false },
+          background: '#ffffff',
+          zoom: {
+            enabled: true,
+            allowMouseWheelZoom: false
+          }
+        },
+        series: data.series,
+        colors: [
+          '#FFB6C1',  // Pastel pink for Lines of Code
+          '#D8BFD8'   // Pastel lavender for Repository Size
+        ],
+        stroke: { curve: 'straight' as const, width: 2 },
+        fill: {
+          type: 'gradient',
+          gradient: {
+            opacityFrom: 0.6,
+            opacityTo: 0.1
+          }
+        },
+        legend: {
+          position: 'top' as const,
+          horizontalAlign: 'left' as const,
+          labels: { colors: '#24292f' }
+        },
+        grid: { borderColor: '#e1e4e8' },
+        dataLabels: { enabled: false },
+        tooltip: {
+          theme: 'light'
+        }
+      }
+      
+      if (data.mode === 'date') {
+        return {
+          ...baseOptions,
+          xaxis: {
+            type: 'datetime',
+            title: {
+              text: 'Date',
+              style: { color: '#24292f' }
+            },
+            labels: {
+              datetimeUTC: false,
+              style: { colors: '#24292f' }
+            }
+          },
+          yaxis: [
+            {
+              title: {
+                text: 'Lines of Code',
+                style: { color: '#24292f' }
+              },
+              min: 0,
+              labels: {
+                style: { colors: '#24292f' },
+                formatter: function(val: number) {
+                  return val.toLocaleString()
+                }
+              }
+            },
+            {
+              opposite: true,
+              title: {
+                text: 'Repository Size',
+                style: { color: '#24292f' }
+              },
+              min: 0,
+              labels: {
+                formatter: formatBytes,
+                style: { colors: '#24292f' }
+              }
+            }
+          ],
+          tooltip: {
+            theme: 'light',
+            x: { format: 'dd MMM yyyy' }
+          }
+        }
+      } else {
+        // Commit mode
+        return {
+          ...baseOptions,
+          xaxis: {
+            type: 'numeric',
+            title: {
+              text: 'Commit Number',
+              style: { color: '#24292f' }
+            },
+            labels: {
+              style: { colors: '#24292f' },
+              formatter: function(val: string) {
+                return Math.round(Number(val)).toString()
+              }
+            },
+            min: 1,
+            max: data.linearSeries.length
+          },
+          yaxis: [
+            {
+              title: {
+                text: 'Lines of Code',
+                style: { color: '#24292f' }
+              },
+              min: 0,
+              labels: {
+                style: { colors: '#24292f' },
+                formatter: function(val: number) {
+                  return val.toLocaleString()
+                }
+              }
+            },
+            {
+              opposite: true,
+              title: {
+                text: 'Repository Size',
+                style: { color: '#24292f' }
+              },
+              min: 0,
+              labels: {
+                formatter: formatBytes,
+                style: { colors: '#24292f' }
+              }
+            }
+          ],
+          tooltip: {
+            theme: 'light',
+            custom: function({dataPointIndex}: any) {
+              const point = data.linearSeries[dataPointIndex]
+              if (!point || point.sha === 'start') return ''
+
+              const commit = data.commits.find((c: CommitData) => c.sha === point.sha)
+              if (!commit) return ''
+
+              const truncateMessage = (msg: string, maxLength: number) => {
+                if (msg.length <= maxLength) return msg
+                return msg.substring(0, maxLength) + '...'
+              }
+
+              let linesDisplay = ''
+              const added = commit.linesAdded
+              const deleted = commit.linesDeleted
+              const net = point.netLines
+
+              if (added > 0) {
+                linesDisplay += '+' + added
+              }
+              if (deleted > 0) {
+                if (linesDisplay !== '') {
+                  linesDisplay += ' / '
+                }
+                linesDisplay += '-' + deleted
+              }
+
+              let netDisplay = ''
+              if (added > 0 && deleted > 0) {
+                netDisplay = ' (Net: ' + (net > 0 ? '+' : '') + net + ')'
+              } else if (added === 0 && deleted === 0) {
+                linesDisplay = '0'
+              }
+
+              const bytesAdded = commit.bytesAdded || 0
+              const bytesDeleted = commit.bytesDeleted || 0
+              let bytesDisplay = ''
+              if (bytesAdded > 0) {
+                bytesDisplay += '+' + formatBytes(bytesAdded)
+              }
+              if (bytesDeleted > 0) {
+                if (bytesDisplay !== '') {
+                  bytesDisplay += ' / '
+                }
+                bytesDisplay += '-' + formatBytes(bytesDeleted)
+              }
+              if (bytesAdded === 0 && bytesDeleted === 0) {
+                bytesDisplay = '0 bytes'
+              }
+
+              return '<div class="custom-tooltip">' +
+                  '<div class="tooltip-title">Commit #' + (point.commitIndex + 1) + '</div>' +
+                  '<div class="tooltip-content">' +
+                  '<div><strong>SHA:</strong> ' + commit.sha.substring(0, 7) + '</div>' +
+                  '<div><strong>Author:</strong> ' + commit.authorName + '</div>' +
+                  '<div><strong>Date:</strong> ' + new Date(commit.date).toLocaleString() + '</div>' +
+                  '<div class="tooltip-message"><strong>Message:</strong> ' + truncateMessage(commit.message, 200) + '</div>' +
+                  '<div><strong>Lines:</strong> ' + linesDisplay + netDisplay + '</div>' +
+                  '<div><strong>Total Lines:</strong> ' + point.cumulativeLines.toLocaleString() + '</div>' +
+                  '<div><strong>Bytes:</strong> ' + bytesDisplay + '</div>' +
+                  '<div><strong>Total Size:</strong> ' + formatBytes(point.cumulativeBytes) + '</div>' +
+                  '</div></div>'
+            }
+          }
+        }
+      }
+    }
+  },
+
+  categoryLines: {
+    type: 'line',
+    hasAxisToggle: true,
+    defaultAxis: 'commit',
+    height: 350,
+    elementId: 'categoryLinesChart',
+    dataFormatter: (data: { timeSeries: TimeSeriesPoint[], commits: CommitData[] }, options?: { axisMode?: 'date' | 'commit' }) => {
+      const mode = options?.axisMode || 'commit'
+      
+      if (!data.timeSeries || !Array.isArray(data.timeSeries)) {
+        throw new Error('categoryLines: timeSeries must be an array')
+      }
+      if (!data.commits || !Array.isArray(data.commits)) {
+        throw new Error('categoryLines: commits must be an array')
+      }
+      
+      const categories = ['application', 'test', 'build', 'documentation', 'other'] as const
+      const categoryNames = {
+        application: 'Application',
+        test: 'Test',
+        build: 'Build',
+        documentation: 'Documentation',
+        other: 'Other'
+      }
+      const categoryColors = {
+        application: '#FFB6C1',
+        test: '#D8BFD8',
+        build: '#FFDAB9',
+        documentation: '#98D8C8',
+        other: '#F0E68C'
+      }
+      
+      const series: any[] = []
+      
+      if (mode === 'date') {
+        // Validate time series data
+        data.timeSeries.forEach((point, index) => {
+          if (!point) {
+            throw new Error(`categoryLines: TimeSeriesPoint at index ${index} is null/undefined`)
+          }
+          if (!point.date || typeof point.date !== 'string') {
+            throw new Error(`categoryLines: TimeSeriesPoint at index ${index} has invalid date: ${point.date}`)
+          }
+          if (!point.cumulativeLines || typeof point.cumulativeLines !== 'object') {
+            throw new Error(`categoryLines: TimeSeriesPoint at ${point.date} has invalid cumulativeLines`)
+          }
+        })
+        
+        for (const category of categories) {
+          const data2 = data.timeSeries.map(point => ({
+            x: new Date(point.date).getTime(),
+            y: point.cumulativeLines[category] || 0
+          }))
+          
+          series.push({
+            name: categoryNames[category],
+            data: data2,
+            color: categoryColors[category]
+          })
+        }
+      } else {
+        // Commit mode - build commit index map
+        const commitIndexMap = new Map<string, number>()
+        data.commits.forEach((commit, index) => {
+          commitIndexMap.set(commit.sha, index)
+        })
+        
+        // Create arrays for each category indexed by commit
+        const commitCumulatives: { [category: string]: (number | null)[] } = {
+          application: new Array(data.commits.length).fill(null),
+          test: new Array(data.commits.length).fill(null),
+          build: new Array(data.commits.length).fill(null),
+          documentation: new Array(data.commits.length).fill(null),
+          other: new Array(data.commits.length).fill(null)
+        }
+        
+        // Map time series points to commit indices
+        data.timeSeries.forEach(point => {
+          // Find the latest commit index for this time point
+          let latestIndex = -1
+          if (point.commitShas && Array.isArray(point.commitShas)) {
+            point.commitShas.forEach(sha => {
+              const index = commitIndexMap.get(sha)
+              if (index !== undefined && index > latestIndex) {
+                latestIndex = index
+              }
+            })
+          }
+          
+          if (latestIndex >= 0) {
+            // Update cumulative values for this commit index
+            for (const category of categories) {
+              commitCumulatives[category]![latestIndex] = point.cumulativeLines[category] || 0
+            }
+          }
+        })
+        
+        // Fill in gaps by carrying forward the last known value
+        for (const category of categories) {
+          let lastValue = 0
+          for (let i = 0; i < data.commits.length; i++) {
+            if (commitCumulatives[category]![i] === null) {
+              commitCumulatives[category]![i] = lastValue
+            } else {
+              lastValue = commitCumulatives[category]![i]!
+            }
+          }
+        }
+        
+        // Create series for each category
+        for (const category of categories) {
+          const data2 = commitCumulatives[category]!.map((value, index) => ({
+            x: index,
+            y: value ?? 0
+          }))
+          
+          series.push({
+            name: categoryNames[category],
+            data: data2,
+            color: categoryColors[category]
+          })
+        }
+      }
+      
+      return { series, mode, commits: data.commits }
+    },
+    optionsBuilder: (data) => {
+      const baseOptions = {
+        chart: {
+          id: 'category-lines-chart',
+          type: 'line' as const,
+          height: 350,
+          toolbar: { show: false },
+          background: '#ffffff',
+          zoom: {
+            enabled: true,
+            allowMouseWheelZoom: false,
+            type: 'x' as const
+          }
+        },
+        series: data.series,
+        dataLabels: {
+          enabled: false
+        },
+        stroke: {
+          curve: 'straight' as const,
+          width: 2
+        },
+        legend: {
+          position: 'top' as const,
+          horizontalAlign: 'left' as const,
+          labels: { colors: '#24292f' }
+        },
+        grid: {
+          borderColor: '#e1e4e8'
+        },
+        tooltip: {
+          theme: 'light'
+        }
+      }
+      
+      if (data.mode === 'date') {
+        return {
+          ...baseOptions,
+          xaxis: {
+            type: 'datetime',
+            title: {
+              text: 'Date',
+              style: { color: '#24292f' }
+            },
+            labels: {
+              datetimeFormatter: {
+                year: 'yyyy',
+                month: 'MMM yyyy',
+                day: 'dd MMM',
+                hour: 'HH:mm'
+              },
+              datetimeUTC: false,
+              style: { colors: '#24292f' }
+            }
+          },
+          yaxis: {
+            title: {
+              text: 'Lines of Code',
+              style: { color: '#24292f' }
+            },
+            min: 0,
+            labels: {
+              style: { colors: '#24292f' },
+              formatter: function(val: number) {
+                return val.toLocaleString()
+              }
+            }
+          },
+          tooltip: {
+            theme: 'light',
+            x: {
+              format: 'dd MMM yyyy'
+            },
+            y: {
+              formatter: function(val: number) {
+                return val ? val.toLocaleString() + ' lines' : '0 lines'
+              }
+            }
+          }
+        }
+      } else {
+        // Commit mode
+        return {
+          ...baseOptions,
+          xaxis: {
+            type: 'numeric',
+            title: {
+              text: 'Commit Number',
+              style: { color: '#24292f' }
+            },
+            labels: {
+              style: { colors: '#24292f' },
+              formatter: function(val: string) {
+                return Math.round(Number(val)).toString()
+              }
+            },
+            tickAmount: 10
+          },
+          yaxis: {
+            title: {
+              text: 'Lines of Code',
+              style: { color: '#24292f' }
+            },
+            min: 0,
+            labels: {
+              style: { colors: '#24292f' },
+              formatter: function(val: number) {
+                return val.toLocaleString()
+              }
+            }
+          },
+          tooltip: {
+            theme: 'light',
+            custom: function({dataPointIndex, seriesIndex, w}: any) {
+              const commitIndex = dataPointIndex
+              if (commitIndex < 0 || commitIndex >= data.commits.length) return ''
+              
+              const commit = data.commits[commitIndex]
+              const seriesName = w.config.series[seriesIndex].name
+              const value = w.config.series[seriesIndex].data[dataPointIndex].y
+              
+              return `
+                <div class="custom-tooltip">
+                  <div class="tooltip-title">Commit #${commitIndex + 1}</div>
+                  <div class="tooltip-content">
+                    <div><strong>SHA:</strong> ${commit.sha.substring(0, 7)}</div>
+                    <div><strong>Author:</strong> ${commit.authorName}</div>
+                    <div><strong>Date:</strong> ${new Date(commit.date).toLocaleString()}</div>
+                    <div><strong>${seriesName}:</strong> ${value.toLocaleString()} lines</div>
+                  </div>
+                </div>
+              `
+            }
+          }
+        }
+      }
+    }
   }
 }

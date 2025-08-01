@@ -27,11 +27,11 @@ import { showChartError } from './charts/chart-utils.js'
 import { chartRefs, chartData, getSelectedFileType } from './charts/chart-state.js'
 
 // Import extracted chart functions
-import { renderGrowthChart, updateGrowthChartAxis } from './charts/growth-chart.js'
-import { renderCategoryLinesChart, updateCategoryChartAxis } from './charts/category-lines-chart.js'
+// Category lines chart now in new system
 
 // New chart system imports
 import { ChartManager } from './charts/chart-manager.js'
+import { setupAllChartToggles } from './charts/chart-toggles.js'
 
 // Access selectedFileType through getter/setter functions for consistency
 
@@ -100,15 +100,49 @@ export function renderAllCharts(data: ChartData): void {
     showChartError('fileTypesChart', 'File types chart failed to load')
   }
 
+  // NEW SYSTEM: Growth chart
   try {
-    renderGrowthChart(data.linearSeries, data.timeSeries, data.commits)
+    const savedMode = localStorage.getItem('growthChartXAxis') as 'date' | 'commit' | null
+    const axisMode = savedMode || 'commit'
+    const chart = manager.create('growth', { linearSeries: data.linearSeries, timeSeries: data.timeSeries, commits: data.commits }, { axisMode })
+    if (chart) {
+      chartRefs['growthChart'] = chart
+      
+      // Set initial button state
+      const dateBtn = document.getElementById('growthXAxisDate') as HTMLInputElement
+      const commitBtn = document.getElementById('growthXAxisCommit') as HTMLInputElement
+      if (axisMode === 'date' && dateBtn && commitBtn) {
+        dateBtn.checked = true
+        commitBtn.checked = false
+      } else if (dateBtn && commitBtn) {
+        dateBtn.checked = false
+        commitBtn.checked = true
+      }
+    }
   } catch (error) {
     console.error('Failed to render growth chart:', error)
     showChartError('growthChart', 'Growth chart failed to load')
   }
 
+  // NEW SYSTEM: Category lines chart
   try {
-    renderCategoryLinesChart(data.timeSeries, data.commits)
+    const savedMode = localStorage.getItem('categoryChartXAxis') as 'date' | 'commit' | null
+    const axisMode = savedMode || 'commit'
+    const chart = manager.create('categoryLines', { timeSeries: data.timeSeries, commits: data.commits }, { axisMode })
+    if (chart) {
+      chartRefs['category-lines-chart'] = chart
+      
+      // Set initial button state
+      const dateBtn = document.getElementById('categoryXAxisDate') as HTMLInputElement
+      const commitBtn = document.getElementById('categoryXAxisCommit') as HTMLInputElement
+      if (axisMode === 'date' && dateBtn && commitBtn) {
+        dateBtn.checked = true
+        commitBtn.checked = false
+      } else if (dateBtn && commitBtn) {
+        dateBtn.checked = false
+        commitBtn.checked = true
+      }
+    }
   } catch (error) {
     console.error('Failed to render category lines chart:', error)
     showChartError('categoryLinesChart', 'Category lines chart failed to load')
@@ -188,31 +222,13 @@ export function renderAllCharts(data: ChartData): void {
 
   // Set up event handlers for interactive elements
   setupEventHandlers()
+  
+  // Set up chart toggles using the new system
+  setupAllChartToggles(manager)
 }
 
 function setupEventHandlers(): void {
-
-  // Growth chart axis toggle
-  const growthRadios = document.querySelectorAll('input[name="growthXAxis"]')
-  growthRadios.forEach(radio => {
-    radio.addEventListener('change', (e) => {
-      const target = e.target as HTMLInputElement
-      if (target.checked) {
-        updateGrowthChartAxis(target.value as 'date' | 'commit')
-      }
-    })
-  })
-
-  // Category lines chart axis toggle
-  const categoryRadios = document.querySelectorAll('input[name="categoryXAxis"]')
-  categoryRadios.forEach(radio => {
-    radio.addEventListener('change', (e) => {
-      const target = e.target as HTMLInputElement
-      if (target.checked) {
-        updateCategoryChartAxis(target.value as 'date' | 'commit')
-      }
-    })
-  })
+  // Chart toggles are now handled by setupAllChartToggles
 
   // Clear Filters button
   const clearFiltersBtn = document.getElementById('clearFilters')
@@ -677,12 +693,15 @@ function updateTargetCharts(min: number, max: number, minDate: number, maxDate: 
 
     // Zoom user charts (they are always date-based)
     Object.keys(chartRefs).forEach(key => {
-      if (key.startsWith('userChart') || key.startsWith('userActivityChart')) {
+      if (key.startsWith('userChart')) {
+        // Only zoom line charts, not activity bar charts
         const userChart = chartRefs[key]
         if (userChart) {
           userChart.zoomX(min, max)
         }
       }
+      // Skip userActivityChart zooming as it uses daily aggregation
+      // and zooming can cause display issues with bar charts
     })
   }
 }
