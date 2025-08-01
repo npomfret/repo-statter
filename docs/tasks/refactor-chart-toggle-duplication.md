@@ -9,10 +9,14 @@ The codebase has significant duplication across three chart types (growth, categ
 3. Similar update functions that differ only in IDs and function names
 4. Repeated chart rebuild logic
 
-## Current Duplication
+## Current Duplication Analysis
 
 ### 1. Toggle Button HTML Pattern
-Each chart generates the same button group structure:
+- **Growth Chart**: Static HTML in template.html with IDs `growthXAxisDate` and `growthXAxisCommit`
+- **Category Chart**: Static HTML in template.html with IDs `categoryXAxisDate` and `categoryXAxisCommit`
+- **User Charts**: Dynamic HTML generated in charts.ts with IDs `userXAxisDate${index}` and `userXAxisCommit${index}`
+
+All follow identical structure:
 ```html
 <div class="btn-group btn-group-sm mb-3" role="group">
   <input type="radio" class="btn-check" name="[chart]XAxis" id="[chart]XAxisDate" value="date">
@@ -23,7 +27,7 @@ Each chart generates the same button group structure:
 ```
 
 ### 2. Event Listener Pattern
-Each chart sets up listeners the same way:
+Each chart sets up listeners identically:
 ```typescript
 dateBtn?.addEventListener('change', () => {
   if ((dateBtn as HTMLInputElement).checked) {
@@ -33,95 +37,195 @@ dateBtn?.addEventListener('change', () => {
 ```
 
 ### 3. Update Function Pattern
-All update functions follow this structure:
+Three nearly identical functions exist:
+- `updateGrowthChartAxis` in growth-chart.ts (uses classList for button state)
+- `updateCategoryChartAxis` in category-lines-chart.ts (uses checked property)
+- `updateUserChartAxis` in charts.ts (uses checked property, takes extra userIndex param)
+
+Key differences:
+- Growth chart uses classList.add/remove for button states
+- Category and user charts use checked property
+- User charts require userIndex for localStorage key
+
+## Detailed Implementation Plan
+
+### Phase 1: Create Generic Utilities (Commit 1)
+
+#### 1.1 Create `src/visualization/charts/chart-toggle-utils.ts`
+
 ```typescript
-function update[Chart]Axis(mode: 'date' | 'commit'): void {
-  const chart = chartRefs[chartId]
-  const data = chartData[chartId]
-  if (!chart || !data) return
-
-  localStorage.setItem(`${chart}XAxis`, mode)
-  
-  // Update button states
-  // Destroy chart
-  // Rebuild chart
-}
-```
-
-## Proposed Solution
-
-### 1. Create a Chart Toggle Configuration Interface
-```typescript
-interface ChartToggleConfig {
+export interface ChartToggleConfig {
   chartId: string
   storageKey: string
   elementPrefix: string // e.g., 'growth', 'category', 'userChart0'
-  renderFunction: (...args: any[]) => void
+  renderFunction: (...args: any[]) => void | Promise<void>
   renderArgs: any[]
-  useClassList?: boolean // for growth chart compatibility
+  updateButtonMethod?: 'classList' | 'checked' // default: 'checked'
+  chartRefKey?: string // Override key for chartRefs lookup (e.g., 'category-lines-chart')
+}
+
+export function createChartToggleHTML(
+  elementPrefix: string, 
+  defaultMode: 'date' | 'commit' = 'commit'
+): string {
+  const isDate = defaultMode === 'date'
+  return `
+    <div class="btn-group btn-group-sm mb-3" role="group">
+      <input type="radio" class="btn-check" name="${elementPrefix}XAxis" 
+             id="${elementPrefix}XAxisDate" value="date" ${isDate ? 'checked' : ''}>
+      <label class="btn btn-outline-primary" for="${elementPrefix}XAxisDate">By Date</label>
+      <input type="radio" class="btn-check" name="${elementPrefix}XAxis" 
+             id="${elementPrefix}XAxisCommit" value="commit" ${!isDate ? 'checked' : ''}>
+      <label class="btn btn-outline-primary" for="${elementPrefix}XAxisCommit">By Commit</label>
+    </div>
+  `
+}
+
+export function updateChartAxis(
+  config: ChartToggleConfig, 
+  mode: 'date' | 'commit',
+  chartRefs: Record<string, any>,
+  chartData: Record<string, any>
+): void {
+  const chartRefKey = config.chartRefKey || config.chartId
+  const chart = chartRefs[chartRefKey]
+  const data = chartData[config.chartId]
+  if (!chart || !data) return
+
+  // Save preference
+  localStorage.setItem(config.storageKey, mode)
+
+  // Update button states
+  const dateBtn = document.getElementById(`${config.elementPrefix}XAxisDate`)
+  const commitBtn = document.getElementById(`${config.elementPrefix}XAxisCommit`)
+
+  if (config.updateButtonMethod === 'classList') {
+    // Growth chart style
+    if (mode === 'date') {
+      dateBtn?.classList.add('active')
+      commitBtn?.classList.remove('active')
+    } else {
+      commitBtn?.classList.add('active')
+      dateBtn?.classList.remove('active')
+    }
+  } else {
+    // Category and user chart style
+    const dateBtnInput = dateBtn as HTMLInputElement
+    const commitBtnInput = commitBtn as HTMLInputElement
+    if (dateBtnInput && commitBtnInput) {
+      dateBtnInput.checked = mode === 'date'
+      commitBtnInput.checked = mode === 'commit'
+    }
+  }
+
+  // Destroy and cleanup
+  chart.destroy()
+  if (config.chartRefKey) {
+    delete chartRefs[config.chartRefKey]
+  }
+
+  // Rebuild chart
+  if (config.renderFunction.constructor.name === 'AsyncFunction') {
+    (config.renderFunction as (...args: any[]) => Promise<void>)(...config.renderArgs)
+  } else {
+    config.renderFunction(...config.renderArgs)
+  }
+}
+
+export function setupChartToggleListeners(
+  config: ChartToggleConfig,
+  chartRefs: Record<string, any>,
+  chartData: Record<string, any>
+): void {
+  const dateBtn = document.getElementById(`${config.elementPrefix}XAxisDate`)
+  const commitBtn = document.getElementById(`${config.elementPrefix}XAxisCommit`)
+
+  dateBtn?.addEventListener('change', () => {
+    if ((dateBtn as HTMLInputElement).checked) {
+      updateChartAxis(config, 'date', chartRefs, chartData)
+    }
+  })
+
+  commitBtn?.addEventListener('change', () => {
+    if ((commitBtn as HTMLInputElement).checked) {
+      updateChartAxis(config, 'commit', chartRefs, chartData)
+    }
+  })
 }
 ```
 
-### 2. Generic Toggle HTML Generator
-Create a function to generate toggle button HTML:
+### Phase 2: Migrate Growth Chart (Commit 2)
+
+#### 2.1 Update `src/visualization/charts/growth-chart.ts`
+
+1. Import the generic utilities
+2. Replace `updateGrowthChartAxis` with a wrapper that uses the generic function
+3. Update event listener setup to use generic function
+
+### Phase 3: Migrate Category Chart (Commit 3)
+
+#### 3.1 Update `src/visualization/charts/category-lines-chart.ts`
+
+1. Import the generic utilities
+2. Replace `updateCategoryChartAxis` with a wrapper
+3. Update event listener setup
+
+### Phase 4: Migrate User Charts (Commit 4)
+
+#### 4.1 Update `src/visualization/charts.ts`
+
+1. Import the generic utilities
+2. Update HTML generation to use `createChartToggleHTML`
+3. Replace `updateUserChartAxis` with a wrapper
+4. Update event listener setup in `initializeUserChartListeners`
+
+### Phase 5: Clean Up and Update Exports (Commit 5)
+
+#### 5.1 Update exports
+1. Update `src/visualization/charts/index.ts` to export generic function
+2. Update `src/build/bundle-charts.ts` to export the generic `updateChartAxis`
+3. Remove old individual update function exports
+
+#### 5.2 Final cleanup
+1. Remove old update function implementations
+2. Ensure all references are updated
+
+## Breaking Changes Mitigation
+
+To avoid breaking existing functionality:
+
+1. Keep the original function names as thin wrappers around the generic function
+2. Maintain exact same localStorage keys
+3. Preserve the different button update methods (classList vs checked)
+4. Keep all existing function signatures
+
+Example wrapper:
 ```typescript
-function createChartToggleHTML(config: ChartToggleConfig, defaultMode: 'date' | 'commit' = 'commit'): string
+export function updateGrowthChartAxis(mode: 'date' | 'commit'): void {
+  const config: ChartToggleConfig = {
+    chartId: 'growthChart',
+    storageKey: 'growthChartXAxis',
+    elementPrefix: 'growth',
+    renderFunction: renderGrowthChart,
+    renderArgs: [repoData],
+    updateButtonMethod: 'classList'
+  }
+  updateChartAxis(config, mode, chartRefs, chartData)
+}
 ```
 
-### 3. Generic Update Function
-Create a single update function that works for all charts:
-```typescript
-function updateChartAxis(config: ChartToggleConfig, mode: 'date' | 'commit'): void
-```
+## Testing Strategy
 
-### 4. Generic Event Listener Setup
-Create a function to set up toggle event listeners:
-```typescript
-function setupChartToggleListeners(config: ChartToggleConfig): void
-```
-
-### 5. Migration Strategy
-
-#### Phase 1: Create Generic Functions
-1. Add the new generic functions to a shared module (e.g., `chart-toggle-utils.ts`)
-2. Test with one chart type first
-
-#### Phase 2: Migrate Existing Charts
-1. Update growth chart to use generic functions
-2. Update category chart to use generic functions  
-3. Update user charts to use generic functions
-4. Remove old duplicate code
-
-#### Phase 3: Clean Up
-1. Remove individual update functions from exports
-2. Update bundle-charts.ts to export only the generic function
-3. Update any external references
+1. Test each chart type individually after migration
+2. Verify localStorage keys remain unchanged
+3. Ensure button state updates work correctly
+4. Test chart destruction and recreation
+5. Verify no memory leaks from event listeners
 
 ## Benefits
 
-1. **Reduced Code**: ~200+ lines of duplicate code reduced to ~50 lines
+1. **Reduced Code**: ~250+ lines of duplicate code reduced to ~80 lines of shared utilities
 2. **Consistency**: All charts guaranteed to behave the same way
-3. **Maintainability**: Changes to toggle behavior only need to be made once
-4. **Extensibility**: Easy to add toggle to new chart types
-
-## Implementation Notes
-
-1. Preserve existing localStorage keys for backward compatibility
-2. Handle both classList and checked property methods for button state
-3. Ensure all existing chart IDs continue to work
-4. Add tests for the generic functions
-
-## Files to Modify
-
-1. Create: `src/visualization/charts/chart-toggle-utils.ts`
-2. Update: `src/visualization/charts/growth-chart.ts`
-3. Update: `src/visualization/charts/category-lines-chart.ts`
-4. Update: `src/visualization/charts.ts` (user charts section)
-5. Update: `src/build/bundle-charts.ts`
-6. Update: Template HTML generation (if needed)
-
-## Estimated Effort
-
-- 2-3 hours for implementation
-- 1 hour for testing
-- 30 minutes for documentation updates
+3. **Maintainability**: Single source of truth for toggle behavior
+4. **Type Safety**: Proper TypeScript interfaces ensure correct usage
+5. **Extensibility**: Easy to add toggle to new chart types
