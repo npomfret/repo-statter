@@ -1089,14 +1089,34 @@ function renderAwards(awards: NonNullable<ChartData['awards']>, githubUrl?: stri
 function updateChartsWithFileTypeFilter(): void {
   if (!globalManager) return
   
+  // Update manager's file type filter
+  const currentFileType = getSelectedFileType()
+  globalManager.setFileTypeFilter(currentFileType)
+  
   // Update file heatmap chart using new system
   const heatmapData = chartData['fileHeatmapChart']
   if (heatmapData) {
-    globalManager.recreate('fileHeatmap', {
+    // First destroy any existing chart (including clearing message)
+    const existingChart = chartRefs['fileHeatmapChart']
+    if (existingChart) {
+      existingChart.destroy()
+      delete chartRefs['fileHeatmapChart']
+    }
+    // Clear container in case it has a message
+    const container = document.getElementById('fileHeatmapChart')
+    if (container) {
+      container.innerHTML = ''
+    }
+    
+    // Now create the chart fresh
+    const chart = globalManager.create('fileHeatmap', heatmapData.fileHeatData, {
       height: heatmapData.height,
       maxFiles: heatmapData.maxFiles,
       manager: globalManager
     })
+    if (chart) {
+      chartRefs['fileHeatmapChart'] = chart
+    }
   }
 
   // Update all three top files charts if they exist and have data

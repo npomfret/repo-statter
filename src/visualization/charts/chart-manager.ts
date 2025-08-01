@@ -41,6 +41,12 @@ export class ChartManager {
     if (chart) {
       chart.instance.destroy()
       this.charts.delete(id)
+      
+      // Clear the container HTML in case it was replaced with a message
+      const container = document.getElementById(chart.definition.elementId)
+      if (container) {
+        container.innerHTML = ''
+      }
     }
   }
 
@@ -80,7 +86,18 @@ export class ChartManager {
   // Recreate a chart (useful for axis toggles)
   recreate(id: string, newOptions?: any): ApexCharts | null {
     const chart = this.charts.get(id)
-    if (!chart) return null
+    if (!chart) {
+      // If chart doesn't exist in manager, we might still need to clear the container
+      // (e.g., if it was showing a "no data" message)
+      const definition = CHART_DEFINITIONS[id]
+      if (definition) {
+        const container = document.getElementById(definition.elementId)
+        if (container) {
+          container.innerHTML = ''
+        }
+      }
+      return null
+    }
     
     // Destroy old instance
     this.destroy(id)

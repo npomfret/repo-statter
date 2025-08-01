@@ -26,6 +26,23 @@ export function createChart(
   
   try {
     const series = definition.dataFormatter(data, options)
+    
+    // Special handling for charts with empty data
+    if (chartType === 'fileHeatmap' && series[0]?.data?.length === 0) {
+      const currentFileType = options?.manager?.getFileTypeFilter?.()
+      if (currentFileType) {
+        container.innerHTML = `
+          <div class="d-flex align-items-center justify-content-center h-100 text-muted" style="height: ${options?.height ?? 400}px;">
+            <div class="text-center">
+              <i class="bi bi-funnel fs-1 mb-3"></i>
+              <p class="mb-0">No files with type "${currentFileType}" found</p>
+            </div>
+          </div>
+        `
+        return null
+      }
+    }
+    
     // Pass manager if provided in options for charts that need it (e.g., fileTypes)
     const chartOptions = definition.optionsBuilder(series, options?.manager || options)
     
