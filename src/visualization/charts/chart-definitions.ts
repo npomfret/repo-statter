@@ -1120,5 +1120,485 @@ export const CHART_DEFINITIONS: Record<string, ChartDefinition> = {
         }
       }
     }
+  },
+
+  topFilesSize: {
+    type: 'bar',
+    hasAxisToggle: false,
+    height: 350,
+    elementId: 'topFilesChartSize',
+    dataFormatter: (topFilesData: any) => {
+      if (!topFilesData || !topFilesData.largest) {
+        console.warn('topFilesSize: No data provided')
+        return [{ data: [] }]
+      }
+
+      const files = topFilesData.largest.slice(0, 10)
+      return [{
+        name: 'Lines of Code',
+        data: files.map((f: any) => ({
+          x: f.fileName.split('/').pop() || f.fileName,
+          y: f.value,
+          fullPath: f.fileName
+        }))
+      }]
+    },
+    optionsBuilder: (series) => ({
+      chart: {
+        type: 'bar',
+        height: 350,
+        toolbar: { show: false },
+        background: '#ffffff'
+      },
+      series,
+      plotOptions: {
+        bar: {
+          horizontal: true
+        }
+      },
+      dataLabels: {
+        enabled: true,
+        textAnchor: 'start',
+        offsetX: -80,
+        style: {
+          fontSize: '12px',
+          colors: ['#000000']
+        },
+        formatter: function(_val: number, opts: any) {
+          const dataPoint = opts.w.config.series[0].data[opts.dataPointIndex]
+          return dataPoint.x
+        }
+      },
+      colors: ['#87CEEB'],
+      xaxis: {
+        title: {
+          text: 'Lines of Code',
+          style: { color: '#24292f' }
+        },
+        labels: {
+          style: { colors: '#24292f' },
+          formatter: (val: string | number) => Number(val).toLocaleString()
+        }
+      },
+      yaxis: {
+        labels: { show: false }
+      },
+      grid: {
+        borderColor: '#e1e4e8'
+      },
+      tooltip: {
+        theme: 'light',
+        custom: function(opts: any) {
+          const dataPoint = opts.w.config.series[0].data[opts.dataPointIndex]
+          return `<div class="custom-tooltip">
+            <div><strong>${dataPoint.fullPath}</strong></div>
+            <div>${dataPoint.y.toLocaleString()} lines</div>
+          </div>`
+        }
+      }
+    })
+  },
+
+  topFilesChurn: {
+    type: 'bar',
+    hasAxisToggle: false,
+    height: 350,
+    elementId: 'topFilesChartChurn',
+    dataFormatter: (topFilesData: any) => {
+      if (!topFilesData || !topFilesData.mostChurn) {
+        console.warn('topFilesChurn: No data provided')
+        return [{ data: [] }]
+      }
+
+      const files = topFilesData.mostChurn.slice(0, 10)
+      return [{
+        name: 'Number of Changes',
+        data: files.map((f: any) => ({
+          x: f.fileName.split('/').pop() || f.fileName,
+          y: f.value,
+          fullPath: f.fileName
+        }))
+      }]
+    },
+    optionsBuilder: (series) => ({
+      chart: {
+        type: 'bar',
+        height: 350,
+        toolbar: { show: false },
+        background: '#ffffff'
+      },
+      series,
+      plotOptions: {
+        bar: {
+          horizontal: true
+        }
+      },
+      dataLabels: {
+        enabled: true,
+        textAnchor: 'start',
+        offsetX: -80,
+        style: {
+          fontSize: '12px',
+          colors: ['#000000']
+        },
+        formatter: function(_val: number, opts: any) {
+          const dataPoint = opts.w.config.series[0].data[opts.dataPointIndex]
+          return dataPoint.x
+        }
+      },
+      colors: ['#87CEEB'],
+      xaxis: {
+        title: {
+          text: 'Number of Changes',
+          style: { color: '#24292f' }
+        },
+        labels: {
+          style: { colors: '#24292f' },
+          formatter: (val: string | number) => Number(val).toLocaleString()
+        }
+      },
+      yaxis: {
+        labels: { show: false }
+      },
+      grid: {
+        borderColor: '#e1e4e8'
+      },
+      tooltip: {
+        theme: 'light',
+        custom: function(opts: any) {
+          const dataPoint = opts.w.config.series[0].data[opts.dataPointIndex]
+          return `<div class="custom-tooltip">
+            <div><strong>${dataPoint.fullPath}</strong></div>
+            <div>${dataPoint.y.toLocaleString()} commits</div>
+          </div>`
+        }
+      }
+    })
+  },
+
+  topFilesComplex: {
+    type: 'bar',
+    hasAxisToggle: false,
+    height: 350,
+    elementId: 'topFilesChartComplex',
+    dataFormatter: (topFilesData: any) => {
+      if (!topFilesData || !topFilesData.mostComplex) {
+        console.warn('topFilesComplex: No data provided')
+        return [{ data: [] }]
+      }
+
+      const files = topFilesData.mostComplex.slice(0, 10)
+      return [{
+        name: 'Cyclomatic Complexity',
+        data: files.map((f: any) => ({
+          x: f.fileName.split('/').pop() || f.fileName,
+          y: f.value,
+          fullPath: f.fileName
+        }))
+      }]
+    },
+    optionsBuilder: (series) => ({
+      chart: {
+        type: 'bar',
+        height: 350,
+        toolbar: { show: false },
+        background: '#ffffff'
+      },
+      series,
+      plotOptions: {
+        bar: {
+          horizontal: true
+        }
+      },
+      dataLabels: {
+        enabled: true,
+        textAnchor: 'start',
+        offsetX: -80,
+        style: {
+          fontSize: '12px',
+          colors: ['#000000']
+        },
+        formatter: function(_val: number, opts: any) {
+          const dataPoint = opts.w.config.series[0].data[opts.dataPointIndex]
+          return dataPoint.x
+        }
+      },
+      colors: ['#87CEEB'],
+      xaxis: {
+        title: {
+          text: 'Cyclomatic Complexity',
+          style: { color: '#24292f' }
+        },
+        labels: {
+          style: { colors: '#24292f' },
+          formatter: (val: string | number) => Number(val).toLocaleString()
+        }
+      },
+      yaxis: {
+        labels: { show: false }
+      },
+      grid: {
+        borderColor: '#e1e4e8'
+      },
+      tooltip: {
+        theme: 'light',
+        custom: function(opts: any) {
+          const dataPoint = opts.w.config.series[0].data[opts.dataPointIndex]
+          return `<div class="custom-tooltip">
+            <div><strong>${dataPoint.fullPath}</strong></div>
+            <div>Complexity: ${dataPoint.y}</div>
+          </div>`
+        }
+      }
+    })
+  },
+
+  // Dynamic user charts - created per contributor
+  userChart: {
+    type: 'area',
+    hasAxisToggle: true,
+    defaultAxis: 'commit',
+    height: 250,
+    elementId: '', // Dynamic - will be set when creating chart
+    dataFormatter: (data: any) => {
+      const { userCommits, xAxisMode } = data
+      
+      if (xAxisMode === 'date') {
+        // Date-based view
+        const userActivityMap = new Map<string, { added: number, deleted: number }>()
+        
+        for (const commit of userCommits) {
+          const dateKey = new Date(commit.date).toISOString().split('T')[0] || ''
+          const existing = userActivityMap.get(dateKey) || { added: 0, deleted: 0 }
+          existing.added += commit.linesAdded
+          existing.deleted += commit.linesDeleted
+          userActivityMap.set(dateKey, existing)
+        }
+
+        const dateData = Array.from(userActivityMap.entries())
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([date, data]) => ({
+            date: new Date(date).getTime(),
+            added: data.added,
+            deleted: data.deleted
+          }))
+
+        return [
+          {
+            name: 'Lines Added',
+            data: dateData.map(d => ({ x: d.date, y: d.added }))
+          },
+          {
+            name: 'Lines Deleted',
+            data: dateData.map(d => ({ x: d.date, y: -d.deleted }))
+          }
+        ]
+      } else {
+        // Commit-based view
+        let cumulativeAdded = 0
+        let cumulativeDeleted = 0
+        
+        const commitData = userCommits.map((commit: any, index: number) => {
+          cumulativeAdded += commit.linesAdded
+          cumulativeDeleted += commit.linesDeleted
+          return {
+            index: index + 1,
+            added: cumulativeAdded,
+            deleted: -cumulativeDeleted
+          }
+        })
+
+        return [
+          {
+            name: 'Lines Added',
+            data: commitData.map((d: any) => ({ x: d.index, y: d.added }))
+          },
+          {
+            name: 'Lines Deleted', 
+            data: commitData.map((d: any) => ({ x: d.index, y: d.deleted }))
+          }
+        ]
+      }
+    },
+    optionsBuilder: (series, config) => ({
+      chart: {
+        id: config.chartId,
+        type: 'area',
+        height: 250,
+        toolbar: { show: false },
+        background: '#ffffff',
+        zoom: {
+          enabled: true,
+          allowMouseWheelZoom: false
+        }
+      },
+      series,
+      stroke: {
+        curve: 'smooth',
+        width: 2
+      },
+      fill: {
+        type: 'gradient',
+        gradient: {
+          shadeIntensity: 1,
+          opacityFrom: 0.7,
+          opacityTo: 0.3
+        }
+      },
+      colors: ['#90EE90', '#FFB6C1'],
+      xaxis: config.xAxisMode === 'date' ? {
+        type: 'datetime',
+        title: {
+          text: 'Date',
+          style: { color: '#24292f' }
+        },
+        labels: {
+          style: { colors: '#24292f' },
+          datetimeFormatter: {
+            year: 'yyyy',
+            month: 'MMM yyyy',
+            day: 'dd MMM',
+            hour: 'HH:mm'
+          }
+        }
+      } : {
+        type: 'numeric',
+        title: {
+          text: 'Commit Number',
+          style: { color: '#24292f' }
+        },
+        labels: {
+          style: { colors: '#24292f' },
+          formatter: (val: string | number) => Math.floor(Number(val)).toString()
+        }
+      },
+      yaxis: {
+        title: {
+          text: 'Lines Changed',
+          style: { color: '#24292f' }
+        },
+        labels: {
+          style: { colors: '#24292f' },
+          formatter: (val: string | number) => Math.abs(Number(val)).toLocaleString()
+        }
+      },
+      grid: {
+        borderColor: '#e1e4e8'
+      },
+      tooltip: {
+        theme: 'light',
+        x: {
+          formatter: config.xAxisMode === 'date' 
+            ? (val: number) => new Date(val).toLocaleDateString()
+            : (val: number) => `Commit #${val}`
+        }
+      },
+      legend: {
+        position: 'top',
+        horizontalAlign: 'right',
+        fontSize: '12px',
+        labels: { colors: '#24292f' }
+      }
+    })
+  },
+
+  userActivityChart: {
+    type: 'bar',
+    hasAxisToggle: false,
+    height: 200,
+    elementId: '', // Dynamic - will be set when creating chart
+    dataFormatter: (commits: any[]) => {
+      // Group commits by date
+      const commitsByDate = new Map<string, number>()
+      
+      for (const commit of commits) {
+        const dateKey = new Date(commit.date).toISOString().split('T')[0] || ''
+        commitsByDate.set(dateKey, (commitsByDate.get(dateKey) || 0) + 1)
+      }
+
+      // Create a continuous date range
+      const dates = Array.from(commitsByDate.keys()).sort()
+      if (dates.length === 0) return [{ data: [] }]
+
+      const startDate = new Date(dates[0] || new Date())
+      const endDate = new Date(dates[dates.length - 1] || new Date())
+      
+      const allDates: { date: number; count: number }[] = []
+      const currentDate = new Date(startDate)
+      
+      while (currentDate <= endDate) {
+        const dateKey = currentDate.toISOString().split('T')[0] || ''
+        allDates.push({
+          date: currentDate.getTime(),
+          count: commitsByDate.get(dateKey) || 0
+        })
+        currentDate.setDate(currentDate.getDate() + 1)
+      }
+
+      return [{
+        name: 'Commits',
+        data: allDates.map(d => ({ x: d.date, y: d.count }))
+      }]
+    },
+    optionsBuilder: (series, config) => ({
+      chart: {
+        id: config.chartId,
+        type: 'bar',
+        height: 200,
+        toolbar: { show: false },
+        background: '#ffffff'
+      },
+      series,
+      plotOptions: {
+        bar: {
+          columnWidth: '90%',
+          dataLabels: {
+            position: 'top'
+          }
+        }
+      },
+      dataLabels: {
+        enabled: false
+      },
+      colors: ['#87CEEB'],
+      xaxis: {
+        type: 'datetime',
+        title: {
+          text: 'Date',
+          style: { color: '#24292f' }
+        },
+        labels: {
+          style: { colors: '#24292f' },
+          datetimeFormatter: {
+            year: 'yyyy',
+            month: 'MMM yyyy',
+            day: 'dd MMM',
+            hour: 'HH:mm'
+          }
+        }
+      },
+      yaxis: {
+        title: {
+          text: 'Commits per Day',
+          style: { color: '#24292f' }
+        },
+        labels: {
+          style: { colors: '#24292f' },
+          formatter: (val: string | number) => Math.floor(Number(val)).toString()
+        }
+      },
+      grid: {
+        borderColor: '#e1e4e8'
+      },
+      tooltip: {
+        theme: 'light',
+        x: {
+          formatter: (val: number) => new Date(val).toLocaleDateString()
+        },
+        y: {
+          formatter: (val: number) => `${val} commit${val !== 1 ? 's' : ''}`
+        }
+      }
+    })
   }
 }

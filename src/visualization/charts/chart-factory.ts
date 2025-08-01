@@ -18,9 +18,11 @@ export function createChart(
     return null
   }
   
-  const container = document.getElementById(definition.elementId)
+  // For dynamic charts like user charts, element ID can be passed in options
+  const elementId = options?.elementId || definition.elementId
+  const container = document.getElementById(elementId)
   if (!container) {
-    console.error(`Container element "${definition.elementId}" not found`)
+    console.error(`Container element "${elementId}" not found`)
     return null
   }
   

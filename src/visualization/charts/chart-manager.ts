@@ -12,11 +12,14 @@ export interface ManagedChart {
 export class ChartManager {
   private charts = new Map<string, ManagedChart>()
   private selectedFileType: string | null = null
+  private fileTypeMap = new Map<string, string>()
 
-  register(id: string, instance: ApexCharts, data: any, options?: any): void {
-    const definition = CHART_DEFINITIONS[id]
+  register(id: string, instance: ApexCharts, data: any, options?: any, chartType?: string): void {
+    // Use chartType if provided, otherwise fall back to id
+    const definitionKey = chartType || id
+    const definition = CHART_DEFINITIONS[definitionKey]
     if (!definition) {
-      console.error(`Chart definition not found for ${id}`)
+      console.error(`Chart definition not found for ${definitionKey}`)
       return
     }
     
@@ -59,7 +62,9 @@ export class ChartManager {
   create(chartType: string, data: any, options?: any): ApexCharts | null {
     const chart = createChart(chartType, data, options)
     if (chart) {
-      this.register(chartType, chart, data, options)
+      // For dynamic charts, use the provided elementId or chartId as the key
+      const registryId = options?.elementId || options?.chartId || chartType
+      this.register(registryId, chart, data, options, chartType)
     }
     return chart
   }
@@ -74,13 +79,100 @@ export class ChartManager {
     return this.selectedFileType
   }
 
+  // Build file type map from commits data
+  buildFileTypeMap(commits: any[]): void {
+    this.fileTypeMap.clear()
+    if (!commits) return
+    
+    for (const commit of commits) {
+      if (commit.filesChanged) {
+        for (const fileChange of commit.filesChanged) {
+          if (fileChange.fileName && fileChange.fileType) {
+            this.fileTypeMap.set(fileChange.fileName, fileChange.fileType)
+          }
+        }
+      }
+    }
+  }
+
   private updateChartsWithFileTypeFilter(): void {
-    // This will be implemented as we migrate charts
-    // For now, just log the action
     console.log(`File type filter changed to: ${this.selectedFileType}`)
     
-    // In the future, this will update relevant charts based on the filter
-    // For example: growth, categoryLines, commitActivity charts
+    // Handle file heatmap
+    const fileHeatmap = this.charts.get('fileHeatmap')
+    if (fileHeatmap && fileHeatmap.data) {
+      if (this.selectedFileType) {
+        // Filter the data
+        const filteredData = fileHeatmap.data.filter(
+          (file: any) => file.fileType === this.selectedFileType
+        )
+        
+        // Recreate chart with filtered data
+        this.destroy('fileHeatmap')
+        this.create('fileHeatmap', filteredData, fileHeatmap.options)
+      } else {
+        // Restore original data
+        this.recreate('fileHeatmap')
+      }
+    }
+    
+    // Handle top files charts
+    const topFilesCharts = ['topFilesSize', 'topFilesChurn', 'topFilesComplex']
+    topFilesCharts.forEach(chartId => {
+      const chart = this.charts.get(chartId)
+      if (chart && chart.data) {
+        if (this.selectedFileType) {
+          // Filter the top files data using the file type map
+          const filteredData = {
+            largest: chart.data.largest?.filter((f: any) => 
+              this.fileTypeMap.get(f.fileName) === this.selectedFileType
+            ) || [],
+            mostChurn: chart.data.mostChurn?.filter((f: any) => 
+              this.fileTypeMap.get(f.fileName) === this.selectedFileType
+            ) || [],
+            mostComplex: chart.data.mostComplex?.filter((f: any) => 
+              this.fileTypeMap.get(f.fileName) === this.selectedFileType
+            ) || []
+          }
+          
+          // Recreate chart with filtered data
+          this.destroy(chartId)
+          this.create(chartId, filteredData, chart.options)
+        } else {
+          // Restore original chart
+          this.recreate(chartId)
+        }
+      }
+    })
+    
+    // Show message for time-based charts (these cannot be filtered)
+    const timeBasedCharts = ['growth', 'categoryLines', 'commitActivity']
+    timeBasedCharts.forEach(chartId => {
+      const chart = this.charts.get(chartId)
+      if (chart) {
+        const definition = CHART_DEFINITIONS[chartId]
+        if (definition) {
+          const container = document.getElementById(definition.elementId)
+          if (container) {
+            if (this.selectedFileType) {
+              container.innerHTML = `
+                <div class="d-flex align-items-center justify-content-center h-100 text-muted" style="height: 350px;">
+                  <div class="text-center">
+                    <i class="bi bi-funnel fs-1 mb-3"></i>
+                    <p class="mb-0">File type filter active: ${this.selectedFileType}</p>
+                    <p class="small">Time-based charts show cumulative data and cannot be filtered by file type</p>
+                  </div>
+                </div>
+              `
+              this.destroy(chartId)
+            } else {
+              // Restore original chart
+              this.recreate(chartId)
+            }
+          }
+        }
+      }
+    })
   }
 
   // Recreate a chart (useful for axis toggles)

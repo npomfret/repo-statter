@@ -1,19 +1,18 @@
 /**
- * Charts module index - maintains backward compatibility
- * Re-exports all chart functions from both extracted modules and original charts.ts
+ * Charts module index - new chart system exports
  */
 
-// Export extracted chart functions
-export { renderContributorsChart } from './contributors-chart.js'
-export { renderFileTypesChart } from './file-types-chart.js'
-export { renderWordCloudChart } from './word-cloud-chart.js'
-export { renderFileHeatmapChart } from './file-heatmap-chart.js'
-export { renderCommitActivityChart } from './commit-activity-chart.js'
-export { renderGrowthChart, updateGrowthChartAxis } from './growth-chart.js'
-export { renderCategoryLinesChart, updateCategoryChartAxis } from './category-lines-chart.js'
+// Export new chart system components
+export { ChartManager } from './chart-manager.js'
+export { CHART_DEFINITIONS } from './chart-definitions.js'
+export { createChart } from './chart-factory.js'
+export { setupAllChartToggles } from './chart-toggles.js'
 
-// Export remaining functions from the original charts.ts (for now)
+// Export remaining functions from the original charts.ts
 export { 
   renderAllCharts,
   type ChartData
 } from '../charts.js'
+
+// Temporary exports for backward compatibility - will be removed in final cleanup
+export { updateGrowthChartAxis, updateCategoryChartAxis } from '../charts.js'
