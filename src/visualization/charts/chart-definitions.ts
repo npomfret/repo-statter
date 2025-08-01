@@ -128,8 +128,8 @@ export const CHART_DEFINITIONS: Record<string, ChartDefinition> = {
           }
         }
       },
-      series: data.series,
-      labels: data.labels,
+      series: data.series,  // This is correct - donut charts want series at top level
+      labels: data.labels,  // This is correct - donut charts want labels at top level
       colors: ['#FFB6C1', '#FFDAB9', '#FFE4B5', '#D8BFD8', '#87CEEB', '#98D8C8', '#B0C4DE', '#E6E6FA', '#F0E68C', '#D3D3D3'],
       dataLabels: {
         enabled: true,
@@ -165,7 +165,19 @@ export const CHART_DEFINITIONS: Record<string, ChartDefinition> = {
     height: 400,
     elementId: 'wordCloudChart',
     dataFormatter: (wordFrequency: WordFrequency[]) => {
-      const topWords = wordFrequency.slice(0, 50)
+      const topWords = wordFrequency
+        .filter(w => w && w.word && w.count !== undefined && w.count !== null)
+        .slice(0, 50)
+      
+      if (topWords.length === 0) {
+        return [{
+          data: [{
+            x: 'No data',
+            y: 1
+          }]
+        }]
+      }
+      
       return [{
         data: topWords.map(w => ({
           x: w.word,

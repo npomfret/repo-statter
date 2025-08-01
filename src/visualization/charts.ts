@@ -153,8 +153,9 @@ export function renderAllCharts(data: ChartData): void {
         maxFiles: data.chartsConfig?.fileHeatmapMaxFiles ?? 100
       }
     }
-  } catch (error) {
+  } catch (error : any) {
     console.error('Failed to render file heatmap:', error)
+    console.error('Error stack:', error.stack)
     showChartError('fileHeatmapChart', 'File heatmap failed to load')
   }
 
