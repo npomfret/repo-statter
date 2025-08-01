@@ -71,19 +71,19 @@ export function renderFileHeatmapChart(fileHeatData: FileHeatData[], height: num
           ranges: [{
             from: 0,
             to: 50,
-            color: '#9be9a8'
+            color: '#E6F3E6'
           }, {
             from: 51,
             to: 200,
-            color: '#40c463'
+            color: '#C7E9C7'
           }, {
             from: 201,
             to: 500,
-            color: '#30a14e'
+            color: '#A8D5A8'
           }, {
             from: 501,
             to: 99999,
-            color: '#216e39'
+            color: '#8FBC8F'
           }]
         }
       }

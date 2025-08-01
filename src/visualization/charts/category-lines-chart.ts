@@ -22,11 +22,11 @@ export function renderCategoryLinesChart(timeSeries: TimeSeriesPoint[], commits:
     other: 'Other'
   }
   const categoryColors = {
-    application: '#ea5545',
-    test: '#b33dc6',
-    build: '#f27036',
-    documentation: '#27ae60',
-    other: '#f39c12'
+    application: '#FFB6C1',
+    test: '#D8BFD8',
+    build: '#FFDAB9',
+    documentation: '#98D8C8',
+    other: '#F0E68C'
   }
 
   const series: any[] = []

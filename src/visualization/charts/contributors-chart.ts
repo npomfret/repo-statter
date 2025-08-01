@@ -29,7 +29,7 @@ export function renderContributorsChart(contributors: ContributorStats[], limit:
         }
       }
     },
-    colors: ['#ea5545', '#f46a9b', '#ffd33d', '#b33dc6', '#27aeef', '#2ea043', '#0366d6', '#79c0ff', '#e27300', '#666666'],
+    colors: ['#FFB6C1', '#FFDAB9', '#FFE4B5', '#D8BFD8', '#87CEEB', '#98D8C8', '#B0C4DE', '#E6E6FA', '#F0E68C', '#D3D3D3'],
     dataLabels: {
       enabled: true,
       formatter: function(val: number) {

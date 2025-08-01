@@ -34,7 +34,7 @@ export function renderWordCloudChart(wordCloudData: WordFrequency[], height: num
   layout.start()
 
   function draw(words: WordCloudData[]) {
-    const colorScale = ['#ea5545', '#f46a9b', '#ffd33d', '#b33dc6', '#27aeef', '#2ea043', '#0366d6', '#79c0ff', '#e27300']
+    const colorScale = ['#FFB6C1', '#FFDAB9', '#FFE4B5', '#D8BFD8', '#87CEEB', '#98D8C8', '#B0C4DE', '#E6E6FA', '#F0E68C']
 
     const svg = (window as any).d3.select(container)
         .append('svg')

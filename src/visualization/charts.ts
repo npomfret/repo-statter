@@ -300,7 +300,7 @@ function buildTopFilesChartOptions(view: string, data: TopFilesData): any {
         return getFileNameFromPath(seriesData.x)
       }
     },
-    colors: ['#0366d6'],
+    colors: ['#87CEEB'],
     xaxis: {
       title: {
         text: yaxisTitle,
@@ -756,7 +756,7 @@ async function renderUserChart(chartId: string, data: ReturnType<typeof buildUse
         }
       }
     },
-    colors: ['#2ea043', '#da3633', '#0366d6'], // Green for added, red for removed, blue for net
+    colors: ['#98D8C8', '#FFB6C1', '#87CEEB'], // Pastel green for added, pastel pink for removed, pastel blue for net
     legend: {
       position: 'top',
       horizontalAlign: 'left',
@@ -912,7 +912,7 @@ async function renderUserActivityChart(chartId: string, commits: CommitData[]): 
         style: { colors: '#24292f' }
       }
     },
-    colors: ['#27aeef'],
+    colors: ['#87CEEB'],
     grid: { borderColor: '#e1e4e8' },
     tooltip: {
       theme: 'light',
@@ -960,9 +960,9 @@ function renderAwards(awards: NonNullable<ChartData['awards']>, githubUrl?: stri
     card.className = 'card h-100'
 
     const cardHeader = document.createElement('div')
-    cardHeader.className = `card-header bg-${category.color} text-white`
+    cardHeader.className = `card-header award-header-${category.color}`
     cardHeader.innerHTML = `
-      <h6 class="mb-0">
+      <h6 class="mb-0 text-secondary">
         <span class="me-2" style="font-size: 1.2em;">${category.icon}</span>
         ${category.title}
       </h6>
@@ -982,13 +982,13 @@ function renderAwards(awards: NonNullable<ChartData['awards']>, githubUrl?: stri
       content.className = 'ms-2 me-auto'
 
       const header = document.createElement('div')
-      header.className = 'fw-bold'
+      header.className = 'fw-normal text-secondary'
 
       const meta = document.createElement('small')
       meta.className = 'text-muted'
 
       const badge = document.createElement('span')
-      badge.className = `badge bg-${category.color} rounded-pill`
+      badge.className = `badge bg-light text-secondary border rounded-pill`
 
       if (category.type === 'commit') {
         header.textContent = award.message.length > 50 ?

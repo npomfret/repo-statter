@@ -119,7 +119,7 @@ export function renderCommitActivityChart(timeSeries: TimeSeriesPoint[]): void {
       min: 0,
       labels: { style: { colors: '#24292f' } }
     },
-    colors: ['#0366d6'],
+    colors: ['#87CEEB'],
     dataLabels: {
       enabled: false
     },
