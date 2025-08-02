@@ -41,6 +41,7 @@ tmp/
 
 
 
+
 # AI agents stuff
 CLAUDE.md
 GEMINI.md
@@ -67,6 +68,7 @@ directives
 .claude/agents/pwd-checker.md
 .claude/agents/scope-creep-detector.md
 .claude/agents/style-enforcer.md
+.claude/agents/test-cleanup.md
 .claude/agents/test-for-future-detector.md
 .claude/agents/test-quality-enforcer.md
 .claude/agents/test-runner.md
