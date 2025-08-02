@@ -36,3 +36,19 @@ export interface WordCloudData {
   y?: number
   rotate?: number
 }
+
+export function getTimezoneAbbreviation(date: Date): string {
+  const timeZoneName = date.toLocaleDateString(undefined, { timeZoneName: 'short' }).split(', ')[1]
+  return timeZoneName || 'Local'
+}
+
+export function formatShortDateTime(date: Date): string {
+  const dateOptions: Intl.DateTimeFormatOptions = {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  }
+  return date.toLocaleString(undefined, dateOptions)
+}
