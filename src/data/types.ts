@@ -89,10 +89,3 @@ export interface TopFilesData {
   mostChurn: TopFileStats[]
   mostComplex: TopFileStats[]
 }
-
-// Word frequency types (from text processor)
-export interface WordFrequency {
-  word: string
-  count: number
-  size?: number
-}
