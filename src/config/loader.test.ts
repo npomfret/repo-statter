@@ -22,28 +22,46 @@ describe('Configuration Loader', () => {
   });
 
   test('loads default configuration when no config files exist', () => {
-    const config = loadConfiguration(TEST_TMP_DIR);
-    expect(config).toEqual(DEFAULT_CONFIG);
+    // Save current working directory
+    const originalCwd = process.cwd();
+    
+    try {
+      // Change to test directory to avoid loading project config
+      process.chdir(TEST_TMP_DIR);
+      const config = loadConfiguration(TEST_TMP_DIR);
+      expect(config).toEqual(DEFAULT_CONFIG);
+    } finally {
+      // Restore original working directory
+      process.chdir(originalCwd);
+    }
   });
 
   test('loads and merges JSON configuration file', () => {
-    const configPath = join(TEST_TMP_DIR, 'repo-statter.config.json');
-    writeFileSync(configPath, JSON.stringify({
-      wordCloud: {
-        maxWords: 150
-      },
-      charts: {
-        topContributorsLimit: 15
-      }
-    }));
-
-    const config = loadConfiguration(TEST_TMP_DIR);
+    const originalCwd = process.cwd();
     
-    expect(config.wordCloud.maxWords).toBe(150);
-    expect(config.charts.topContributorsLimit).toBe(15);
-    // Other values should remain default
-    expect(config.wordCloud.minWordLength).toBe(DEFAULT_CONFIG.wordCloud.minWordLength);
-    expect(config.analysis.bytesPerLineEstimate).toBe(DEFAULT_CONFIG.analysis.bytesPerLineEstimate);
+    try {
+      process.chdir(TEST_TMP_DIR);
+      
+      const configPath = join(TEST_TMP_DIR, 'repo-statter.config.json');
+      writeFileSync(configPath, JSON.stringify({
+        wordCloud: {
+          maxWords: 150
+        },
+        charts: {
+          topContributorsLimit: 15
+        }
+      }));
+
+      const config = loadConfiguration(TEST_TMP_DIR);
+      
+      expect(config.wordCloud.maxWords).toBe(150);
+      expect(config.charts.topContributorsLimit).toBe(15);
+      // Other values should remain default
+      expect(config.wordCloud.minWordLength).toBe(DEFAULT_CONFIG.wordCloud.minWordLength);
+      expect(config.analysis.bytesPerLineEstimate).toBe(DEFAULT_CONFIG.analysis.bytesPerLineEstimate);
+    } finally {
+      process.chdir(originalCwd);
+    }
   });
 
   test('applies CLI overrides over configuration file', () => {

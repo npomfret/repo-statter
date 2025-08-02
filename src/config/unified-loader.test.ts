@@ -155,9 +155,17 @@ describe('Unified Config Loader', () => {
   
   describe('loadConfiguration', () => {
     it('should load defaults without overrides', () => {
-      const config = loadConfiguration()
+      const originalCwd = process.cwd()
       
-      expect(config).toEqual(DEFAULT_CONFIG)
+      try {
+        // Change to test directory to avoid loading project config
+        process.chdir(testDir)
+        const config = loadConfiguration()
+        
+        expect(config).toEqual(DEFAULT_CONFIG)
+      } finally {
+        process.chdir(originalCwd)
+      }
     })
     
     it('should apply CLI overrides', () => {

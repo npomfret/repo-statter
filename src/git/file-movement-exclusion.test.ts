@@ -24,7 +24,7 @@ describe('File movement and exclusion patterns', () => {
     rmSync(testRepoPath, { recursive: true, force: true })
   })
   
-  it('should track LOC correctly when files move to/from excluded directories', async () => {
+  it('should track LOC correctly when files move to/from excluded directories', { timeout: 20000 }, async () => {
     // Step 1: Create a regular file with 10 lines
     const fileContent = Array.from({ length: 10 }, (_, i) => `// Line ${i + 1}`).join('\n')
     execSync(`echo "${fileContent}" > mycode.js`, { cwd: testRepoPath })

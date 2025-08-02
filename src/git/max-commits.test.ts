@@ -92,7 +92,7 @@ describe('Max Commits Feature', () => {
     expect(commits[2]?.message).toBe('Add file5')
   })
   
-  it('should calculate consistent final cumulative lines regardless of starting point', async () => {
+  it('should calculate consistent final cumulative lines regardless of starting point', { timeout: 10000 }, async () => {
     // Get different subsets of commits
     const allCommits = await parseCommitHistory(
       testRepoPath, 

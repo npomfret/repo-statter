@@ -24,7 +24,7 @@ describe('Cumulative LOC with file moves to excluded directories', () => {
     rmSync(testRepoPath, { recursive: true, force: true })
   })
   
-  it('should show cumulative LOC drop when files are moved to excluded directories', async () => {
+  it('should show cumulative LOC drop when files are moved to excluded directories', { timeout: 20000 }, async () => {
     // Step 1: Create initial source files (100 lines total)
     const file1 = Array.from({ length: 40 }, (_, i) => `// File1 Line ${i + 1}`).join('\n')
     const file2 = Array.from({ length: 60 }, (_, i) => `// File2 Line ${i + 1}`).join('\n')

@@ -12,7 +12,7 @@ export interface ManagedChart {
 
 export class ChartManager {
   private charts = new Map<string, ManagedChart>()
-  private originalChartData = new Map<string, any>() // Store original data for filter restoration
+  private originalChartData = new Map<string, any>()
   private selectedFileType: string | null = null
   private fileTypeMap = new Map<string, string>()
 
@@ -57,6 +57,7 @@ export class ChartManager {
     if (chart) {
       chart.instance.destroy()
       this.charts.delete(id)
+      this.originalChartData.delete(id)
       
       // Clear the container HTML in case it was replaced with a message
       const container = document.getElementById(chart.definition.elementId)
@@ -69,6 +70,7 @@ export class ChartManager {
   destroyAll(): void {
     this.charts.forEach(({ instance }) => instance.destroy())
     this.charts.clear()
+    this.originalChartData.clear()
   }
 
   // Create and register a chart
@@ -109,7 +111,6 @@ export class ChartManager {
   }
 
   private updateChartsWithFileTypeFilter(): void {
-    console.log(`File type filter changed to: ${this.selectedFileType}`)
     
     // Handle file heatmap
     const fileHeatmap = this.charts.get('fileHeatmap')
