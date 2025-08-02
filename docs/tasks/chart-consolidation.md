@@ -214,6 +214,17 @@ const chart = chartManager.create('contributors', data)
 - Remove backward compatibility exports
 - Target: ~550 lines
 
+### ✅ Step 3 Completed (2025-08-02)
+- Removed all commented-out code blocks (379 lines)
+- Removed createChartToggleHTML helper function
+- Inlined setupEventHandlers into renderAllCharts
+- Cleaned up imports
+- Kept updateChartsWithFileTypeFilter for HTML event handlers
+- Kept updateGrowthChartAxis/updateCategoryChartAxis for backward compatibility
+- Reduced charts.ts from 976 to 417 lines (57% reduction)
+- All TypeScript checks pass
+- All tests pass (except unrelated timeout issues)
+
 ### ✅ Step 1 Completed (2025-08-02)
 - Extracted awards rendering to `src/visualization/awards-renderer.ts`
 - Extracted time slider to `src/visualization/time-slider-renderer.ts`
