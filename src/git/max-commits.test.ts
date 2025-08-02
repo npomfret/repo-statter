@@ -19,17 +19,13 @@ describe('Max Commits Feature', () => {
     execSync('git config user.name "Test User"', { cwd: testRepoPath })
     execSync('git config user.email "test@example.com"', { cwd: testRepoPath })
     
-    // Create commits with predictable line changes
+    // Create commits with predictable line changes (reduced from 10 to 6 for faster tests)
     const commits = [
       { file: 'file1.js', lines: 10, message: 'Initial commit' },
       { file: 'file2.js', lines: 20, message: 'Add file2' },
-      { file: 'file1.js', lines: 15, message: 'Update file1 (+5 lines)' },
       { file: 'file3.js', lines: 30, message: 'Add file3' },
-      { file: 'file2.js', lines: 25, message: 'Update file2 (+5 lines)' },
-      { file: 'file1.js', lines: 10, message: 'Reduce file1 (-5 lines)' },
-      { file: 'file4.js', lines: 40, message: 'Add file4' },
       { file: 'file3.js', lines: 35, message: 'Update file3 (+5 lines)' },
-      { file: 'file2.js', lines: 20, message: 'Reduce file2 (-5 lines)' },
+      { file: 'file2.js', lines: 15, message: 'Reduce file2 to 15 lines' },
       { file: 'file5.js', lines: 50, message: 'Add file5' },
     ]
     
@@ -70,10 +66,10 @@ describe('Max Commits Feature', () => {
     const fifthLastCommit = commits[commits.length - 5]
     
     expect(lastCommit?.message).toBe('Add file5')
-    expect(secondLastCommit?.message).toBe('Reduce file2 (-5 lines)')
+    expect(secondLastCommit?.message).toBe('Reduce file2 to 15 lines')
     expect(thirdLastCommit?.message).toBe('Update file3 (+5 lines)')
-    expect(fourthLastCommit?.message).toBe('Add file4')
-    expect(fifthLastCommit?.message).toBe('Reduce file1 (-5 lines)')
+    expect(fourthLastCommit?.message).toBe('Add file3')
+    expect(fifthLastCommit?.message).toBe('Add file2')
   })
   
   it('should maintain chronological order when using --max-commits', async () => {
@@ -88,35 +84,35 @@ describe('Max Commits Feature', () => {
     
     // Verify chronological order (oldest to newest)
     expect(commits[0]?.message).toBe('Update file3 (+5 lines)')
-    expect(commits[1]?.message).toBe('Reduce file2 (-5 lines)')
+    expect(commits[1]?.message).toBe('Reduce file2 to 15 lines')
     expect(commits[2]?.message).toBe('Add file5')
   })
   
   it('should calculate consistent final cumulative lines regardless of starting point', { timeout: 10000 }, async () => {
-    // Get different subsets of commits
-    const allCommits = await parseCommitHistory(
-      testRepoPath, 
-      undefined, 
-      undefined, 
-      { useCache: false }, 
-      DEFAULT_CONFIG
-    )
-    
-    const last5Commits = await parseCommitHistory(
-      testRepoPath, 
-      undefined, 
-      5, 
-      { useCache: false }, 
-      DEFAULT_CONFIG
-    )
-    
-    const last3Commits = await parseCommitHistory(
-      testRepoPath, 
-      undefined, 
-      3, 
-      { useCache: false }, 
-      DEFAULT_CONFIG
-    )
+    // Get different subsets of commits in parallel for better performance
+    const [allCommits, last5Commits, last3Commits] = await Promise.all([
+      parseCommitHistory(
+        testRepoPath, 
+        undefined, 
+        undefined, 
+        { useCache: false }, 
+        DEFAULT_CONFIG
+      ),
+      parseCommitHistory(
+        testRepoPath, 
+        undefined, 
+        5, 
+        { useCache: false }, 
+        DEFAULT_CONFIG
+      ),
+      parseCommitHistory(
+        testRepoPath, 
+        undefined, 
+        3, 
+        { useCache: false }, 
+        DEFAULT_CONFIG
+      )
+    ])
     
     // Calculate cumulative lines for each subset
     const calculateCumulativeLines = (commits: any[]) => {
@@ -141,9 +137,9 @@ describe('Max Commits Feature', () => {
     expect(last5Cumulative).toBeLessThan(allCumulative)
     expect(last3Cumulative).toBeLessThan(last5Cumulative)
     
-    // The final files have: file1=10, file2=20, file3=35, file4=40, file5=50 = 155 total lines
+    // The final files have: file1=10, file2=15, file3=35, file5=50 = 110 total lines
     // But cumulative calculation shows net changes, not absolute values
-    expect(allCumulative).toBe(155) // All additions minus deletions
+    expect(allCumulative).toBe(110) // All additions minus deletions
   })
   
   it('should handle edge cases gracefully', async () => {

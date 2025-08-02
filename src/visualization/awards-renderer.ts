@@ -58,7 +58,7 @@ export function renderAwards(awards: AwardsData, githubUrl?: string): void {
       content.className = 'ms-2 me-auto'
 
       const header = document.createElement('div')
-      header.className = 'fw-normal text-secondary'
+      header.className = 'fw-bold text-secondary'
 
       const meta = document.createElement('small')
       meta.className = 'text-muted'
