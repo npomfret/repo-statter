@@ -5,9 +5,9 @@ import {
   getTopCommitsByBytesAdded,
   getTopCommitsByBytesRemoved,
   getTopCommitsByLinesAdded,
-  getTopCommitsByLinesRemoved,
-  type CommitAward
+  getTopCommitsByLinesRemoved
 } from './award-calculator.js'
+import type { CommitAward } from './types.js'
 import { CommitDataBuilder, FileChangeBuilder } from '../test/builders.js'
 import type { CommitData } from '../git/parser.js'
 import type { AnalysisContext } from '../report/generator.js'

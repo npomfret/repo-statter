@@ -48,12 +48,12 @@ export async function generateRepositoryHash(repoPath: string): Promise<string> 
   return createHash('sha256').update(combined).digest('hex').substring(0, 16)
 }
 
-export function getCachePath(repositoryHash: string, cacheDirName: string): string {
+function getCachePath(repositoryHash: string, cacheDirName: string): string {
   const cacheDir = join(tmpdir(), cacheDirName)
   return join(cacheDir, `${repositoryHash}.json`)
 }
 
-export async function ensureCacheDirectory(cacheDirName: string): Promise<void> {
+async function ensureCacheDirectory(cacheDirName: string): Promise<void> {
   const cacheDir = join(tmpdir(), cacheDirName)
   if (!existsSync(cacheDir)) {
     await mkdir(cacheDir, { recursive: true })

@@ -1,18 +1,7 @@
 import type { CommitData } from '../git/parser.js'
 import { analyzeRepositoryComplexity } from './lizard-complexity-analyzer.js'
 import type { AnalysisContext } from '../report/generator.js'
-
-export interface TopFileStats {
-  fileName: string
-  value: number
-  percentage: number
-}
-
-export interface TopFilesData {
-  largest: TopFileStats[]
-  mostChurn: TopFileStats[]
-  mostComplex: TopFileStats[]
-}
+import type { TopFileStats, TopFilesData } from './types.js'
 
 export function getTopFilesBySize(commits: CommitData[], currentFiles?: Set<string>): TopFileStats[] {
   const fileSizeMap = new Map<string, number>()

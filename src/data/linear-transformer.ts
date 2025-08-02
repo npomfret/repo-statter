@@ -1,16 +1,5 @@
 import type { CommitData } from '../git/parser.js'
-
-export interface LinearSeriesPoint {
-  commitIndex: number
-  sha: string
-  date: string
-  cumulativeLines: number
-  commits: number
-  linesAdded: number
-  linesDeleted: number
-  netLines: number
-  cumulativeBytes: number
-}
+import type { LinearSeriesPoint } from './types.js'
 
 export function getLinearSeriesData(commits: CommitData[]): LinearSeriesPoint[] {
   const linearSeries: LinearSeriesPoint[] = []

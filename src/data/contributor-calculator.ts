@@ -1,19 +1,7 @@
 import { isRealCommit } from '../utils/commit-filters.js'
 import { assert } from '../utils/errors.js'
 import type { AnalysisContext } from '../report/generator.js'
-
-export interface ContributorStats {
-  name: string
-  commits: number
-  linesAdded: number
-  linesDeleted: number
-}
-
-export interface ContributorAward {
-  name: string
-  commits: number
-  averageLinesChanged: number
-}
+import type { ContributorStats, ContributorAward } from './types.js'
 
 export function getContributorStats(context: AnalysisContext): ContributorStats[] {
   const { commits, config } = context

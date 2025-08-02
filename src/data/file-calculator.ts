@@ -1,19 +1,5 @@
 import type { AnalysisContext } from '../report/generator.js'
-
-export interface FileTypeStats {
-  type: string
-  lines: number
-  percentage: number
-}
-
-export interface FileHeatData {
-  fileName: string
-  heatScore: number
-  commitCount: number
-  lastModified: string
-  totalLines: number
-  fileType: string
-}
+import type { FileTypeStats, FileHeatData } from './types.js'
 
 export function getFileTypeStats(context: AnalysisContext): FileTypeStats[] {
   const { commits, currentFiles, config } = context

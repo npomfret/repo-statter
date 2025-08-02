@@ -1,14 +1,7 @@
 import type { CommitData } from '../git/parser.js'
 import { isRealCommit } from '../utils/commit-filters.js'
 import type { AnalysisContext } from '../report/generator.js'
-
-export interface CommitAward {
-  sha: string
-  authorName: string
-  date: string
-  message: string
-  value: number
-}
+import type { CommitAward } from './types.js'
 
 function getTopCommitsByMetric(
   context: AnalysisContext,

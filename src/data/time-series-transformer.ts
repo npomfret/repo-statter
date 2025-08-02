@@ -2,6 +2,7 @@ import type { CommitData } from '../git/parser.js'
 import { assert } from '../utils/errors.js'
 import { getFileCategory, type FileCategory } from '../utils/file-categories.js'
 import type { AnalysisContext } from '../report/generator.js'
+import type { CategoryBreakdown, TimeSeriesPoint } from './types.js'
 
 function createEmptyBreakdown(): CategoryBreakdown {
   return {
@@ -46,26 +47,6 @@ function getStartDateKey(firstCommitDate: Date, useHourly: boolean): string {
   return getDateKey(startDate, useHourly)
 }
 
-export interface CategoryBreakdown {
-  total: number
-  application: number
-  test: number
-  build: number
-  documentation: number
-  other: number
-}
-
-export interface TimeSeriesPoint {
-  date: string
-  commits: number
-  commitShas: string[]
-  linesAdded: CategoryBreakdown
-  linesDeleted: CategoryBreakdown
-  cumulativeLines: CategoryBreakdown
-  bytesAdded: CategoryBreakdown
-  bytesDeleted: CategoryBreakdown
-  cumulativeBytes: CategoryBreakdown
-}
 
 export function getTimeSeriesData(context: AnalysisContext): TimeSeriesPoint[] {
   const { commits, config } = context

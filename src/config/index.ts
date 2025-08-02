@@ -14,6 +14,3 @@ export {
 export type {
   SimplifiedConfig
 } from './simplified-schema.js'
-
-// Re-export validation for backward compatibility
-export { loadConfiguration as validateConfiguration } from './unified-loader.js'
