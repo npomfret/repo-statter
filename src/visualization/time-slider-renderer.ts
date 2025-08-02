@@ -331,6 +331,33 @@ export function updateTargetCharts(
               console.warn(`Failed to zoom ${chartId}:`, e)
             }
           }
+        } else if (chartId.includes('ActivityChart')) {
+          // For user activity charts, we need to recreate with filtered data
+          const managedChart = manager?.get(chartId)
+          if (managedChart && commits) {
+            // Filter commits to the selected date range
+            const filteredCommits = commits.filter((commit: any) => {
+              const commitTime = new Date(commit.date).getTime()
+              return commitTime >= min && commitTime <= max
+            })
+            
+            // Find the contributor name from the chart header
+            const chartContainer = document.getElementById(chartId)?.closest('.card')
+            const contributorName = chartContainer?.querySelector('.card-title')?.textContent
+            
+            if (contributorName) {
+              // Filter commits for this specific user
+              const userFilteredCommits = filteredCommits.filter(c => c.authorName === contributorName)
+              
+              // Destroy and recreate the chart with filtered data
+              manager.destroy(chartId)
+              manager.create('userActivityChart', userFilteredCommits, {
+                elementId: chartId,
+                chartId: chartId,
+                timeRange: { min, max } // Pass the time range for consistent display
+              })
+            }
+          }
         }
         // Skip userActivityChart zooming as it uses daily aggregation
         // and zooming can cause display issues with bar charts

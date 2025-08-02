@@ -1518,7 +1518,7 @@ export const CHART_DEFINITIONS: Record<string, ChartDefinition> = {
     hasAxisToggle: false,
     height: 200,
     elementId: '', // Dynamic - will be set when creating chart
-    dataFormatter: (commits: any[]) => {
+    dataFormatter: (commits: any[], options?: any) => {
       // Group commits by date
       const commitsByDate = new Map<string, number>()
       
@@ -1531,8 +1531,9 @@ export const CHART_DEFINITIONS: Record<string, ChartDefinition> = {
       const dates = Array.from(commitsByDate.keys()).sort()
       if (dates.length === 0) return [{ data: [] }]
 
-      const startDate = new Date(dates[0] || new Date())
-      const endDate = new Date(dates[dates.length - 1] || new Date())
+      // Use provided time range or fall back to commit data range
+      const startDate = options?.timeRange?.min ? new Date(options.timeRange.min) : new Date(dates[0] || new Date())
+      const endDate = options?.timeRange?.max ? new Date(options.timeRange.max) : new Date(dates[dates.length - 1] || new Date())
       
       const allDates: { date: number; count: number }[] = []
       const currentDate = new Date(startDate)

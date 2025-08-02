@@ -71,6 +71,11 @@ export interface SimplifiedConfig {
     mergePatterns: string[]
     automatedPatterns: string[]
   }
+  
+  // Author mapping
+  authorMapping?: {
+    [authorName: string]: string // Maps author names to normalized names
+  }
 }
 
 /**
@@ -364,5 +369,7 @@ export const SIMPLIFIED_DEFAULTS: SimplifiedConfig = {
       'accepting current'
     ]
   }
+  
+  // No author mapping by default - don't include it in defaults
 }
 

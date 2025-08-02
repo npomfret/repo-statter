@@ -199,9 +199,15 @@ export async function parseCommitHistory(repoPath: string, progressReporter: Pro
     // Then remove the space before the timezone
     const isoDate = commit.date.replace(' ', 'T').replace(' +', '+').replace(' -', '-')
     
+    // Apply author mapping if configured
+    let authorName = commit.author_name
+    if (config.authorMapping && config.authorMapping[authorName]) {
+      authorName = config.authorMapping[authorName]
+    }
+    
     const commitData = {
       sha: commit.hash,
-      authorName: commit.author_name,
+      authorName,
       authorEmail: commit.author_email,
       date: isoDate,
       message: commit.message,
