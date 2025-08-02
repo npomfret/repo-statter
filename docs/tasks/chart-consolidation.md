@@ -221,19 +221,69 @@ const chart = chartManager.create('contributors', data)
 #### Step 2: Remove Global State (Commit 2)
 **Goal**: Eliminate chartRefs and chartData globals
 
-1. **Replace chartRefs**
-   - ChartManager already tracks all chart instances
-   - Update any code that accesses chartRefs to use manager.get()
-   - Remove chartRefs declaration
+**Detailed Implementation Plan:**
 
-2. **Replace chartData**
-   - Store data in ChartManager alongside chart instances
-   - Update file type filtering to use manager's data
-   - Remove chartData declaration
+1. **Replace chartRefs (11 write operations, 4 read operations)**
+   
+   a. **Update Chart Registration** (lines 97, 108, 122, 146, 168, 181, 196)
+      - Remove all `chartRefs['chartName'] = chart` assignments
+      - These charts are already registered via ChartManager in their creation
+      - Verify each chart is properly registered with correct ID
+   
+   b. **Update User Chart Access** (lines 534-538)
+      - Replace iteration over `chartRefs` keys with ChartManager iteration
+      - Change `chartRefs[key]` access to `globalManager.getChart(key)`
+      - Update user chart detection logic
+   
+   c. **Update File Type Filter Function** (lines 927, 941, 950, 958, 961, 976)
+      - Replace `chartRefs['chartName'] = chart` with ChartManager operations
+      - Change `const existingChart = chartRefs['fileHeatmapChart']` to use manager
+      - Remove `delete chartRefs['fileHeatmapChart']` - manager handles cleanup
+   
+   d. **Remove Declaration** (line 34)
+      - Delete `const chartRefs: Record<string, any> = {}`
+
+2. **Replace chartData (5 write operations, 5 read operations)**
+   
+   a. **Migrate Data Storage**
+      - Line 73: `chartData['allData'] = data` - Store in module-level variable or pass directly
+      - Line 109: File types data - Already stored in ChartManager during chart creation
+      - Lines 197-201: Heatmap config - Already stored in ChartManager options
+   
+   b. **Update Data Access**
+      - Line 412: Top files data - Use `globalManager.get('topFilesChart')?.data`
+      - Lines 446, 859: All data access - Use module-level variable or closure
+      - Line 955: Heatmap data - Use `globalManager.get('fileHeatmapChart')?.options`
+      - Line 981: Top files data - Use manager's stored data
+   
+   c. **Update Property Mutations**
+      - Line 418: `currentView` property - Store in chart options or separate state
+   
+   d. **Remove Declaration** (line 35)
+      - Delete `const chartData: Record<string, any> = {}`
 
 3. **Move selectedFileType to ChartManager**
-   - Already has setFileTypeFilter/getFileTypeFilter methods
-   - Remove local selectedFileType variable
+   
+   a. **Update Getter Function** (lines 38-40)
+      - Change `getSelectedFileType()` to return `globalManager.getFileTypeFilter()`
+   
+   b. **Remove Local Variable** (line 36)
+      - Delete `let selectedFileType: string | null = null`
+   
+   c. **Update Any Direct Usage**
+      - Ensure all access goes through ChartManager's filter methods
+
+**Breaking Changes to Handle:**
+- User charts iteration needs new approach
+- Top files view state needs alternative storage
+- All data reference needs module-level storage or parameter passing
+
+**Testing Points:**
+- Verify all charts still render correctly
+- Test file type filtering still works
+- Ensure user charts are properly managed
+- Check zoom/time slider functionality
+- Validate top files view switching
 
 #### Step 3: Clean Up Old Code (Commit 3)
 **Goal**: Remove all deprecated functions and patterns
