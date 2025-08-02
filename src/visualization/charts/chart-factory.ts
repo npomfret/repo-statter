@@ -1,5 +1,77 @@
 import { CHART_DEFINITIONS, type ChartDefinition } from './chart-definitions.js'
 
+declare global {
+  interface Window {
+    d3: any
+  }
+}
+
+function renderD3WordCloud(container: HTMLElement, data: any, height: number) {
+  // Clear container
+  container.innerHTML = ''
+  
+  // Extract word data from the ApexCharts format
+  const words = data[0]?.data || []
+  if (!words.length) {
+    container.innerHTML = '<div class="text-center text-muted" style="padding: 100px 0;">No word data available</div>'
+    return
+  }
+  
+  // D3 word cloud implementation
+  const width = container.offsetWidth
+  const d3 = (window as any).d3
+  if (!d3 || !d3.layout?.cloud) {
+    console.error('D3 or d3-cloud library not loaded')
+    container.innerHTML = '<div class="text-center text-muted" style="padding: 100px 0;">Word cloud library not loaded</div>'
+    return
+  }
+  
+  const svg = d3.select(container)
+    .append('svg')
+    .attr('width', width)
+    .attr('height', height)
+  
+  const g = svg.append('g')
+    .attr('transform', `translate(${width/2},${height/2})`)
+  
+  // Color scale
+  const color = d3.scaleOrdinal(d3.schemeSet3)
+  
+  // Create the layout
+  const layout = d3.layout.cloud()
+    .size([width, height])
+    .words(words.map((d: any) => ({ text: d.x, size: d.y })))
+    .padding(5)
+    .rotate(() => (Math.random() - 0.5) * 60)
+    .font('Impact')
+    .fontSize((d: any) => {
+      const maxSize = Math.max(...words.map((w: any) => w.y))
+      const minSize = Math.min(...words.map((w: any) => w.y))
+      // Scale font sizes between 10 and 60 pixels
+      return 10 + ((d.size - minSize) / (maxSize - minSize)) * 50
+    })
+    .on('end', draw)
+  
+  layout.start()
+  
+  function draw(words: any[]) {
+    g.selectAll('text')
+      .data(words)
+      .enter().append('text')
+      .style('font-size', (d: any) => `${d.size}px`)
+      .style('font-family', 'Impact')
+      .style('fill', (_d: any, i: number) => color(i.toString()))
+      .attr('text-anchor', 'middle')
+      .attr('transform', (d: any) => `translate(${d.x},${d.y})rotate(${d.rotate})`)
+      .text((d: any) => d.text)
+      .append('title')
+      .text((d: any) => {
+        const count = data[0].data.find((w: any) => w.x === d.text)?.y || 0
+        return `${d.text}: ${count} occurrences`
+      })
+  }
+}
+
 export interface ChartInstance {
   chart: ApexCharts
   definition: ChartDefinition
@@ -35,6 +107,12 @@ export function createChart(
       console.error('Input data:', data)
       console.error('Options:', options)
       throw dataError
+    }
+    
+    // Handle D3 word cloud specially
+    if (definition.type === 'd3-wordcloud') {
+      renderD3WordCloud(container, series, definition.height)
+      return null // Return null since it's not an ApexCharts instance
     }
     
     // Special handling for charts with empty data

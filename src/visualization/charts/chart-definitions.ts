@@ -4,7 +4,7 @@ import type { CommitData } from '../../git/parser.js'
 import { formatBytes } from './chart-utils.js'
 
 export interface ChartDefinition {
-  type: 'line' | 'area' | 'bar' | 'donut' | 'heatmap' | 'treemap' | 'radialBar' | 'rangeBar'
+  type: 'line' | 'area' | 'bar' | 'donut' | 'heatmap' | 'treemap' | 'radialBar' | 'rangeBar' | 'd3-wordcloud'
   hasAxisToggle: boolean
   defaultAxis?: 'date' | 'commit'
   height: number
@@ -202,7 +202,7 @@ export const CHART_DEFINITIONS: Record<string, ChartDefinition> = {
   },
 
   wordCloud: {
-    type: 'treemap',
+    type: 'd3-wordcloud' as const,
     hasAxisToggle: false,
     height: 400,
     elementId: 'wordCloudChart',
