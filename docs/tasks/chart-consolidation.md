@@ -225,6 +225,13 @@ const chart = chartManager.create('contributors', data)
 - All TypeScript checks pass
 - All tests pass (except unrelated timeout issues)
 
+### 🔲 Step 4 Plan Ready (2025-08-02)
+- Detailed analysis complete
+- Will extract updateTargetCharts to time-slider-renderer.ts (122 lines)
+- Will extract renderUserCharts to user-charts-renderer.ts (51 lines)
+- Will simplify renderAllCharts function
+- Target: ~240 lines (42% additional reduction)
+
 ### ✅ Step 1 Completed (2025-08-02)
 - Extracted awards rendering to `src/visualization/awards-renderer.ts`
 - Extracted time slider to `src/visualization/time-slider-renderer.ts`
@@ -364,26 +371,52 @@ After analyzing the current state of charts.ts (976 lines), I've identified the 
 #### Step 4: Optimize Imports and Structure (Commit 4)
 **Goal**: Clean architecture with proper separation
 
-1. **Fix Import Structure**
-   - Remove duplicate imports
-   - Group related imports
-   - Remove commented imports
+## Analysis of Current State (417 lines)
 
-2. **Move Non-Chart Code**
-   - Extract timezone utilities
-   - Extract formatting utilities
-   - Move to appropriate utility modules
+### Current Structure
+1. **Imports** (lines 1-26): Well organized, no duplicates found
+2. **Module-level variables** (lines 28-32): allData and globalManager for state
+3. **Main functions**:
+   - `renderAllCharts` (lines 48-207): Main orchestration function
+   - `updateTargetCharts` (lines 209-331): Time slider zoom logic
+   - `renderUserCharts` (lines 333-384): User chart creation
+   - `updateChartsWithFileTypeFilter` (lines 387-398): File type filter handler
+   - `updateGrowthChartAxis` (lines 400-408): Backward compatibility
+   - `updateCategoryChartAxis` (lines 410-418): Backward compatibility
 
-3. **Simplify renderAllCharts**
-   - Should just orchestrate ChartManager calls
-   - No direct chart logic
-   - Clean error handling pattern
+### What Can Be Moved/Removed
+1. **updateTargetCharts** - Move to time-slider-renderer.ts as it handles time slider zoom
+2. **renderUserCharts** - Extract to user-charts-renderer.ts
+3. **Backward compatibility functions** - Keep but simplify
+4. **Module-level state** - Keep minimal for now
+
+## Implementation Plan
+
+### 1. Extract Time Slider Zoom Logic (lines 209-331)
+- Move `updateTargetCharts` function to `time-slider-renderer.ts`
+- Pass ChartManager instance as parameter
+- This removes 122 lines of zoom-specific logic
+
+### 2. Extract User Charts Rendering (lines 333-384)
+- Create new file `src/visualization/user-charts-renderer.ts`
+- Move `renderUserCharts` function
+- Import ChartManager for chart creation
+- This removes 51 lines
+
+### 3. Simplify Main Function
+- Remove direct chart error handling (use try-catch pattern)
+- Consolidate chart creation calls
+- Remove inline button state management (move to chart-toggles)
+
+### 4. Clean Up Exports
+- Keep only essential exports
+- Document why backward compatibility functions remain
 
 ### Expected Outcome
-- charts.ts: ~200-300 lines (orchestration only)
-- All chart logic in chart-definitions.ts
-- No global state
-- Clean separation of concerns
+- charts.ts: ~240 lines (orchestration only)
+- Better separation of concerns
+- Each renderer handles its own logic
+- Clean, focused main orchestration file
 
 ### Testing Strategy
 After each commit:
