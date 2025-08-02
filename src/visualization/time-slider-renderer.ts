@@ -1,5 +1,7 @@
 import type { TimeSeriesPoint, LinearSeriesPoint } from '../data/types.js'
+import type { CommitData } from '../git/parser.js'
 import { getTimezoneAbbreviation, formatShortDateTime } from './charts/chart-utils.js'
+import type { ChartManager } from './charts/index.js'
 
 export interface TimeSliderCallbacks {
   onRangeChange: (startDate: number, endDate: number, minDate: number, maxDate: number, totalCommits: number) => void
@@ -201,5 +203,138 @@ export function resetTimeSlider(): void {
     startSlider.value = '0'
     endSlider.value = '100'
     startSlider.dispatchEvent(new Event('input'))
+  }
+}
+
+// Function to update target charts based on time slider changes
+export function updateTargetCharts(
+  min: number, 
+  max: number, 
+  minDate: number, 
+  maxDate: number, 
+  totalCommits: number,
+  commits: CommitData[] | null,
+  manager: ChartManager | null
+): void {
+  // Calculate filtered commit count
+  let filteredCommitCount = totalCommits
+  
+  if (commits) {
+    // Count commits within the selected date range
+    filteredCommitCount = commits.filter((commit: any) => {
+      const commitTime = new Date(commit.date).getTime()
+      return commitTime >= min && commitTime <= max
+    }).length
+  }
+  
+  // Update filter status display
+  const filterStatus = document.getElementById('filterStatus')
+  if (filterStatus) {
+    filterStatus.textContent = `Showing ${filteredCommitCount}/${totalCommits} commits`
+  }
+
+  // Only attempt to zoom charts if ApexCharts is loaded and manager is available
+  if ((window as any).ApexCharts && manager) {
+    // Zoom the commit activity chart (always date-based)
+    const commitChart = manager.getChart('commitActivity')
+    if (commitChart && typeof commitChart.zoomX === 'function') {
+      try {
+        commitChart.zoomX(min, max)
+      } catch (e) {
+        console.warn('Failed to zoom commit activity chart:', e)
+      }
+    }
+
+    // Zoom the category lines chart (check if it's in date or commit mode)
+    const categoryChartData = manager.get('categoryLines')
+    if (categoryChartData && categoryChartData.instance) {
+      const chart = categoryChartData.instance
+      if (typeof chart.zoomX === 'function') {
+        try {
+          const xAxisType = categoryChartData.options?.axisMode === 'date' ? 'datetime' : 'category'
+          
+          if (xAxisType === 'datetime') {
+            // Date mode - use same date range
+            chart.zoomX(min, max)
+          } else {
+            // Commit mode - need to convert date range to commit indices
+            const dateRange = maxDate - minDate
+            const startPercent = (min - minDate) / dateRange
+            const endPercent = (max - minDate) / dateRange
+
+            const startIndex = Math.max(0, Math.round(startPercent * (totalCommits - 1)))
+            const endIndex = Math.min(totalCommits - 1, Math.round(endPercent * (totalCommits - 1)))
+
+            chart.zoomX(startIndex, endIndex)
+          }
+        } catch (e) {
+          console.warn('Failed to zoom category lines chart:', e)
+        }
+      }
+    }
+
+    // Zoom the growth chart
+    const growthChartData = manager.get('growth')
+    if (growthChartData && growthChartData.instance) {
+      const chart = growthChartData.instance
+      if (typeof chart.zoomX === 'function') {
+        try {
+          // Check if growth chart is in date or commit mode
+          const xAxisType = growthChartData.options?.axisMode === 'date' ? 'datetime' : 'category'
+
+          if (xAxisType === 'datetime') {
+            // Date mode - use same date range
+            chart.zoomX(min, max)
+          } else {
+            // Commit mode - need to convert date range to commit indices
+            const dateRange = maxDate - minDate
+            const startPercent = (min - minDate) / dateRange
+            const endPercent = (max - minDate) / dateRange
+
+            const startIndex = Math.max(1, Math.round(startPercent * (totalCommits - 1)) + 1)
+            const endIndex = Math.min(totalCommits, Math.round(endPercent * (totalCommits - 1)) + 1)
+
+            chart.zoomX(startIndex, endIndex)
+          }
+        } catch (e) {
+          console.warn('Failed to zoom growth chart:', e)
+        }
+      }
+    }
+
+    // Zoom user charts (they have axis toggles like growth/category charts)
+    if (manager) {
+      manager.getAllChartIds().forEach(chartId => {
+        if (chartId.startsWith('userChart') && !chartId.includes('Activity')) {
+          // Only zoom line charts, not activity bar charts
+          const managedChart = manager?.get(chartId)
+          if (managedChart && managedChart.instance && typeof managedChart.instance.zoomX === 'function') {
+            try {
+              // Check if user chart is in date or commit mode
+              const xAxisType = managedChart.options?.xAxisMode === 'date' ? 'datetime' : 'category'
+              
+              if (xAxisType === 'datetime') {
+                // Date mode - use same date range
+                managedChart.instance.zoomX(min, max)
+              } else {
+                // Commit mode - need to convert date range to commit indices
+                const dateRange = maxDate - minDate
+                const startPercent = (min - minDate) / dateRange
+                const endPercent = (max - minDate) / dateRange
+                
+                const startIndex = Math.max(0, Math.round(startPercent * (totalCommits - 1)))
+                const endIndex = Math.min(totalCommits - 1, Math.round(endPercent * (totalCommits - 1)))
+                
+                managedChart.instance.zoomX(startIndex, endIndex)
+              }
+            } catch (e) {
+              console.warn(`Failed to zoom ${chartId}:`, e)
+            }
+          }
+        }
+        // Skip userActivityChart zooming as it uses daily aggregation
+        // and zooming can cause display issues with bar charts
+      })
+    }
   }
 }
