@@ -15,6 +15,11 @@ export class ChartManager {
   private selectedFileType: string | null = null
   private fileTypeMap = new Map<string, string>()
 
+  // Get all chart IDs
+  getAllChartIds(): string[] {
+    return Array.from(this.charts.keys())
+  }
+
   register(id: string, instance: ApexCharts, data: any, options?: any, chartType?: string): void {
     // Use chartType if provided, otherwise fall back to id
     const definitionKey = chartType || id

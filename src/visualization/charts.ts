@@ -30,14 +30,8 @@ import { showChartError } from './charts/chart-utils.js'
 import { ChartManager } from './charts/index.js'
 import { setupAllChartToggles } from './charts/index.js'
 
-// Temporary local state until full migration is complete
-const chartRefs: Record<string, any> = {}
-const chartData: Record<string, any> = {}
-let selectedFileType: string | null = null
-
-function getSelectedFileType(): string | null {
-  return selectedFileType
-}
+// Module-level storage for allData until full migration is complete
+let allData: ChartData | null = null
 
 // Helper function for creating chart toggle HTML
 function createChartToggleHTML(toggleId: string): string {
@@ -69,10 +63,10 @@ export interface ChartData {
 }
 
 export function renderAllCharts(data: ChartData): void {
-  // Store all data globally for filtering access
-  chartData['allData'] = data
+  // Store all data for filtering access
+  allData = data
 
-  // Make updateChartsWithFileTypeFilter globally available for chart modules
+  // Make updateChartsWithFileTypeFilter globally available for HTML event handlers
   ;(globalThis as any).updateChartsWithFileTypeFilter = updateChartsWithFileTypeFilter
 
   // Create chart manager for new system
@@ -89,13 +83,9 @@ export function renderAllCharts(data: ChartData): void {
 
   // NEW SYSTEM: Contributors chart
   try {
-    const chart = manager.create('contributors', data.contributors, { 
+    manager.create('contributors', data.contributors, { 
       limit: data.chartsConfig?.topContributorsLimit ?? 10 
     })
-    if (chart) {
-      // Maintain backward compatibility
-      chartRefs['contributorsChart'] = chart
-    }
   } catch (error) {
     console.error('Failed to render contributors chart:', error)
     showChartError('contributorsChart', 'Contributors chart failed to load')
@@ -103,11 +93,7 @@ export function renderAllCharts(data: ChartData): void {
 
   // NEW SYSTEM: File types chart
   try {
-    const chart = manager.create('fileTypes', data.fileTypes, { manager })
-    if (chart) {
-      chartRefs['fileTypesChart'] = chart
-      chartData['fileTypesChart'] = { fileTypes: data.fileTypes.slice(0, 10) }
-    }
+    manager.create('fileTypes', data.fileTypes, { manager })
   } catch (error) {
     console.error('Failed to render file types chart:', error)
     showChartError('fileTypesChart', 'File types chart failed to load')
@@ -119,7 +105,6 @@ export function renderAllCharts(data: ChartData): void {
     const axisMode = savedMode || 'commit'
     const chart = manager.create('growth', { linearSeries: data.linearSeries, timeSeries: data.timeSeries, commits: data.commits }, { axisMode })
     if (chart) {
-      chartRefs['growthChart'] = chart
       
       // Set initial button state
       const dateBtn = document.getElementById('growthXAxisDate') as HTMLInputElement
@@ -143,7 +128,6 @@ export function renderAllCharts(data: ChartData): void {
     const axisMode = savedMode || 'commit'
     const chart = manager.create('categoryLines', { timeSeries: data.timeSeries, commits: data.commits }, { axisMode })
     if (chart) {
-      chartRefs['category-lines-chart'] = chart
       
       // Set initial button state
       const dateBtn = document.getElementById('categoryXAxisDate') as HTMLInputElement
@@ -163,10 +147,7 @@ export function renderAllCharts(data: ChartData): void {
 
   // NEW SYSTEM: Commit activity chart
   try {
-    const chart = manager.create('commitActivity', data.timeSeries)
-    if (chart) {
-      chartRefs['commit-activity-chart'] = chart
-    }
+    manager.create('commitActivity', data.timeSeries)
   } catch (error) {
     console.error('Failed to render commit activity chart:', error)
     showChartError('commitActivityChart', 'Commit activity chart failed to load')
@@ -174,12 +155,9 @@ export function renderAllCharts(data: ChartData): void {
 
   // NEW SYSTEM: Word cloud chart
   try {
-    const chart = manager.create('wordCloud', data.wordCloudData, {
+    manager.create('wordCloud', data.wordCloudData, {
       height: data.chartsConfig?.wordCloudHeight ?? 400
     })
-    if (chart) {
-      chartRefs['wordCloudChart'] = chart
-    }
   } catch (error) {
     console.error('Failed to render word cloud:', error)
     showChartError('wordCloudChart', 'Word cloud failed to load')
@@ -187,19 +165,11 @@ export function renderAllCharts(data: ChartData): void {
 
   // NEW SYSTEM: File heatmap chart
   try {
-    const chart = manager.create('fileHeatmap', data.fileHeatData, {
+    manager.create('fileHeatmap', data.fileHeatData, {
       height: data.chartsConfig?.fileHeatmapHeight ?? 400,
       maxFiles: data.chartsConfig?.fileHeatmapMaxFiles ?? 100,
       manager
     })
-    if (chart) {
-      chartRefs['fileHeatmapChart'] = chart
-      chartData['fileHeatmapChart'] = { 
-        fileHeatData: data.fileHeatData, 
-        height: data.chartsConfig?.fileHeatmapHeight ?? 400,
-        maxFiles: data.chartsConfig?.fileHeatmapMaxFiles ?? 100
-      }
-    }
   } catch (error : any) {
     console.error('Failed to render file heatmap:', error)
     console.error('Error stack:', error.stack)
@@ -409,13 +379,14 @@ function setupEventHandlers(): void {
 /*
 function updateTopFilesChart(view: string): void {
   // Get stored chart data
-  const storedData = chartData['topFilesChart']
+  // This function is commented out and not used
+  const storedData = null // chartData['topFilesChart']
   if (!storedData || !storedData.data) {
     return
   }
 
   // Update current view and save to localStorage
-  chartData['topFilesChart'].currentView = view
+  // chartData['topFilesChart'].currentView = view
   localStorage.setItem('topFilesView', view)
 
   // Update button states
@@ -443,7 +414,6 @@ function updateTopFilesChart(view: string): void {
 
 function updateTargetCharts(min: number, max: number, minDate: number, maxDate: number, totalCommits: number): void {
   // Calculate filtered commit count
-  const allData = chartData['allData']
   let filteredCommitCount = totalCommits
   
   if (allData && allData.commits) {
@@ -529,18 +499,33 @@ function updateTargetCharts(min: number, max: number, minDate: number, maxDate: 
       }
     }
 
-    // Zoom user charts (they are always date-based)
-    // These still use chartRefs for now as they're dynamically created
-    if (chartRefs) {
-      Object.keys(chartRefs).forEach(key => {
-        if (key.startsWith('userChart') && !key.includes('Activity')) {
+    // Zoom user charts (they have axis toggles like growth/category charts)
+    if (globalManager) {
+      globalManager.getAllChartIds().forEach(chartId => {
+        if (chartId.startsWith('userChart') && !chartId.includes('Activity')) {
           // Only zoom line charts, not activity bar charts
-          const userChart = chartRefs[key]
-          if (userChart && typeof userChart.zoomX === 'function') {
+          const managedChart = globalManager?.get(chartId)
+          if (managedChart && managedChart.instance && typeof managedChart.instance.zoomX === 'function') {
             try {
-              userChart.zoomX(min, max)
+              // Check if user chart is in date or commit mode
+              const xAxisType = managedChart.options?.xAxisMode === 'date' ? 'datetime' : 'category'
+              
+              if (xAxisType === 'datetime') {
+                // Date mode - use same date range
+                managedChart.instance.zoomX(min, max)
+              } else {
+                // Commit mode - need to convert date range to commit indices
+                const dateRange = maxDate - minDate
+                const startPercent = (min - minDate) / dateRange
+                const endPercent = (max - minDate) / dateRange
+                
+                const startIndex = Math.max(0, Math.round(startPercent * (totalCommits - 1)))
+                const endIndex = Math.min(totalCommits - 1, Math.round(endPercent * (totalCommits - 1)))
+                
+                managedChart.instance.zoomX(startIndex, endIndex)
+              }
             } catch (e) {
-              console.warn(`Failed to zoom ${key}:`, e)
+              console.warn(`Failed to zoom ${chartId}:`, e)
             }
           }
         }
@@ -852,142 +837,10 @@ function renderUserCharts(topContributors: ContributorStats[], commits: CommitDa
 function updateChartsWithFileTypeFilter(): void {
   if (!globalManager) return
   
-  // Update manager's file type filter
-  const currentFileType = getSelectedFileType()
-  globalManager.setFileTypeFilter(currentFileType)
-  
-  const allData = chartData['allData']
-  if (!allData) return
-  
-  // Filter data if needed
-  let filteredData = allData
-  if (currentFileType) {
-    // For now, show a message that filtering is not fully supported
-    // Full implementation would require recalculating time series and linear series data
-    console.log('File type filtering for time-based charts requires data recalculation')
-    
-    // Show informative message on affected charts
-    const message = `Filtering by "${currentFileType}" requires recalculating cumulative data`
-    
-    const growthContainer = document.getElementById('growthChart')
-    if (growthContainer) {
-      growthContainer.innerHTML = `
-        <div class="d-flex align-items-center justify-content-center h-100 text-muted" style="height: 350px;">
-          <div class="text-center">
-            <i class="bi bi-info-circle fs-1 mb-3"></i>
-            <p class="mb-0">${message}</p>
-            <p class="small mt-2">Clear the filter to see all data</p>
-          </div>
-        </div>
-      `
-    }
-    
-    const categoryContainer = document.getElementById('categoryLinesChart')
-    if (categoryContainer) {
-      categoryContainer.innerHTML = `
-        <div class="d-flex align-items-center justify-content-center h-100 text-muted" style="height: 350px;">
-          <div class="text-center">
-            <i class="bi bi-info-circle fs-1 mb-3"></i>
-            <p class="mb-0">${message}</p>
-            <p class="small mt-2">Clear the filter to see all data</p>
-          </div>
-        </div>
-      `
-    }
-    
-    const commitActivityContainer = document.getElementById('commitActivityChart')
-    if (commitActivityContainer) {
-      commitActivityContainer.innerHTML = `
-        <div class="d-flex align-items-center justify-content-center h-100 text-muted" style="height: 350px;">
-          <div class="text-center">
-            <i class="bi bi-info-circle fs-1 mb-3"></i>
-            <p class="mb-0">${message}</p>
-            <p class="small mt-2">Clear the filter to see all data</p>
-          </div>
-        </div>
-      `
-    }
-    
-    // Skip updating these charts when filter is active
-    return
-  }
-  
-  // Update charts with filtered or original data
-  // Growth chart
-  if (globalManager.get('growth')) {
-    globalManager.destroy('growth')
-    const savedMode = localStorage.getItem('growthChartXAxis') as 'date' | 'commit' | null
-    const axisMode = savedMode || 'commit'
-    const chart = globalManager.create('growth', { 
-      linearSeries: filteredData.linearSeries, 
-      timeSeries: filteredData.timeSeries, 
-      commits: filteredData.commits 
-    }, { axisMode })
-    if (chart) {
-      chartRefs['growthChart'] = chart
-    }
-  }
-  
-  // Category lines chart
-  if (globalManager.get('categoryLines')) {
-    globalManager.destroy('categoryLines')
-    const savedMode = localStorage.getItem('categoryChartXAxis') as 'date' | 'commit' | null
-    const axisMode = savedMode || 'commit'
-    const chart = globalManager.create('categoryLines', { 
-      timeSeries: filteredData.timeSeries, 
-      commits: filteredData.commits 
-    }, { axisMode })
-    if (chart) {
-      chartRefs['category-lines-chart'] = chart
-    }
-  }
-  
-  // Commit activity chart
-  if (globalManager.get('commitActivity')) {
-    globalManager.destroy('commitActivity')
-    const chart = globalManager.create('commitActivity', filteredData.timeSeries)
-    if (chart) {
-      chartRefs['commit-activity-chart'] = chart
-    }
-  }
-  
-  // Update file heatmap chart using new system
-  const heatmapData = chartData['fileHeatmapChart']
-  if (heatmapData) {
-    // First destroy any existing chart (including clearing message)
-    const existingChart = chartRefs['fileHeatmapChart']
-    if (existingChart) {
-      existingChart.destroy()
-      delete chartRefs['fileHeatmapChart']
-    }
-    // Clear container in case it has a message
-    const container = document.getElementById('fileHeatmapChart')
-    if (container) {
-      container.innerHTML = ''
-    }
-    
-    // Now create the chart fresh
-    const chart = globalManager.create('fileHeatmap', heatmapData.fileHeatData, {
-      height: heatmapData.height,
-      maxFiles: heatmapData.maxFiles,
-      manager: globalManager
-    })
-    if (chart) {
-      chartRefs['fileHeatmapChart'] = chart
-    }
-  }
-
-  // Update all three top files charts if they exist and have data
-  const topFilesData = chartData['topFilesChart']
-  if (topFilesData) {
-    // Migrated to ChartManager
-    // renderTopFilesChartWithFilter(topFilesData.data, 'size', 'topFilesChartSize')
-    // renderTopFilesChartWithFilter(topFilesData.data, 'changes', 'topFilesChartChurn')
-    // renderTopFilesChartWithFilter(topFilesData.data, 'complexity', 'topFilesChartComplex')
-    globalManager?.create('topFilesSize', topFilesData.data)
-    globalManager?.create('topFilesChurn', topFilesData.data)
-    globalManager?.create('topFilesComplex', topFilesData.data)
-  }
+  // The ChartManager handles all filtering internally
+  const fileTypeSelect = document.getElementById('fileTypeFilter') as HTMLSelectElement
+  const selectedFileType = fileTypeSelect?.value || null
+  globalManager.setFileTypeFilter(selectedFileType)
 }
 
 // Helper function to calculate top files for a specific file type
@@ -1120,12 +973,20 @@ function updateChartsWithFileTypeFilter(): void {
 // Export update functions for backward compatibility
 export function updateGrowthChartAxis(mode: 'date' | 'commit'): void {
   // Now handled by ChartManager
-  globalManager?.destroy('growth')
-  globalManager?.recreate('growth', { axisMode: mode })
+  if (globalManager) {
+    const chartData = globalManager.get('growth')
+    if (chartData) {
+      globalManager.recreate('growth', { axisMode: mode })
+    }
+  }
 }
 
 export function updateCategoryChartAxis(mode: 'date' | 'commit'): void {
   // Now handled by ChartManager
-  globalManager?.destroy('categoryLines')
-  globalManager?.recreate('categoryLines', { axisMode: mode })
+  if (globalManager) {
+    const chartData = globalManager.get('categoryLines')
+    if (chartData) {
+      globalManager.recreate('categoryLines', { axisMode: mode })
+    }
+  }
 }

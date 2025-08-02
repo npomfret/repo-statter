@@ -202,10 +202,10 @@ const chart = chartManager.create('contributors', data)
 ## Remaining Work - Phase 2
 
 ### Current State (2025-08-02)
-- charts.ts: 1,102 lines (target: ~800 lines) ✅ Step 1 completed
-- Global state still present: `chartRefs`, `chartData`, `selectedFileType`
-- Some charts migrated to ChartManager, but not fully integrated
-- Old patterns still mixed with new system
+- charts.ts: 976 lines (target: ~800 lines) ✅ Step 1 & 2 completed
+- Global state removed: ~~`chartRefs`~~, ~~`chartData`~~, ~~`selectedFileType`~~
+- All charts use ChartManager exclusively
+- Ready for cleanup of deprecated code
 
 ### ✅ Step 1 Completed (2025-08-02)
 - Extracted awards rendering to `src/visualization/awards-renderer.ts`
@@ -214,11 +214,21 @@ const chart = chartManager.create('contributors', data)
 - Fixed zoom functionality to use ChartManager
 - Reduced charts.ts by 309 lines (22% reduction)
 
+### ✅ Step 2 Completed (2025-08-02)
+- Removed `chartRefs` global variable and all references
+- Removed `chartData` global variable and all references
+- Removed `selectedFileType` variable - now uses ChartManager
+- Simplified `updateChartsWithFileTypeFilter` to delegate to ChartManager
+- Updated user chart zoom to use ChartManager.getAllChartIds()
+- Added `getAllChartIds()` method to ChartManager
+- Module-level `allData` retained temporarily for commit filtering
+- Reduced charts.ts to 976 lines (additional 126 lines removed)
+
 ### Migration Plan
 
 #### ~~Step 1: Complete ChartManager Migration (Commit 1)~~ ✅ COMPLETED
 
-#### Step 2: Remove Global State (Commit 2)
+#### ~~Step 2: Remove Global State (Commit 2)~~ ✅ COMPLETED
 **Goal**: Eliminate chartRefs and chartData globals
 
 **Detailed Implementation Plan:**
