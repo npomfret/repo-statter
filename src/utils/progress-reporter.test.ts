@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { ConsoleProgressReporter, SilentProgressReporter } from './progress-reporter.js'
+import { ConsoleProgressReporter } from './progress-reporter.js'
 
 describe('ProgressReporter', () => {
   describe('ConsoleProgressReporter', () => {
@@ -35,17 +35,4 @@ describe('ProgressReporter', () => {
     })
   })
   
-  describe('SilentProgressReporter', () => {
-    it('should not log anything', () => {
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
-      const reporter = new SilentProgressReporter()
-      
-      reporter.report('Test step')
-      reporter.report('Test step with numbers', 1, 10)
-      
-      expect(consoleLogSpy).not.toHaveBeenCalled()
-      
-      consoleLogSpy.mockRestore()
-    })
-  })
 })

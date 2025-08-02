@@ -162,7 +162,7 @@ interface TrophySvgs {
   averageHigh: string
 }
 
-interface ChartData {
+interface ReportTemplateData {
   repositoryName: string
   totalCommits: number
   totalLinesOfCode: number
@@ -187,7 +187,7 @@ function formatFullDate(date: Date): string {
   });
 }
 
-async function transformCommitData(context: AnalysisContext): Promise<ChartData> {
+async function transformCommitData(context: AnalysisContext): Promise<ReportTemplateData> {
   const { commits, repoName, repoPath, progressReporter, isLizardInstalled, currentFiles } = context
   
   // Calculate cumulative lines of code using the same method as the time series chart
@@ -259,7 +259,7 @@ async function transformCommitData(context: AnalysisContext): Promise<ChartData>
   }
 }
 
-async function injectDataIntoTemplate(template: string, chartData: ChartData, pipelineData: ProcessedData, context: AnalysisContext): Promise<string> {
+async function injectDataIntoTemplate(template: string, chartData: ReportTemplateData, pipelineData: ProcessedData, context: AnalysisContext): Promise<string> {
   const { commits, repoPath, progressReporter, config } = context
   
   progressReporter?.report('Using unified pipeline data for template injection')

@@ -2,13 +2,8 @@ import { describe, it, expect } from 'vitest'
 import {
   CommitDataBuilder,
   FileChangeBuilder,
-  ContributorStatsBuilder,
-  TimeSeriesPointBuilder,
-  LinearSeriesPointBuilder,
   createTestCommit,
-  createEmptyCommit,
-  createLargeCommit,
-  createDeletionCommit
+  createEmptyCommit
 } from './builders.js'
 
 describe('CommitDataBuilder', () => {
@@ -76,57 +71,6 @@ describe('FileChangeBuilder', () => {
   })
 })
 
-describe('ContributorStatsBuilder', () => {
-  it('builds contributor statistics', () => {
-    const stats = new ContributorStatsBuilder()
-      .withName('Jane Smith')
-      .withCommits(10)
-      .withLines(100, 50)
-      .build()
-
-    expect(stats.name).toBe('Jane Smith')
-    expect(stats.commits).toBe(10)
-    expect(stats.linesAdded).toBe(100)
-    expect(stats.linesDeleted).toBe(50)
-  })
-})
-
-describe('TimeSeriesPointBuilder', () => {
-  it('builds time series point', () => {
-    const point = new TimeSeriesPointBuilder()
-      .withDate('2024-03-01')
-      .withCommits(5)
-      .withLines(100, 25)
-      .withBytes(5000, 1250)
-      .build()
-
-    expect(point.date).toBe('2024-03-01')
-    expect(point.commits).toBe(5)
-    expect(point.linesAdded.total).toBe(100)
-    expect(point.linesDeleted.total).toBe(25)
-    expect(point.cumulativeLines.total).toBe(75)
-    expect(point.bytesAdded.total).toBe(5000)
-    expect(point.bytesDeleted.total).toBe(1250)
-    expect(point.cumulativeBytes.total).toBe(3750)
-  })
-})
-
-describe('LinearSeriesPointBuilder', () => {
-  it('builds linear series point', () => {
-    const point = new LinearSeriesPointBuilder()
-      .withIndex(10)
-      .withLines(50, 10)
-      .withCumulativeBytes(2000)
-      .build()
-
-    expect(point.commitIndex).toBe(10)
-    expect(point.linesAdded).toBe(50)
-    expect(point.linesDeleted).toBe(10)
-    expect(point.netLines).toBe(40)
-    expect(point.cumulativeBytes).toBe(2000)
-  })
-})
-
 describe('Factory functions', () => {
   it('creates test commit with defaults', () => {
     const commit = createTestCommit()
@@ -145,18 +89,4 @@ describe('Factory functions', () => {
     expect(commit.linesDeleted).toBe(0)
   })
 
-  it('creates large commit with many files', () => {
-    const commit = createLargeCommit(5)
-    expect(commit.filesChanged).toHaveLength(5)
-    expect(commit.linesAdded).toBeGreaterThan(0)
-    expect(commit.message).toBe('Large commit with many files')
-  })
-
-  it('creates deletion commit', () => {
-    const commit = createDeletionCommit()
-    expect(commit.message).toBe('Major cleanup')
-    expect(commit.linesAdded).toBe(0)
-    expect(commit.linesDeleted).toBe(500)
-    expect(commit.bytesDeleted).toBe(25000)
-  })
 })

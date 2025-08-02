@@ -12,8 +12,3 @@ export class ConsoleProgressReporter implements ProgressReporter {
   }
 }
 
-export class SilentProgressReporter implements ProgressReporter {
-  report(_step: string, _current?: number, _total?: number): void {
-    // No-op implementation for tests and programmatic usage
-  }
-}

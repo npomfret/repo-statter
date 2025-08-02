@@ -3,17 +3,8 @@
  * All chart rendering logic in one place, no complex abstractions
  */
 
-import type { CommitData } from '../git/parser.js'
-import type { WordFrequency } from '../text/processor.js'
 import type { SimplifiedConfig } from '../config/simplified-schema.js'
-import type {
-  ContributorStats,
-  FileTypeStats,
-  FileHeatData,
-  TimeSeriesPoint,
-  LinearSeriesPoint,
-  TopFilesData
-} from '../data/types.js'
+import type { ProcessedData } from '../data/unified-pipeline.js'
 
 import { renderAwards, type AwardsData } from './awards-renderer.js'
 import { renderTimeSlider, resetTimeSlider, updateTargetCharts } from './time-slider-renderer.js'
@@ -32,15 +23,7 @@ let allData: ChartData | null = null
 // Store manager reference for file type filtering
 let globalManager: ChartManager | null = null
 
-export interface ChartData {
-  commits: CommitData[]
-  contributors: ContributorStats[]
-  fileTypes: FileTypeStats[]
-  timeSeries: TimeSeriesPoint[]
-  linearSeries: LinearSeriesPoint[]
-  wordCloudData: WordFrequency[]
-  fileHeatData: FileHeatData[]
-  topFilesData?: TopFilesData
+export interface ChartData extends ProcessedData {
   awards?: AwardsData
   githubUrl?: string
   chartsConfig?: SimplifiedConfig['charts']

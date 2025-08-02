@@ -28,14 +28,6 @@ export function showChartError(containerId: string, message: string): void {
   }
 }
 
-export interface WordCloudData {
-  text: string
-  size: number
-  frequency: number
-  x?: number
-  y?: number
-  rotate?: number
-}
 
 export function getTimezoneAbbreviation(date: Date): string {
   const timeZoneName = date.toLocaleDateString(undefined, { timeZoneName: 'short' }).split(', ')[1]
