@@ -12,6 +12,7 @@ export interface ManagedChart {
 
 export class ChartManager {
   private charts = new Map<string, ManagedChart>()
+  private originalChartData = new Map<string, any>() // Store original data for filter restoration
   private selectedFileType: string | null = null
   private fileTypeMap = new Map<string, string>()
 
@@ -36,6 +37,11 @@ export class ChartManager {
       options,
       chartType: definitionKey
     })
+    
+    // Store original data for filter restoration if not already stored
+    if (!this.originalChartData.has(id)) {
+      this.originalChartData.set(id, data)
+    }
   }
 
   get(id: string): ManagedChart | undefined {
@@ -119,7 +125,11 @@ export class ChartManager {
         this.create('fileHeatmap', filteredData, fileHeatmap.options)
       } else {
         // Restore original data
-        this.recreate('fileHeatmap')
+        const originalData = this.originalChartData.get('fileHeatmap')
+        if (originalData) {
+          this.destroy('fileHeatmap')
+          this.create('fileHeatmap', originalData, fileHeatmap.options)
+        }
       }
     }
     
@@ -146,8 +156,12 @@ export class ChartManager {
           this.destroy(chartId)
           this.create(chartId, filteredData, chart.options)
         } else {
-          // Restore original chart
-          this.recreate(chartId)
+          // Restore original chart with original data
+          const originalData = this.originalChartData.get(chartId)
+          if (originalData) {
+            this.destroy(chartId)
+            this.create(chartId, originalData, chart.options)
+          }
         }
       }
     })
@@ -174,7 +188,11 @@ export class ChartManager {
               this.destroy(chartId)
             } else {
               // Restore original chart
-              this.recreate(chartId)
+              const originalData = this.originalChartData.get(chartId)
+              if (originalData && chart.options) {
+                container.innerHTML = '' // Clear the filter message
+                this.create(chartId, originalData, chart.options)
+              }
             }
           }
         }

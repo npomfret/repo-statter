@@ -9,52 +9,58 @@ When a file type filter is selected in the "Current State" section, the file hea
 - Top files by churn
 - Top files by complexity
 
-## Current State
-- File type filter UI is working
-- Filter state is being tracked in ChartManager
-- Charts show a placeholder message when filter is active
-- Need to implement actual filtering logic
+## Current State (Fixed)
+- ✅ File type filter UI is working
+- ✅ Filter state is being tracked in ChartManager
+- ✅ Charts show appropriate message when filter is active for time-based charts
+- ✅ Filtering logic is fully implemented in `updateChartsWithFileTypeFilter()`
+- ✅ **Fixed: Filter clearing now properly restores original charts**
 
 ## Requirements
 This is NOT a historical filter - it only filters the current view of which files are shown in the charts based on their file type. The data itself (commit counts, file sizes, etc.) remains unchanged.
 
-## Implementation Plan
+## Investigation Findings
 
-### 1. Update Chart Manager
-- Implement `updateChartsWithFileTypeFilter()` to filter and update charts
-- Filter the existing data arrays (fileHeatData, topFiles) by file type
-- Re-render affected charts with filtered data
+After code analysis, the filtering implementation is **already complete**:
 
-### 2. Update Chart Data Filtering
-For each affected chart:
-- **File Heatmap**: Filter `fileHeatData` array by `fileType` property
-- **Top Files**: Filter the respective data arrays by file type before sorting/limiting
+1. **ChartManager.updateChartsWithFileTypeFilter()** - Fully implemented with:
+   - File heatmap filtering by `fileType` property
+   - Top files filtering using `fileTypeMap` lookup
+   - Time-based charts showing filter message
+   - Console logging of filter changes
 
-### 3. Handle Empty States
-- Show appropriate message when no files match the selected type(s)
-- Ensure charts handle empty data gracefully
+2. **Data structures are correct**:
+   - `fileHeatData` has `fileType` property for direct filtering
+   - `topFilesData` uses `fileTypeMap` (built from commits) for filtering
+   - File type map is built in `buildFileTypeMap()` from commit data
 
-## Technical Details
+3. **UI integration exists**:
+   - Pie chart has `dataPointSelection` event handler
+   - Click toggles filter on/off for same segment
+   - ChartManager methods properly wired up
 
-### Data Flow
-1. User selects file type filter
-2. ChartManager stores the selected file type(s)
-3. `updateChartsWithFileTypeFilter()` filters the existing data
-4. Charts are destroyed and recreated with filtered data
-5. When filter is cleared, charts show all data again
+## Revised Implementation Plan
 
-### Simple Filter Logic
-```typescript
-// Example for file heatmap
-const filteredData = selectedFileTypes.length > 0
-  ? fileHeatData.filter(file => selectedFileTypes.includes(file.fileType))
-  : fileHeatData
-```
+### 1. Debug Why Filtering Isn't Working
+- Check if `fileTypeMap` is being populated correctly
+- Verify `fileHeatData` actually has `fileType` property
+- Ensure chart manager instance is properly connected
+- Check for JavaScript errors in browser console
 
-### Key Functions to Update
-- `updateChartsWithFileTypeFilter()` in ChartManager
-- Add filtering logic before chart creation
-- Ensure proper cleanup when switching filters
+### 2. Potential Issues to Investigate
+- **Data issue**: `fileType` might be missing from data
+- **Timing issue**: Charts might be created before data is ready
+- **Instance issue**: Multiple ChartManager instances
+- **Event issue**: Click handler not firing properly
+
+### 3. Fix Applied
+The issue was that when charts were destroyed during filtering, they were removed from the ChartManager's Map entirely, losing the original data needed for restoration.
+
+**Solution implemented:**
+1. Added `originalChartData` Map to preserve original data
+2. Modified `register()` to store original data when charts are first created
+3. Updated filter clearing logic to use preserved original data instead of `recreate()`
+4. Charts now properly restore when filter is removed
 
 ## Testing
 1. Filter by single file type - verify only those files appear
