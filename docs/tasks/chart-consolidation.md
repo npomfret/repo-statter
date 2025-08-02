@@ -199,6 +199,106 @@ const chart = chartManager.create('contributors', data)
 - ✅ No console errors or warnings
 - ✅ Performance metrics unchanged
 
+## Remaining Work - Phase 2
+
+### Current State (2025-08-01)
+- charts.ts: 1,411 lines (target: ~800 lines)
+- Global state still present: `chartRefs`, `chartData`, `selectedFileType`
+- Some charts migrated to ChartManager, but not fully integrated
+- Old patterns still mixed with new system
+
+### Migration Plan
+
+#### Step 1: Complete ChartManager Migration (Commit 1)
+**Goal**: Migrate remaining charts to use ChartManager exclusively
+
+1. **Time Slider Chart**
+   - Create chart definition in chart-definitions.ts
+   - Move renderTimeSliderChart logic to definition
+   - Use ChartManager.create() instead of direct instantiation
+   - Remove chartRefs usage
+
+2. **User Charts**
+   - Already partially migrated but needs cleanup
+   - Remove renderUserCharts function, use ChartManager directly
+   - Ensure dynamic chart IDs work with manager
+
+3. **Awards Section**
+   - Not a chart, but needs refactoring
+   - Move to separate module (awards-renderer.ts)
+   - Remove from charts.ts
+
+#### Step 2: Remove Global State (Commit 2)
+**Goal**: Eliminate chartRefs and chartData globals
+
+1. **Replace chartRefs**
+   - ChartManager already tracks all chart instances
+   - Update any code that accesses chartRefs to use manager.get()
+   - Remove chartRefs declaration
+
+2. **Replace chartData**
+   - Store data in ChartManager alongside chart instances
+   - Update file type filtering to use manager's data
+   - Remove chartData declaration
+
+3. **Move selectedFileType to ChartManager**
+   - Already has setFileTypeFilter/getFileTypeFilter methods
+   - Remove local selectedFileType variable
+
+#### Step 3: Clean Up Old Code (Commit 3)
+**Goal**: Remove all deprecated functions and patterns
+
+1. **Remove Old Helper Functions**
+   - createChartToggleHTML (use new toggle system)
+   - updateChartsWithFileTypeFilter (moved to ChartManager)
+   - Any unused chart-specific functions
+
+2. **Consolidate Event Handlers**
+   - setupEventHandlers() should only handle non-chart events
+   - Chart-specific events handled by chart definitions
+
+3. **Remove Backward Compatibility Code**
+   - Lines like `chartRefs['contributorsChart'] = chart`
+   - Global assignments like `(globalThis as any).updateChartsWithFileTypeFilter`
+
+#### Step 4: Optimize Imports and Structure (Commit 4)
+**Goal**: Clean architecture with proper separation
+
+1. **Fix Import Structure**
+   - Remove duplicate imports
+   - Group related imports
+   - Remove commented imports
+
+2. **Move Non-Chart Code**
+   - Extract timezone utilities
+   - Extract formatting utilities
+   - Move to appropriate utility modules
+
+3. **Simplify renderAllCharts**
+   - Should just orchestrate ChartManager calls
+   - No direct chart logic
+   - Clean error handling pattern
+
+### Expected Outcome
+- charts.ts: ~200-300 lines (orchestration only)
+- All chart logic in chart-definitions.ts
+- No global state
+- Clean separation of concerns
+
+### Testing Strategy
+After each commit:
+1. Run `npm run test`
+2. Run `npm run typecheck`
+3. Test with `./scripts/run-tests.sh`
+4. Verify all charts render correctly
+5. Test all interactive features (toggles, filtering, zoom)
+
+### Risk Mitigation
+- Each step is a separate commit for easy rollback
+- Maintain backward compatibility until final step
+- Test thoroughly after each change
+- Keep ChartManager as source of truth
+
 ## Conclusion
 
 The chart system consolidation successfully eliminated technical debt while improving code quality, maintainability, and user experience. The new architecture provides a solid foundation for future enhancements and demonstrates the value of data-driven design patterns in reducing complexity and duplication.
