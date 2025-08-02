@@ -207,6 +207,13 @@ const chart = chartManager.create('contributors', data)
 - All charts use ChartManager exclusively
 - Ready for cleanup of deprecated code
 
+### Step 3 Plan (2025-08-02)
+- Remove 379 lines of commented code
+- Remove createChartToggleHTML function
+- Inline setupEventHandlers
+- Remove backward compatibility exports
+- Target: ~550 lines
+
 ### ✅ Step 1 Completed (2025-08-02)
 - Extracted awards rendering to `src/visualization/awards-renderer.ts`
 - Extracted time slider to `src/visualization/time-slider-renderer.ts`
@@ -298,18 +305,50 @@ const chart = chartManager.create('contributors', data)
 #### Step 3: Clean Up Old Code (Commit 3)
 **Goal**: Remove all deprecated functions and patterns
 
+## Analysis
+
+After analyzing the current state of charts.ts (976 lines), I've identified the following deprecated code to remove:
+
+### 1. Old Helper Functions to Remove
+- **createChartToggleHTML** (lines 37-46): Used only for user charts, should use new toggle system
+- **updateChartsWithFileTypeFilter** (lines 837-844): Still needed for HTML handlers but should be simplified
+- **All commented-out code blocks** (lines 245-973): Large sections of migrated/unused code
+
+### 2. Event Handlers
+- **setupEventHandlers** (lines 223-236): Currently only handles Clear Filters button, can be inlined
+
+### 3. Backward Compatibility Code
+- **Global assignment** (line 70): `(globalThis as any).updateChartsWithFileTypeFilter`
+- **Export functions** (lines 974-993): updateGrowthChartAxis, updateCategoryChartAxis - no longer used
+
+### 4. Dead Code
+- **379 lines of commented code** representing old implementations
+- **Empty imports** and unused type imports
+
+## Implementation Plan
+
 1. **Remove Old Helper Functions**
-   - createChartToggleHTML (use new toggle system)
-   - updateChartsWithFileTypeFilter (moved to ChartManager)
-   - Any unused chart-specific functions
+   - Delete createChartToggleHTML function
+   - Update user chart rendering to use data attributes for toggle setup
+   - Keep updateChartsWithFileTypeFilter but simplify it
 
 2. **Consolidate Event Handlers**
-   - setupEventHandlers() should only handle non-chart events
-   - Chart-specific events handled by chart definitions
+   - Inline setupEventHandlers code into renderAllCharts
+   - Remove the separate function
 
 3. **Remove Backward Compatibility Code**
-   - Lines like `chartRefs['contributorsChart'] = chart`
-   - Global assignments like `(globalThis as any).updateChartsWithFileTypeFilter`
+   - Remove global assignment for updateChartsWithFileTypeFilter
+   - Remove export functions that delegate to ChartManager
+   - Clean up all commented code blocks
+
+4. **Clean Imports**
+   - Remove unused imports
+   - Consolidate type imports
+
+### Expected Result
+- Reduce from 976 to ~550 lines (removing ~426 lines)
+- Cleaner, more focused code
+- No dead code or comments
 
 #### Step 4: Optimize Imports and Structure (Commit 4)
 **Goal**: Clean architecture with proper separation
