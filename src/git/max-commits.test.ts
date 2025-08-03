@@ -52,7 +52,7 @@ describe('Max Commits Feature', () => {
       testRepoPath, 
       undefined, 
       maxCommits, 
-      { useCache: false }, 
+      { useCache: true }, 
       DEFAULT_CONFIG
     )
     
@@ -78,7 +78,7 @@ describe('Max Commits Feature', () => {
       testRepoPath, 
       undefined, 
       maxCommits, 
-      { useCache: false }, 
+      { useCache: true }, 
       DEFAULT_CONFIG
     )
     
@@ -95,60 +95,45 @@ describe('Max Commits Feature', () => {
         testRepoPath, 
         undefined, 
         undefined, 
-        { useCache: false }, 
+        { useCache: true }, 
         DEFAULT_CONFIG
       ),
       parseCommitHistory(
         testRepoPath, 
         undefined, 
         5, 
-        { useCache: false }, 
+        { useCache: true }, 
         DEFAULT_CONFIG
       ),
       parseCommitHistory(
         testRepoPath, 
         undefined, 
         3, 
-        { useCache: false }, 
+        { useCache: true }, 
         DEFAULT_CONFIG
       )
     ])
     
-    // Calculate cumulative lines for each subset
     const calculateCumulativeLines = (commits: any[]) => {
-      let cumulative = 0
-      commits.forEach(commit => {
-        cumulative += commit.linesAdded - commit.linesDeleted
-      })
-      return cumulative
+      return commits.reduce((sum, commit) => sum + commit.linesAdded - commit.linesDeleted, 0)
     }
     
     const allCumulative = calculateCumulativeLines(allCommits)
     const last5Cumulative = calculateCumulativeLines(last5Commits)
     const last3Cumulative = calculateCumulativeLines(last3Commits)
     
-    // The final state should be the same (total lines in the repo)
-    // But the starting point will be different
-    console.log('All commits cumulative:', allCumulative)
-    console.log('Last 5 commits cumulative:', last5Cumulative)
-    console.log('Last 3 commits cumulative:', last3Cumulative)
-    
-    // Verify that partial histories show the changes within their scope
     expect(last5Cumulative).toBeLessThan(allCumulative)
     expect(last3Cumulative).toBeLessThan(last5Cumulative)
     
-    // The final files have: file1=10, file2=15, file3=35, file5=50 = 110 total lines
-    // But cumulative calculation shows net changes, not absolute values
-    expect(allCumulative).toBe(110) // All additions minus deletions
+    expect(allCumulative).toBe(110)
   })
   
   it('should handle edge cases gracefully', async () => {
-    // Request more commits than exist
     const commits = await parseCommitHistory(
       testRepoPath, 
       undefined, 
       100, 
-      { useCache: false }, 
+      { useCache: true }, 
       DEFAULT_CONFIG
     )
     
