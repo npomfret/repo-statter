@@ -307,5 +307,245 @@ describe('Linear Transformer', () => {
       expect(firstPoint.netLines).toBe(35)
       expect(firstPoint.cumulativeBytes).toBe(1750) // (42 - 7) * 50
     })
+
+    describe('baseline consistency', () => {
+      it('should produce identical final cumulative values regardless of starting commit', () => {
+        // Create a realistic scenario with a large initial commit followed by smaller changes
+        const commits = [
+          // Commit 1: Large initial codebase
+          new CommitDataBuilder()
+            .withHash('initial')
+            .withDate('2024-01-01T10:00:00Z')
+            .withMessage('Initial large codebase')
+            .withFileChange(
+              new FileChangeBuilder()
+                .withPath('src/main.js')
+                .withAdditions(1000, 50000)  // Large initial commit
+                .withDeletions(0, 0)
+                .build()
+            )
+            .build(),
+          
+          // Commit 2: Small addition
+          new CommitDataBuilder()
+            .withHash('feature1')
+            .withDate('2024-01-02T10:00:00Z')
+            .withMessage('Add feature 1')
+            .withFileChange(
+              new FileChangeBuilder()
+                .withPath('src/feature1.js')
+                .withAdditions(50, 2500)
+                .withDeletions(10, 500)
+                .build()
+            )
+            .build(),
+          
+          // Commit 3: Refactoring - large deletion
+          new CommitDataBuilder()
+            .withHash('refactor')
+            .withDate('2024-01-03T10:00:00Z')
+            .withMessage('Major refactoring')
+            .withFileChange(
+              new FileChangeBuilder()
+                .withPath('src/main.js')
+                .withAdditions(200, 10000)
+                .withDeletions(800, 40000)  // Major deletion
+                .build()
+            )
+            .build(),
+          
+          // Commit 4: Small fix
+          new CommitDataBuilder()
+            .withHash('bugfix')
+            .withDate('2024-01-04T10:00:00Z')
+            .withMessage('Bug fix')
+            .withFileChange(
+              new FileChangeBuilder()
+                .withPath('src/utils.js')
+                .withAdditions(20, 1000)
+                .withDeletions(5, 250)
+                .build()
+            )
+            .build(),
+          
+          // Commit 5: Final addition
+          new CommitDataBuilder()
+            .withHash('final')
+            .withDate('2024-01-05T10:00:00Z')
+            .withMessage('Final feature')
+            .withFileChange(
+              new FileChangeBuilder()
+                .withPath('src/final.js')
+                .withAdditions(100, 5000)
+                .withDeletions(0, 0)
+                .build()
+            )
+            .build()
+        ]
+
+        // Test different analysis windows with appropriate baselines
+        
+        // Scenario 1: Full history (commits 1-5) - baseline = 0
+        const fullHistory = getLinearSeriesData(commits, 0, 0)
+        
+        // Scenario 2: Skip first commit (commits 2-5) - baseline = state after commit 1
+        const partialHistory = getLinearSeriesData(commits.slice(1), 50000, 1000)
+        
+        // Scenario 3: Start from commit 3 (commits 3-5) - baseline = state after commit 2
+        const laterStart = getLinearSeriesData(commits.slice(2), 52000, 1040) // 50000 + 2500 - 500, 1000 + 50 - 10
+        
+        // Final cumulative values should be identical
+        const finalFull = fullHistory[fullHistory.length - 1]!
+        const finalPartial = partialHistory[partialHistory.length - 1]!
+        const finalLater = laterStart[laterStart.length - 1]!
+        
+        expect(finalFull.cumulativeBytes).toBe(finalPartial.cumulativeBytes)
+        expect(finalFull.cumulativeBytes).toBe(finalLater.cumulativeBytes)
+        expect(finalFull.cumulativeLines).toBe(finalPartial.cumulativeLines)
+        expect(finalFull.cumulativeLines).toBe(finalLater.cumulativeLines)
+        
+        // Verify the expected final values
+        // Total: 50000 + 2000 - 30000 + 750 + 5000 = 27750 bytes
+        // Total: 1000 + 40 - 600 + 15 + 100 = 555 lines
+        expect(finalFull.cumulativeBytes).toBe(27750)
+        expect(finalFull.cumulativeLines).toBe(555)
+      })
+
+      it('should prevent negative cumulative values when starting from proper baseline', () => {
+        // Create scenario where large deletion would cause negative values without baseline
+        const commits = [
+          // Initial large commit (this would be the baseline)
+          new CommitDataBuilder()
+            .withHash('large-initial')
+            .withMessage('Large initial commit')
+            .withFileChange(
+              new FileChangeBuilder()
+                .withPath('generated.js')
+                .withAdditions(5000, 250000)  // Large generated file
+                .withDeletions(0, 0)
+                .build()
+            )
+            .build(),
+          
+          // Massive refactoring that deletes most of the large file
+          new CommitDataBuilder()
+            .withHash('massive-refactor')
+            .withMessage('Replace generated code with optimized version')
+            .withFileChange(
+              new FileChangeBuilder()
+                .withPath('generated.js')
+                .withAdditions(500, 25000)    // Small optimized replacement
+                .withDeletions(4800, 240000)  // Delete most of original
+                .build()
+            )
+            .build(),
+          
+          // Small addition after refactoring
+          new CommitDataBuilder()
+            .withHash('small-add')
+            .withMessage('Add small feature')
+            .withFileChange(
+              new FileChangeBuilder()
+                .withPath('feature.js')
+                .withAdditions(100, 5000)
+                .withDeletions(0, 0)
+                .build()
+            )
+            .build()
+        ]
+
+        // Without baseline (old behavior) - this would cause negative values
+        const withoutBaseline = getLinearSeriesData(commits.slice(1), 0, 0)
+        
+        // With proper baseline (new behavior)  
+        const withBaseline = getLinearSeriesData(commits.slice(1), 250000, 5000) // State after first commit
+        
+        // Without baseline, the refactoring commit would have caused negative cumulative
+        // But our Math.max(0, ...) prevents it
+        expect(withoutBaseline[0]!.cumulativeBytes).toBe(0) // Math.max prevented negative
+        expect(withoutBaseline[0]!.cumulativeLines).toBe(0)
+        
+        // With baseline, values should be positive and realistic
+        expect(withBaseline[0]!.cumulativeBytes).toBe(35000) // 250000 + 25000 - 240000
+        expect(withBaseline[0]!.cumulativeLines).toBe(700)   // 5000 + 500 - 4800
+        
+        // Final values should be different, proving baseline matters
+        const finalWithout = withoutBaseline[withoutBaseline.length - 1]!
+        const finalWith = withBaseline[withBaseline.length - 1]!
+        
+        expect(finalWith.cumulativeBytes).toBe(40000) // 35000 + 5000
+        expect(finalWith.cumulativeLines).toBe(800)   // 700 + 100
+        
+        expect(finalWithout.cumulativeBytes).toBe(5000) // Only the small addition
+        expect(finalWithout.cumulativeLines).toBe(100)
+        
+        // The baseline version should have much larger values, proving it's more accurate
+        expect(finalWith.cumulativeBytes).toBeGreaterThan(finalWithout.cumulativeBytes)
+        expect(finalWith.cumulativeLines).toBeGreaterThan(finalWithout.cumulativeLines)
+      })
+
+      it('should handle multiple large deletions correctly with baseline', () => {
+        // Simulate a repository with multiple major refactoring events
+        const commits = [
+          // Commit 1: Initial codebase
+          new CommitDataBuilder()
+            .withHash('init')
+            .withMessage('Initial version')
+            .withFileChange(
+              new FileChangeBuilder()
+                .withPath('v1.js')
+                .withAdditions(2000, 100000)
+                .withDeletions(0, 0)
+                .build()
+            )
+            .build(),
+          
+          // Commit 2: First refactoring
+          new CommitDataBuilder()
+            .withHash('refactor1')
+            .withMessage('First major refactor')
+            .withFileChange(
+              new FileChangeBuilder()
+                .withPath('v1.js')
+                .withAdditions(800, 40000)
+                .withDeletions(1500, 75000)
+                .build()
+            )
+            .build(),
+          
+          // Commit 3: Second refactoring  
+          new CommitDataBuilder()
+            .withHash('refactor2')
+            .withMessage('Second major refactor')
+            .withFileChange(
+              new FileChangeBuilder()
+                .withPath('v1.js')
+                .withAdditions(600, 30000)
+                .withDeletions(900, 45000)
+                .build()
+            )
+            .build()
+        ]
+
+        // Test analysis starting from different points
+        const fullAnalysis = getLinearSeriesData(commits, 0, 0)
+        const fromSecond = getLinearSeriesData(commits.slice(1), 100000, 2000)  // After commit 1
+        const fromThird = getLinearSeriesData(commits.slice(2), 65000, 1300)    // After commit 2
+        
+        // All should reach the same final state
+        const expected = {
+          bytes: 50000,  // 100000 - 75000 + 40000 - 45000 + 30000
+          lines: 1000    // 2000 - 1500 + 800 - 900 + 600
+        }
+        
+        expect(fullAnalysis[fullAnalysis.length - 1]!.cumulativeBytes).toBe(expected.bytes)
+        expect(fromSecond[fromSecond.length - 1]!.cumulativeBytes).toBe(expected.bytes)
+        expect(fromThird[fromThird.length - 1]!.cumulativeBytes).toBe(expected.bytes)
+        
+        expect(fullAnalysis[fullAnalysis.length - 1]!.cumulativeLines).toBe(expected.lines)
+        expect(fromSecond[fromSecond.length - 1]!.cumulativeLines).toBe(expected.lines)
+        expect(fromThird[fromThird.length - 1]!.cumulativeLines).toBe(expected.lines)
+      })
+    })
   })
 })
