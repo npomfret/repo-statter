@@ -193,4 +193,89 @@ describe('Max Commits Feature', () => {
     // Verify we got different sets of commits
     expect(secondRun[0]?.message).not.toBe(firstRun[0]?.message)
   })
+
+  it('should demonstrate limitations of partial commit history analysis', { timeout: 10000 }, async () => {
+    // This test demonstrates that analyzing partial commit history has inherent limitations:
+    // 1. Files created before the analysis window are not seen
+    // 2. File states are calculated from the partial window, not true final state
+    // 3. Only recently modified files are analyzed with their cumulative changes from the window
+    
+    const [allCommits, last4Commits, last2Commits] = await Promise.all([
+      parseCommitHistory(testRepoPath, undefined, undefined, { useCache: true }, DEFAULT_CONFIG),
+      parseCommitHistory(testRepoPath, undefined, 4, { useCache: true }, DEFAULT_CONFIG),
+      parseCommitHistory(testRepoPath, undefined, 2, { useCache: true }, DEFAULT_CONFIG)
+    ])
+
+    // Helper function to calculate file state from a commit window
+    const calculateFileStateFromWindow = (commits: any[]) => {
+      const fileSizeMap = new Map<string, number>()
+      
+      for (const commit of commits) {
+        for (const fileChange of commit.filesChanged) {
+          const currentSize = fileSizeMap.get(fileChange.fileName) ?? 0
+          const sizeChange = fileChange.linesAdded - fileChange.linesDeleted
+          fileSizeMap.set(fileChange.fileName, Math.max(0, currentSize + sizeChange))
+        }
+      }
+      
+      return fileSizeMap
+    }
+
+    const allFileState = calculateFileStateFromWindow(allCommits)
+    const last4FileState = calculateFileStateFromWindow(last4Commits)
+    const last2FileState = calculateFileStateFromWindow(last2Commits)
+
+    // ASSERTION 1: Different windows see different sets of files
+    const allFiles = Array.from(allFileState.keys()).filter(file => (allFileState.get(file) || 0) > 0)
+    const last4Files = Array.from(last4FileState.keys()).filter(file => (last4FileState.get(file) || 0) > 0)
+    const last2Files = Array.from(last2FileState.keys()).filter(file => (last2FileState.get(file) || 0) > 0)
+
+    // Smaller windows see fewer files (files not modified in the window are invisible)
+    expect(last4Files.length).toBeLessThanOrEqual(allFiles.length)
+    expect(last2Files.length).toBeLessThanOrEqual(last4Files.length)
+
+    // ASSERTION 2: Verify actual behavior based on our test data
+    // From our commit setup:
+    // - file1.js: 10 lines (commit 1 - initial, never changed) 
+    // - file2.js: 20 lines (commit 2), then reduced by 5 in commit 5 (net: +15)
+    // - file3.js: 30 lines (commit 3), then increased by 5 in commit 4 (net: +35)
+    // - file5.js: 50 lines (commit 6)
+    
+    // All commits: should see true final state
+    expect(allFileState.get('file1.js')).toBe(10)
+    expect(allFileState.get('file2.js')).toBe(15) // 20 - 5 = 15
+    expect(allFileState.get('file3.js')).toBe(35) // 30 + 5 = 35
+    expect(allFileState.get('file5.js')).toBe(50)
+
+    // Last 4 commits (commits 3,4,5,6): misses file1, but sees others from their creation/modification
+    expect(last4FileState.has('file1.js')).toBe(false) // Not modified in this window
+    expect(last4FileState.get('file2.js')).toBe(0) // Sees only the -5 change from commit 5, not the +20 from commit 2
+    expect(last4FileState.get('file3.js')).toBe(35) // Sees creation (+30) and modification (+5)  
+    expect(last4FileState.get('file5.js')).toBe(50) // Sees creation
+
+    // Last 2 commits (commits 5,6): sees only recent changes
+    expect(last2FileState.has('file1.js')).toBe(false) // Not modified in this window
+    expect(last2FileState.get('file2.js')).toBe(0) // Sees only the -5 change, not the +20 base
+    expect(last2FileState.has('file3.js')).toBe(false) // Not modified in this window (last change was commit 4)
+    expect(last2FileState.get('file5.js')).toBe(50) // Sees creation
+
+    // ASSERTION 3: This demonstrates why maxCommits is a performance trade-off, not accuracy
+    // - Full history gives accurate file states but is slow
+    // - Partial history gives incomplete picture but is fast
+    // - The tool should use currentFiles from git to supplement missing information
+
+    // Files with 0 size in partial windows had earlier state that wasn't captured
+    const allFilesInWindow = Array.from(last4FileState.keys()) // All files seen, regardless of final size
+    const zeroSizeFiles = allFilesInWindow.filter(file => (last4FileState.get(file) || 0) === 0)
+    expect(zeroSizeFiles).toContain('file2.js') // This file shows the limitation
+
+    // ASSERTION 4: Cumulative metrics are also affected by window size
+    const allCumulative = allCommits.reduce((sum, commit) => sum + commit.linesAdded - commit.linesDeleted, 0)
+    const last4Cumulative = last4Commits.reduce((sum, commit) => sum + commit.linesAdded - commit.linesDeleted, 0)
+    const last2Cumulative = last2Commits.reduce((sum, commit) => sum + commit.linesAdded - commit.linesDeleted, 0)
+
+    expect(allCumulative).toBe(110) // True total: 10 + 15 + 35 + 50
+    expect(last4Cumulative).toBe(80) // Last 4 commits: +30 + 5 - 5 + 50 = 80 
+    expect(last2Cumulative).toBe(45) // Only recent changes: -5 + 50 = 45
+  })
 })
