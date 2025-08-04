@@ -11,6 +11,11 @@ export function getLinearSeriesData(commits: CommitData[]): LinearSeriesPoint[] 
     cumulativeLines += commit.linesAdded - commit.linesDeleted
     cumulativeBytes += (commit.bytesAdded ?? 0) - (commit.bytesDeleted ?? 0)
     
+    // Detect data integrity issues early
+    if (cumulativeBytes < 0) {
+      throw new Error(`Negative cumulativeBytes (${cumulativeBytes}) detected at commit ${index + 1} (${commit.sha}). This indicates a data integrity issue - likely incorrect byte calculations in git diff parsing.`)
+    }
+    
     linearSeries.push({
       commitIndex: index,
       sha: commit.sha,
