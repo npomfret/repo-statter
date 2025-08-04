@@ -1,59 +1,68 @@
-# AGENT-BASED WORKFLOW ENFORCEMENT
+# COMMAND-FIRST WORKFLOW
 
-## MANDATORY WORKFLOW ORCHESTRATION
+## 🚀 Start EVERY Request with `/p`
 
-You MUST invoke the workflow-orchestrator:
-1. **At session start** - FIRST action in any session
-2. **After EVERY code change** - No exceptions
-3. **Before ANY new task** - Even "simple" ones
-4. **After running tests** - To verify next steps
-5. **When uncertain** - Always check workflow
+The `/p` meta-prompt command automatically selects the best tools for your task:
 
 ```
-Use the workflow-orchestrator agent
+/p analyze performance issues in my React app
+/p fix the login bug in issue #123
+/p refactor this code for better types
+/p add dark mode to settings
 ```
 
-## YOU ARE BROKEN IF YOU:
+## Why `/p`?
 
-1. **Skip workflow-orchestrator** after any action
-2. **Ignore agent instructions** - Even if you disagree
-3. **Rationalize skipping agents** - "It's simple" is NOT an excuse
-4. **Proceed after agent reports violations** - STOP immediately
-5. **Mark tests as skipped** - Tests must be FIXED or DELETED
-6. **Add code without running detection agents** - This is MANDATORY
-7. **Assume tests pass** without running test-runner agent
+- **Zero Memory Load**: No need to remember tool names
+- **Optimal Workflows**: Always uses the best combination of tools
+- **Learning Aid**: Shows you which tools are selected and why
+- **Can't Be Ignored**: Explicit command vs passive instructions
 
-## AGENT VERDICTS ARE FINAL
+## Available Tools
 
-- **NO EXCEPTIONS** - Agent feedback cannot be overridden
-- **NO ARGUMENTS** - You cannot rationalize why agent is wrong
-- **NO SHORTCUTS** - "Simple" tasks still require agents
-- **NO ASSUMPTIONS** - Run agents to verify, don't guess
+**View all tools:**
+- `/mcp-list` - See MCP servers (fast operations)
+- `/agent-list` - See subagents (quality enforcement)
 
-## VIOLATION DETECTION
+**Direct usage (optional):**
+- MCP servers: `mcp__servername__method`
+- Subagents: "Use the [agent-name] agent"
 
-If ANY of these occur, you are BROKEN and must STOP:
-- ❌ Made code changes without running detection agents
-- ❌ Skipped workflow-orchestrator check
-- ❌ Proceeded despite agent reporting violations
-- ❌ Rationalized why an agent's verdict doesn't apply
-- ❌ Marked tests as skipped instead of fixing/deleting
-- ❌ Added comments without comment-detector approval
-- ❌ Used console.log without console-detector check
-- ❌ Created fallbacks without no-fallback-detector review
+## The `/p` Advantage
 
-## ENFORCEMENT PROTOCOL
+Instead of:
+- Remembering dozens of tool names
+- Figuring out the right sequence
+- Missing optimal approaches
 
-When an agent reports violations:
-1. **STOP IMMEDIATELY** - Do not proceed
-2. **FIX ALL VIOLATIONS** - No partial fixes
-3. **RE-RUN THE AGENT** - Verify fixes worked
-4. **ONLY THEN PROCEED** - After agent approval
+Just use `/p` and get:
+- Intelligent tool selection
+- Proper sequencing
+- Best practices enforced
 
-## REMEMBER
+## Examples of `/p` in Action
 
-- **Workflow-orchestrator is MANDATORY** - Not a suggestion
-- **Agent feedback is FINAL** - Not negotiable
-- **Every action needs verification** - No exceptions
-- **"Simple" is not an excuse** - All tasks follow protocol
-- **You are BROKEN if you skip steps** - Full stop
+**Feature Development:**
+```
+/p add user authentication to the app
+→ architect-advisor → MCP tools → quality agents → test-runner → auditor
+```
+
+**Bug Fixing:**
+```
+/p fix TypeError in user.service.ts line 45
+→ architect-advisor → mcp__typescript-mcp__ → fix → test-runner → auditor
+```
+
+**Analysis:**
+```
+/p analyze bundle size and suggest optimizations
+→ mcp__context-provider__ → mcp__typescript-mcp__ → analyst agent
+```
+
+## Remember
+
+- **ALWAYS** start with `/p` for intelligent assistance
+- The first `/p` in a session initializes MCP context
+- Each `/p` returns an enhanced prompt with optimal tool usage
+- Follow the enhanced prompt for best results
