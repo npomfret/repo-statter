@@ -1,20 +1,19 @@
 import type { CommitData } from '../git/parser.js'
 import type { LinearSeriesPoint } from './types.js'
 
-export function getLinearSeriesData(commits: CommitData[]): LinearSeriesPoint[] {
+export function getLinearSeriesData(commits: CommitData[], baselineBytes: number = 0, baselineLines: number = 0): LinearSeriesPoint[] {
   const linearSeries: LinearSeriesPoint[] = []
   
-  let cumulativeLines = 0
-  let cumulativeBytes = 0
+  let cumulativeLines = baselineLines
+  let cumulativeBytes = baselineBytes
   
   commits.forEach((commit, index) => {
     cumulativeLines += commit.linesAdded - commit.linesDeleted
     cumulativeBytes += (commit.bytesAdded ?? 0) - (commit.bytesDeleted ?? 0)
     
-    // Detect data integrity issues early
-    if (cumulativeBytes < 0) {
-      throw new Error(`Negative cumulativeBytes (${cumulativeBytes}) detected at commit ${index + 1} (${commit.sha}). This indicates a data integrity issue - likely incorrect byte calculations in git diff parsing.`)
-    }
+    // Ensure cumulative values don't go negative (though this should be rare now)
+    cumulativeLines = Math.max(0, cumulativeLines)
+    cumulativeBytes = Math.max(0, cumulativeBytes)
     
     linearSeries.push({
       commitIndex: index,

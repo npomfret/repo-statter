@@ -4,6 +4,7 @@ import { getContributorStats, getLowestAverageLinesChanged, getHighestAverageLin
 import { getFileTypeStats, getFileHeatData } from './file-calculator.js'
 import { getTimeSeriesData } from './time-series-transformer.js'
 import { getLinearSeriesData } from './linear-transformer.js'
+import { calculateBaselineCommitSize } from '../git/parser.js'
 import { processCommitMessages, type WordFrequency } from '../text/processor.js'
 import { getTopFilesStats } from './top-files-calculator.js'
 import {
@@ -60,7 +61,7 @@ export class DataPipeline {
    * - top-files-calculator.ts
    */
   async processRepository(context: AnalysisContext): Promise<ProcessedData> {
-    const { commits, progressReporter, config } = context
+    const { commits, progressReporter, config, repoPath } = context
     
     progressReporter?.report('Processing repository data through unified pipeline')
     
@@ -71,7 +72,22 @@ export class DataPipeline {
     
     progressReporter?.report('Generating time series and linear data')
     const timeSeries = getTimeSeriesData(context)
-    const linearSeries = getLinearSeriesData(commits)
+    
+    // Calculate baseline from first commit for accurate cumulative values
+    let baselineBytes = 0
+    let baselineLines = 0
+    if (commits.length > 0 && repoPath && commits[0]) {
+      try {
+        progressReporter?.report('Calculating baseline repository size')
+        const baseline = await calculateBaselineCommitSize(repoPath, commits[0].sha, config)
+        baselineBytes = baseline.totalBytes
+        baselineLines = baseline.totalLines
+      } catch (error) {
+        console.warn(`Warning: Could not calculate baseline size, using zero: ${error}`)
+      }
+    }
+    
+    const linearSeries = getLinearSeriesData(commits, baselineBytes, baselineLines)
     
     progressReporter?.report('Processing text and heat data')
     const wordCloudData = processCommitMessages(commits.map(c => c.message), config)
@@ -108,6 +124,7 @@ export class DataPipeline {
 
   /**
    * Process commits only (for simpler use cases)
+   * Note: This method doesn't calculate baseline, so may be less accurate for repositories with large initial commits
    */
   processCommits(commits: CommitData[]): Pick<ProcessedData, 'commits' | 'linearSeries'> {
     return {

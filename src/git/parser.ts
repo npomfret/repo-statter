@@ -7,6 +7,7 @@ import { generateRepositoryHash, loadCache, saveCache, clearCache } from '../cac
 import type { SimplifiedConfig } from '../config/simplified-schema.js'
 import { isFileExcluded } from '../utils/exclusions.js'
 import { applyCumulativeExclusions } from './cumulative-exclusion.js'
+import * as path from 'path'
 
 // Assert utilities for fail-fast error handling
 function assert(condition: boolean, message: string): asserts condition {
@@ -332,6 +333,69 @@ export async function getRepositoryName(repoPath: string): Promise<string | null
     }
   }
   return null
+}
+
+// Calculate total file sizes at a specific commit using git show (no checkout needed)
+export async function calculateBaselineCommitSize(repoPath: string, commitSha: string, config: SimplifiedConfig): Promise<{ totalBytes: number; totalLines: number }> {
+  const git = simpleGit(repoPath)
+  
+  try {
+    // Get all files at this commit without checking out
+    const files = await git.raw(['ls-tree', '-r', '--name-only', commitSha])
+    const fileList = files.trim().split('\n').filter(f => f.length > 0)
+    
+    let totalBytes = 0
+    let totalLines = 0
+    
+    for (const filePath of fileList) {
+      // Skip files that would be excluded by config
+      if (isFileExcluded(filePath, config.exclusions.patterns)) {
+        continue
+      }
+      
+      try {
+        // Get file content at the specific commit
+        const content = await git.show([`${commitSha}:${filePath}`])
+        totalBytes += Buffer.byteLength(content, 'utf8')
+        
+        // Count lines for text files (simple heuristic)
+        if (!isBinaryFile(filePath)) {
+          totalLines += content.split('\n').length
+        }
+      } catch (error) {
+        // File might be binary or have other issues, try to get just the size
+        try {
+          const stats = await git.raw(['cat-file', '-s', `${commitSha}:${filePath}`])
+          const size = parseInt(stats.trim(), 10)
+          if (!isNaN(size)) {
+            totalBytes += size
+          }
+        } catch {
+          // Skip this file if we can't get its size
+          console.warn(`Warning: Could not get size for file ${filePath} at commit ${commitSha}`)
+        }
+      }
+    }
+    
+    return { totalBytes, totalLines }
+  } catch (error) {
+    throw new Error(`Failed to calculate baseline size for commit ${commitSha}: ${error}`)
+  }
+}
+
+// Simple heuristic to detect binary files
+function isBinaryFile(filePath: string): boolean {
+  const binaryExtensions = [
+    '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.ico', '.svg',
+    '.pdf', '.zip', '.tar', '.gz', '.bz2', '.7z', '.rar',
+    '.exe', '.dll', '.so', '.dylib', '.a', '.lib',
+    '.woff', '.woff2', '.ttf', '.otf', '.eot',
+    '.mp3', '.mp4', '.avi', '.mov', '.mkv', '.wav',
+    '.bin', '.dat', '.db', '.sqlite', '.class', '.jar'
+  ]
+  
+  const ext = path.extname(filePath).toLowerCase()
+  return binaryExtensions.includes(ext)
 }
 
 async function parseCommitDiff(repoPath: string, commitHash: string, config: SimplifiedConfig): Promise<{ linesAdded: number; linesDeleted: number; bytesAdded: number; bytesDeleted: number; filesChanged: FileChange[] }> {
