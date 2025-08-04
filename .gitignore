@@ -39,10 +39,6 @@ analysis/
 dist/
 tmp/
 
-
-
-
-
 # AI agents stuff
 CLAUDE.md
 GEMINI.md
@@ -60,3 +56,4 @@ directives
 .claude/agents/scope-guardian.md
 .claude/agents/test-guardian.md
 .claude/agents/workflow-orchestrator.md
+.mcp.local.json
