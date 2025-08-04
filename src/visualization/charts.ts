@@ -16,12 +16,14 @@ import { showChartError } from './charts/chart-utils.js'
 // New chart system imports
 import { ChartManager } from './charts/index.js'
 import { setupAllChartToggles } from './charts/index.js'
+import { FileTypeFilter } from './filters/file-type-filter.js'
 
 // Module-level storage for allData until full migration is complete
 let allData: ChartData | null = null
 
 // Store manager reference for file type filtering
 let globalManager: ChartManager | null = null
+let fileTypeFilter: FileTypeFilter | null = null
 
 export interface ChartData extends ProcessedData {
   awards?: AwardsData
@@ -37,8 +39,16 @@ export function renderAllCharts(data: ChartData): void {
   const manager = new ChartManager()
   globalManager = manager
   
-  // Expose manager to window for event handlers
-  ;(window as any).globalManager = manager
+  // Create file type filter
+  fileTypeFilter = new FileTypeFilter()
+  
+  // Expose filter to window for chart mounted callbacks
+  ;(window as any).fileTypeFilter = fileTypeFilter
+  
+  // Connect filter to manager
+  fileTypeFilter.subscribe((filter) => {
+    manager.setFileTypeFilter(filter)
+  })
   
   // Build file type map from commits data for filtering
   if (data.commits) {

@@ -191,7 +191,21 @@ export function createChart(
     const chartOptions = definition.optionsBuilder(series, options?.manager || options)
     
     const chart = new (window as any).ApexCharts(container, chartOptions)
-    chart.render()
+    chart.render().then(() => {
+      // Call mounted callback after chart is rendered
+      if (definition.mounted) {
+        definition.mounted(container, series)
+      }
+    }).catch((error: any) => {
+      console.error(`Chart render failed for ${chartType}:`, error)
+      // Still try to call mounted callback for critical functionality like filters
+      if (definition.mounted && chartType === 'fileTypes') {
+        // Give DOM time to settle even on render error
+        setTimeout(() => {
+          definition.mounted!(container, series)
+        }, 200)
+      }
+    })
     
     return chart
   } catch (error) {

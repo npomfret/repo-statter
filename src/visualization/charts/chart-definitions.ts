@@ -15,6 +15,8 @@ export interface ChartDefinition {
   eventHandlers?: {
     onDataPointSelection?: (manager: any, event: any, chartContext: any, config: any) => void
   }
+  // Called after chart is mounted to DOM
+  mounted?: (chartElement: HTMLElement, data: any) => void
 }
 
 // Start with contributors chart as proof of concept
@@ -149,38 +151,18 @@ export const CHART_DEFINITIONS: Record<string, ChartDefinition> = {
       return {
         series: topFileTypes.map(ft => ft.lines),
         labels: topFileTypes.map(ft => ft.type),
-        data: topFileTypes // Store for event handling
+        data: topFileTypes,
+        segments: topFileTypes.map((ft, i) => ({
+          label: ft.type,
+          color: ['#FFB6C1', '#FFDAB9', '#FFE4B5', '#D8BFD8', '#87CEEB', '#98D8C8', '#B0C4DE', '#E6E6FA', '#F0E68C', '#D3D3D3'][i % 10]
+        }))
       }
     },
-    optionsBuilder: (data, manager) => ({
+    optionsBuilder: (data) => ({
       chart: {
         type: 'donut',
         height: 350,
-        background: '#ffffff',
-        events: {
-          dataPointSelection: function(event: any, chartContext: any, config: any) {
-            if (config.dataPointIndex === undefined || config.dataPointIndex < 0) return
-            
-            const selectedType = data.labels[config.dataPointIndex]
-            if (!selectedType) return
-            
-            // Get manager from window.globalManager (set in charts.ts)
-            const chartManager = window.globalManager
-            if (!chartManager) {
-              console.error('Chart manager not available')
-              return
-            }
-            
-            const currentFilter = chartManager.getFileTypeFilter()
-            
-            // Toggle logic: if same type, clear; otherwise switch
-            if (currentFilter === selectedType) {
-              chartManager.setFileTypeFilter(null)
-            } else {
-              chartManager.setFileTypeFilter(selectedType)
-            }
-          }
-        }
+        background: '#ffffff'
       },
       series: data.series,  // This is correct - donut charts want series at top level
       labels: data.labels,  // This is correct - donut charts want labels at top level
@@ -231,7 +213,26 @@ export const CHART_DEFINITIONS: Record<string, ChartDefinition> = {
           }
         }
       }
-    })
+    }),
+    mounted: (chartElement: HTMLElement, data: any) => {
+      // This will be called after chart renders to attach filter click handlers
+      const fileTypeFilter = (window as any).fileTypeFilter
+      if (data.segments && fileTypeFilter) {
+        // Wait for SVG to be available in DOM
+        const waitForSvg = () => {
+          const svg = chartElement.querySelector('svg')
+          if (svg && svg.querySelectorAll('path[fill]:not([fill="none"])').length > 0) {
+            // SVG is ready with paths
+            fileTypeFilter.attachToChart(chartElement, data.segments)
+          } else {
+            // Retry with exponential backoff
+            setTimeout(waitForSvg, 50)
+          }
+        }
+        // Start checking immediately
+        waitForSvg()
+      }
+    }
   },
 
   wordCloud: {
