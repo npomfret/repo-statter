@@ -20,6 +20,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
     "gh-pages": "npm run build && npm run analyse -- . -o docs/repo-statter && mv docs/repo-statter/repo-statter.html docs/repo-statter/index.html",
+    "test-ccxt": "npm run build && npm run analyse -- ../ccxt -o tmp/ccxt",
     "build": "tsc",
     "prepublishOnly": "npm run clean && npm run build && npm run test",
     "preversion": "npm run test",
