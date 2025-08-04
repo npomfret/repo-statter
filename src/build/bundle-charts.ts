@@ -8,9 +8,18 @@ const __dirname = dirname(__filename)
 
 export async function bundleCharts(): Promise<string> {
   try {
-    // Always use the source directory for bundling, regardless of whether we're running from src or dist
-    const srcDir = join(__dirname, '../../src')
-    const entryPoint = join(srcDir, 'visualization/charts.ts')
+    // Check if we're running from dist (npm package) or src (development)
+    const currentDir = __dirname
+    let entryPoint: string
+    
+    if (currentDir.includes('/dist/')) {
+      // Running from compiled npm package - charts.ts should be in dist
+      entryPoint = join(__dirname, '../visualization/charts.js')
+    } else {
+      // Running from source during development
+      const srcDir = join(__dirname, '../../src')
+      entryPoint = join(srcDir, 'visualization/charts.ts')
+    }
     
     const result = await build({
       entryPoints: [entryPoint],
