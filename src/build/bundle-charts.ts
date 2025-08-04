@@ -8,8 +8,12 @@ const __dirname = dirname(__filename)
 
 export async function bundleCharts(): Promise<string> {
   try {
+    // Always use the source directory for bundling, regardless of whether we're running from src or dist
+    const srcDir = join(__dirname, '../../src')
+    const entryPoint = join(srcDir, 'visualization/charts.ts')
+    
     const result = await build({
-      entryPoints: [join(__dirname, '../visualization/charts.ts')],
+      entryPoints: [entryPoint],
       bundle: true,
       format: 'iife',
       globalName: 'Charts',

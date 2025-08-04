@@ -47,7 +47,10 @@ export function renderAllCharts(data: ChartData): void {
   
   // Connect filter to manager
   fileTypeFilter.subscribe((filter) => {
+    console.log('🔗 Charts subscription callback called with filter:', filter);
+    console.log('🔗 About to call manager.setFileTypeFilter()');
     manager.setFileTypeFilter(filter)
+    console.log('🔗 manager.setFileTypeFilter() completed');
   })
   
   // Build file type map from commits data for filtering

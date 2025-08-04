@@ -22,6 +22,15 @@ export class ChartManager {
   }
 
   register(id: string, instance: ApexCharts, data: any, options?: any, chartType?: string): void {
+    console.log(`📋 Registering chart ${id} with data:`, data);
+    console.log(`📋 Data length/size for ${id}:`, Array.isArray(data) ? data.length : typeof data === 'object' ? Object.keys(data).length : 'not array/object');
+    if (typeof data === 'object' && data !== null) {
+      console.log(`📋 Data keys for ${id}:`, Object.keys(data));
+      if (data.largest) console.log(`📋 ${id} largest length:`, data.largest.length);
+      if (data.mostChurn) console.log(`📋 ${id} mostChurn length:`, data.mostChurn.length);
+      if (data.mostComplex) console.log(`📋 ${id} mostComplex length:`, data.mostComplex.length);
+    }
+    
     // Use chartType if provided, otherwise fall back to id
     const definitionKey = chartType || id
     const definition = CHART_DEFINITIONS[definitionKey]
@@ -40,7 +49,10 @@ export class ChartManager {
     
     // Store original data for filter restoration if not already stored
     if (!this.originalChartData.has(id)) {
+      console.log(`💾 Storing original data for ${id}`);
       this.originalChartData.set(id, data)
+    } else {
+      console.log(`⚠️ Original data for ${id} already exists, not overwriting`);
     }
   }
 
@@ -52,12 +64,20 @@ export class ChartManager {
     return this.charts.get(id)?.instance
   }
 
-  destroy(id: string): void {
+  destroy(id: string, preserveOriginalData: boolean = false): void {
     const chart = this.charts.get(id)
     if (chart) {
+      console.log(`🗑️ Destroying chart ${id}, preserveOriginalData:`, preserveOriginalData);
       chart.instance.destroy()
       this.charts.delete(id)
-      this.originalChartData.delete(id)
+      
+      // Only delete original data if not preserving (e.g., during filtering)
+      if (!preserveOriginalData) {
+        this.originalChartData.delete(id)
+        console.log(`🗑️ Original data for ${id} deleted`);
+      } else {
+        console.log(`💾 Original data for ${id} preserved`);
+      }
       
       // Clear the container HTML in case it was replaced with a message
       const container = document.getElementById(chart.definition.elementId)
@@ -86,7 +106,11 @@ export class ChartManager {
 
   // File type filtering support
   setFileTypeFilter(fileType: string | null): void {
+    console.log('🎯 ChartManager.setFileTypeFilter() called with fileType:', fileType);
+    console.log('🎯 Previous selectedFileType:', this.selectedFileType);
     this.selectedFileType = fileType
+    console.log('🎯 New selectedFileType:', this.selectedFileType);
+    console.log('🎯 About to call updateChartsWithFileTypeFilter()');
     this.updateChartsWithFileTypeFilter()
   }
 
@@ -96,39 +120,56 @@ export class ChartManager {
 
   // Build file type map from commits data
   buildFileTypeMap(commits: any[]): void {
+    console.log('📊 Building file type map from', commits?.length || 0, 'commits');
     this.fileTypeMap.clear()
     if (!commits) return
     
+    let fileCount = 0;
     for (const commit of commits) {
       if (commit.filesChanged) {
         for (const fileChange of commit.filesChanged) {
           if (fileChange.fileName && fileChange.fileType) {
             this.fileTypeMap.set(fileChange.fileName, fileChange.fileType)
+            fileCount++;
           }
         }
       }
     }
+    console.log('📊 Built file type map with', this.fileTypeMap.size, 'unique files from', fileCount, 'file changes');
+    console.log('📊 Sample file type mappings:', Array.from(this.fileTypeMap.entries()).slice(0, 10));
   }
 
   private updateChartsWithFileTypeFilter(): void {
+    console.log('📊 ChartManager.updateChartsWithFileTypeFilter() called');
+    console.log('📊 Current selectedFileType:', this.selectedFileType);
+    console.log('📊 Registered charts:', Array.from(this.charts.keys()));
     
     // Handle file heatmap
     const fileHeatmap = this.charts.get('fileHeatmap')
+    console.log('📊 Processing fileHeatmap:', !!fileHeatmap, 'has data:', !!fileHeatmap?.data);
     if (fileHeatmap && fileHeatmap.data) {
+      console.log('📊 Original fileHeatmap data length:', fileHeatmap.data.length);
+      console.log('📊 Sample fileHeatmap data:', fileHeatmap.data.slice(0, 3));
       if (this.selectedFileType) {
         // Filter the data
         const filteredData = fileHeatmap.data.filter(
-          (file: any) => file.fileType === this.selectedFileType
+          (file: any) => {
+            console.log('📊 Checking file:', file.fileName, 'fileType:', file.fileType, 'vs selectedFileType:', this.selectedFileType);
+            return file.fileType === this.selectedFileType;
+          }
         )
+        console.log('📊 Filtered fileHeatmap data length:', filteredData.length);
+        console.log('📊 Filtered fileHeatmap data:', filteredData.slice(0, 3));
         
-        // Recreate chart with filtered data
-        this.destroy('fileHeatmap')
+        // Recreate chart with filtered data (preserve original data)
+        this.destroy('fileHeatmap', true)
         this.create('fileHeatmap', filteredData, fileHeatmap.options)
       } else {
         // Restore original data
         const originalData = this.originalChartData.get('fileHeatmap')
         if (originalData) {
-          this.destroy('fileHeatmap')
+          console.log('📊 Restoring original fileHeatmap data length:', originalData.length);
+          this.destroy('fileHeatmap', true)
           this.create('fileHeatmap', originalData, fileHeatmap.options)
         }
       }
@@ -140,11 +181,22 @@ export class ChartManager {
       const chart = this.charts.get(chartId)
       if (chart && chart.data) {
         if (this.selectedFileType) {
+          console.log(`📊 Processing ${chartId} with selectedFileType:`, this.selectedFileType);
+          console.log(`📊 Original ${chartId} data:`, {
+            largest: chart.data.largest?.length || 0,
+            mostChurn: chart.data.mostChurn?.length || 0,
+            mostComplex: chart.data.mostComplex?.length || 0
+          });
+          console.log(`📊 FileTypeMap size:`, this.fileTypeMap.size);
+          console.log(`📊 Sample fileTypeMap entries:`, Array.from(this.fileTypeMap.entries()).slice(0, 5));
+          
           // Filter the top files data using the file type map
           const filteredData = {
-            largest: chart.data.largest?.filter((f: any) => 
-              this.fileTypeMap.get(f.fileName) === this.selectedFileType
-            ) || [],
+            largest: chart.data.largest?.filter((f: any) => {
+              const fileType = this.fileTypeMap.get(f.fileName);
+              console.log(`📊 Checking ${f.fileName}: mapped type=${fileType}, selected=${this.selectedFileType}`);
+              return fileType === this.selectedFileType;
+            }) || [],
             mostChurn: chart.data.mostChurn?.filter((f: any) => 
               this.fileTypeMap.get(f.fileName) === this.selectedFileType
             ) || [],
@@ -153,14 +205,20 @@ export class ChartManager {
             ) || []
           }
           
-          // Recreate chart with filtered data
-          this.destroy(chartId)
+          console.log(`📊 Filtered ${chartId} data:`, {
+            largest: filteredData.largest.length,
+            mostChurn: filteredData.mostChurn.length,
+            mostComplex: filteredData.mostComplex.length
+          });
+          
+          // Recreate chart with filtered data (preserve original data)
+          this.destroy(chartId, true)
           this.create(chartId, filteredData, chart.options)
         } else {
           // Restore original chart with original data
           const originalData = this.originalChartData.get(chartId)
           if (originalData) {
-            this.destroy(chartId)
+            this.destroy(chartId, true)
             this.create(chartId, originalData, chart.options)
           }
         }
@@ -186,7 +244,7 @@ export class ChartManager {
                   </div>
                 </div>
               `
-              this.destroy(chartId)
+              this.destroy(chartId, true)
             } else {
               // Restore original chart
               const originalData = this.originalChartData.get(chartId)
@@ -217,8 +275,8 @@ export class ChartManager {
       return null
     }
     
-    // Destroy old instance
-    this.destroy(id)
+    // Destroy old instance (preserve original data)
+    this.destroy(id, true)
     
     // Create new instance with merged options
     const mergedOptions = { ...chart.options, ...newOptions }
