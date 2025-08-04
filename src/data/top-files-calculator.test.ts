@@ -47,7 +47,7 @@ describe('top-files-calculator', () => {
       })
     })
 
-    it('should return only top 5 files', () => {
+    it('should return top 20 files (all files when less than 20)', () => {
       const commits = [
         createTestCommit({
           filesChanged: Array.from({ length: 10 }, (_, i) => ({
@@ -61,9 +61,9 @@ describe('top-files-calculator', () => {
 
       const result = getTopFilesBySize(commits)
       
-      expect(result).toHaveLength(5)
+      expect(result).toHaveLength(10) // All 10 files since less than 20
       expect(result[0]?.fileName).toBe('file0.ts')
-      expect(result[4]?.fileName).toBe('file4.ts')
+      expect(result[9]?.fileName).toBe('file9.ts')
     })
 
     it('should filter out files with negative or zero size', () => {
@@ -145,7 +145,7 @@ describe('top-files-calculator', () => {
       })
     })
 
-    it('should return only top 5 files', () => {
+    it('should return top 20 files (all files when less than 20)', () => {
       const commits = [
         createTestCommit({
           filesChanged: Array.from({ length: 10 }, (_, i) => ({
@@ -159,9 +159,9 @@ describe('top-files-calculator', () => {
 
       const result = getTopFilesByChurn(commits)
       
-      expect(result).toHaveLength(5)
+      expect(result).toHaveLength(10) // All 10 files since less than 20
       expect(result[0]?.fileName).toBe('file0.ts')
-      expect(result[4]?.fileName).toBe('file4.ts')
+      expect(result[9]?.fileName).toBe('file9.ts')
     })
 
     it('should calculate percentages correctly', () => {
