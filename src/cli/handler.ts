@@ -21,7 +21,7 @@ export async function handleCLI(args: string[]): Promise<void> {
     .option('-r, --repo <path>', 'Repository path (alternative to positional argument)')
     .option('-o, --output <dir>', 'Output directory', 'dist')
     .option('--output-file <filename>', 'Custom output filename (overrides default naming)')
-    .option('--max-commits <number>', 'Analyze only the N most recent commits (improves performance for large repos)')
+    .option('--max-commits <number>', 'Analyze only the N most recent commits (default: 1000, use 0 for all commits)')
     .option('--no-cache', 'Disable caching (always do full scan)')
     .option('--clear-cache', 'Clear existing cache before running')
     .option('--config-file <path>', 'Path to configuration file')
@@ -47,7 +47,9 @@ export async function handleCLI(args: string[]): Promise<void> {
 
         // Load configuration with CLI overrides
         const configOverrides: ConfigOverrides = {
-          maxCommits: options.maxCommits ? parseInt(options.maxCommits, 10) : null,
+          maxCommits: options.maxCommits !== undefined 
+            ? (parseInt(options.maxCommits, 10) === 0 ? null : parseInt(options.maxCommits, 10))
+            : undefined, // undefined means use config default
           output: outputDir,
           outputFile: outputFile,
           noCache: options.noCache,
@@ -86,7 +88,7 @@ export async function handleCLI(args: string[]): Promise<void> {
           useCache: config.performance.cacheEnabled,
           clearCache: options.clearCache || false
         }
-        const reportPath = await generateReport(finalRepoPath, outputDir, progressReporter, config.analysis.maxCommits || undefined, outputFile, cacheOptions, config)
+        const reportPath = await generateReport(finalRepoPath, outputDir, progressReporter, config.analysis.maxCommits === null ? undefined : config.analysis.maxCommits, outputFile, cacheOptions, config)
         console.log(`\nReport generated: ${reportPath}`)
       } catch (error) {
         if (isRepoStatError(error)) {

@@ -6,7 +6,7 @@
 export interface SimplifiedConfig {
   // Core analysis settings
   analysis: {
-    maxCommits: number | null // null means no limit
+    maxCommits: number | null // null means no limit, default: 1000
     bytesPerLineEstimate: number // Default: 50
     timeSeriesHourlyThresholdHours: number // Keep original property for compatibility
   }
@@ -84,7 +84,7 @@ export interface SimplifiedConfig {
  */
 export const SIMPLIFIED_DEFAULTS: SimplifiedConfig = {
   analysis: {
-    maxCommits: null,
+    maxCommits: 1000, // Default to last 1000 commits for performance
     bytesPerLineEstimate: 50,
     timeSeriesHourlyThresholdHours: 48
   },
