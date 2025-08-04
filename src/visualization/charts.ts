@@ -37,6 +37,9 @@ export function renderAllCharts(data: ChartData): void {
   const manager = new ChartManager()
   globalManager = manager
   
+  // Expose manager to window for event handlers
+  ;(window as any).globalManager = manager
+  
   // Build file type map from commits data for filtering
   if (data.commits) {
     manager.buildFileTypeMap(data.commits)

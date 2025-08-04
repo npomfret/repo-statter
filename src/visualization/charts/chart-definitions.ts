@@ -158,14 +158,26 @@ export const CHART_DEFINITIONS: Record<string, ChartDefinition> = {
         height: 350,
         background: '#ffffff',
         events: {
-          dataPointSelection: function(_event: any, _chartContext: any, config: any) {
-            const selectedType = data.labels[config.dataPointIndex]
-            const currentFilter = manager?.getFileTypeFilter?.()
+          dataPointSelection: function(event: any, chartContext: any, config: any) {
+            if (config.dataPointIndex === undefined || config.dataPointIndex < 0) return
             
+            const selectedType = data.labels[config.dataPointIndex]
+            if (!selectedType) return
+            
+            // Get manager from window.globalManager (set in charts.ts)
+            const chartManager = window.globalManager
+            if (!chartManager) {
+              console.error('Chart manager not available')
+              return
+            }
+            
+            const currentFilter = chartManager.getFileTypeFilter()
+            
+            // Toggle logic: if same type, clear; otherwise switch
             if (currentFilter === selectedType) {
-              manager?.setFileTypeFilter?.(null)
+              chartManager.setFileTypeFilter(null)
             } else {
-              manager?.setFileTypeFilter?.(selectedType)
+              chartManager.setFileTypeFilter(selectedType)
             }
           }
         }
@@ -173,6 +185,24 @@ export const CHART_DEFINITIONS: Record<string, ChartDefinition> = {
       series: data.series,  // This is correct - donut charts want series at top level
       labels: data.labels,  // This is correct - donut charts want labels at top level
       colors: ['#FFB6C1', '#FFDAB9', '#FFE4B5', '#D8BFD8', '#87CEEB', '#98D8C8', '#B0C4DE', '#E6E6FA', '#F0E68C', '#D3D3D3'],
+      plotOptions: {
+        pie: {
+          expandOnClick: false,  // Disable expand on click to allow toggle functionality
+          donut: {
+            labels: {
+              show: false
+            }
+          }
+        }
+      },
+      states: {
+        active: {
+          allowMultipleDataPointsSelection: false,
+          filter: {
+            type: 'none'
+          }
+        }
+      },
       dataLabels: {
         enabled: true,
         formatter: function(val: number, opts: any) {
@@ -188,7 +218,10 @@ export const CHART_DEFINITIONS: Record<string, ChartDefinition> = {
       },
       legend: {
         position: 'bottom',
-        labels: { colors: '#24292f' }
+        labels: { colors: '#24292f' },
+        onItemClick: {
+          toggleDataSeries: false  // Disable legend click interference
+        }
       },
       tooltip: {
         theme: 'light',
