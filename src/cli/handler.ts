@@ -47,14 +47,16 @@ export async function handleCLI(args: string[]): Promise<void> {
 
         // Load configuration with CLI overrides
         const configOverrides: ConfigOverrides = {
-          maxCommits: options.maxCommits !== undefined 
-            ? (parseInt(options.maxCommits, 10) === 0 ? null : parseInt(options.maxCommits, 10))
-            : undefined, // undefined means use config default
           output: outputDir,
           outputFile: outputFile,
           noCache: options.noCache,
           clearCache: options.clearCache,
           configPath: options.configFile
+        }
+        
+        // Only set maxCommits if it was provided
+        if (options.maxCommits !== undefined) {
+          configOverrides.maxCommits = parseInt(options.maxCommits, 10) === 0 ? null : parseInt(options.maxCommits, 10)
         }
         
         const config = loadConfiguration(configOverrides)
