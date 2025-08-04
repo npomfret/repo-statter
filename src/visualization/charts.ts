@@ -42,8 +42,9 @@ export function renderAllCharts(data: ChartData): void {
   // Create file type filter
   fileTypeFilter = new FileTypeFilter()
   
-  // Expose filter to window for chart mounted callbacks
+  // Expose filter and manager to window for chart mounted callbacks
   ;(window as any).fileTypeFilter = fileTypeFilter
+  ;(window as any).chartManager = manager
   
   // Connect filter to manager
   fileTypeFilter.subscribe((filter) => {
