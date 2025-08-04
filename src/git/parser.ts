@@ -15,6 +15,19 @@ function assert(condition: boolean, message: string): asserts condition {
   }
 }
 
+// Helper function to get total commit count in repository
+async function getTotalCommitCount(repoPath: string): Promise<number> {
+  try {
+    const git = simpleGit(repoPath)
+    const result = await git.raw(['rev-list', '--count', 'HEAD'])
+    const count = parseInt(result.trim(), 10)
+    return isNaN(count) ? 0 : count
+  } catch (error) {
+    // Handle empty repositories or other git errors gracefully
+    return 0
+  }
+}
+
 export interface FileChange {
   fileName: string
   linesAdded: number
@@ -186,6 +199,21 @@ export async function parseCommitHistory(repoPath: string, progressReporter: Pro
     return cachedCommits
   }
   
+  // Get total repository commit count for better progress reporting when using maxCommits
+  let totalCommitsInRepo = 0
+  let startingPosition = 0
+  if (maxCommits && totalNewCommits > 0) {
+    try {
+      totalCommitsInRepo = await getTotalCommitCount(repoPath)
+      // Calculate where we're starting in the overall repository history
+      // For newest-first processing, we start at (total - commits_to_process)
+      startingPosition = Math.max(0, totalCommitsInRepo - totalNewCommits - cachedCommits.length)
+    } catch (error) {
+      // Fall back to normal progress reporting if we can't get total count
+      totalCommitsInRepo = 0
+    }
+  }
+  
   progressReporter?.report(`Processing ${totalNewCommits} new commits${cachedCommits.length > 0 ? ` (${cachedCommits.length} cached)` : ''}`)
   
   for (const commit of newCommits) {
@@ -226,7 +254,15 @@ export async function parseCommitHistory(repoPath: string, progressReporter: Pro
     if (processedCommits % 100 === 0 || processedCommits === totalNewCommits) {
       const shortHash = commitData.sha.substring(0, 7)
       const progressMessage = `Processing commit: ${shortHash} by ${commitData.authorName} at ${commitData.date}`
-      progressReporter?.report(progressMessage, processedCommits, totalNewCommits)
+      
+      // Use total repository context if available (when maxCommits is specified)
+      if (totalCommitsInRepo > 0) {
+        const currentPosition = startingPosition + processedCommits + cachedCommits.length
+        progressReporter?.report(progressMessage, currentPosition, totalCommitsInRepo)
+      } else {
+        // Fall back to normal progress reporting
+        progressReporter?.report(progressMessage, processedCommits, totalNewCommits)
+      }
     }
   }
   
