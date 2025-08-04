@@ -149,26 +149,40 @@ export class ChartManager {
       const originalData = this.originalChartData.get(chartId)
       if (chart && originalData) {
         if (this.selectedFileType) {
-          // Filter the original data using the file type map
-          const filteredData = {
-            largest: originalData.largest?.filter((f: any) => {
-              const fileType = this.fileTypeMap.get(f.fileName);
-              return fileType === this.selectedFileType;
-            }) || [],
-            mostChurn: originalData.mostChurn?.filter((f: any) => 
-              this.fileTypeMap.get(f.fileName) === this.selectedFileType
-            ) || [],
-            mostComplex: originalData.mostComplex?.filter((f: any) => 
-              this.fileTypeMap.get(f.fileName) === this.selectedFileType
-            ) || []
-          }
+          // Filter only the relevant array for each chart type
+          let filteredData: any = {}
           
-          const totalFiltered = filteredData.largest.length + filteredData.mostChurn.length + filteredData.mostComplex.length;
-          console.log(`ChartManager: Filtered ${chartId} - found ${totalFiltered} matching files`);
-          
-          // Debug shell file filtering specifically
-          if (this.selectedFileType === 'Shell') {
-            console.log('Shell files in fileTypeMap:', Array.from(this.fileTypeMap.entries()).filter(([, type]) => type === 'Shell'));
+          if (chartId === 'topFilesSize') {
+            // Only filter the largest array for size chart
+            filteredData = {
+              largest: originalData.largest?.filter((f: any) => {
+                const fileType = this.fileTypeMap.get(f.fileName);
+                return fileType === this.selectedFileType;
+              }) || [],
+              mostChurn: originalData.mostChurn || [],
+              mostComplex: originalData.mostComplex || []
+            }
+            console.log(`ChartManager: Filtered ${chartId} - found ${filteredData.largest.length} matching files`);
+          } else if (chartId === 'topFilesChurn') {
+            // Only filter the mostChurn array for churn chart
+            filteredData = {
+              largest: originalData.largest || [],
+              mostChurn: originalData.mostChurn?.filter((f: any) => 
+                this.fileTypeMap.get(f.fileName) === this.selectedFileType
+              ) || [],
+              mostComplex: originalData.mostComplex || []
+            }
+            console.log(`ChartManager: Filtered ${chartId} - found ${filteredData.mostChurn.length} matching files`);
+          } else if (chartId === 'topFilesComplex') {
+            // Only filter the mostComplex array for complexity chart
+            filteredData = {
+              largest: originalData.largest || [],
+              mostChurn: originalData.mostChurn || [],
+              mostComplex: originalData.mostComplex?.filter((f: any) => 
+                this.fileTypeMap.get(f.fileName) === this.selectedFileType
+              ) || []
+            }
+            console.log(`ChartManager: Filtered ${chartId} - found ${filteredData.mostComplex.length} matching files`);
           }
           
           // Recreate chart with filtered data (preserve original data)

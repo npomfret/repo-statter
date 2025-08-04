@@ -24,10 +24,10 @@ export function getTopFilesBySize(commits: CommitData[], currentFiles?: Set<stri
     .filter(([_, size]) => size > 0)
     .map(([fileName, size]) => ({ fileName, size }))
   
-  // Sort by size descending and take top 5
+  // Sort by size descending and take top 20 (to ensure all file types are represented)
   const topFiles = positiveFiles
     .sort((a, b) => b.size - a.size)
-    .slice(0, 5)
+    .slice(0, 20)
   
   const total = topFiles.reduce((sum, file) => sum + file.size, 0)
   
@@ -54,11 +54,11 @@ export function getTopFilesByChurn(commits: CommitData[], currentFiles?: Set<str
     }
   }
   
-  // Sort by churn descending and take top 5
+  // Sort by churn descending and take top 20 (to ensure all file types are represented)
   const topFiles = Array.from(fileChurnMap.entries())
     .map(([fileName, churn]) => ({ fileName, churn }))
     .sort((a, b) => b.churn - a.churn)
-    .slice(0, 5)
+    .slice(0, 20)
   
   const total = topFiles.reduce((sum, file) => sum + file.churn, 0)
   
@@ -86,10 +86,10 @@ export async function getTopFilesByComplexity(repoPath: string, currentFiles?: S
     .filter(([fileName]) => currentFiles.has(fileName))
     .map(([fileName, complexity]) => ({ fileName, complexity }))
   
-  // Sort by complexity descending and take top 5
+  // Sort by complexity descending and take top 20 (to ensure all file types are represented)
   const topFiles = existingFiles
     .sort((a, b) => b.complexity - a.complexity)
-    .slice(0, 5)
+    .slice(0, 20)
   
   const total = topFiles.reduce((sum, file) => sum + file.complexity, 0)
   
