@@ -1,7 +1,9 @@
-// Chart exports
+/**
+ * Chart component exports
+ * @module @repo-statter/visualizations/charts
+ */
 
-export * from './base-chart.js'
-export * from './time-series-chart.js'
-export * from './pie-chart.js'
-export * from './bar-chart.js'
-export * from './heatmap-chart.js'
+export { GrowthChart } from './GrowthChart.js'
+export { FileTypesPieChart } from './FileTypesPieChart.js'
+export type { GrowthChartData } from './GrowthChart.js'
+export type { FileTypeData } from './FileTypesPieChart.js'

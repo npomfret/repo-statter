@@ -185,7 +185,7 @@ export class TimeRangeSlider {
     const handleMouseMove = (e: MouseEvent | TouchEvent) => {
       if (!this.isDragging) return
       
-      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+      const clientX = 'touches' in e ? e.touches[0]?.clientX ?? 0 : e.clientX
       const rect = slider.getBoundingClientRect()
       const trackRect = slider.querySelector('.slider-track')!.getBoundingClientRect()
       const percentage = Math.max(0, Math.min(1, (clientX - trackRect.left) / trackRect.width))

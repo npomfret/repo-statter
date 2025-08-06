@@ -85,11 +85,11 @@ export class GrowthChart extends ChartComponent<GrowthChartData> {
     if (!chartContainer) return
     
     // Initialize ApexCharts
-    this.chart = new ApexCharts(chartContainer, this.getApexConfig(config))
-    await this.chart.render()
+    this.chart = new ApexCharts(chartContainer, this.getApexConfig(config));
+    await this.chart.render();
     
     // Add accessibility
-    this.addAccessibilityAttributes(chartEl as HTMLElement)
+    this.addAccessibilityAttributes(chartEl as HTMLElement);
     
     // Store chart reference for updates
     (chartEl as any).__chart = this.chart
@@ -167,11 +167,11 @@ export class GrowthChart extends ChartComponent<GrowthChartData> {
     ]
     
     const xScale = (value: number) => {
-      return ((value - xDomain[0]) / (xDomain[1] - xDomain[0])) * width
+      return ((value - (xDomain[0] ?? 0)) / ((xDomain[1] ?? 1) - (xDomain[0] ?? 0))) * width
     }
     
     const yScale = (value: number) => {
-      return height - ((value - yDomain[0]) / (yDomain[1] - yDomain[0])) * height
+      return height - ((value - (yDomain[0] ?? 0)) / ((yDomain[1] ?? 1) - (yDomain[0] ?? 0))) * height
     }
     
     return { xScale, yScale, xDomain, yDomain }
@@ -229,7 +229,7 @@ export class GrowthChart extends ChartComponent<GrowthChartData> {
     
     // X-axis labels (dates)
     for (let i = 0; i <= 6; i++) {
-      const value = xDomain[0] + (xDomain[1] - xDomain[0]) * (i / 6)
+      const value = (xDomain[0] ?? 0) + ((xDomain[1] ?? 1) - (xDomain[0] ?? 0)) * (i / 6)
       const x = padding.left + (width / 6) * i
       const date = new Date(value)
       const label = `${date.getMonth() + 1}/${date.getDate()}`
@@ -239,7 +239,7 @@ export class GrowthChart extends ChartComponent<GrowthChartData> {
     
     // Y-axis labels
     for (let i = 0; i <= 5; i++) {
-      const value = yDomain[0] + (yDomain[1] - yDomain[0]) * (1 - i / 5)
+      const value = (yDomain[0] ?? 0) + ((yDomain[1] ?? 1) - (yDomain[0] ?? 0)) * (1 - i / 5)
       const y = padding.top + (height / 5) * i
       const label = this.formatValue(value)
       
@@ -276,10 +276,10 @@ export class GrowthChart extends ChartComponent<GrowthChartData> {
     if (points.length === 0) return ''
     
     // Create path
-    let path = `M ${padding.left + xScale(points[0].x)} ${padding.top + yScale(points[0].y)}`
+    let path = `M ${padding.left + xScale(points[0]?.x ?? 0)} ${padding.top + yScale(points[0]?.y ?? 0)}`
     
     for (let i = 1; i < points.length; i++) {
-      path += ` L ${padding.left + xScale(points[i].x)} ${padding.top + yScale(points[i].y)}`
+      path += ` L ${padding.left + xScale(points[i]?.x ?? 0)} ${padding.top + yScale(points[i]?.y ?? 0)}`
     }
     
     let line = `<g class="chart-series" data-series="${series.name}">`
@@ -287,8 +287,8 @@ export class GrowthChart extends ChartComponent<GrowthChartData> {
     // Draw area if specified
     if (series.type === 'area') {
       let areaPath = path
-      areaPath += ` L ${padding.left + xScale(points[points.length - 1].x)} ${padding.top + yScale(0)}`
-      areaPath += ` L ${padding.left + xScale(points[0].x)} ${padding.top + yScale(0)}`
+      areaPath += ` L ${padding.left + xScale(points[points.length - 1]?.x ?? 0)} ${padding.top + yScale(0)}`
+      areaPath += ` L ${padding.left + xScale(points[0]?.x ?? 0)} ${padding.top + yScale(0)}`
       areaPath += ' Z'
       
       line += `<path d="${areaPath}" fill="${color}" opacity="0.1"/>`
@@ -457,7 +457,7 @@ export class GrowthChart extends ChartComponent<GrowthChartData> {
       '#008FFB', '#00E396', '#FEB019', '#FF4560', '#775DD0',
       '#546E7A', '#26A69A', '#D10CE8', '#F86624', '#A5978B'
     ]
-    return colors[index % colors.length]
+    return colors[index % colors.length] ?? '#666666'
   }
   
   /**
@@ -565,7 +565,7 @@ export class GrowthChart extends ChartComponent<GrowthChartData> {
         <tr>
           <td>${date}</td>
           ${this.data.series.map(s => 
-            `<td>${data[s.name] !== undefined ? this.formatValue(data[s.name]) : '-'}</td>`
+            `<td>${data[s.name] !== undefined ? this.formatValue(data[s.name]!) : '-'}</td>`
           ).join('')}
         </tr>
       `
