@@ -6,19 +6,10 @@
 import { spawn } from 'child_process'
 import { promises as fs } from 'fs'
 import { join, resolve } from 'path'
-import { GitBranch, GitTag } from '../types/git.js'
-import { RepoStatterError } from '../errors/base.js'
+import { GitBranch, GitTag, CommitInfo } from '../types/git.js'
+import { GitOperationError } from '../errors/base.js'
 import { StreamingGitParser } from './streaming-parser.js'
-
-export class GitRepositoryError extends RepoStatterError {
-  code = 'GIT_ERROR'
-  userMessage = 'Git operation failed'
-  
-  constructor(message: string, originalError?: Error) {
-    super(message, originalError)
-    this.name = 'GitRepositoryError'
-  }
-}
+import { createLogger } from '../logging/logger.js'
 
 export interface RepositoryInfo {
   path: string
@@ -28,9 +19,19 @@ export interface RepositoryInfo {
   remotes: string[]
 }
 
+export interface GitStreamOptions {
+  maxCommits?: number
+  branch?: string
+  since?: Date
+  until?: Date
+  followRenames?: boolean
+  includeStats?: boolean
+}
+
 export class GitRepository {
   private readonly repoPath: string
   private _isValid: boolean | null = null
+  private readonly logger = createLogger('GitRepository')
 
   constructor(repoPath: string) {
     this.repoPath = resolve(repoPath)
@@ -129,7 +130,7 @@ export class GitRepository {
           }
         })
     } catch (error) {
-      throw new GitRepositoryError('Failed to retrieve branches', error as Error)
+      throw new GitOperationError('Failed to retrieve branches', error as Error)
     }
   }
 
@@ -150,7 +151,7 @@ export class GitRepository {
           }
         })
     } catch (error) {
-      throw new GitRepositoryError('Failed to retrieve tags', error as Error)
+      throw new GitOperationError('Failed to retrieve tags', error as Error)
     }
   }
 
@@ -158,26 +159,112 @@ export class GitRepository {
     return new StreamingGitParser()
   }
 
-  async *streamCommits(): AsyncGenerator<any, void, unknown> {
-    // Simple implementation that returns mock commit data
-    // In real implementation, this would spawn git log and pipe through StreamingGitParser
-    const mockCommit = {
-      sha: 'abc123def456',
-      author: { name: 'Mock User', email: 'mock@example.com' },
-      committer: { name: 'Mock User', email: 'mock@example.com' },
-      date: new Date(),
-      message: 'Mock commit message',
-      stats: { insertions: 10, deletions: 5, files: 1 },
-      files: [{
-        path: 'mock-file.ts',
-        insertions: 10,
-        deletions: 5,
-        status: 'modified' as const
-      }]
+  async *streamCommits(options: GitStreamOptions = {}): AsyncGenerator<CommitInfo, void, unknown> {
+    this.logger.info('Starting git log stream', { repoPath: this.repoPath, options })
+    
+    // Validate repository first
+    const isValid = await this.isValidRepository()
+    if (!isValid) {
+      throw new GitOperationError('Not a valid git repository')
+    }
+
+    // Build git log arguments
+    const args = this.buildGitLogArgs(options)
+    
+    // Spawn git log process
+    const gitProcess = spawn('git', args, {
+      cwd: this.repoPath,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env: { ...process.env, GIT_PAGER: '' }
+    })
+
+    // Create streaming parser
+    const parser = new StreamingGitParser({
+      maxCommits: options.maxCommits,
+      emitProgress: true,
+      progressInterval: 100
+    })
+
+    // Handle git process errors
+    let gitError = ''
+    gitProcess.stderr.on('data', (chunk) => {
+      gitError += chunk.toString()
+    })
+
+    gitProcess.on('error', (error) => {
+      this.logger.error('Git process error', error)
+      parser.destroy(new GitOperationError(`Failed to start git process: ${error.message}`, error))
+    })
+
+    gitProcess.on('close', (code) => {
+      if (code !== 0) {
+        this.logger.error('Git process exited with error', undefined, { code, stderr: gitError })
+        parser.destroy(new GitOperationError(`Git log failed (exit ${code}): ${gitError}`))
+      } else {
+        parser.end()
+      }
+    })
+
+    // Pipe git output to parser
+    gitProcess.stdout.pipe(parser, { end: false })
+
+    let commitCount = 0
+    try {
+      // Yield parsed commits
+      for await (const commit of parser) {
+        commitCount++
+        this.logger.trace(`Yielding commit ${commit.sha.slice(0, 7)}`)
+        yield commit
+        
+        // Check if we've hit the limit
+        if (options.maxCommits && commitCount >= options.maxCommits) {
+          this.logger.info(`Reached commit limit: ${options.maxCommits}`)
+          gitProcess.kill('SIGTERM')
+          break
+        }
+      }
+    } catch (error) {
+      this.logger.error('Error streaming commits', error as Error)
+      gitProcess.kill('SIGTERM')
+      throw error
+    } finally {
+      this.logger.info(`Git log stream complete: ${commitCount} commits processed`)
+    }
+  }
+
+  private buildGitLogArgs(options: GitStreamOptions): string[] {
+    const args = [
+      'log',
+      '--format=commit %H%nAuthor: %an <%ae>%nDate: %ad%n%n%s%n%b%n',
+      '--date=rfc'
+    ]
+
+    // Add numstat for file change information if requested
+    if (options.includeStats !== false) {
+      args.push('--numstat')
+    }
+
+    // Add branch specification
+    if (options.branch) {
+      args.push(options.branch)
+    }
+
+    // Add date filtering
+    if (options.since) {
+      args.push(`--since=${options.since.toISOString()}`)
     }
     
-    // Yield a single mock commit for now
-    yield mockCommit
+    if (options.until) {
+      args.push(`--until=${options.until.toISOString()}`)
+    }
+
+    // Add rename following
+    if (options.followRenames) {
+      args.push('--follow', '-M')
+    }
+
+    this.logger.debug('Built git log args', { args })
+    return args
   }
 
   private executeGitCommand(args: string[]): Promise<string> {
@@ -202,12 +289,12 @@ export class GitRepository {
         if (code === 0) {
           resolve(stdout)
         } else {
-          reject(new GitRepositoryError(`Git command failed: git ${args.join(' ')} (exit code: ${code})`))
+          reject(new GitOperationError(`Git command failed: git ${args.join(' ')} (exit code: ${code})`))
         }
       })
 
       gitProcess.on('error', (error) => {
-        reject(new GitRepositoryError(`Failed to execute git command: ${error.message}`, error))
+        reject(new GitOperationError(`Failed to execute git command: ${error.message}`, error))
       })
     })
   }

@@ -15,7 +15,7 @@ export * from './errors/index.js'
 export * from './logging/index.js'
 
 // Export git operations
-export { GitRepository, GitRepositoryError } from './git/repository.js'
+export { GitRepository } from './git/repository.js'
 export { StreamingGitParser } from './git/streaming-parser.js'
 
 // Export analysis functionality

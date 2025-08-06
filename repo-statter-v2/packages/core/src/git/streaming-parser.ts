@@ -103,13 +103,24 @@ export class StreamingGitParser extends Transform {
     } else if (line.startsWith('Date: ')) {
       const dateStr = line.slice(6).trim()
       this.currentCommit.timestamp = new Date(dateStr)
-    } else if (line.startsWith('    ')) {
-      // Commit message (indented with 4 spaces)
-      const messageLine = line.slice(4)
+    } else if (line.trim() === '') {
+      // Empty line - might be separator
+      return
+    } else if (this.currentCommit.author && this.currentCommit.timestamp && !line.match(/^\d+\s+\d+\s+/)) {
+      // This is likely commit message content (not numstat)
       const currentMessage = this.currentCommit.message
       this.currentCommit.message = currentMessage 
-        ? `${currentMessage}\n${messageLine}`
-        : messageLine
+        ? `${currentMessage}\n${line}`
+        : line
+    } else if (line.match(/^\d+\s+\d+\s+/) || line.match(/^-\s+-\s+/)) {
+      // This is numstat output (additions deletions filename)
+      const fileChange = parseFileChange(line)
+      if (fileChange && this.currentCommit.stats) {
+        this.currentCommit.stats.files.push(fileChange)
+        this.currentCommit.stats.filesChanged++
+        this.currentCommit.stats.additions += fileChange.additions
+        this.currentCommit.stats.deletions += fileChange.deletions
+      }
     }
   }
   
@@ -117,8 +128,10 @@ export class StreamingGitParser extends Transform {
     if (this.currentCommit && this.isCompleteCommit(this.currentCommit)) {
       const commit = this.currentCommit as CommitInfo
       
-      // Ensure message is trimmed
-      commit.message = commit.message.trim()
+      // Ensure message is trimmed and cleaned
+      if (commit.message) {
+        commit.message = commit.message.trim()
+      }
       
       this.push(commit)
       this.commitCount++
@@ -146,7 +159,6 @@ export class StreamingGitParser extends Transform {
       commit.author && 
       commit.email &&
       commit.timestamp &&
-      commit.message !== undefined &&
       commit.stats
     )
   }

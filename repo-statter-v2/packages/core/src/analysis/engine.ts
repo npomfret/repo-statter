@@ -62,26 +62,8 @@ export class AnalysisEngine {
       let processed = 0
 
       // For now, create mock commit data structure that matches CommitInfo
-      for await (const gitCommit of repository.streamCommits()) {
-        const commitInfo: CommitInfo = {
-          sha: gitCommit.sha,
-          author: gitCommit.author.name,
-          email: gitCommit.author.email,
-          timestamp: gitCommit.date,
-          message: gitCommit.message,
-          stats: {
-            filesChanged: gitCommit.files.length,
-            additions: gitCommit.stats.insertions,
-            deletions: gitCommit.stats.deletions,
-            files: gitCommit.files.map((file: any) => ({
-              path: file.path,
-              additions: file.insertions,
-              deletions: file.deletions,
-              status: file.status
-            }))
-          }
-        }
-        
+      for await (const commitInfo of repository.streamCommits()) {
+        // commitInfo is already a properly structured CommitInfo from the streaming parser
         commits.push(commitInfo)
         processed++
         
