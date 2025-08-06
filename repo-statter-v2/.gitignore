@@ -1,0 +1,17 @@
+# TypeScript build outputs
+*.tsbuildinfo
+*.d.ts
+*.d.ts.map
+*.js.map
+
+# Keep config files
+!*.config.js
+!*.config.ts
+!vitest.config.ts
+!eslint.config.js
+
+# But exclude test outputs
+**/*.test.js
+**/*.test.d.ts
+**/*.spec.js
+**/*.spec.d.ts

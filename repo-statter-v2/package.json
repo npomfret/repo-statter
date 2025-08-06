@@ -6,23 +6,30 @@
   "type": "module",
   "scripts": {
     "build": "pnpm -r build",
-    "test": "pnpm -r test",
+    "test": "vitest run",
+    "test:watch": "vitest watch",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "test:bench": "vitest bench",
     "lint": "eslint . --ext .ts,.tsx",
     "format": "prettier --write .",
     "typecheck": "tsc --build",
     "clean": "pnpm -r clean",
     "dev:playground": "pnpm --filter playground dev",
-    "dev:watch": "pnpm -r --parallel dev:watch"
+    "dev:watch": "pnpm -r --parallel dev:watch",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
+    "@vitest/ui": "^3.2.4",
+    "c8": "^10.1.3",
     "eslint": "^9.0.0",
     "eslint-config-prettier": "^9.0.0",
+    "husky": "^9.1.7",
     "prettier": "^3.0.0",
-    "typescript": "^5.7.3",
-    "vitest": "^2.1.8"
+    "typescript": "^5.7.3"
   },
   "engines": {
     "node": ">=18.0.0",

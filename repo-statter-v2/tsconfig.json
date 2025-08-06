@@ -25,9 +25,7 @@
   "references": [
     { "path": "./packages/core" },
     { "path": "./packages/visualizations" },
-    { "path": "./packages/report-builder" },
-    { "path": "./packages/cli" },
-    { "path": "./apps/playground" }
+    { "path": "./packages/report-builder" }
   ],
   "exclude": [
     "node_modules",
