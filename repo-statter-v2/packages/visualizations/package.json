@@ -8,6 +8,22 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
+    },
+    "./charts": {
+      "import": "./dist/charts/index.js",
+      "types": "./dist/charts/index.d.ts"
+    },
+    "./widgets": {
+      "import": "./dist/widgets/index.js",
+      "types": "./dist/widgets/index.d.ts"
+    },
+    "./base": {
+      "import": "./dist/base/index.js",
+      "types": "./dist/base/index.d.ts"
+    },
+    "./utils": {
+      "import": "./dist/utils/index.js",
+      "types": "./dist/utils/index.d.ts"
     }
   },
   "scripts": {
