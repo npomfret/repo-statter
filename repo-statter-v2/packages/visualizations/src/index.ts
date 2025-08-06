@@ -20,6 +20,31 @@ export * from './widgets/index.js'
 // Components
 export * from './components/index.js'
 
+// Registry
+export { ComponentRegistry } from './registry.js'
+export type { 
+  ComponentType, 
+  ComponentInstance, 
+  ComponentConstructor, 
+  ComponentInfo 
+} from './registry.js'
+export {
+  getComponent,
+  getComponentInfo,
+  registerComponent,
+  unregisterComponent,
+  getAllComponents,
+  getComponentsByCategory,
+  hasComponent,
+  renderComponent,
+  createComponent,
+  renderComponents,
+  getAvailableTypes,
+  validateComponent,
+  getRegistryMetadata,
+  resetRegistry
+} from './registry.js'
+
 // Types and utilities
 export * from './types/index.js'
 export * from './utils/index.js'

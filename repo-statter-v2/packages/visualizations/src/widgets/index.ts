@@ -6,6 +6,7 @@
 export { TimeRangeSlider } from './TimeRangeSlider.js'
 export { MetricCard } from './MetricCard.js'
 export { ChartToggle } from './ChartToggle.js'
+export { TopFilesTable } from './TopFilesTable.js'
 
 export type { 
   TimeRangeData,
@@ -21,3 +22,9 @@ export type {
   ToggleOption,
   ChartToggleOptions
 } from './ChartToggle.js'
+
+export type {
+  FileData,
+  TopFilesData,
+  TopFilesTableOptions
+} from './TopFilesTable.js'
