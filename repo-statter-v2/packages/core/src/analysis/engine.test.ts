@@ -140,7 +140,7 @@ describe('AnalysisEngine', () => {
         expect.objectContaining({
           phase: 'finalization',
           processed: 3,
-          total: 3
+          total: 4
         })
       )
     })
@@ -176,18 +176,19 @@ describe('AnalysisEngine', () => {
 
       const result = await engine.analyze('/test/repo')
       
-      expect(result.contributors).toHaveLength(2)
-      // Both contributors have 1 commit, so order is not guaranteed
-      const jane = result.contributors.find(c => c.email === 'jane@example.com')
-      const john = result.contributors.find(c => c.email === 'john@example.com')
+      // Contributors are now in a Map, not an array
+      expect(result.currentState.contributors.size).toBe(2)
+      
+      const jane = result.currentState.contributors.get('jane@example.com')
+      const john = result.currentState.contributors.get('john@example.com')
       
       expect(jane).toBeDefined()
-      expect(jane?.commitCount).toBe(1)
-      expect(jane?.linesAdded).toBe(20)
-      expect(jane?.linesNet).toBe(10)
+      expect(jane?.commits).toBe(1)
+      expect(jane?.additions).toBe(20)
+      expect(jane?.deletions).toBe(10)
       
       expect(john).toBeDefined()
-      expect(john?.commitCount).toBe(1)
+      expect(john?.commits).toBe(1)
     })
 
     it('should calculate file statistics correctly', async () => {

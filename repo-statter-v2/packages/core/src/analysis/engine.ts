@@ -6,7 +6,7 @@
 import { GitRepository } from '../git/repository.js'
 import { Logger } from '../logging/logger.js'
 import { RepoStatterError } from '../errors/base.js'
-import { AnalysisResult, AnalysisConfig, ContributorStats, TimeSeriesData } from '../types/analysis.js'
+import { AnalysisResult, AnalysisConfig, ContributorStats, TimeSeriesData, FileMetrics } from '../types/analysis.js'
 import { CommitInfo } from '../types/git.js'
 
 export class AnalysisEngineError extends RepoStatterError {
@@ -79,14 +79,17 @@ export class AnalysisEngine {
       this.emitProgress('commit_processing', processed, processed, 'Commit processing complete')
 
       // Calculate statistics
-      this.emitProgress('statistics_calculation', 0, 3, 'Calculating contributor statistics')
+      this.emitProgress('statistics_calculation', 0, 4, 'Calculating contributor statistics')
       const contributors = this.calculateContributorStats(commits)
       
-      this.emitProgress('statistics_calculation', 2, 3, 'Generating time series data')
+      this.emitProgress('statistics_calculation', 1, 4, 'Calculating file metrics')
+      const fileMetrics = this.calculateFileMetrics(commits)
+      
+      this.emitProgress('statistics_calculation', 2, 4, 'Generating time series data')
       const timeSeries = this.generateTimeSeries(commits, config.granularity || 'month')
 
       // Finalize results
-      this.emitProgress('finalization', 3, 3, 'Finalizing analysis')
+      this.emitProgress('finalization', 3, 4, 'Finalizing analysis')
       const endTime = Date.now()
       
       const result: AnalysisResult = {
@@ -111,7 +114,7 @@ export class AnalysisEngine {
           totalLines: commits.reduce((sum, commit) => sum + commit.stats.additions, 0),
           totalFiles: new Set(commits.flatMap(c => c.stats.files?.map(f => f.path) || [])).size,
           totalBytes: 0,
-          fileMetrics: new Map(),
+          fileMetrics,
           contributors,
           languages: new Map()
         },
@@ -134,6 +137,38 @@ export class AnalysisEngine {
         ? error 
         : new AnalysisEngineError(`Analysis failed: ${(error as Error).message}`)
     }
+  }
+
+  private calculateFileMetrics(commits: CommitInfo[]): Map<string, FileMetrics> {
+    const fileMetrics = new Map<string, FileMetrics>()
+
+    for (const commit of commits) {
+      if (commit.stats.files) {
+        for (const file of commit.stats.files) {
+          const existing = fileMetrics.get(file.path)
+          
+          if (existing) {
+            existing.totalCommits++
+            existing.totalChurn += file.additions + file.deletions
+            existing.contributors.add(commit.email)
+            existing.lastModified = commit.timestamp > existing.lastModified ? commit.timestamp : existing.lastModified
+          } else {
+            fileMetrics.set(file.path, {
+              path: file.path,
+              currentLines: file.additions, // Simplified - would need actual file content
+              totalCommits: 1,
+              totalChurn: file.additions + file.deletions,
+              lastModified: commit.timestamp,
+              firstAppeared: commit.timestamp,
+              contributors: new Set([commit.email]),
+              sizeBytes: 0 // Would need to calculate from actual file
+            })
+          }
+        }
+      }
+    }
+
+    return fileMetrics
   }
 
   private calculateContributorStats(commits: CommitInfo[]): Map<string, ContributorStats> {

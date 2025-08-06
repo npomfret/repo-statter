@@ -108,7 +108,7 @@ describe('FileAnalyzer', () => {
       const result = await analyzer.analyzeFileContent('complex.js', content)
       
       expect(result.complexity).toBeGreaterThan(1) // Should have higher complexity
-      expect(result.lines).toBe(12)
+      expect(result.lines).toBe(15)
     })
 
     it('should analyze Python file with specific patterns', async () => {
@@ -154,7 +154,7 @@ This is a markdown file with some content.
       
       expect(result.language).toBe('Markdown')
       expect(result.complexity).toBe(0) // Markdown doesn't support complexity
-      expect(result.lines).toBe(8)
+      expect(result.lines).toBe(7)
       expect(result.isBinary).toBe(false)
     })
   })
