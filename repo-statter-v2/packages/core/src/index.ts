@@ -20,6 +20,7 @@ export { StreamingGitParser } from './git/streaming-parser.js'
 
 // Export analysis functionality
 export { AnalysisEngine, AnalysisEngineError } from './analysis/engine.js'
+export { FileAnalyzer } from './analysis/file-analyzer.js'
 
 // Version information
 export const VERSION = '2.0.0-alpha.0'
