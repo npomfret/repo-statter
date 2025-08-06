@@ -1,0 +1,31 @@
+{
+  "name": "repo-statter-v2",
+  "version": "2.0.0-alpha.0",
+  "private": true,
+  "description": "Next-generation git repository analyzer with streaming architecture",
+  "type": "module",
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "eslint . --ext .ts,.tsx",
+    "format": "prettier --write .",
+    "typecheck": "tsc --build",
+    "clean": "pnpm -r clean",
+    "dev:playground": "pnpm --filter playground dev",
+    "dev:watch": "pnpm -r --parallel dev:watch"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.0.0",
+    "eslint-config-prettier": "^9.0.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}

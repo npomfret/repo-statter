@@ -1,0 +1,9 @@
+dist
+build
+coverage
+*.tsbuildinfo
+node_modules
+pnpm-lock.yaml
+*.html
+*.json
+*.md
