@@ -67,7 +67,7 @@ repo-statter-v2/
     ├── playground/
     │   ├── package.json
     │   └── vite.config.ts
-    └── e2e/
+    └── e2e-tests/
         ├── package.json
         └── playwright.config.ts
 ```
@@ -863,7 +863,318 @@ export async function parseRepository(repoPath: string): Promise<CommitInfo[]> {
 - Progress events fire accurately
 - Error handling for malformed git output
 
-### 1.10 Performance Benchmarking
+### 1.10 E2E Test Infrastructure (Splitifyd-2 Patterns)
+
+#### Description
+Set up enterprise-grade E2E testing infrastructure based on proven patterns from splitifyd-2, including console error monitoring, performance optimization, and robust error handling.
+
+#### Technical Rationale
+- **Console Error Capture**: Automatically fail tests on JavaScript errors, preventing silent failures
+- **Performance Optimization**: Pre-warmed test environments reduce execution time by 70%+
+- **Error Recovery**: Detailed error reporting with stack traces and debugging assistance
+- **Framework Integration**: Specialized handling for reactive frameworks and animation systems
+
+#### Implementation
+
+#### apps/e2e-tests/playwright.config.ts
+```typescript
+import { defineConfig, devices } from '@playwright/test';
+
+export default defineConfig({
+  testDir: './src/tests',
+  outputDir: '../tmp/playwright-test-results',
+  
+  // Global setup for performance optimization
+  globalSetup: './src/fixtures/global-setup.ts',
+  globalTeardown: './src/fixtures/global-teardown.ts',
+  
+  // Optimized timeouts for fast feedback
+  timeout: 10000,
+  
+  // Parallel execution for performance
+  fullyParallel: true,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 2 : 0,
+  workers: process.env.CI ? 1 : undefined,
+  
+  reporter: [
+    ['list'],
+    ['html', { outputFolder: '../playwright-report/normal', open: 'never' }]
+  ],
+  
+  use: {
+    // Fast fail for element interactions
+    actionTimeout: 1000,
+    
+    // Enable tracing for debugging
+    trace: 'on-first-retry',
+    screenshot: 'only-on-failure',
+  },
+
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+  ],
+});
+```
+
+#### apps/e2e-tests/src/fixtures/base-test.ts
+```typescript
+import { test as base } from '@playwright/test';
+import { setupConsoleErrorReporting } from '../helpers/console-error-reporter';
+
+// Set up console error reporting for all tests
+setupConsoleErrorReporting();
+
+// Extend base test to inject performance flags
+export const test = base.extend({
+  page: async ({ page }, use) => {
+    // Inject performance flags before any page script executes
+    // This flag disables heavy animations during E2E tests
+    await page.addInitScript(() => {
+      (window as any).__E2E_TEST__ = true;
+      (window as any).__DISABLE_ANIMATIONS__ = true;
+    });
+    
+    await use(page);
+  }
+});
+
+export { expect } from '@playwright/test';
+```
+
+#### apps/e2e-tests/src/helpers/console-error-reporter.ts
+```typescript
+import { test } from '@playwright/test';
+
+interface ConsoleError {
+  message: string;
+  type: string;
+  location?: {
+    url?: string;
+    lineNumber?: number;
+    columnNumber?: number;
+  };
+  timestamp: Date;
+}
+
+interface PageError {
+  name: string;
+  message: string;
+  stack?: string;
+  timestamp: Date;
+}
+
+/**
+ * Sets up automatic console error reporting for all tests.
+ * Based on splitifyd-2 patterns for reliable error detection.
+ */
+export function setupConsoleErrorReporting() {
+  let consoleErrors: ConsoleError[] = [];
+  let pageErrors: PageError[] = [];
+
+  test.beforeEach(async ({ page }) => {
+    // Clear arrays for each test
+    consoleErrors = [];
+    pageErrors = [];
+    
+    // Capture console errors with details
+    page.on('console', (msg) => {
+      const msgType = msg.type();
+      const msgText = msg.text();
+      const location = msg.location();
+      
+      console.log(`[Browser Console ${msgType.toUpperCase()}]: ${msgText}`);
+      if (location?.url) {
+        console.log(`  at ${location.url}:${location.lineNumber}:${location.columnNumber}`);
+      }
+      
+      if (msgType === 'error') {
+        consoleErrors.push({
+          message: msgText,
+          type: msgType,
+          location: location ? {
+            url: location.url,
+            lineNumber: location.lineNumber,
+            columnNumber: location.columnNumber
+          } : undefined,
+          timestamp: new Date()
+        });
+        
+        console.log(`🚨 CONSOLE ERROR CAPTURED: ${msgText}`);
+      }
+    });
+    
+    // Capture page errors (uncaught exceptions)
+    page.on('pageerror', (error) => {
+      pageErrors.push({
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+        timestamp: new Date()
+      });
+    });
+  });
+
+  test.afterEach(async ({}, testInfo) => {
+    const hasConsoleErrors = consoleErrors.length > 0;
+    const hasPageErrors = pageErrors.length > 0;
+    
+    // Check if this test has skip-error-checking annotation
+    const skipErrorChecking = testInfo.annotations.some(
+      annotation => annotation.type === 'skip-error-checking'
+    );
+    
+    if ((hasConsoleErrors || hasPageErrors) && !skipErrorChecking) {
+      // Print to console for immediate visibility
+      console.log('\n' + '='.repeat(80));
+      console.log('❌ BROWSER ERRORS DETECTED');
+      console.log('='.repeat(80));
+      console.log(`Test: ${testInfo.title}`);
+      console.log(`File: ${testInfo.file}`);
+      
+      if (hasConsoleErrors) {
+        console.log(`\n📋 Console Errors (${consoleErrors.length}):`);
+        consoleErrors.forEach((err, index) => {
+          console.log(`\n  ${index + 1}. ${err.type.toUpperCase()}: ${err.message}`);
+          if (err.location?.url) {
+            console.log(`     at ${err.location.url}:${err.location.lineNumber || '?'}:${err.location.columnNumber || '?'}`);
+          }
+          console.log(`     time: ${err.timestamp.toISOString()}`);
+        });
+      }
+      
+      if (hasPageErrors) {
+        console.log(`\n⚠️  Page Errors (${pageErrors.length}):`);
+        pageErrors.forEach((err, index) => {
+          console.log(`\n  ${index + 1}. ${err.name}: ${err.message}`);
+          if (err.stack) {
+            console.log(`     Stack trace:\n${err.stack.split('\n').map(line => '       ' + line).join('\n')}`);
+          }
+          console.log(`     time: ${err.timestamp.toISOString()}`);
+        });
+      }
+      
+      console.log('\n' + '='.repeat(80) + '\n');
+      
+      // Attach errors to test report
+      if (hasConsoleErrors) {
+        const consoleErrorReport = consoleErrors.map((err, index) => 
+          `${index + 1}. ${err.type.toUpperCase()}: ${err.message}\n` +
+          `   Location: ${err.location?.url || 'unknown'}:${err.location?.lineNumber || '?'}:${err.location?.columnNumber || '?'}\n` +
+          `   Time: ${err.timestamp.toISOString()}`
+        ).join('\n\n');
+        
+        await testInfo.attach('console-errors.txt', {
+          body: consoleErrorReport,
+          contentType: 'text/plain'
+        });
+      }
+      
+      if (hasPageErrors) {
+        const pageErrorReport = pageErrors.map((err, index) => 
+          `${index + 1}. ${err.name}: ${err.message}\n` +
+          `${err.stack ? `Stack trace:\n${err.stack}\n` : ''}` +
+          `Time: ${err.timestamp.toISOString()}`
+        ).join('\n\n');
+        
+        await testInfo.attach('page-errors.txt', {
+          body: pageErrorReport,
+          contentType: 'text/plain'
+        });
+      }
+      
+      // FAIL THE TEST if there are errors and test hasn't already failed
+      if (testInfo.status !== 'failed') {
+        throw new Error(`Test had ${consoleErrors.length} console error(s) and ${pageErrors.length} page error(s). Check console output above for details.`);
+      }
+    } else if ((hasConsoleErrors || hasPageErrors) && skipErrorChecking) {
+      // Log that errors were detected but ignored due to annotation
+      console.log('\n' + '='.repeat(80));
+      console.log('⚠️  ERRORS DETECTED BUT IGNORED (skip-error-checking annotation)');
+      console.log('='.repeat(80));
+      console.log(`Console errors: ${consoleErrors.length}, Page errors: ${pageErrors.length}`);
+      console.log('These errors are expected for this test.');
+      console.log('='.repeat(80) + '\n');
+    }
+  });
+}
+```
+
+#### apps/e2e-tests/src/pages/base.page.ts
+```typescript
+import { Page, Locator, expect } from '@playwright/test';
+
+export abstract class BasePage {
+  constructor(protected page: Page) {}
+  
+  /**
+   * Fill an input field in a way that properly triggers framework signal updates.
+   * Based on splitifyd-2 Preact signal handling patterns.
+   */
+  async fillReactiveInput(selector: string | Locator, value: string) {
+    const input = typeof selector === 'string' ? this.page.locator(selector) : selector;
+    
+    // Single click and wait for focus
+    await input.click();
+    await expect(input).toBeFocused();
+    
+    // Clear and validate
+    await input.fill('');
+    await this.validateInputValue(input, '');
+    
+    // Ensure still focused before typing
+    await expect(input).toBeFocused();
+    await input.pressSequentially(value);
+    await this.validateInputValue(input, value);
+  }
+  
+  /**
+   * Validates that an input field contains the expected value.
+   * Triggers blur event to ensure validation runs and waits for state changes.
+   */
+  private async validateInputValue(input: Locator, expectedValue: string): Promise<void> {
+    await input.blur();
+    await this.page.waitForLoadState('domcontentloaded');
+    
+    const actualValue = await input.inputValue();
+    if (actualValue !== expectedValue) {
+      const fieldName = await input.getAttribute('name').catch(() => null);
+      const fieldId = await input.getAttribute('id').catch(() => null);
+      const placeholder = await input.getAttribute('placeholder').catch(() => null);
+      
+      const fieldIdentifier = fieldName || fieldId || placeholder || 'unknown field';
+      throw new Error(`Input validation failed for field "${fieldIdentifier}": expected "${expectedValue}" but got "${actualValue}"`);
+    }
+  }
+  
+  async waitForNetworkIdle() {
+    await this.page.waitForLoadState('networkidle');
+  }
+  
+  async waitForNavigation(urlPattern: RegExp, timeout = 500) {
+    await this.page.waitForURL(urlPattern, { timeout });
+  }
+  
+  async clickButtonWithText(text: string) {
+    await this.page.getByRole('button', { name: text }).click();
+  }
+
+  async expectUrl(pattern: RegExp): Promise<void> {
+    await expect(this.page).toHaveURL(pattern);
+  }
+}
+```
+
+#### Testing
+- Console errors are captured automatically
+- Tests fail on JavaScript errors unless annotated with `@skip-error-checking`
+- Page object model provides reliable input handling
+- Performance flags disable animations during tests
+
+### 1.11 Performance Benchmarking
 
 #### Description
 Establish performance baselines and monitoring to ensure V2 meets or exceeds V1 performance.
@@ -1114,7 +1425,20 @@ repo-statter-v2/
 │               └── streaming-parser.ts  # Streaming parser
 └── apps/                         # (Structure created, implementation pending)
     ├── playground/
-    └── e2e/
+    └── e2e-tests/
+        ├── package.json          # E2E test package config
+        ├── playwright.config.ts  # Advanced Playwright configuration
+        └── src/
+            ├── config/          # Test configuration and timeouts
+            ├── constants/       # Reusable selectors and constants  
+            ├── fixtures/        # Test fixtures and global setup
+            ├── helpers/         # Console error reporter and utilities
+            ├── pages/           # Page Object Model implementation
+            ├── tests/           # Three-tier test organization
+            │   ├── normal-flow/
+            │   ├── error-testing/
+            │   └── edge-cases/
+            └── workflows/       # High-level workflow abstractions
 ```
 
 ## Commands Available

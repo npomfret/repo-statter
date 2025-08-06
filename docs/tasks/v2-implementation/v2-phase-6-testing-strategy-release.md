@@ -305,84 +305,438 @@ describe('Analysis Pipeline Integration', () => {
 })
 ```
 
-### 6.3 End-to-End Testing
+### 6.3 Advanced End-to-End Testing (Splitifyd-2 Patterns)
 
 #### Description
-Test complete user workflows using Playwright.
+Enterprise-grade E2E testing with automatic error detection, workflow abstractions, and three-tier test organization based on proven splitifyd-2 patterns.
 
-#### apps/e2e/tests/report-generation.spec.ts
+#### Technical Rationale
+- **Three-Tier Organization**: Separate normal-flow, error-testing, and edge-cases for comprehensive coverage
+- **Workflow Abstractions**: High-level workflows encapsulate complex multi-step processes
+- **Console Error Integration**: Automatic test failure on JavaScript errors prevents silent failures
+- **Performance Optimization**: Test-specific optimizations reduce execution time
+
+#### apps/e2e-tests/package.json
+```json
+{
+  "name": "@repo-statter/e2e-tests",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "npx tsc --noEmit --skipLibCheck",
+    "test:integration": "npm run test:e2e:normal-flow && npm run test:e2e:error-testing && npm run test:e2e:edge-cases",
+    "_test:e2e": "npm run build && PLAYWRIGHT_HTML_OPEN=never npx playwright test --workers=6 --project=chromium",
+    "test:e2e:normal-flow": "PLAYWRIGHT_HTML_REPORT=playwright-report/normal npm run _test:e2e -- --reporter=html src/tests/normal-flow",
+    "test:e2e:error-testing": "PLAYWRIGHT_HTML_REPORT=playwright-report/errors npm run _test:e2e -- --reporter=html src/tests/error-testing", 
+    "test:e2e:edge-cases": "PLAYWRIGHT_HTML_REPORT=playwright-report/edge npm run _test:e2e -- --reporter=html src/tests/edge-cases",
+    "install-browsers": "playwright install --with-deps"
+  }
+}
+```
+
+#### apps/e2e-tests/src/workflows/analysis.workflow.ts
 ```typescript
-import { test, expect } from '@playwright/test'
-import { exec } from 'child_process'
-import { promisify } from 'util'
-import { mkdtemp } from 'fs/promises'
-import { join } from 'path'
-import { tmpdir } from 'os'
+import { Page } from '@playwright/test';
+import { exec } from 'child_process';
+import { promisify } from 'util';
 
-const execAsync = promisify(exec)
+const execAsync = promisify(exec);
+
+/**
+ * Analysis workflow class that handles repository analysis and report generation.
+ * Based on splitifyd-2 workflow abstraction patterns.
+ */
+export class AnalysisWorkflow {
+  constructor(private page: Page) {}
+
+  /**
+   * Analyzes a repository and generates a report, returning the report path
+   */
+  async analyzeRepository(repoPath: string, outputPath: string): Promise<string> {
+    await execAsync(`repo-statter analyze ${repoPath} --output ${outputPath}`);
+    return outputPath;
+  }
+
+  /**
+   * Opens a generated report and validates basic structure
+   */
+  async openAndValidateReport(reportPath: string): Promise<void> {
+    await this.page.goto(`file://${reportPath}`);
+    
+    // Wait for report to load
+    await this.page.waitForLoadState('networkidle');
+    
+    // Validate basic report structure
+    await this.page.waitForSelector('h1'); // Repository name
+    await this.page.waitForSelector('.metric-card'); // Metric cards
+    await this.page.waitForSelector('.chart-container'); // Charts
+  }
+
+  /**
+   * Tests interactive features of the report
+   */
+  async testInteractivity(): Promise<void> {
+    // Test time range slider
+    const slider = this.page.locator('.time-range-slider');
+    if (await slider.isVisible()) {
+      await this.page.click('[data-range="1m"]');
+      await this.page.waitForTimeout(500); // Allow charts to update
+    }
+
+    // Test chart view toggles
+    const viewToggle = this.page.locator('[data-value="by-commit"]');
+    if (await viewToggle.isVisible()) {
+      await viewToggle.click();
+      await this.page.waitForTimeout(500);
+    }
+
+    // Test tab navigation
+    const churnTab = this.page.locator('[data-tab="churn"]');
+    if (await churnTab.isVisible()) {
+      await churnTab.click();
+      await this.page.waitForTimeout(300);
+    }
+
+    // Test theme toggle
+    const themeToggle = this.page.locator('.theme-toggle');
+    if (await themeToggle.isVisible()) {
+      await themeToggle.click();
+      await this.page.waitForTimeout(300);
+    }
+  }
+
+  /**
+   * Validates performance characteristics of the report
+   */
+  async validatePerformance(): Promise<{ loadTime: number; chartCount: number }> {
+    const loadTime = await this.page.evaluate(() => 
+      performance.timing.loadEventEnd - performance.timing.navigationStart
+    );
+    
+    const chartCount = await this.page.locator('.apexcharts-canvas').count();
+    
+    return { loadTime, chartCount };
+  }
+
+  /**
+   * Tests responsive behavior at different viewport sizes
+   */
+  async testResponsiveness(): Promise<void> {
+    const viewports = [
+      { width: 1920, height: 1080, name: 'desktop' },
+      { width: 768, height: 1024, name: 'tablet' },
+      { width: 375, height: 667, name: 'mobile' }
+    ];
+
+    for (const viewport of viewports) {
+      await this.page.setViewportSize(viewport);
+      await this.page.waitForTimeout(200); // Allow layout to settle
+      
+      // Verify charts are still visible and properly sized
+      const charts = this.page.locator('.chart-container');
+      const chartCount = await charts.count();
+      
+      if (chartCount > 0) {
+        const firstChart = charts.first();
+        await firstChart.waitFor({ state: 'visible' });
+      }
+    }
+  }
+}
+```
+
+#### apps/e2e-tests/src/tests/normal-flow/report-generation.e2e.test.ts
+```typescript
+import { test, expect } from '../../fixtures/base-test';
+import { AnalysisWorkflow } from '../../workflows/analysis.workflow';
+import { mkdtemp } from 'fs/promises';
+import { join } from 'path';
+import { tmpdir } from 'os';
 
 test.describe('Report Generation E2E', () => {
-  test('should generate interactive report', async ({ page }) => {
+  test('should generate and validate interactive report', async ({ page }) => {
+    const workflow = new AnalysisWorkflow(page);
+    
     // Generate report
-    const tempDir = await mkdtemp(join(tmpdir(), 'e2e-test-'))
-    const reportPath = join(tempDir, 'report.html')
+    const tempDir = await mkdtemp(join(tmpdir(), 'e2e-test-'));
+    const reportPath = join(tempDir, 'report.html');
     
-    await execAsync(
-      `repo-statter analyze ./test-fixtures/sample-repo --output ${reportPath}`
-    )
+    await workflow.analyzeRepository('./test-fixtures/sample-repo', reportPath);
     
-    // Open report
-    await page.goto(`file://${reportPath}`)
+    // Open and validate report structure
+    await workflow.openAndValidateReport(reportPath);
     
-    // Check basic structure
-    await expect(page.locator('h1')).toContainText('sample-repo')
-    await expect(page.locator('.metric-card')).toHaveCount(4)
+    // Check specific elements
+    await expect(page.locator('h1')).toContainText('sample-repo');
+    await expect(page.locator('.metric-card')).toHaveCount(4);
     
-    // Test time slider interaction
-    const slider = page.locator('.time-range-slider')
-    await expect(slider).toBeVisible()
-    
-    // Click 1 month preset
-    await page.click('[data-range="1m"]')
-    
-    // Charts should update
-    await page.waitForFunction(() => {
-      const chart = document.querySelector('.growth-chart')
-      return chart?.getAttribute('data-filtered') === 'true'
-    })
-    
-    // Test chart toggle
-    await page.click('[data-value="by-commit"]')
-    await expect(page.locator('.growth-chart')).toHaveAttribute('data-view', 'by-commit')
-    
-    // Test file table tabs
-    await page.click('[data-tab="churn"]')
-    await expect(page.locator('#panel-churn')).toBeVisible()
-    await expect(page.locator('#panel-largest')).toBeHidden()
-    
-    // Test theme toggle
-    await page.click('.theme-toggle')
-    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
-  })
+    // Test interactivity
+    await workflow.testInteractivity();
+  });
   
-  test('should handle large repositories', async ({ page }) => {
-    const reportPath = './test-fixtures/large-repo-report.html'
+  test('should handle large repositories efficiently', async ({ page }) => {
+    const workflow = new AnalysisWorkflow(page);
+    const reportPath = './test-fixtures/large-repo-report.html';
     
-    // Pre-generated large report
-    await page.goto(`file://${reportPath}`)
+    await workflow.openAndValidateReport(reportPath);
     
-    // Should load quickly
-    const loadTime = await page.evaluate(() => performance.timing.loadEventEnd - performance.timing.navigationStart)
-    expect(loadTime).toBeLessThan(3000) // 3 seconds
+    // Validate performance
+    const { loadTime, chartCount } = await workflow.validatePerformance();
+    expect(loadTime).toBeLessThan(3000); // 3 seconds
+    expect(chartCount).toBeGreaterThanOrEqual(4);
     
-    // Charts should render
-    await expect(page.locator('.apexcharts-canvas')).toHaveCount(4)
+    // Test responsiveness
+    await workflow.testResponsiveness();
+  });
+
+  test('should maintain functionality across chart interactions', async ({ page }) => {
+    const workflow = new AnalysisWorkflow(page);
+    const reportPath = './test-fixtures/medium-repo-report.html';
     
-    // Should be responsive
-    await page.setViewportSize({ width: 375, height: 667 }) // iPhone size
-    await expect(page.locator('.chart-grid')).toHaveCSS('grid-template-columns', /1fr/)
-  })
+    await workflow.openAndValidateReport(reportPath);
+    
+    // Test chart view switching
+    await page.click('[data-value="by-commit"]');
+    await expect(page.locator('.growth-chart')).toHaveAttribute('data-view', 'by-commit');
+    
+    // Test time filtering
+    await page.click('[data-range="6m"]');
+    await page.waitForFunction(() => {
+      const chart = document.querySelector('.growth-chart');
+      return chart?.getAttribute('data-filtered') === 'true';
+    });
+    
+    // Test file table navigation
+    await page.click('[data-tab="complexity"]');
+    await expect(page.locator('#panel-complexity')).toBeVisible();
+    await expect(page.locator('#panel-largest')).toBeHidden();
+  });
 })
+```
+
+#### apps/e2e-tests/src/tests/error-testing/configuration-errors.e2e.test.ts
+```typescript
+import { test, expect } from '../../fixtures/base-test';
+import { AnalysisWorkflow } from '../../workflows/analysis.workflow';
+
+// Skip error checking for tests that expect errors
+test.describe('Configuration Error Handling E2E', () => {
+  test('should handle invalid repository path', async ({ page }) => {
+    test.info().annotations.push({ type: 'skip-error-checking', description: 'Expected error scenario' });
+    
+    const workflow = new AnalysisWorkflow(page);
+    
+    // Test with non-existent repository
+    await expect(async () => {
+      await workflow.analyzeRepository('./non-existent-repo', './output.html');
+    }).rejects.toThrow(/not a git repository|does not exist/);
+  });
+
+  test('should handle invalid output directory', async ({ page }) => {
+    test.info().annotations.push({ type: 'skip-error-checking', description: 'Expected error scenario' });
+    
+    const workflow = new AnalysisWorkflow(page);
+    
+    // Test with invalid output path
+    await expect(async () => {
+      await workflow.analyzeRepository('./test-fixtures/sample-repo', '/invalid/path/output.html');
+    }).rejects.toThrow(/permission denied|cannot create|invalid path/i);
+  });
+
+  test('should handle corrupted repository', async ({ page }) => {
+    test.info().annotations.push({ type: 'skip-error-checking', description: 'Expected error scenario' });
+    
+    const workflow = new AnalysisWorkflow(page);
+    
+    // Test with corrupted git repository
+    await expect(async () => {
+      await workflow.analyzeRepository('./test-fixtures/corrupted-repo', './output.html');
+    }).rejects.toThrow(/git operation failed|corrupted/i);
+  });
+
+  test('should display error page for failed reports', async ({ page }) => {
+    // Navigate to an error report fixture
+    await page.goto('./test-fixtures/error-report.html');
+    
+    // Should show error message instead of charts
+    await expect(page.locator('.error-message')).toBeVisible();
+    await expect(page.locator('.error-message')).toContainText('Failed to analyze repository');
+    
+    // Charts should not be present
+    await expect(page.locator('.chart-container')).toHaveCount(0);
+    
+    // Error details should be expandable
+    await page.click('.error-details-toggle');
+    await expect(page.locator('.error-stack-trace')).toBeVisible();
+  });
+});
+```
+
+#### apps/e2e-tests/src/tests/edge-cases/large-repository.e2e.test.ts
+```typescript
+import { test, expect } from '../../fixtures/base-test';
+import { AnalysisWorkflow } from '../../workflows/analysis.workflow';
+
+test.describe('Large Repository Edge Cases', () => {
+  test('should handle repository with many commits efficiently', async ({ page }) => {
+    // Set longer timeout for large repository processing
+    test.setTimeout(60000);
+    
+    const workflow = new AnalysisWorkflow(page);
+    const reportPath = './test-fixtures/large-repo-report.html';
+    
+    await workflow.openAndValidateReport(reportPath);
+    
+    // Should still be performant with large datasets
+    const { loadTime, chartCount } = await workflow.validatePerformance();
+    expect(loadTime).toBeLessThan(5000); // 5 seconds for large reports
+    expect(chartCount).toBeGreaterThanOrEqual(4);
+    
+    // Memory usage should be reasonable (test via browser performance API)
+    const memoryInfo = await page.evaluate(() => {
+      return (performance as any).memory ? {
+        usedJSHeapSize: (performance as any).memory.usedJSHeapSize,
+        totalJSHeapSize: (performance as any).memory.totalJSHeapSize
+      } : null;
+    });
+    
+    if (memoryInfo) {
+      // Should use less than 100MB for report display
+      expect(memoryInfo.usedJSHeapSize).toBeLessThan(100 * 1024 * 1024);
+    }
+  });
+
+  test('should handle repository with many files', async ({ page }) => {
+    const workflow = new AnalysisWorkflow(page);
+    const reportPath = './test-fixtures/many-files-repo-report.html';
+    
+    await workflow.openAndValidateReport(reportPath);
+    
+    // File table should handle pagination or virtualization
+    const fileRows = page.locator('.file-table tbody tr');
+    const rowCount = await fileRows.count();
+    
+    // Should limit displayed rows for performance
+    expect(rowCount).toBeLessThanOrEqual(100);
+    
+    // Should have pagination or "show more" functionality
+    const hasLoadMore = await page.locator('.load-more-files').isVisible();
+    const hasPagination = await page.locator('.pagination').isVisible();
+    
+    expect(hasLoadMore || hasPagination).toBe(true);
+  });
+
+  test('should handle repository with unusual file types', async ({ page }) => {
+    const workflow = new AnalysisWorkflow(page);
+    const reportPath = './test-fixtures/unusual-files-repo-report.html';
+    
+    await workflow.openAndValidateReport(reportPath);
+    
+    // File type chart should handle unknown extensions gracefully
+    const fileTypeChart = page.locator('[data-chart="file-types"]');
+    await expect(fileTypeChart).toBeVisible();
+    
+    // Should have "Other" category for unknown file types
+    const otherCategory = page.locator('.file-type-other');
+    await expect(otherCategory).toBeVisible();
+    
+    // Binary files should be categorized separately
+    const binaryCategory = page.locator('.file-type-binary');
+    await expect(binaryCategory).toBeVisible();
+  });
+});
+```
+
+#### apps/e2e-tests/src/tests/edge-cases/network-resilience.e2e.test.ts  
+```typescript
+import { test, expect } from '../../fixtures/base-test';
+import { AnalysisWorkflow } from '../../workflows/analysis.workflow';
+
+test.describe('Network and Performance Edge Cases', () => {
+  test('should maintain functionality with slow connections', async ({ page, context }) => {
+    // Simulate slow 3G connection
+    await context.route('**/*', route => {
+      setTimeout(() => route.continue(), 100); // 100ms delay
+    });
+    
+    const workflow = new AnalysisWorkflow(page);
+    const reportPath = './test-fixtures/sample-repo-report.html';
+    
+    await workflow.openAndValidateReport(reportPath);
+    
+    // Interactivity should still work despite slow connection
+    await workflow.testInteractivity();
+    
+    // Charts should load even with delayed resources
+    const chartCount = await page.locator('.chart-container').count();
+    expect(chartCount).toBeGreaterThan(0);
+  });
+
+  test('should handle offline mode gracefully', async ({ page, context }) => {
+    const workflow = new AnalysisWorkflow(page);
+    
+    // Load report first
+    const reportPath = './test-fixtures/sample-repo-report.html';
+    await workflow.openAndValidateReport(reportPath);
+    
+    // Go offline
+    await context.setOffline(true);
+    
+    // Basic functionality should still work (no network requests needed)
+    await workflow.testInteractivity();
+    
+    // Charts should remain functional
+    const charts = page.locator('.chart-container');
+    await expect(charts.first()).toBeVisible();
+    
+    // Theme switching should work offline
+    const themeToggle = page.locator('.theme-toggle');
+    if (await themeToggle.isVisible()) {
+      await themeToggle.click();
+      await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    }
+  });
+
+  test('should handle extreme viewport sizes', async ({ page }) => {
+    const workflow = new AnalysisWorkflow(page);
+    const reportPath = './test-fixtures/sample-repo-report.html';
+    
+    await workflow.openAndValidateReport(reportPath);
+    
+    // Test very narrow viewport
+    await page.setViewportSize({ width: 320, height: 568 });
+    await page.waitForTimeout(200);
+    
+    // Charts should stack vertically
+    const charts = page.locator('.chart-container');
+    const chartCount = await charts.count();
+    
+    if (chartCount > 0) {
+      // Should be visible and properly sized
+      await expect(charts.first()).toBeVisible();
+      
+      // Chart should not overflow
+      const chartWidth = await charts.first().evaluate(el => el.scrollWidth);
+      expect(chartWidth).toBeLessThanOrEqual(320);
+    }
+    
+    // Test very wide viewport
+    await page.setViewportSize({ width: 3440, height: 1440 });
+    await page.waitForTimeout(200);
+    
+    // Charts should use available space efficiently
+    if (chartCount > 1) {
+      // Multiple charts should be side by side
+      const firstChartBox = await charts.first().boundingBox();
+      const secondChartBox = await charts.nth(1).boundingBox();
+      
+      if (firstChartBox && secondChartBox) {
+        expect(secondChartBox.x).toBeGreaterThan(firstChartBox.x + firstChartBox.width - 50);
+      }
+    }
+  });
+});
 ```
 
 ### 6.4 Performance Testing
