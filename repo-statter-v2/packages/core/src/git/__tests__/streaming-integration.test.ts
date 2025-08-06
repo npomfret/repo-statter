@@ -99,19 +99,19 @@ describe('Git Streaming Integration Tests', () => {
     })
 
     it('should handle date filtering', async () => {
-      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
+      const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
       const commits: CommitInfo[] = []
       
-      for await (const commit of gitRepo.streamCommits({ since: oneDayAgo })) {
+      for await (const commit of gitRepo.streamCommits({ since: threeDaysAgo })) {
         commits.push(commit)
       }
 
-      // Should have recent commits
+      // Should have recent commits (our test repo has commits from 1-2 days ago)
       expect(commits.length).toBeGreaterThan(0)
       
       // All commits should be after the since date
       commits.forEach(commit => {
-        expect(commit.timestamp.getTime()).toBeGreaterThanOrEqual(oneDayAgo.getTime())
+        expect(commit.timestamp.getTime()).toBeGreaterThanOrEqual(threeDaysAgo.getTime())
       })
     })
 
