@@ -14,5 +14,12 @@ export * from './errors/index.js'
 // Export logging utilities
 export * from './logging/index.js'
 
+// Export git operations
+export { GitRepository, GitRepositoryError } from './git/repository.js'
+export { StreamingGitParser } from './git/streaming-parser.js'
+
+// Export analysis functionality
+export { AnalysisEngine, AnalysisEngineError } from './analysis/engine.js'
+
 // Version information
 export const VERSION = '2.0.0-alpha.0'
