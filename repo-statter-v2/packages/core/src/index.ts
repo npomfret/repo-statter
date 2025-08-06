@@ -22,5 +22,8 @@ export { StreamingGitParser } from './git/streaming-parser.js'
 export { AnalysisEngine, AnalysisEngineError } from './analysis/engine.js'
 export { FileAnalyzer } from './analysis/file-analyzer.js'
 
+// Export cache management
+export * from './cache/index.js'
+
 // Version information
 export const VERSION = '2.0.0-alpha.0'

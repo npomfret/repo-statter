@@ -109,7 +109,7 @@ export class AnalysisEngine {
         },
         currentState: {
           totalLines: commits.reduce((sum, commit) => sum + commit.stats.additions, 0),
-          totalFiles: new Set(commits.flatMap(c => c.stats.files.map(f => f.path))).size,
+          totalFiles: new Set(commits.flatMap(c => c.stats.files?.map(f => f.path) || [])).size,
           totalBytes: 0,
           fileMetrics: new Map(),
           contributors,
@@ -148,7 +148,9 @@ export class AnalysisEngine {
         existing.additions += commit.stats.additions
         existing.deletions += commit.stats.deletions
         existing.lastCommit = commit.timestamp > existing.lastCommit ? commit.timestamp : existing.lastCommit
-        commit.stats.files.forEach(file => existing.filesModified.add(file.path))
+        if (commit.stats.files) {
+          commit.stats.files.forEach(file => existing.filesModified.add(file.path))
+        }
         existing.emails.add(commit.email)
       } else {
         contributorMap.set(key, {
@@ -158,7 +160,7 @@ export class AnalysisEngine {
           commits: 1,
           additions: commit.stats.additions,
           deletions: commit.stats.deletions,
-          filesModified: new Set(commit.stats.files.map(f => f.path)),
+          filesModified: new Set(commit.stats.files?.map(f => f.path) || []),
           firstCommit: commit.timestamp,
           lastCommit: commit.timestamp,
           activeDays: 1
@@ -191,13 +193,15 @@ export class AnalysisEngine {
         existing.commits++
         existing.linesAdded += commit.stats.additions
         existing.contributors.add(commit.email)
-        commit.stats.files.forEach(file => existing.files.add(file.path))
+        if (commit.stats.files) {
+          commit.stats.files.forEach(file => existing.files.add(file.path))
+        }
       } else {
         periods.set(period, {
           commits: 1,
           linesAdded: commit.stats.additions,
           contributors: new Set([commit.email]),
-          files: new Set(commit.stats.files.map(f => f.path))
+          files: new Set(commit.stats.files?.map(f => f.path) || [])
         })
       }
     }
