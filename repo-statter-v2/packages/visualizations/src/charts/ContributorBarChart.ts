@@ -327,7 +327,7 @@ export class ContributorBarChart extends ChartComponent<ContributorBarData> {
 
   private renderMetricSelector(): string {
     return `
-      <div class="metric-selector" role="tablist" aria-label="Select metric to display">
+      <div class="metric-toggles" role="tablist" aria-label="Select metric to display">
         ${this.data.metrics.map((metric, index) => `
           <button 
             role="tab"

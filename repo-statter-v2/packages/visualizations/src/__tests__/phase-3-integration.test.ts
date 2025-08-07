@@ -664,8 +664,8 @@ function createMockAnalysisResult(): ExtendedAnalysisResult {
       recent: []
     },
     awards: {
-      individual: new Map(),
-      team: []
+      individual: new Map([["Alice Developer", ["Most Active Developer"]], ["Bob Coder", ["Top Contributor"]]]),
+      team: [{ name: "Dream Team", members: ["Alice Developer", "Bob Coder"], award: "Best Collaboration" }]
     },
     wordCloud: {
       overall: new Map(),

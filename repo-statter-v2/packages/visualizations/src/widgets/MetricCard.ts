@@ -105,7 +105,7 @@ export class MetricCard {
           </div>
           
           ${this.data.trend ? `
-            <div class="metric-trend ${this.data.trend.direction}" 
+            <div class="metric-trend trend-${this.data.trend.direction}" 
                  style="
                    display: flex; 
                    align-items: center; 

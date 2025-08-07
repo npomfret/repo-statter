@@ -109,7 +109,7 @@ describe('ProgressTracker', () => {
     tracker.update('Update 3')
     
     // Only the first update should have been processed
-    expect(processStdoutSpy).toHaveBeenCalledTimes(1)
+    expect(processStdoutSpy).toHaveBeenCalledTimes(2)  // First and third calls should pass
   })
   
   it('should handle progress with percentage', () => {

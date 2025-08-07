@@ -81,7 +81,7 @@ export class FileActivityHeatmap extends ChartComponent<FileActivityHeatmapData>
           </div>
         </div>
         
-        <div class="heatmap-container">
+        <div class="treemap-container">
           ${this.toSVG()}
           
           <noscript>

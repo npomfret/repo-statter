@@ -78,14 +78,14 @@ export class ConfigLoader {
   }
   
   private static loadFromEnv(): Config {
-    const config: Config = {}
+    const config: any = {}
     
     if (process.env.REPO_STATTER_OUTPUT) {
       config.output = process.env.REPO_STATTER_OUTPUT
     }
     
     if (process.env.REPO_STATTER_THEME) {
-      config.theme = process.env.REPO_STATTER_THEME as any
+      config.theme = process.env.REPO_STATTER_THEME
     }
     
     if (process.env.REPO_STATTER_NO_CACHE) {
@@ -96,7 +96,7 @@ export class ConfigLoader {
       config.maxCommits = parseInt(process.env.REPO_STATTER_MAX_COMMITS)
     }
     
-    return config
+    return ConfigSchema.parse(config)
   }
   
   private static mergeWithEnv(config: Config): Config {

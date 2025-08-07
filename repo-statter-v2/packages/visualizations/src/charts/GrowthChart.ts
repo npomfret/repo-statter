@@ -33,7 +33,7 @@ export class GrowthChart extends ChartComponent<GrowthChartData> {
       <div id="${id}" class="growth-chart chart-component" 
            data-chart-id="${id}"
            data-chart-type="growth"
-           data-chart-config='${JSON.stringify(config)}'
+           data-config='${JSON.stringify(config)}'
            style="background: ${colors.background}; color: ${colors.text};">
         
         ${this.options.title ? `
@@ -71,7 +71,7 @@ export class GrowthChart extends ChartComponent<GrowthChartData> {
     if (svgEl) svgEl.remove()
     
     // Get config from data attribute
-    const configStr = chartEl.getAttribute('data-chart-config')
+    const configStr = chartEl.getAttribute('data-config')
     if (!configStr) return
     
     const config = JSON.parse(configStr)
@@ -440,6 +440,9 @@ export class GrowthChart extends ChartComponent<GrowthChartData> {
    * Format numeric values
    */
   private formatValue(value: number): string {
+    if (typeof value !== 'number' || isNaN(value) || value === null || value === undefined) {
+      return '0'
+    }
     if (value >= 1000000) {
       return `${(value / 1000000).toFixed(1)}M`
     }
@@ -447,8 +450,7 @@ export class GrowthChart extends ChartComponent<GrowthChartData> {
       return `${(value / 1000).toFixed(1)}K`
     }
     return value.toFixed(0)
-  }
-  
+  }  
   /**
    * Get color for series by index
    */
