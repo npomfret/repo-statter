@@ -119,7 +119,7 @@ export class FileActivityHeatmap extends ChartComponent<FileActivityHeatmapData>
       await this.tryD3Enhancement(heatmapEl)
       
     } catch (error) {
-      console.warn('Failed to fully hydrate FileActivityHeatmap:', error)
+      // Silent fallback to static chart on hydration failure
       // Fallback: basic interactivity works
     }
   }
@@ -750,7 +750,7 @@ export class FileActivityHeatmap extends ChartComponent<FileActivityHeatmapData>
 
   private showFileDetails(file: FileActivityData): void {
     // Could open a modal or navigate to file details
-    console.log('File details:', file)
+    // File interaction: would trigger detail view for file
   }
 
   private announceMetricChange(metricLabel: string): void {

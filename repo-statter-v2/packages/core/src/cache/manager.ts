@@ -118,7 +118,7 @@ export class CacheManager {
         return null
       }
       
-      this.logger.warn('Cache read error', error as Error, { cacheKey })
+      this.logger.warn('Cache read error', { cacheKey, error: (error as Error).message })
       return null
     }
   }
@@ -193,7 +193,7 @@ export class CacheManager {
         return null
       }
       
-      this.logger.warn('File analysis cache read error', error as Error, { cacheKey })
+      this.logger.warn('File analysis cache read error', { cacheKey, error: (error as Error).message })
       return null
     }
   }
@@ -228,7 +228,7 @@ export class CacheManager {
         size: cached.metadata.size
       })
     } catch (error) {
-      this.logger.warn('Failed to write file analysis cache', error as Error, { cacheKey })
+      this.logger.warn('Failed to write file analysis cache', { cacheKey, error: (error as Error).message })
       // Don't throw - file analysis should work without cache
     }
   }
@@ -336,7 +336,7 @@ export class CacheManager {
     } catch (error) {
       // Ignore if file doesn't exist
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
-        this.logger.warn('Failed to delete cache file', error as Error, { filePath })
+        this.logger.warn('Failed to delete cache file', { filePath, error: (error as Error).message })
       }
     }
   }
@@ -433,7 +433,7 @@ export class CacheManager {
         }
       }
     } catch (error) {
-      this.logger.warn('Failed to get cache stats', error as Error)
+      this.logger.warn('Failed to get cache stats', { error: (error as Error).message })
     }
     
     return {

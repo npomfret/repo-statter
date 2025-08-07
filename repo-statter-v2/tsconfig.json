@@ -25,7 +25,8 @@
   "references": [
     { "path": "./packages/core" },
     { "path": "./packages/visualizations" },
-    { "path": "./packages/report-builder" }
+    { "path": "./packages/report-builder" },
+    { "path": "./packages/cli" }
   ],
   "exclude": [
     "node_modules",

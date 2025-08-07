@@ -92,7 +92,7 @@ export class FileTypesPieChart extends ChartComponent<FileTypeData> {
       // Add interactivity
       this.addInteractivity(chart, chartEl)
     } catch (error) {
-      console.warn('Failed to load ApexCharts, using static SVG fallback:', error)
+      // Silent fallback to static SVG on ApexCharts load failure
     }
   }
 

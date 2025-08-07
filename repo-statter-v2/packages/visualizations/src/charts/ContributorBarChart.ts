@@ -115,7 +115,7 @@ export class ContributorBarChart extends ChartComponent<ContributorBarData> {
       }
       
     } catch (error) {
-      console.warn('Failed to hydrate ContributorBarChart:', error)
+      // Silent fallback to static chart on hydration failure
       // Fallback: keep the SVG version
     }
   }

@@ -34,7 +34,7 @@ export class GrowthChartSimple extends ChartComponent<GrowthChartData> {
   
   async hydrate(container: HTMLElement): Promise<void> {
     // Implementation would go here
-    console.log('Hydrating chart', this.chartId)
+    // Hydrating chart with id: this.chartId
   }
   
   toSVG(): string {
