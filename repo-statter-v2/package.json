@@ -23,7 +23,9 @@
     "clean": "pnpm -r clean",
     "dev:playground": "pnpm --filter playground dev",
     "dev:watch": "pnpm -r --parallel dev:watch",
-    "prepare": "husky"
+    "prepare": "husky",
+    "quality:check": "node scripts/validate-quality-gates.js",
+    "release:prepare": "pnpm quality:check && pnpm build"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.8.3",
