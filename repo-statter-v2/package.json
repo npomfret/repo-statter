@@ -25,7 +25,11 @@
     "dev:watch": "pnpm -r --parallel dev:watch",
     "prepare": "husky",
     "quality:check": "node scripts/validate-quality-gates.js",
-    "release:prepare": "pnpm quality:check && pnpm build"
+    "bench": "vitest bench",
+    "bench:report": "vitest bench --reporter=verbose",
+    "size:check": "node scripts/check-bundle-size.js",
+    "release:prepare": "pnpm quality:check && pnpm build",
+    "release:notes": "node scripts/generate-release-notes.js"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.8.3",
