@@ -37,6 +37,12 @@ export class ComponentTester {
         case 'file-types-pie':
           await this.renderFileTypesPie(wrapper, data)
           break
+        case 'contributor-bar':
+          await this.renderContributorBarChart(wrapper, data)
+          break
+        case 'file-activity-heatmap':
+          await this.renderFileActivityHeatmap(wrapper, data)
+          break
         case 'top-files-table':
           await this.renderTopFilesTable(wrapper, data)
           break
@@ -243,6 +249,41 @@ export class ComponentTester {
     }
     
     infoEl.innerHTML = `<strong>Selected:</strong> ${value}`
+  }
+
+  private async renderContributorBarChart(container: HTMLElement, data: any): Promise<void> {
+    const { ContributorBarChart } = await import('@repo-statter/visualizations')
+    
+    const chart = new ContributorBarChart(data, {
+      title: 'Top Contributors',
+      maxContributors: 8,
+      showAvatars: true,
+      showMetricSelector: true,
+      theme: this.getCurrentTheme()
+    })
+    
+    container.innerHTML = chart.renderStatic()
+    await chart.hydrate(container)
+    
+    this.loadedComponents.set('contributor-bar', chart)
+  }
+
+  private async renderFileActivityHeatmap(container: HTMLElement, data: any): Promise<void> {
+    const { FileActivityHeatmap } = await import('@repo-statter/visualizations')
+    
+    const heatmap = new FileActivityHeatmap(data, {
+      title: 'File Activity Heatmap',
+      maxFiles: 30,
+      colorScheme: 'blue',
+      showLabels: true,
+      interactiveTooltips: true,
+      theme: this.getCurrentTheme()
+    })
+    
+    container.innerHTML = heatmap.renderStatic()
+    await heatmap.hydrate(container)
+    
+    this.loadedComponents.set('file-activity-heatmap', heatmap)
   }
 
   private getCurrentTheme(): 'light' | 'dark' {

@@ -6,6 +6,8 @@
 import { ChartComponent } from './base/ChartComponent.js'
 import { GrowthChart } from './charts/GrowthChart.js'
 import { FileTypesPieChart } from './charts/FileTypesPieChart.js'
+import { ContributorBarChart } from './charts/ContributorBarChart.js'
+import { FileActivityHeatmap } from './charts/FileActivityHeatmap.js'
 import { TimeRangeSlider } from './widgets/TimeRangeSlider.js'
 import { MetricCard } from './widgets/MetricCard.js'
 import { ChartToggle } from './widgets/ChartToggle.js'
@@ -14,6 +16,8 @@ import { TopFilesTable } from './widgets/TopFilesTable.js'
 export type ComponentType = 
   | 'growth-chart'
   | 'file-types-pie'
+  | 'contributor-bar'
+  | 'file-activity-heatmap'
   | 'time-slider'
   | 'metric-card'
   | 'chart-toggle'
@@ -22,6 +26,8 @@ export type ComponentType =
 export type ComponentInstance = 
   | GrowthChart
   | FileTypesPieChart
+  | ContributorBarChart
+  | FileActivityHeatmap
   | TimeRangeSlider
   | MetricCard
   | ChartToggle
@@ -55,6 +61,18 @@ export class ComponentRegistry {
       description: 'Pie chart showing lines of code by file type',
       category: 'chart',
       constructor: FileTypesPieChart
+    }],
+    ['contributor-bar', {
+      name: 'Contributor Bar Chart',
+      description: 'Horizontal bar chart showing contributor statistics',
+      category: 'chart',
+      constructor: ContributorBarChart
+    }],
+    ['file-activity-heatmap', {
+      name: 'File Activity Heatmap',
+      description: 'Treemap/heatmap showing file activity and sizes',
+      category: 'chart',
+      constructor: FileActivityHeatmap
     }],
     ['time-slider', {
       name: 'Time Range Slider',
@@ -300,6 +318,18 @@ export class ComponentRegistry {
         description: 'Pie chart showing lines of code by file type',
         category: 'chart',
         constructor: FileTypesPieChart
+      }],
+      ['contributor-bar', {
+        name: 'Contributor Bar Chart',
+        description: 'Horizontal bar chart showing contributor statistics',
+        category: 'chart',
+        constructor: ContributorBarChart
+      }],
+      ['file-activity-heatmap', {
+        name: 'File Activity Heatmap',
+        description: 'Treemap/heatmap showing file activity and sizes',
+        category: 'chart',
+        constructor: FileActivityHeatmap
       }],
       ['time-slider', {
         name: 'Time Range Slider',
