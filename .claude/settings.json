@@ -41,5 +41,8 @@
       "mcp__typescript-mcp__*"
     ],
     "deny": []
+  },
+  "enabledPlugins": {
+    "task-files@npomfret": true
   }
 }
