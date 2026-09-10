@@ -34,6 +34,13 @@
         "-y",
         "@playwright/mcp@latest"
       ]
+    },
+    "gitnexus": {
+      "command": "npx",
+      "args": [
+        "gitnexus",
+        "mcp"
+      ]
     }
   }
 }
