@@ -64,3 +64,4 @@ directives
 .claude/agents/prompt-advisor.md
 .claude/mcp-inventory.json
 .gitnexus/
+.codex/config.toml
