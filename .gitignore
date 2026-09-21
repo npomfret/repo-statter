@@ -40,7 +40,6 @@ dist/
 tmp/
 
 # AI agents stuff
-CLAUDE.md
 GEMINI.md
 directives
 .claude/commands/analyse.md
