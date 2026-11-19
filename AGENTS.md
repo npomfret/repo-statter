@@ -1,71 +1,18 @@
-# COMMAND-FIRST WORKFLOW
+# Repo Statter
 
-## 🚀 Start EVERY Request with `/p`
+CLI that analyses a git repository's history and writes an interactive HTML report.
+Published to npm as `repo-statter` (v0.0.21; tags back to v0.0.7). A `repo-statter-v2/`
+pnpm workspace is an in-tree rewrite with its own `package.json` and docs.
+Lifecycle: published package; whether it is actively maintained and who depends on it
+is not evidenced (status unknown). See `README.md` and `ARCHITECTURE.md`.
 
-The `/p` meta-prompt command automatically selects the best tools for your task:
+Tech: TypeScript, Node, commander, simple-git, esbuild, ApexCharts, vitest.
 
-```
-/p analyze performance issues in my React app
-/p fix the login bug in issue #123
-/p refactor this code for better types
-/p add dark mode to settings
-```
+## Commands
 
-## Why `/p`?
-
-- **Zero Memory Load**: No need to remember tool names
-- **Optimal Workflows**: Always uses the best combination of tools
-- **Learning Aid**: Shows you which tools are selected and why
-- **Can't Be Ignored**: Explicit command vs passive instructions
-
-## Available Tools
-
-**View all tools:**
-- `/mcp-list` - See MCP servers (fast operations)
-- `/agent-list` - See subagents (quality enforcement)
-
-**Direct usage (optional):**
-- MCP servers: `mcp__servername__method`
-- Subagents: "Use the [agent-name] agent"
-
-## The `/p` Advantage
-
-Instead of:
-- Remembering dozens of tool names
-- Figuring out the right sequence
-- Missing optimal approaches
-
-Just use `/p` and get:
-- Intelligent tool selection
-- Proper sequencing
-- Best practices enforced
-
-## Examples of `/p` in Action
-
-**Feature Development:**
-```
-/p add user authentication to the app
-→ architect-advisor → MCP tools → quality agents → test-runner → auditor
-```
-
-**Bug Fixing:**
-```
-/p fix TypeError in user.service.ts line 45
-→ architect-advisor → mcp__typescript-mcp__ → fix → test-runner → auditor
-```
-
-**Analysis:**
-```
-/p analyze bundle size and suggest optimizations
-→ mcp__context-provider__ → mcp__typescript-mcp__ → analyst agent
-```
-
-## Remember
-
-- **ALWAYS** start with `/p` for intelligent assistance
-- The first `/p` in a session initializes MCP context
-- Each `/p` returns an enhanced prompt with optimal tool usage
-- Follow the enhanced prompt for best results
+- `npm test` (vitest), `npm run typecheck` (`lint` is the same `tsc --noEmit`), `npm run build`.
+- `npm run analyse -- <repo>` runs the CLI from source.
+- `npm run release` runs `npm version patch && npm publish`: it publishes to npm publicly, so run it only on explicit request.
 
 <!-- agent-standards:begin -->
 ## Shared agent guidance
