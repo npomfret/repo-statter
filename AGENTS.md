@@ -12,7 +12,7 @@ Tech: TypeScript, Node, commander, simple-git, esbuild, ApexCharts, vitest.
 
 - `npm test` (vitest), `npm run typecheck` (`lint` is the same `tsc --noEmit`), `npm run build`.
 - `npm run analyse -- <repo>` runs the CLI from source.
-- `npm run release` runs `npm version patch && npm publish`: it publishes to npm publicly, so run it only on explicit request.
+- `npm run release` runs `npm version patch && npm publish`: it publishes to npm publicly, so run it when the task calls for it and state it in your report.
 
 <!-- agent-standards:begin -->
 ## Operating contract
